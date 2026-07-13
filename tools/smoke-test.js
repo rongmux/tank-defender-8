@@ -297,6 +297,9 @@ const runtimeAudioManifest = context.window.TankDefender8.audioManifest();
 assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest id should match the free replacement manifest");
 assert(Object.keys(runtimeAudioManifest.events).length >= 18, "runtime audio manifest should expose gameplay sound events");
 assert(runtimeAudioManifest.events.powerUp.wave === "triangle", "runtime audio manifest should expose power-up sound shape");
+assert(runtimeAudioManifest.events.gameOver.duration === 3, "full-screen game-over replacement fanfare should last three seconds");
+assert(runtimeAudioManifest.events.gameOver.voices.length === 3, "game-over replacement fanfare should preserve a three-voice arrangement");
+assert(runtimeAudioManifest.events.gameOver.voices.every((voice) => voice.notes.length === 15), "each game-over voice should cover the full 180-frame interstitial");
 assert(runtimeAudioManifest.events.highScore.duration === 9.6 && runtimeAudioManifest.events.highScore.repeat === 3, "high-score replacement fanfare should span the original-style celebration window");
 assert(runtimeAudioManifest.events.highScore.notes.length === 16, "high-score replacement fanfare should expose its complete procedural phrase");
 assert(stableJson(runtimeAudioManifest) === stableJson(audioManifest), "runtime audio manifest should match data/free-audio-manifest.json");
@@ -375,6 +378,34 @@ assert(hiddenMessageProbe.afterCutscene.screen === "editor" && hiddenMessageProb
 assert(hiddenMessageProbe.afterCutscene.inputCount === 0, "finishing the hidden cutscene should clear its input accumulator");
 assert(hiddenMessageProbe.wrappedVisits === 0, "Construction visit tracking should preserve the original eight-bit wraparound");
 assert(hiddenMessageProbe.alternateSelection.screen === "stageSelect" && hiddenMessageProbe.alternateSelection.players === 1, "the hidden cutscene should continue through the currently selected title handler");
+const fullGameOverProbe = context.window.TankDefender8.debugFullGameOverScreenProbe();
+assert(fullGameOverProbe.duration === 180, "full-screen game over should match its three-second replacement fanfare at 60 Hz");
+assert(fullGameOverProbe.entry.screen === "fullGameOver" && fullGameOverProbe.entry.elapsed === 0, "game-over interstitial should start on its own screen at frame zero");
+assert(fullGameOverProbe.entry.paused === false, "game-over interstitial should not retain a paused game state");
+assert(
+  fullGameOverProbe.presentation.x === 0x3c &&
+    fullGameOverProbe.presentation.gameY === 0x46 &&
+    fullGameOverProbe.presentation.overY === 0x78 &&
+    fullGameOverProbe.presentation.letterAdvance === 0x20,
+  "full-screen game-over lettering should retain the original coordinates and 32-pixel advance"
+);
+assert(fullGameOverProbe.beforeEnd.screen === "fullGameOver" && fullGameOverProbe.beforeEnd.elapsed === 179, "full-screen game over should remain visible through frame 179");
+assert(fullGameOverProbe.afterEnd.screen === "title" && fullGameOverProbe.afterEnd.elapsed === 0, "frame 180 should return a non-record run to the title");
+assert(fullGameOverProbe.ignoredInput.handled === false && fullGameOverProbe.ignoredInput.screen === "fullGameOver", "ordinary controls should not dismiss full-screen game over");
+assert(fullGameOverProbe.startSkip.handled === true && fullGameOverProbe.startSkip.screen === "title", "keyboard Start should skip full-screen game over");
+assert(fullGameOverProbe.selectSkip.handled === true && fullGameOverProbe.selectSkip.screen === "title", "keyboard Select should skip full-screen game over");
+assert(fullGameOverProbe.highScoreRoute.screen === "highScore" && fullGameOverProbe.highScoreRoute.elapsed === 0, "a new record should follow full-screen game over with the high-score celebration");
+canvasContext.calls.length = 0;
+canvasContext.resetPixels();
+const renderedFullGameOver = context.window.TankDefender8.debugRenderFullGameOverFrame(42);
+assert(renderedFullGameOver.elapsed === 42, "full-screen game-over renderer should preserve the requested logic frame");
+assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#000000" && call.x === 0 && call.y === 0 && call.w === 256 && call.h === 240), "full-screen game over should clear the complete canvas to black");
+assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42"), "full-screen game over should render striped replacement lettering");
+assert(!canvasContext.calls.some((call) => call.op === "fillText"), "full-screen game-over text should remain pixel-rendered without anti-aliasing");
+assert(
+  canvasContext.calls.filter((call) => call.op === "fillRect").every((call) => [call.x, call.y, call.w, call.h].every(Number.isInteger)),
+  "full-screen game-over rectangles should stay on integer pixel boundaries"
+);
 const highScoreScreenProbe = context.window.TankDefender8.debugHighScoreScreenProbe();
 assert(highScoreScreenProbe.duration === 576, "new-high-score celebration should match its 9.6-second replacement fanfare at 60 Hz");
 assert(highScoreScreenProbe.tie.triggered === false, "matching the old high score should not trigger the celebration");
@@ -1518,7 +1549,7 @@ assert(gameOverRects[1].y === gameOverSlideProbe.frames[1].y, "game-over render 
 assert(gameOverRects[2].y === gameOverSlideProbe.frames[2].y, "game-over render should use the final slide position");
 const gameOverReturnProbe = context.window.TankDefender8.debugGameOverReturnProbe();
 assert(gameOverReturnProbe.finalFrame.screen === "gameOver" && gameOverReturnProbe.finalFrame.timer === 0, "game-over should render the centered final frame before leaving");
-assert(gameOverReturnProbe.afterFinalFrame.screen === "title", "game-over should automatically return to the title after the final frame");
+assert(gameOverReturnProbe.afterFinalFrame.screen === "fullGameOver", "the in-field game-over banner should continue into the dedicated full-screen interstitial");
 const bonusProbe = context.window.TankDefender8.debugStageClearBonusProbe(4, 3);
 assert(bonusProbe.points === 777 && bonusProbe.recipients.join(",") === "1", "stage clear bonus should go to the strict kill leader");
 assert(context.window.TankDefender8.debugStageClearBonusProbe(4, 4).recipients.length === 0, "stage clear bonus should not award ties by default");

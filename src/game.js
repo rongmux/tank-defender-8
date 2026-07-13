@@ -40,6 +40,7 @@
   const HIDDEN_MESSAGE_DROP_MORPH_FRAMES = 28;
   const HIDDEN_MESSAGE_DROP_FALL_FRAMES = 218;
   const HIDDEN_MESSAGE_END_FRAME = 887;
+  const FULL_GAME_OVER_SCREEN_FRAMES = 180;
   const HIGH_SCORE_SCREEN_FRAMES = 576;
   const HIGH_SCORE_PALETTE_COLORS = ["#111111", "#345fd1", "#6b6f78", "#f3f0d4"];
   const DEFAULT_INITIAL_LIVES = 3;
@@ -153,6 +154,32 @@
       enemyShoot: { freq: 310, duration: 0.03, gain: 0.018, wave: "square" },
       stageClearA: { freq: 660, duration: 0.08, gain: 0.03, wave: "triangle" },
       stageClearB: { freq: 880, duration: 0.1, gain: 0.025, wave: "triangle" },
+      gameOver: {
+        duration: 3,
+        voices: [
+          {
+            gain: 0.018,
+            wave: "square",
+            step: 0.2,
+            noteDuration: 0.17,
+            notes: [784, 659, 587, 523, 440, 392, 349, 330, 294, 262, 220, 196, 175, 147, 131]
+          },
+          {
+            gain: 0.014,
+            wave: "square",
+            step: 0.2,
+            noteDuration: 0.17,
+            notes: [523, 494, 440, 392, 349, 330, 294, 262, 247, 220, 196, 175, 147, 131, 110]
+          },
+          {
+            gain: 0.022,
+            wave: "triangle",
+            step: 0.2,
+            noteDuration: 0.18,
+            notes: [196, 196, 175, 175, 147, 147, 131, 131, 110, 110, 98, 98, 82, 73, 65]
+          }
+        ]
+      },
       highScore: {
         duration: 9.6,
         gain: 0.022,
@@ -686,6 +713,7 @@
   const keys = new Set();
   const pendingFirePresses = new Set();
   let audioCtx = null;
+  const activeSequencedSounds = new Map();
 
   const game = {
     screen: "title",
@@ -713,6 +741,7 @@
     nextSpawn: 0,
     clearPendingTimer: 0,
     gameOverTimer: 0,
+    fullGameOverElapsed: 0,
     freezeTimer: 0,
     shovelTimer: 0,
     highScore: DEFAULT_HIGH_SCORE,
@@ -1861,6 +1890,7 @@
       game.hiddenInputCount = 0;
       game.runHighScoreBaseline = game.highScore;
       game.newHighScoreAtGameOver = false;
+      game.fullGameOverElapsed = 0;
       game.highScoreScreenElapsed = 0;
     }
     game.demoMode = Boolean(opts.demo);
@@ -2022,6 +2052,7 @@
     game.nextSpawn = enemySpawnDelay(stage, 0);
     game.clearPendingTimer = 0;
     game.gameOverTimer = 0;
+    game.fullGameOverElapsed = 0;
     game.freezeTimer = 0;
     game.shovelTimer = 0;
     game.stageClearElapsed = 0;
@@ -2215,9 +2246,12 @@
   }
 
   function clearTransientBattleState() {
+    stopSound("gameOver");
+    stopSound("highScore");
     game.demoMode = false;
     game.runHighScoreBaseline = game.highScore;
     game.newHighScoreAtGameOver = false;
+    game.fullGameOverElapsed = 0;
     game.highScoreScreenElapsed = 0;
     game.players = [];
     game.enemies = [];
@@ -2272,7 +2306,36 @@
     }
   }
 
-  function beep(freq, duration, gain, type, delay) {
+  function trackSequencedSound(name, oscillator) {
+    if (!name) return;
+    let nodes = activeSequencedSounds.get(name);
+    if (!nodes) {
+      nodes = new Set();
+      activeSequencedSounds.set(name, nodes);
+    }
+    nodes.add(oscillator);
+    oscillator.onended = () => {
+      nodes.delete(oscillator);
+      if (nodes.size === 0 && activeSequencedSounds.get(name) === nodes) {
+        activeSequencedSounds.delete(name);
+      }
+    };
+  }
+
+  function stopSound(name) {
+    const nodes = activeSequencedSounds.get(name);
+    if (!nodes) return;
+    activeSequencedSounds.delete(name);
+    for (const oscillator of nodes) {
+      try {
+        oscillator.stop(audioCtx ? audioCtx.currentTime : 0);
+      } catch (_error) {
+        // A naturally ended oscillator no longer needs to be stopped.
+      }
+    }
+  }
+
+  function beep(freq, duration, gain, type, delay, sequenceName) {
     if (!audioCtx) return;
     const now = audioCtx.currentTime + Math.max(0, Number(delay) || 0);
     const osc = audioCtx.createOscillator();
@@ -2282,23 +2345,40 @@
     vol.gain.setValueAtTime(gain || 0.025, now);
     vol.gain.exponentialRampToValueAtTime(0.001, now + duration);
     osc.connect(vol).connect(audioCtx.destination);
+    trackSequencedSound(sequenceName, osc);
     osc.start(now);
     osc.stop(now + duration);
+  }
+
+  function playSoundVoice(name, voice, defaults) {
+    const notes = Array.isArray(voice.notes) ? voice.notes : [];
+    const repeat = Math.max(1, Math.floor(Number(voice.repeat ?? defaults.repeat) || 1));
+    const step = Math.max(0.01, Number(voice.step ?? defaults.step) || 0.2);
+    const noteDuration = Number(voice.noteDuration ?? defaults.noteDuration) || step * 0.7;
+    const gain = Number(voice.gain ?? defaults.gain) || 0.025;
+    const wave = voice.wave || defaults.wave;
+    for (let loop = 0; loop < repeat; loop += 1) {
+      for (let index = 0; index < notes.length; index += 1) {
+        const frequency = Number(notes[index]);
+        if (!(frequency > 0)) continue;
+        const offset = (loop * notes.length + index) * step;
+        beep(frequency, noteDuration, gain, wave, offset, name);
+      }
+    }
   }
 
   function playSound(name, options) {
     const event = FREE_AUDIO_MANIFEST.events[name];
     if (!event) return;
     const opts = options || {};
+    if (Array.isArray(event.voices) && event.voices.length) {
+      stopSound(name);
+      for (const voice of event.voices) playSoundVoice(name, voice, event);
+      return;
+    }
     if (Array.isArray(event.notes) && event.notes.length) {
-      const repeat = Math.max(1, Math.floor(Number(event.repeat) || 1));
-      const step = Math.max(0.01, Number(event.step) || 0.2);
-      for (let loop = 0; loop < repeat; loop += 1) {
-        for (let index = 0; index < event.notes.length; index += 1) {
-          const offset = (loop * event.notes.length + index) * step;
-          beep(event.notes[index], event.noteDuration || step * 0.7, event.gain, event.wave, offset);
-        }
-      }
+      stopSound(name);
+      playSoundVoice(name, event, event);
       return;
     }
     const pitch = opts.brush === undefined ? 0 : Number(opts.brush) * (event.brushPitch || 0);
@@ -2445,10 +2525,9 @@
       else if (/^Digit[0-5]$/.test(event.code)) selectEditorBrush(Number(event.code.slice(-1)));
       else if (event.code === "Escape") exitEditorToTitle();
     } else if (game.screen === "gameOver") {
-      if (event.code === "Enter" || event.code === "Escape") {
-        game.gameOverTimer = 0;
-        finishGameOverScreen();
-      }
+      return;
+    } else if (game.screen === "fullGameOver") {
+      handleFullGameOverInput(event.code);
     } else if (game.screen === "highScore" || game.screen === "hiddenMessage") {
       return;
     } else if (game.screen === "stageClear") {
@@ -2708,6 +2787,11 @@
 
     if (game.screen === "highScore") {
       updateHighScoreScreen();
+      return;
+    }
+
+    if (game.screen === "fullGameOver") {
+      updateFullGameOverScreen();
       return;
     }
 
@@ -3938,7 +4022,7 @@
       endTitleDemo();
       return;
     }
-    if (game.screen === "gameOver") return;
+    if (game.screen === "gameOver" || game.screen === "fullGameOver") return;
     game.screen = "gameOver";
     game.paused = false;
     game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
@@ -3946,6 +4030,30 @@
   }
 
   function finishGameOverScreen() {
+    startFullGameOverScreen();
+  }
+
+  function startFullGameOverScreen() {
+    game.screen = "fullGameOver";
+    game.paused = false;
+    game.fullGameOverElapsed = 0;
+    playSound("gameOver");
+  }
+
+  function updateFullGameOverScreen() {
+    game.fullGameOverElapsed += 1;
+    if (game.fullGameOverElapsed < FULL_GAME_OVER_SCREEN_FRAMES) return;
+    finishFullGameOverScreen();
+  }
+
+  function handleFullGameOverInput(code) {
+    if (code !== "Enter" && code !== "Escape") return false;
+    finishFullGameOverScreen();
+    return true;
+  }
+
+  function finishFullGameOverScreen() {
+    stopSound("gameOver");
     if (game.newHighScoreAtGameOver) {
       startHighScoreScreen();
       return;
@@ -3967,9 +4075,12 @@
   }
 
   function returnToTitleAfterGame() {
+    stopSound("gameOver");
+    stopSound("highScore");
     game.screen = "title";
     game.paused = false;
     game.newHighScoreAtGameOver = false;
+    game.fullGameOverElapsed = 0;
     game.highScoreScreenElapsed = 0;
     game.constructionUsed = false;
     game.constructionVisits = 0;
@@ -4141,6 +4252,7 @@
     if (game.screen === "title") renderTitle();
     else if (game.screen === "hiddenMessage") renderHiddenMessage();
     else if (game.screen === "highScore") renderHighScore();
+    else if (game.screen === "fullGameOver") renderFullGameOver();
     else if (game.screen === "stageSelect") renderStageSelect();
     else if (game.screen === "editor") renderEditor();
     else if (game.screen === "stageClear") renderStageClear();
@@ -4196,6 +4308,42 @@
     };
     drawStripedTitleText("HISCORE", 23, 50, 5, palette);
     drawStripedTitleText(presentation.scoreText, presentation.scoreX, 100, 5, palette);
+  }
+
+  function renderFullGameOver() {
+    const presentation = fullGameOverPresentation(game.fullGameOverElapsed);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    for (let index = 0; index < presentation.gameText.length; index += 1) {
+      drawStripedTitleText(
+        presentation.gameText[index],
+        presentation.x + index * presentation.letterAdvance,
+        presentation.gameY,
+        presentation.scale
+      );
+    }
+    for (let index = 0; index < presentation.overText.length; index += 1) {
+      drawStripedTitleText(
+        presentation.overText[index],
+        presentation.x + index * presentation.letterAdvance,
+        presentation.overY,
+        presentation.scale
+      );
+    }
+  }
+
+  function fullGameOverPresentation(elapsed) {
+    return {
+      elapsed: clamp(Math.floor(Number(elapsed) || 0), 0, FULL_GAME_OVER_SCREEN_FRAMES - 1),
+      duration: FULL_GAME_OVER_SCREEN_FRAMES,
+      gameText: "GAME",
+      overText: "OVER",
+      x: 0x3c,
+      gameY: 0x46,
+      overY: 0x78,
+      letterAdvance: 0x20,
+      scale: 5
+    };
   }
 
   function highScorePresentation(elapsed, score) {
@@ -5240,6 +5388,7 @@
           screen: game.screen
         };
         finishGameOverScreen();
+        finishFullGameOverScreen();
         const started = {
           screen: game.screen,
           elapsed: game.highScoreScreenElapsed
@@ -5264,6 +5413,7 @@
         game.screen = "playing";
         enterGameOver();
         finishGameOverScreen();
+        finishFullGameOverScreen();
         const belowRecord = {
           screen: game.screen,
           triggered: game.newHighScoreAtGameOver
@@ -5279,6 +5429,85 @@
           afterEnd,
           belowRecord
         };
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
+    debugFullGameOverScreenProbe() {
+      const previous = { ...game };
+      try {
+        game.newHighScoreAtGameOver = false;
+        startFullGameOverScreen();
+        const entry = {
+          screen: game.screen,
+          elapsed: game.fullGameOverElapsed,
+          paused: game.paused
+        };
+        const presentation = fullGameOverPresentation(game.fullGameOverElapsed);
+        game.fullGameOverElapsed = FULL_GAME_OVER_SCREEN_FRAMES - 2;
+        update();
+        const beforeEnd = {
+          screen: game.screen,
+          elapsed: game.fullGameOverElapsed
+        };
+        update();
+        const afterEnd = {
+          screen: game.screen,
+          elapsed: game.fullGameOverElapsed
+        };
+
+        game.newHighScoreAtGameOver = false;
+        startFullGameOverScreen();
+        const ignoredInput = {
+          handled: handleFullGameOverInput("KeyA"),
+          screen: game.screen
+        };
+        const startSkip = {
+          handled: handleFullGameOverInput("Enter"),
+          screen: game.screen
+        };
+
+        game.newHighScoreAtGameOver = false;
+        startFullGameOverScreen();
+        const selectSkip = {
+          handled: handleFullGameOverInput("Escape"),
+          screen: game.screen
+        };
+
+        game.newHighScoreAtGameOver = true;
+        startFullGameOverScreen();
+        finishFullGameOverScreen();
+        const highScoreRoute = {
+          screen: game.screen,
+          elapsed: game.highScoreScreenElapsed
+        };
+        return {
+          duration: FULL_GAME_OVER_SCREEN_FRAMES,
+          entry,
+          presentation,
+          beforeEnd,
+          afterEnd,
+          ignoredInput,
+          startSkip,
+          selectSkip,
+          highScoreRoute
+        };
+      } finally {
+        stopSound("gameOver");
+        stopSound("highScore");
+        Object.assign(game, previous);
+      }
+    },
+    debugRenderFullGameOverFrame(frame) {
+      const previous = {
+        screen: game.screen,
+        fullGameOverElapsed: game.fullGameOverElapsed
+      };
+      try {
+        game.screen = "fullGameOver";
+        game.fullGameOverElapsed = Math.max(0, Math.floor(Number(frame) || 0));
+        render();
+        return fullGameOverPresentation(game.fullGameOverElapsed);
       } finally {
         Object.assign(game, previous);
       }
@@ -5321,6 +5550,7 @@
         highScore: game.highScore,
         runHighScoreBaseline: game.runHighScoreBaseline,
         newHighScoreAtGameOver: game.newHighScoreAtGameOver,
+        fullGameOverElapsed: game.fullGameOverElapsed,
         highScoreScreenElapsed: game.highScoreScreenElapsed,
         enemySpawned: game.enemySpawned,
         enemyKilled: game.enemyKilled,
@@ -8910,12 +9140,16 @@
         screen: game.screen,
         paused: game.paused,
         gameOverTimer: game.gameOverTimer,
+        fullGameOverElapsed: game.fullGameOverElapsed,
+        newHighScoreAtGameOver: game.newHighScoreAtGameOver,
         explosions: game.explosions
       };
       try {
         game.screen = "gameOver";
         game.paused = false;
         game.gameOverTimer = 1;
+        game.fullGameOverElapsed = 0;
+        game.newHighScoreAtGameOver = false;
         game.explosions = [];
         update();
         const finalFrame = {
@@ -8929,6 +9163,7 @@
         };
         return { finalFrame, afterFinalFrame };
       } finally {
+        stopSound("gameOver");
         Object.assign(game, previous);
       }
     },

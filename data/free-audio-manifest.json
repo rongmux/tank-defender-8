@@ -22,6 +22,32 @@
     "enemyShoot": { "freq": 310, "duration": 0.03, "gain": 0.018, "wave": "square" },
     "stageClearA": { "freq": 660, "duration": 0.08, "gain": 0.03, "wave": "triangle" },
     "stageClearB": { "freq": 880, "duration": 0.1, "gain": 0.025, "wave": "triangle" },
+    "gameOver": {
+      "duration": 3,
+      "voices": [
+        {
+          "gain": 0.018,
+          "wave": "square",
+          "step": 0.2,
+          "noteDuration": 0.17,
+          "notes": [784, 659, 587, 523, 440, 392, 349, 330, 294, 262, 220, 196, 175, 147, 131]
+        },
+        {
+          "gain": 0.014,
+          "wave": "square",
+          "step": 0.2,
+          "noteDuration": 0.17,
+          "notes": [523, 494, 440, 392, 349, 330, 294, 262, 247, 220, 196, 175, 147, 131, 110]
+        },
+        {
+          "gain": 0.022,
+          "wave": "triangle",
+          "step": 0.2,
+          "noteDuration": 0.18,
+          "notes": [196, 196, 175, 175, 147, 147, 131, 131, 110, 110, 98, 98, 82, 73, 65]
+        }
+      ]
+    },
     "highScore": {
       "duration": 9.6,
       "gain": 0.022,
