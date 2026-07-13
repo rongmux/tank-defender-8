@@ -315,6 +315,12 @@ assert(pauseProbe.stageIntroAccepted === false && pauseProbe.demoAccepted === fa
 assert(pauseProbe.inputs.map((entry) => `${entry.code}:${entry.accepted}`).join(",") === "Enter:true,KeyP:true,Escape:false", "only Start and the documented P extension should pause active gameplay");
 assert(pauseProbe.frames[0].visible === false && pauseProbe.frames[1].visible === true && pauseProbe.frames[2].visible === true && pauseProbe.frames[3].visible === false, "PAUSE should alternate through sixteen hidden and sixteen visible frames");
 assert(pauseProbe.frames[1].text === "PAUSE" && pauseProbe.frames[1].x === 100 && pauseProbe.frames[1].y === 128, "PAUSE should use the original sprite coordinates without a backing panel");
+const pausedStageEndProbe = context.window.TankDefender8.debugPausedStageEndProbe();
+assert(pausedStageEndProbe.incomplete.screen === "playing" && pausedStageEndProbe.incomplete.paused === true && pausedStageEndProbe.incomplete.pauseElapsed === 1, "an incomplete stage should remain paused while its display frame advances");
+assert(pausedStageEndProbe.incomplete.tick === 41 && pausedStageEndProbe.detected.tick === 41, "paused stage-end checks should not advance battle time");
+assert(pausedStageEndProbe.detected.enemyCount === 0 && pausedStageEndProbe.detected.paused === false && pausedStageEndProbe.detected.pauseElapsed === 0, "detecting the final defeated enemy during pause should leave the pausable battle loop");
+assert(pausedStageEndProbe.detected.screen === "playing" && pausedStageEndProbe.detected.clearPendingTimer === pausedStageEndProbe.delay - 1, "paused stage completion should begin the active clear delay on its detection frame");
+assert(pausedStageEndProbe.pauseAcceptedDuringDelay === false, "the post-clear activity delay should reject new pause input");
 canvasContext.calls.length = 0;
 context.window.TankDefender8.debugRenderPauseFrame(15);
 assert(canvasContext.calls.length === 0, "a hidden PAUSE phase should not draw any overlay pixels");

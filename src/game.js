@@ -2437,7 +2437,12 @@
    * @returns {boolean} Whether an active battle accepted the pause input.
    */
   function togglePause() {
-    if (game.screen !== "playing" || game.demoMode) return false;
+    if (
+      game.screen !== "playing" ||
+      game.demoMode ||
+      game.clearPendingTimer > 0 ||
+      stageEnemiesCleared()
+    ) return false;
     game.paused = !game.paused;
     game.pauseElapsed = 0;
     pendingFirePresses.clear();
@@ -2878,6 +2883,7 @@
     if (game.paused) {
       game.pauseElapsed += 1;
       updateScorePopups();
+      checkEndState();
       return;
     }
 
@@ -4024,6 +4030,8 @@
       return;
     }
     if (stageEnemiesCleared()) {
+      game.paused = false;
+      game.pauseElapsed = 0;
       if (game.clearPendingTimer <= 0) {
         game.clearPendingTimer = gameSettings().timings.stageClearDelay;
       }
@@ -5244,6 +5252,20 @@
     return String(value).padStart(2, "0");
   }
 
+  function preparePausedDebugBattle(tick) {
+    game.screen = "playing";
+    game.demoMode = false;
+    game.paused = true;
+    game.pauseElapsed = 0;
+    game.tick = Math.max(0, Math.floor(Number(tick) || 0));
+    game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+    game.players = [{ alive: true, lives: 1, respawn: 0 }];
+    game.enemies = [];
+    game.enemySpawned = 0;
+    game.clearPendingTimer = 0;
+    game.scorePopups = [];
+  }
+
   window.TankDefender8 = {
     loadStagePack(pack) {
       return loadStagePackObject(pack).ok;
@@ -5304,6 +5326,11 @@
         game.paused = false;
         game.pauseElapsed = 99;
         game.tick = 15;
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.players = [{ alive: true, lives: 1, respawn: 0 }];
+        game.enemies = [];
+        game.enemySpawned = 0;
+        game.clearPendingTimer = 0;
         game.scorePopups = [];
         pendingFirePresses.clear();
         pendingFirePresses.add("Space");
@@ -5342,6 +5369,58 @@
       } finally {
         pendingFirePresses.clear();
         for (const code of previousFirePresses) pendingFirePresses.add(code);
+        Object.assign(game, previous);
+      }
+    },
+    debugPausedStageEndProbe() {
+      const previous = { ...game };
+      const total = enemyTotal();
+      const player = { alive: true, lives: 1, respawn: 0 };
+      try {
+        game.screen = "playing";
+        game.demoMode = false;
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.players = [player];
+        game.enemies = [];
+        game.enemySpawned = Math.max(0, total - 1);
+        game.clearPendingTimer = 0;
+        game.paused = true;
+        game.pauseElapsed = 0;
+        game.tick = 41;
+        game.scorePopups = [];
+        update();
+        const incomplete = {
+          screen: game.screen,
+          paused: game.paused,
+          pauseElapsed: game.pauseElapsed,
+          tick: game.tick
+        };
+
+        game.screen = "playing";
+        game.enemies = [{ alive: false }];
+        game.enemySpawned = total;
+        game.clearPendingTimer = 0;
+        game.paused = true;
+        game.pauseElapsed = 0;
+        game.tick = 41;
+        game.scorePopups = [];
+        update();
+        const detected = {
+          screen: game.screen,
+          paused: game.paused,
+          pauseElapsed: game.pauseElapsed,
+          tick: game.tick,
+          enemyCount: game.enemies.length,
+          clearPendingTimer: game.clearPendingTimer
+        };
+        const pauseAcceptedDuringDelay = togglePause();
+        return {
+          delay: gameSettings().timings.stageClearDelay,
+          incomplete,
+          detected,
+          pauseAcceptedDuringDelay
+        };
+      } finally {
         Object.assign(game, previous);
       }
     },
@@ -6024,12 +6103,7 @@
       const carrier = { carrier: true };
       const stunnedPlayer = { stun: 1 };
       try {
-        game.screen = "playing";
-        game.demoMode = false;
-        game.paused = true;
-        game.pauseElapsed = 0;
-        game.tick = 7;
-        game.scorePopups = [];
+        preparePausedDebugBattle(7);
 
         const snapshot = () => {
           const displayFrame = battleDisplayFrame();
@@ -6355,15 +6429,11 @@
     },
     debugPausedShieldProbe() {
       const previous = { ...game };
-      const player = { invuln: 2 };
+      const player = { alive: true, lives: 1, respawn: 0, invuln: 2 };
       try {
-        game.screen = "playing";
-        game.demoMode = false;
+        preparePausedDebugBattle(63);
         game.paused = false;
-        game.pauseElapsed = 0;
-        game.tick = 63;
         game.players = [player];
-        game.scorePopups = [];
 
         const activeVisible = isPlayerShieldVisible(player);
         game.paused = true;
@@ -6759,12 +6829,7 @@
     debugPausedPowerUpVisualProbe() {
       const previous = { ...game };
       try {
-        game.screen = "playing";
-        game.demoMode = false;
-        game.paused = true;
-        game.pauseElapsed = 0;
-        game.tick = 7;
-        game.scorePopups = [];
+        preparePausedDebugBattle(7);
 
         const snapshot = () => ({
           tick: game.tick,
@@ -7392,16 +7457,9 @@
       }
     },
     debugPausedScorePopupProbe() {
-      const previous = {
-        screen: game.screen,
-        paused: game.paused,
-        tick: game.tick,
-        scorePopups: game.scorePopups
-      };
+      const previous = { ...game };
       try {
-        game.screen = "playing";
-        game.paused = true;
-        game.tick = 27;
+        preparePausedDebugBattle(27);
         game.scorePopups = [{ value: 500, x: 64, y: 64, ttl: 2, max: 2, style: "powerUp" }];
         update();
         const afterOneFrame = { tick: game.tick, ttl: game.scorePopups[0] ? game.scorePopups[0].ttl : 0 };
@@ -8994,18 +9052,10 @@
       return { key, ...explosionRule(key) };
     },
     debugBulletImpactExplosionProbe() {
-      const previous = {
-        explosions: game.explosions,
-        scorePopups: game.scorePopups,
-        screen: game.screen,
-        paused: game.paused,
-        editorMessageTimer: game.editorMessageTimer
-      };
+      const previous = { ...game };
       try {
+        preparePausedDebugBattle(0);
         game.explosions = [];
-        game.scorePopups = [];
-        game.screen = "playing";
-        game.paused = true;
         addRuleExplosion("brickHit", 64, 64);
         const beforePause = game.explosions[0].ttl;
         update();
@@ -9024,11 +9074,7 @@
           frames
         };
       } finally {
-        game.explosions = previous.explosions;
-        game.scorePopups = previous.scorePopups;
-        game.screen = previous.screen;
-        game.paused = previous.paused;
-        game.editorMessageTimer = previous.editorMessageTimer;
+        Object.assign(game, previous);
       }
     },
     debugEnemyPanelCounterProbe(spawned, killed, total) {
