@@ -832,6 +832,12 @@ assert(powerUpFlashProbe.slice(0, 8).every((frame) => frame.visible === false), 
 assert(powerUpFlashProbe.slice(8, 16).every((frame) => frame.visible === true), "uncollected power-ups should be visible for the second eight-frame band");
 assert(powerUpFlashProbe.slice(16, 24).every((frame) => frame.visible === false), "power-up visibility should repeat with another eight hidden frames");
 assert(powerUpFlashProbe.slice(24, 32).every((frame) => frame.visible === true), "power-up visibility should repeat with another eight visible frames");
+const pausedPowerUpVisualProbe = context.window.TankDefender8.debugPausedPowerUpVisualProbe();
+assert(pausedPowerUpVisualProbe.initial.displayFrame === 7 && pausedPowerUpVisualProbe.initial.powerUpVisible === false, "a paused power-up should start from the current battle display phase");
+assert(pausedPowerUpVisualProbe.afterOneFrame.tick === 7 && pausedPowerUpVisualProbe.afterOneFrame.displayFrame === 8 && pausedPowerUpVisualProbe.afterOneFrame.powerUpVisible === true, "paused display frames should keep an uncollected power-up flashing without advancing battle time");
+assert(pausedPowerUpVisualProbe.afterNineFrames.displayFrame === 16 && pausedPowerUpVisualProbe.afterNineFrames.powerUpVisible === false, "paused power-up flashing should repeat across the next eight-frame boundary");
+assert(pausedPowerUpVisualProbe.initial.waterFrame === pausedPowerUpVisualProbe.afterNineFrames.waterFrame, "pause should keep water animation tied to the frozen battle frame");
+assert(pausedPowerUpVisualProbe.afterResume.displayFrame === 23, "resumed display animation should ignore elapsed pause frames");
 const waterAnimationProbe = context.window.TankDefender8.debugWaterAnimationCadenceProbe();
 assert(waterAnimationProbe.map((entry) => entry.frame).join(",") === "waterA,waterA,waterB,waterB,waterA,waterA,waterB", "water animation should switch on bit five of the global frame counter");
 const grenadeScoreProbe = context.window.TankDefender8.debugGrenadeScoreProbe();

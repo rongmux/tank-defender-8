@@ -4784,7 +4784,7 @@
   }
 
   function drawPowerUp(power) {
-    if (!isPowerUpVisible(game.tick)) return;
+    if (!isPowerUpVisible(battleDisplayFrame())) return;
     const visual = powerUpVisualRect(power);
     const x = visual.x;
     const y = visual.y;
@@ -4804,6 +4804,14 @@
 
   function isPowerUpVisible(tick) {
     return (Math.max(0, Math.floor(Number(tick) || 0)) & 8) !== 0;
+  }
+
+  /**
+   * Returns the visual frame phase used by display handlers that keep running
+   * while the battle simulation is paused.
+   */
+  function battleDisplayFrame() {
+    return game.tick + (game.paused ? game.pauseElapsed : 0);
   }
 
   function powerUpVisualRect(power) {
@@ -5107,7 +5115,7 @@
   }
 
   function renderPause() {
-    const presentation = pausePresentation(game.tick + game.pauseElapsed);
+    const presentation = pausePresentation(battleDisplayFrame());
     if (!presentation.visible) return;
     drawText(presentation.text, presentation.x, presentation.y, 1, "#f3f0d4");
   }
@@ -6669,6 +6677,37 @@
     },
     debugPowerUpFlashCadenceProbe() {
       return Array.from({ length: 32 }, (_, tick) => ({ tick, visible: isPowerUpVisible(tick) }));
+    },
+    debugPausedPowerUpVisualProbe() {
+      const previous = { ...game };
+      try {
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = true;
+        game.pauseElapsed = 0;
+        game.tick = 7;
+        game.scorePopups = [];
+
+        const snapshot = () => ({
+          tick: game.tick,
+          pauseElapsed: game.pauseElapsed,
+          displayFrame: battleDisplayFrame(),
+          powerUpVisible: isPowerUpVisible(battleDisplayFrame()),
+          waterFrame: waterFrameName(game.tick)
+        });
+        const initial = snapshot();
+        update();
+        const afterOneFrame = snapshot();
+        for (let frame = 0; frame < 8; frame += 1) update();
+        const afterNineFrames = snapshot();
+
+        game.paused = false;
+        game.tick = 23;
+        const afterResume = snapshot();
+        return { initial, afterOneFrame, afterNineFrames, afterResume };
+      } finally {
+        Object.assign(game, previous);
+      }
     },
     debugWaterAnimationCadenceProbe() {
       return [0, 31, 32, 63, 64, 95, 96].map((tick) => ({ tick, frame: waterFrameName(tick) }));
