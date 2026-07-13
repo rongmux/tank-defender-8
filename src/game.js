@@ -3158,12 +3158,15 @@
         return;
       }
     }
-    for (const player of game.players) {
-      if (canPlayerCollectPowerUp(player, game.powerUp)) {
-        collectPowerUp(player, game.powerUp);
-        break;
-      }
+    const player = powerUpCollector(game.powerUp);
+    if (player) collectPowerUp(player, game.powerUp);
+  }
+
+  function powerUpCollector(power) {
+    for (let index = game.players.length - 1; index >= 0; index -= 1) {
+      if (canPlayerCollectPowerUp(game.players[index], power)) return game.players[index];
     }
+    return null;
   }
 
   function canPlayerCollectPowerUp(player, power) {
@@ -5233,6 +5236,28 @@
         stunned: canPlayerCollectPowerUp({ ...player, stun: 1 }, power),
         invulnerable: canPlayerCollectPowerUp({ ...player, invuln: 1 }, power)
       };
+    },
+    debugPowerUpPickupPriorityProbe() {
+      const previousPlayers = game.players;
+      const makePlayer = (id, spawnFlash) => ({ id, alive: true, respawn: 0, spawnFlash: spawnFlash || 0, x: 64, y: 64 });
+      const power = { type: "star", x: 64, y: 64, w: POWERUP_SIZE, h: POWERUP_SIZE };
+      try {
+        const player1 = makePlayer(1);
+        const player2 = makePlayer(2);
+        game.players = [player1, player2];
+        const simultaneous = powerUpCollector(power);
+        player2.spawnFlash = 1;
+        const player2Spawning = powerUpCollector(power);
+        game.players = [player1];
+        const onePlayer = powerUpCollector(power);
+        return {
+          simultaneousPlayerId: simultaneous ? simultaneous.id : null,
+          player2SpawningPlayerId: player2Spawning ? player2Spawning.id : null,
+          onePlayerId: onePlayer ? onePlayer.id : null
+        };
+      } finally {
+        game.players = previousPlayers;
+      }
     },
     debugPowerUpPickupRenderProbe() {
       const previous = {
