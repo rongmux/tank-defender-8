@@ -758,6 +758,7 @@
     hiddenMessageElapsed: 0,
     stageSelectPlayers: 1,
     stageSelectHoldTimer: 0,
+    stageResultReason: "clear",
     stageClearElapsed: 0,
     stageClearBonusPlayerIds: [],
     stageClearBonusAwarded: false,
@@ -2055,6 +2056,7 @@
     game.fullGameOverElapsed = 0;
     game.freezeTimer = 0;
     game.shovelTimer = 0;
+    game.stageResultReason = "clear";
     game.stageClearElapsed = 0;
     game.stageClearBonusPlayerIds = [];
     game.stageClearBonusAwarded = false;
@@ -2253,6 +2255,7 @@
     game.newHighScoreAtGameOver = false;
     game.fullGameOverElapsed = 0;
     game.highScoreScreenElapsed = 0;
+    game.stageResultReason = "clear";
     game.players = [];
     game.enemies = [];
     game.bullets = [];
@@ -2531,7 +2534,7 @@
     } else if (game.screen === "highScore" || game.screen === "hiddenMessage") {
       return;
     } else if (game.screen === "stageClear") {
-      if (event.code === "Enter" || event.code === "Space") game.transitionTimer = 1;
+      return;
     } else if (event.code === "KeyP" || event.code === "Escape" || event.code === "Enter") {
       game.paused = !game.paused;
     }
@@ -2809,24 +2812,17 @@
     if (game.screen === "stageClear") {
       game.stageClearElapsed += 1;
       const presentation = stageClearPresentation();
-      if (!game.stageClearBonusAwarded && game.stageClearElapsed >= presentation.bonusRevealFrame) {
+      if (
+        game.stageResultReason === "clear" &&
+        !game.stageClearBonusAwarded &&
+        game.stageClearElapsed >= presentation.bonusRevealFrame
+      ) {
         awardPendingStageClearBonus();
       }
       game.transitionTimer -= 1;
       updateExplosions();
       updateScorePopups();
-      if (game.transitionTimer <= 0) {
-        awardPendingStageClearBonus();
-        const advance = stageAdvanceResult(game.stage);
-        if (!game.customGrid && advance.stops) {
-          game.screen = "title";
-          resetTitleIdleTimer();
-          return;
-        }
-        if (!game.customGrid) game.stage = advance.stage;
-        game.constructionStageActive = false;
-        startStage(game.stage);
-      }
+      if (game.transitionTimer <= 0) finishStageResult();
       return;
     }
 
@@ -4007,14 +4003,45 @@
   }
 
   function enterStageClear() {
+    enterStageResult("clear");
+  }
+
+  /**
+   * Starts the shared result count-up while preserving the distinct clear and game-over exits.
+   * @param {"clear" | "gameOver"} reason
+   */
+  function enterStageResult(reason) {
+    const resultReason = reason === "gameOver" ? "gameOver" : "clear";
     game.clearPendingTimer = 0;
+    game.stageResultReason = resultReason;
     game.stageClearElapsed = 0;
-    game.stageClearBonusPlayerIds = stageClearBonusRecipients(game.players).map((player) => player.id);
+    game.stageClearBonusPlayerIds = resultReason === "clear"
+      ? stageClearBonusRecipients(game.players).map((player) => player.id)
+      : [];
     game.stageClearBonusAwarded = false;
     game.screen = "stageClear";
     game.transitionTimer = gameSettings().timings.stageClear;
     playSound("stageClearA");
     setTimeout(() => playSound("stageClearB"), 90);
+  }
+
+  function finishStageResult() {
+    if (game.stageResultReason === "gameOver") {
+      const advance = stageAdvanceResult(game.stage);
+      if (!game.customGrid && !advance.stops) game.stage = advance.stage;
+      startFullGameOverScreen();
+      return;
+    }
+    awardPendingStageClearBonus();
+    const advance = stageAdvanceResult(game.stage);
+    if (!game.customGrid && advance.stops) {
+      game.screen = "title";
+      resetTitleIdleTimer();
+      return;
+    }
+    if (!game.customGrid) game.stage = advance.stage;
+    game.constructionStageActive = false;
+    startStage(game.stage);
   }
 
   function enterGameOver() {
@@ -4030,7 +4057,7 @@
   }
 
   function finishGameOverScreen() {
-    startFullGameOverScreen();
+    enterStageResult("gameOver");
   }
 
   function startFullGameOverScreen() {
@@ -4082,6 +4109,7 @@
     game.newHighScoreAtGameOver = false;
     game.fullGameOverElapsed = 0;
     game.highScoreScreenElapsed = 0;
+    game.stageResultReason = "clear";
     game.constructionUsed = false;
     game.constructionVisits = 0;
     game.hiddenInputCount = 0;
@@ -5388,6 +5416,7 @@
           screen: game.screen
         };
         finishGameOverScreen();
+        finishStageResult();
         finishFullGameOverScreen();
         const started = {
           screen: game.screen,
@@ -5413,6 +5442,7 @@
         game.screen = "playing";
         enterGameOver();
         finishGameOverScreen();
+        finishStageResult();
         finishFullGameOverScreen();
         const belowRecord = {
           screen: game.screen,
@@ -5557,6 +5587,7 @@
         panelEnemyCounter: panelEnemyCounterRemaining(),
         nextSpawn: game.nextSpawn,
         clearPendingTimer: game.clearPendingTimer,
+        stageResultReason: game.stageResultReason,
         stageClearElapsed: game.stageClearElapsed,
         stageClearBonusPlayerIds: game.stageClearBonusPlayerIds.slice(),
         stageClearBonusAwarded: game.stageClearBonusAwarded,
@@ -9136,14 +9167,7 @@
       }
     },
     debugGameOverReturnProbe() {
-      const previous = {
-        screen: game.screen,
-        paused: game.paused,
-        gameOverTimer: game.gameOverTimer,
-        fullGameOverElapsed: game.fullGameOverElapsed,
-        newHighScoreAtGameOver: game.newHighScoreAtGameOver,
-        explosions: game.explosions
-      };
+      const previous = { ...game };
       try {
         game.screen = "gameOver";
         game.paused = false;
@@ -9159,11 +9183,107 @@
         update();
         const afterFinalFrame = {
           screen: game.screen,
-          timer: game.gameOverTimer
+          timer: game.gameOverTimer,
+          reason: game.stageResultReason
         };
         return { finalFrame, afterFinalFrame };
       } finally {
         stopSound("gameOver");
+        Object.assign(game, previous);
+      }
+    },
+    debugGameOverStageResultProbe() {
+      const previous = { ...game };
+      const p1 = createPlayer(1);
+      const p2 = createPlayer(2);
+      p1.alive = false;
+      p1.lives = 0;
+      p1.score = 21000;
+      p1.stageKills = [5, 1, 0, 0];
+      p1.stagePoints = 700;
+      p2.alive = false;
+      p2.lives = 0;
+      p2.score = 800;
+      p2.stageKills = [2, 0, 1, 0];
+      p2.stagePoints = 500;
+      try {
+        game.stagePack = builtInStagePack;
+        game.screen = "playing";
+        game.paused = false;
+        game.stage = 5;
+        game.playerCount = 2;
+        game.customGrid = null;
+        game.players = [p1, p2];
+        game.runHighScoreBaseline = 20000;
+        game.newHighScoreAtGameOver = false;
+        enterGameOver();
+        game.gameOverTimer = 0;
+        finishGameOverScreen();
+        const entry = {
+          screen: game.screen,
+          reason: game.stageResultReason,
+          stage: game.stage,
+          elapsed: game.stageClearElapsed,
+          timer: game.transitionTimer,
+          bonusPlayerIds: game.stageClearBonusPlayerIds.slice(),
+          bonusAwarded: game.stageClearBonusAwarded,
+          newHighScore: game.newHighScoreAtGameOver
+        };
+        const counted = stageClearPresentation(game.players, 200);
+        const scoreBeforeFinish = p1.score;
+        game.transitionTimer = 2;
+        update();
+        const beforeEnd = {
+          screen: game.screen,
+          reason: game.stageResultReason,
+          stage: game.stage,
+          timer: game.transitionTimer,
+          score: p1.score,
+          bonusAwarded: game.stageClearBonusAwarded
+        };
+        update();
+        const afterEnd = {
+          screen: game.screen,
+          stage: game.stage,
+          elapsed: game.fullGameOverElapsed,
+          score: p1.score,
+          bonusAwarded: game.stageClearBonusAwarded,
+          newHighScore: game.newHighScoreAtGameOver
+        };
+        finishFullGameOverScreen();
+        const highScoreRoute = {
+          screen: game.screen,
+          elapsed: game.highScoreScreenElapsed
+        };
+
+        stopSound("highScore");
+        game.stage = gameSettings().stageAdvance.extendedLoopEndStage;
+        game.customGrid = null;
+        game.newHighScoreAtGameOver = false;
+        enterStageResult("gameOver");
+        game.transitionTimer = 1;
+        update();
+        const wrappedStage = {
+          screen: game.screen,
+          stage: game.stage
+        };
+        return {
+          duration: gameSettings().timings.stageClear,
+          entry,
+          visibleRows: counted.rows.map((row) => ({
+            typeIndex: row.typeIndex,
+            p1VisibleKills: row.p1VisibleKills,
+            p2VisibleKills: row.p2VisibleKills
+          })),
+          scoreBeforeFinish,
+          beforeEnd,
+          afterEnd,
+          highScoreRoute,
+          wrappedStage
+        };
+      } finally {
+        stopSound("gameOver");
+        stopSound("highScore");
         Object.assign(game, previous);
       }
     },

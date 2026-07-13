@@ -1180,6 +1180,7 @@ snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "title", "loading a stage pack should return to the title screen");
 assert(snapshot.players.length === 0 && snapshot.enemySpawned === 0 && snapshot.enemyKilled === 0, "loading a stage pack should clear active player and enemy counters");
 assert(snapshot.powerUpType === null && snapshot.clearPendingTimer === 0 && snapshot.gameOverTimer === 0, "loading a stage pack should clear transient power-up and transition state");
+assert(snapshot.stageResultReason === "clear" && snapshot.stageClearElapsed === 0, "loading a stage pack should reset stage-result routing state");
 
 const customEnemySequencePack = {
   id: "custom-enemy-sequence",
@@ -1549,7 +1550,36 @@ assert(gameOverRects[1].y === gameOverSlideProbe.frames[1].y, "game-over render 
 assert(gameOverRects[2].y === gameOverSlideProbe.frames[2].y, "game-over render should use the final slide position");
 const gameOverReturnProbe = context.window.TankDefender8.debugGameOverReturnProbe();
 assert(gameOverReturnProbe.finalFrame.screen === "gameOver" && gameOverReturnProbe.finalFrame.timer === 0, "game-over should render the centered final frame before leaving");
-assert(gameOverReturnProbe.afterFinalFrame.screen === "fullGameOver", "the in-field game-over banner should continue into the dedicated full-screen interstitial");
+assert(gameOverReturnProbe.afterFinalFrame.screen === "stageClear" && gameOverReturnProbe.afterFinalFrame.reason === "gameOver", "the in-field game-over banner should continue into the shared stage-result screen");
+const gameOverStageResultProbe = context.window.TankDefender8.debugGameOverStageResultProbe();
+assert(gameOverStageResultProbe.duration === schema.gameSettings.timings.stageClear, "game-over stage result should retain the configured result duration");
+assert(
+  gameOverStageResultProbe.entry.screen === "stageClear" &&
+    gameOverStageResultProbe.entry.reason === "gameOver" &&
+    gameOverStageResultProbe.entry.stage === 5 &&
+    gameOverStageResultProbe.entry.elapsed === 0,
+  "game over should enter the current stage's result table before the full-screen interstitial"
+);
+assert(gameOverStageResultProbe.entry.bonusPlayerIds.length === 0 && gameOverStageResultProbe.entry.bonusAwarded === false, "game-over result should suppress the two-player kill-leader bonus");
+assert(gameOverStageResultProbe.entry.newHighScore === true, "game-over result should preserve the run-start high-score decision");
+assert(gameOverStageResultProbe.visibleRows[0].p1VisibleKills === 5 && gameOverStageResultProbe.visibleRows[0].p2VisibleKills === 2, "game-over result should count the same per-type kill rows as a cleared stage");
+assert(gameOverStageResultProbe.visibleRows[1].p1VisibleKills === 1 && gameOverStageResultProbe.visibleRows[2].p2VisibleKills === 1, "game-over result should retain later enemy-type rows");
+assert(
+  gameOverStageResultProbe.beforeEnd.screen === "stageClear" &&
+    gameOverStageResultProbe.beforeEnd.stage === 5 &&
+    gameOverStageResultProbe.beforeEnd.timer === 1,
+  "game-over result should keep the completed stage number through its final visible frame"
+);
+assert(gameOverStageResultProbe.beforeEnd.score === gameOverStageResultProbe.scoreBeforeFinish && gameOverStageResultProbe.beforeEnd.bonusAwarded === false, "game-over result should not add the skipped leader bonus before its final frame");
+assert(
+  gameOverStageResultProbe.afterEnd.screen === "fullGameOver" &&
+    gameOverStageResultProbe.afterEnd.stage === 6 &&
+    gameOverStageResultProbe.afterEnd.elapsed === 0,
+  "finishing the game-over result should advance the stage index and start full-screen game over at frame zero"
+);
+assert(gameOverStageResultProbe.afterEnd.score === gameOverStageResultProbe.scoreBeforeFinish && gameOverStageResultProbe.afterEnd.bonusAwarded === false, "game-over result should never award the two-player leader bonus");
+assert(gameOverStageResultProbe.afterEnd.newHighScore === true && gameOverStageResultProbe.highScoreRoute.screen === "highScore", "the high-score celebration should remain after the result and full-screen game-over sequence");
+assert(gameOverStageResultProbe.wrappedStage.screen === "fullGameOver" && gameOverStageResultProbe.wrappedStage.stage === 1, "a stage-70 game-over result should preserve the original extended-loop wrap before full-screen game over");
 const bonusProbe = context.window.TankDefender8.debugStageClearBonusProbe(4, 3);
 assert(bonusProbe.points === 777 && bonusProbe.recipients.join(",") === "1", "stage clear bonus should go to the strict kill leader");
 assert(context.window.TankDefender8.debugStageClearBonusProbe(4, 4).recipients.length === 0, "stage clear bonus should not award ties by default");
