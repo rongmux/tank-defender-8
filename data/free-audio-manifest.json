@@ -16,6 +16,7 @@
     "enemyHit": { "freq": 330, "duration": 0.025, "gain": 0.02, "wave": "square" },
     "enemyDestroy": { "freq": 94, "duration": 0.12, "gain": 0.05, "wave": "square" },
     "bonusLife": { "freq": 880, "duration": 0.08, "gain": 0.028, "wave": "triangle" },
+    "pause": { "freq": 620, "duration": 0.07, "gain": 0.025, "wave": "square" },
     "playerDestroy": { "freq": 76, "duration": 0.2, "gain": 0.055, "wave": "sawtooth" },
     "powerUp": { "freq": 740, "duration": 0.08, "gain": 0.035, "wave": "triangle" },
     "playerShoot": { "freq": 460, "duration": 0.03, "gain": 0.018, "wave": "square" },

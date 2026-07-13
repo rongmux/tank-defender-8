@@ -158,6 +158,7 @@
       enemyHit: { freq: 330, duration: 0.025, gain: 0.02, wave: "square" },
       enemyDestroy: { freq: 94, duration: 0.12, gain: 0.05, wave: "square" },
       bonusLife: { freq: 880, duration: 0.08, gain: 0.028, wave: "triangle" },
+      pause: { freq: 620, duration: 0.07, gain: 0.025, wave: "square" },
       playerDestroy: { freq: 76, duration: 0.2, gain: 0.055, wave: "sawtooth" },
       powerUp: { freq: 740, duration: 0.08, gain: 0.035, wave: "triangle" },
       playerShoot: { freq: 460, duration: 0.03, gain: 0.018, wave: "square" },
@@ -728,6 +729,7 @@
   const game = {
     screen: "title",
     paused: false,
+    pauseElapsed: 0,
     stage: 1,
     playerCount: 1,
     tick: 0,
@@ -1907,6 +1909,7 @@
     game.demoMode = Boolean(opts.demo);
     game.playerCount = players;
     game.paused = false;
+    game.pauseElapsed = 0;
     game.stage = opts.stage || game.stage || 1;
     game.customGrid = opts.customGrid ? cloneGrid(opts.customGrid) : null;
     game.constructionStageActive = Boolean(
@@ -2419,10 +2422,27 @@
     else if (action === "clear" && game.screen === "editor") clearEditorStage();
     else if (action === "export" && game.screen === "editor") exportEditorStage();
     else if (action === "import") importStagePackFile();
-    else if (action === "pause") game.paused = !game.paused;
+    else if (action === "pause") togglePause();
     else if (action === "reset") {
       restoreBuiltInStagePack();
     }
+  }
+
+  function isPauseInputCode(code) {
+    return code === "Enter" || code === "KeyP";
+  }
+
+  /**
+   * Toggles the active battle pause state. The original pause sound is triggered only on entry.
+   * @returns {boolean} Whether an active battle accepted the pause input.
+   */
+  function togglePause() {
+    if (game.screen !== "playing" || game.demoMode) return false;
+    game.paused = !game.paused;
+    game.pauseElapsed = 0;
+    pendingFirePresses.clear();
+    if (game.paused) playSound("pause");
+    return true;
   }
 
   document.querySelectorAll("[data-action]").forEach((button) => {
@@ -2545,8 +2565,8 @@
       return;
     } else if (game.screen === "stageClear") {
       return;
-    } else if (event.code === "KeyP" || event.code === "Escape" || event.code === "Enter") {
-      game.paused = !game.paused;
+    } else if (isPauseInputCode(event.code)) {
+      togglePause();
     }
   });
 
@@ -2856,6 +2876,7 @@
 
     if (game.screen !== "playing") return;
     if (game.paused) {
+      game.pauseElapsed += 1;
       updateScorePopups();
       return;
     }
@@ -5086,9 +5107,20 @@
   }
 
   function renderPause() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.68)";
-    ctx.fillRect(FIELD_X + 54, 96, 100, 30);
-    drawText("PAUSE", FIELD_X + 84, 108, 1, "#f3f0d4");
+    const presentation = pausePresentation(game.tick + game.pauseElapsed);
+    if (!presentation.visible) return;
+    drawText(presentation.text, presentation.x, presentation.y, 1, "#f3f0d4");
+  }
+
+  function pausePresentation(frame) {
+    const value = Math.max(0, Math.floor(Number(frame) || 0)) & 0xff;
+    return {
+      frame: value,
+      visible: (value & 0x10) !== 0,
+      text: "PAUSE",
+      x: 100,
+      y: 128
+    };
   }
 
   function renderEditor() {
@@ -5246,6 +5278,72 @@
         enemySequence: enemySequenceForStage(game.stage),
         stage: game.stage
       };
+    },
+    debugPauseBehaviorProbe() {
+      const previous = { ...game };
+      const previousFirePresses = Array.from(pendingFirePresses);
+      try {
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = false;
+        game.pauseElapsed = 99;
+        game.tick = 15;
+        game.scorePopups = [];
+        pendingFirePresses.clear();
+        pendingFirePresses.add("Space");
+
+        const entered = togglePause();
+        const entry = {
+          paused: game.paused,
+          pauseElapsed: game.pauseElapsed,
+          pendingFirePresses: pendingFirePresses.size
+        };
+        update();
+        const pausedUpdate = {
+          tick: game.tick,
+          pauseElapsed: game.pauseElapsed
+        };
+        const exited = togglePause();
+
+        game.screen = "stageIntro";
+        game.paused = false;
+        game.demoMode = false;
+        const stageIntroAccepted = togglePause();
+        game.screen = "playing";
+        game.demoMode = true;
+        const demoAccepted = togglePause();
+
+        return {
+          entered,
+          exited,
+          entry,
+          pausedUpdate,
+          stageIntroAccepted,
+          demoAccepted,
+          inputs: ["Enter", "KeyP", "Escape"].map((code) => ({ code, accepted: isPauseInputCode(code) })),
+          frames: [15, 16, 31, 32].map(pausePresentation)
+        };
+      } finally {
+        pendingFirePresses.clear();
+        for (const code of previousFirePresses) pendingFirePresses.add(code);
+        Object.assign(game, previous);
+      }
+    },
+    debugRenderPauseFrame(frame) {
+      const previous = {
+        paused: game.paused,
+        pauseElapsed: game.pauseElapsed,
+        tick: game.tick
+      };
+      try {
+        game.paused = true;
+        game.pauseElapsed = 0;
+        game.tick = Math.max(0, Math.floor(Number(frame) || 0));
+        renderPause();
+        return pausePresentation(game.tick);
+      } finally {
+        Object.assign(game, previous);
+      }
     },
     debugTitleScoreLayoutProbe(menuIndex) {
       return titleScoreLayout(menuIndex).map((item) => ({ ...item }));
@@ -5601,6 +5699,7 @@
       return {
         screen: game.screen,
         paused: game.paused,
+        pauseElapsed: game.pauseElapsed,
         titleMenu: game.titleMenu,
         titleMenuAction: (TITLE_MENU_ITEMS[game.titleMenu] || TITLE_MENU_ITEMS[0]).action,
         titleIdleFrames: game.titleIdleFrames,

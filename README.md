@@ -31,7 +31,7 @@ git diff --check
 - Stage select: `Space`/`Z` acts as NES A and advances through stages 1-35; `F`/`X` acts as NES B and moves backward. Holding A or B repeats every eight frames. `Enter` starts the selected stage and `Escape` returns to the title.
 - Player 1: arrow keys move, `Space` fires. In one-player mode, `WASD` also moves Player 1.
 - Player 2: in two-player mode, `WASD` moves and `F` fires.
-- Pause: `Enter` as the keyboard Start button, `P`, or toolbar `PAUSE`.
+- Pause: during active battle, use `Enter` as the keyboard Start button, `P`, or toolbar `PAUSE`; stage intro and non-battle screens reject pause input. Entering pause plays the free replacement pause sound, clears queued fire presses, and shows the unframed `PAUSE` lettering at the original coordinates for alternating 16-frame visible and hidden phases. `Escape` is not a pause key.
 - Game over: the in-field banner and following current-stage result count-up cannot be skipped. The separate full-screen `GAME OVER` interstitial follows that result; `Enter` acts as Start and `Escape` acts as Select, and either skips the remaining fanfare only on the full-screen segment.
 - Reset: toolbar `RESET` returns to the title screen, restores the built-in original-style stage pack, and clears temporary gameplay/editor-test state.
 - Construction: arrow keys or `WASD` move the tank cursor one 16x16 cell. `Space`/`Z` acts as NES A and advances through the original 14 block patterns; `F`/`X` acts as NES B and moves backward. The first A/B press after moving places the current pattern without changing it. `Enter` acts as Start, returns to the title, and installs the edited map as stage 1; clearing it continues to the normal stage 2. `TEST` or `E` starts an immediate one-stage test.
