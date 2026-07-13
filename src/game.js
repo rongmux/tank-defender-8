@@ -526,6 +526,7 @@
   ];
 
   const powerTypes = ["grenade", "helmet", "shovel", "star", "timer", "tank"];
+  const originalPowerUpRandomTable = ["helmet", "timer", "shovel", "star", "grenade", "tank", "grenade", "star"];
   const PLAYER_UPGRADE_OVERLAY_COLORS = {
     level1: "#f7f1c6",
     level2: "#f8e08b",
@@ -3076,11 +3077,15 @@
   function spawnPowerUp(forcedType) {
     const type = forcedType && powerTypes.includes(forcedType)
       ? forcedType
-      : powerTypes[Math.floor(Math.random() * powerTypes.length)];
+      : randomPowerUpType();
     const settings = stageSettings();
     const spot = pickPowerUpSpawnSpot(settings ? settings.powerUpSpawns : DEFAULT_POWERUP_SPAWNS);
     if (!spot) return;
     game.powerUp = { type, x: spot.x, y: spot.y, w: POWERUP_SIZE, h: POWERUP_SIZE, ttl: gameSettings().timings.powerUpTtl };
+  }
+
+  function randomPowerUpType(random) {
+    return originalPowerUpRandomTable[randomByte(random) & 7];
   }
 
   function pickPowerUpSpawnSpot(spots) {
@@ -5184,8 +5189,13 @@
     },
     debugPowerUpTypePoolProbe() {
       const starFrame = FREE_SPRITE_MANIFEST.sprites.powerUp.frames.star || [];
+      const weights = Object.fromEntries(powerTypes.map((type) => [type, 0]));
+      for (const type of originalPowerUpRandomTable) weights[type] += 1;
       return {
         types: powerTypes.slice(),
+        randomTable: originalPowerUpRandomTable.slice(),
+        sampledTable: Array.from({ length: 8 }, (_, byte) => randomPowerUpType(() => byte / 256)),
+        weights,
         starFrameParts: starFrame.length,
         starPrimaryParts: starFrame.filter((part) => part.role === "primary").length
       };

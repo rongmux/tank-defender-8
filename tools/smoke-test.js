@@ -640,6 +640,9 @@ assert(powerUpSpawnRandomProbe.uniquePickCount < powerUpSpawnRandomProbe.candida
 assert(powerUpSpawnRandomProbe.immediateRepeats === false, "power-up spawning should not repeat the same location on consecutive releases");
 const powerUpTypePoolProbe = context.window.TankDefender8.debugPowerUpTypePoolProbe();
 assert(powerUpTypePoolProbe.types.join(",") === "grenade,helmet,shovel,star,timer,tank", "random power-up type pool should include the original six power-up types");
+assert(powerUpTypePoolProbe.randomTable.join(",") === "helmet,timer,shovel,star,grenade,tank,grenade,star", "random power-up lookup should match the original eight-entry table");
+assert(powerUpTypePoolProbe.sampledTable.join(",") === powerUpTypePoolProbe.randomTable.join(","), "random bytes zero through seven should pass through the production selector in original table order");
+assert(JSON.stringify(powerUpTypePoolProbe.weights) === JSON.stringify({ grenade: 2, helmet: 1, shovel: 1, star: 2, timer: 1, tank: 1 }), "random power-up weights should preserve the original star and grenade double chance");
 assert(powerUpTypePoolProbe.starFrameParts >= 8 && powerUpTypePoolProbe.starPrimaryParts >= 5, "star power-up should use a recognizable multi-part frame");
 const grenadeScoreProbe = context.window.TankDefender8.debugGrenadeScoreProbe();
 assert(grenadeScoreProbe.scoreGain === grenadeScoreProbe.pickupScore, "grenade should award only the power-up pickup score");
