@@ -40,6 +40,8 @@
   const HIDDEN_MESSAGE_DROP_MORPH_FRAMES = 28;
   const HIDDEN_MESSAGE_DROP_FALL_FRAMES = 218;
   const HIDDEN_MESSAGE_END_FRAME = 887;
+  const HIGH_SCORE_SCREEN_FRAMES = 576;
+  const HIGH_SCORE_PALETTE_COLORS = ["#111111", "#345fd1", "#6b6f78", "#f3f0d4"];
   const DEFAULT_INITIAL_LIVES = 3;
   const DEFAULT_BONUS_LIFE_SCORES = [20000];
   const DEFAULT_DEATH_POWER_LEVEL = 0;
@@ -150,7 +152,16 @@
       playerShoot: { freq: 460, duration: 0.03, gain: 0.018, wave: "square" },
       enemyShoot: { freq: 310, duration: 0.03, gain: 0.018, wave: "square" },
       stageClearA: { freq: 660, duration: 0.08, gain: 0.03, wave: "triangle" },
-      stageClearB: { freq: 880, duration: 0.1, gain: 0.025, wave: "triangle" }
+      stageClearB: { freq: 880, duration: 0.1, gain: 0.025, wave: "triangle" },
+      highScore: {
+        duration: 9.6,
+        gain: 0.022,
+        wave: "square",
+        step: 0.2,
+        noteDuration: 0.14,
+        repeat: 3,
+        notes: [659, 784, 880, 988, 880, 784, 659, 523, 587, 659, 784, 659, 587, 523, 494, 523]
+      }
     }
   };
   const FREE_SPRITE_MANIFEST = {
@@ -705,6 +716,9 @@
     freezeTimer: 0,
     shovelTimer: 0,
     highScore: DEFAULT_HIGH_SCORE,
+    runHighScoreBaseline: DEFAULT_HIGH_SCORE,
+    newHighScoreAtGameOver: false,
+    highScoreScreenElapsed: 0,
     stagePack: builtInStagePack,
     titleMenu: 0,
     titleIdleFrames: 0,
@@ -797,6 +811,7 @@
     } catch (error) {
       game.highScore = DEFAULT_HIGH_SCORE;
     }
+    game.runHighScoreBaseline = game.highScore;
   }
 
   function saveHighScore() {
@@ -1844,6 +1859,9 @@
       game.constructionUsed = false;
       game.constructionVisits = 0;
       game.hiddenInputCount = 0;
+      game.runHighScoreBaseline = game.highScore;
+      game.newHighScoreAtGameOver = false;
+      game.highScoreScreenElapsed = 0;
     }
     game.demoMode = Boolean(opts.demo);
     game.playerCount = players;
@@ -2198,6 +2216,9 @@
 
   function clearTransientBattleState() {
     game.demoMode = false;
+    game.runHighScoreBaseline = game.highScore;
+    game.newHighScoreAtGameOver = false;
+    game.highScoreScreenElapsed = 0;
     game.players = [];
     game.enemies = [];
     game.bullets = [];
@@ -2251,9 +2272,9 @@
     }
   }
 
-  function beep(freq, duration, gain, type) {
+  function beep(freq, duration, gain, type, delay) {
     if (!audioCtx) return;
-    const now = audioCtx.currentTime;
+    const now = audioCtx.currentTime + Math.max(0, Number(delay) || 0);
     const osc = audioCtx.createOscillator();
     const vol = audioCtx.createGain();
     osc.frequency.value = freq;
@@ -2269,6 +2290,17 @@
     const event = FREE_AUDIO_MANIFEST.events[name];
     if (!event) return;
     const opts = options || {};
+    if (Array.isArray(event.notes) && event.notes.length) {
+      const repeat = Math.max(1, Math.floor(Number(event.repeat) || 1));
+      const step = Math.max(0.01, Number(event.step) || 0.2);
+      for (let loop = 0; loop < repeat; loop += 1) {
+        for (let index = 0; index < event.notes.length; index += 1) {
+          const offset = (loop * event.notes.length + index) * step;
+          beep(event.notes[index], event.noteDuration || step * 0.7, event.gain, event.wave, offset);
+        }
+      }
+      return;
+    }
     const pitch = opts.brush === undefined ? 0 : Number(opts.brush) * (event.brushPitch || 0);
     beep(event.freq + pitch, event.duration, event.gain, event.wave);
   }
@@ -2414,9 +2446,11 @@
       else if (event.code === "Escape") exitEditorToTitle();
     } else if (game.screen === "gameOver") {
       if (event.code === "Enter" || event.code === "Escape") {
-        game.screen = "title";
-        resetTitleIdleTimer();
+        game.gameOverTimer = 0;
+        finishGameOverScreen();
       }
+    } else if (game.screen === "highScore" || game.screen === "hiddenMessage") {
+      return;
     } else if (game.screen === "stageClear") {
       if (event.code === "Enter" || event.code === "Space") game.transitionTimer = 1;
     } else if (event.code === "KeyP" || event.code === "Escape" || event.code === "Enter") {
@@ -2672,6 +2706,11 @@
       return;
     }
 
+    if (game.screen === "highScore") {
+      updateHighScoreScreen();
+      return;
+    }
+
     if (game.screen === "stageSelect") {
       updateStageSelectControls();
       return;
@@ -2714,8 +2753,7 @@
         game.gameOverTimer -= 1;
         return;
       }
-      game.screen = "title";
-      resetTitleIdleTimer();
+      finishGameOverScreen();
       return;
     }
 
@@ -3903,7 +3941,40 @@
     if (game.screen === "gameOver") return;
     game.screen = "gameOver";
     game.paused = false;
+    game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
     game.gameOverTimer = gameSettings().timings.gameOverSlide;
+  }
+
+  function finishGameOverScreen() {
+    if (game.newHighScoreAtGameOver) {
+      startHighScoreScreen();
+      return;
+    }
+    returnToTitleAfterGame();
+  }
+
+  function startHighScoreScreen() {
+    game.screen = "highScore";
+    game.paused = false;
+    game.highScoreScreenElapsed = 0;
+    playSound("highScore");
+  }
+
+  function updateHighScoreScreen() {
+    game.highScoreScreenElapsed += 1;
+    if (game.highScoreScreenElapsed < HIGH_SCORE_SCREEN_FRAMES) return;
+    returnToTitleAfterGame();
+  }
+
+  function returnToTitleAfterGame() {
+    game.screen = "title";
+    game.paused = false;
+    game.newHighScoreAtGameOver = false;
+    game.highScoreScreenElapsed = 0;
+    game.constructionUsed = false;
+    game.constructionVisits = 0;
+    game.hiddenInputCount = 0;
+    resetTitleIdleTimer();
   }
 
   function stageAdvanceResult(stage) {
@@ -4069,6 +4140,7 @@
 
     if (game.screen === "title") renderTitle();
     else if (game.screen === "hiddenMessage") renderHiddenMessage();
+    else if (game.screen === "highScore") renderHighScore();
     else if (game.screen === "stageSelect") renderStageSelect();
     else if (game.screen === "editor") renderEditor();
     else if (game.screen === "stageClear") renderStageClear();
@@ -4113,6 +4185,32 @@
     }
   }
 
+  function renderHighScore() {
+    const presentation = highScorePresentation(game.highScoreScreenElapsed, game.highScore);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    const palette = {
+      dark: "#1b1512",
+      primary: presentation.color,
+      highlight: "#f7f1c6"
+    };
+    drawStripedTitleText("HISCORE", 23, 50, 5, palette);
+    drawStripedTitleText(presentation.scoreText, presentation.scoreX, 100, 5, palette);
+  }
+
+  function highScorePresentation(elapsed, score) {
+    const frame = Math.max(0, Math.floor(Number(elapsed) || 0));
+    const scoreText = String(clamp(Math.floor(Number(score) || 0), 0, 9999999));
+    return {
+      frame,
+      duration: HIGH_SCORE_SCREEN_FRAMES,
+      palettePhase: frame & 3,
+      color: HIGH_SCORE_PALETTE_COLORS[frame & 3],
+      scoreText,
+      scoreX: Math.round((SCREEN_W - scoreText.length * 30) / 2)
+    };
+  }
+
   function titleScoreLayout(menuIndex) {
     const selected = menuIndex === undefined ? game.titleMenu : menuIndex;
     const items = [
@@ -4134,8 +4232,9 @@
     }));
   }
 
-  function drawStripedTitleText(text, x, y, scale) {
+  function drawStripedTitleText(text, x, y, scale, palette) {
     const size = Math.max(2, Math.floor(scale || 2));
+    const colors = palette || { dark: "#a8322c", primary: "#f05a42", highlight: "#f3f0d4" };
     let cursorX = Math.round(x);
     const top = Math.round(y);
     for (const ch of String(text).toUpperCase()) {
@@ -4145,11 +4244,11 @@
           if (glyph[row][col] !== "1") continue;
           const px = cursorX + col * size;
           const py = top + row * size;
-          ctx.fillStyle = "#a8322c";
+          ctx.fillStyle = colors.dark;
           ctx.fillRect(px, py, size, size);
-          ctx.fillStyle = "#f05a42";
+          ctx.fillStyle = colors.primary;
           ctx.fillRect(px, py, size, Math.max(1, size - 1));
-          ctx.fillStyle = "#f3f0d4";
+          ctx.fillStyle = colors.highlight;
           ctx.fillRect(px, py + Math.floor(size / 2), size, 1);
         }
       }
@@ -5118,6 +5217,88 @@
         Object.assign(game, previous);
       }
     },
+    debugHighScoreScreenProbe() {
+      const previous = { ...game };
+      try {
+        const player = (score) => ({ id: 1, score, alive: false, respawn: 0, lives: 0 });
+        game.runHighScoreBaseline = 20000;
+        game.highScore = 20000;
+        game.players = [player(20000)];
+        game.screen = "playing";
+        enterGameOver();
+        const tie = {
+          triggered: game.newHighScoreAtGameOver,
+          screen: game.screen
+        };
+
+        game.players = [player(20100)];
+        game.highScore = 20100;
+        game.screen = "playing";
+        enterGameOver();
+        const strictBeat = {
+          triggered: game.newHighScoreAtGameOver,
+          screen: game.screen
+        };
+        finishGameOverScreen();
+        const started = {
+          screen: game.screen,
+          elapsed: game.highScoreScreenElapsed
+        };
+        const paletteFrames = [0, 1, 2, 3, 4].map((frame) => highScorePresentation(frame, 20100));
+        const sevenDigit = highScorePresentation(0, 1234567);
+        game.highScoreScreenElapsed = HIGH_SCORE_SCREEN_FRAMES - 2;
+        update();
+        const beforeEnd = {
+          screen: game.screen,
+          elapsed: game.highScoreScreenElapsed
+        };
+        update();
+        const afterEnd = {
+          screen: game.screen,
+          elapsed: game.highScoreScreenElapsed,
+          triggered: game.newHighScoreAtGameOver
+        };
+
+        game.players = [player(19900)];
+        game.runHighScoreBaseline = 20000;
+        game.screen = "playing";
+        enterGameOver();
+        finishGameOverScreen();
+        const belowRecord = {
+          screen: game.screen,
+          triggered: game.newHighScoreAtGameOver
+        };
+        return {
+          duration: HIGH_SCORE_SCREEN_FRAMES,
+          tie,
+          strictBeat,
+          started,
+          paletteFrames,
+          sevenDigit,
+          beforeEnd,
+          afterEnd,
+          belowRecord
+        };
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
+    debugRenderHighScoreFrame(frame, score) {
+      const previous = {
+        screen: game.screen,
+        highScore: game.highScore,
+        highScoreScreenElapsed: game.highScoreScreenElapsed
+      };
+      try {
+        game.screen = "highScore";
+        game.highScore = Math.max(0, Math.floor(Number(score) || 0));
+        game.highScoreScreenElapsed = Math.max(0, Math.floor(Number(frame) || 0));
+        render();
+        return highScorePresentation(game.highScoreScreenElapsed, game.highScore);
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
     debugSnapshot() {
       return {
         screen: game.screen,
@@ -5138,6 +5319,9 @@
         mapDataStage: mapDataStage(game.stage),
         enemyDataStage: enemyDataStage(game.stage),
         highScore: game.highScore,
+        runHighScoreBaseline: game.runHighScoreBaseline,
+        newHighScoreAtGameOver: game.newHighScoreAtGameOver,
+        highScoreScreenElapsed: game.highScoreScreenElapsed,
         enemySpawned: game.enemySpawned,
         enemyKilled: game.enemyKilled,
         panelEnemyCounter: panelEnemyCounterRemaining(),

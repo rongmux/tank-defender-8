@@ -57,6 +57,7 @@ git diff --check
 - In-field score popups for scored enemy kills and collected power-ups. A collected item is immediately replaced by its fixed, single-color score at the item center for 49 visible frames, including frames spent paused; the item icon itself is not retained. Grenade-cleared enemies still omit enemy score popups because they do not receive kill-table score credit.
 - Player spawn/respawn animation that locks movement and firing before the initial force field starts.
 - Stage intro, original-timed per-stage result count-up table, game over, score, persistent high score with the original 20000-point floor, reserve-life display, reserve enemy counter, pause.
+- Post-game high-score celebration when either player's final score strictly exceeds the record that existed when the run began; tying the record does not trigger it. The screen keeps up to seven score digits, cycles four lettering palettes every frame for 576 fixed logic frames, and plays a 9.6-second free procedural replacement fanfare before returning to a fresh title cycle.
 - Original-style Construction mode with a 16px tank cursor, 14-pattern A/B block cycle, stage-1 replacement and normal stage-2 continuation, plus optional 8px mouse editing and save/load/export extensions.
 
 ## Stage Pack Format
