@@ -695,6 +695,15 @@ assert(activeBulletProbe.enemy.maxBullets === 1, "enemy tanks should have a one-
 assert(activeBulletProbe.enemy.counts.join(",") === "1,1", "enemy tanks should not fire a second active bullet while their first remains on screen");
 assert(activeBulletProbe.enemy.speeds[0] === schema.enemyTypes[2].bullet, "enemy active bullet probe should use the configured enemy bullet speed");
 assert(activeBulletProbe.enemy.powers[0] === schema.enemyTypes[2].wallPower, "enemy active bullet probe should use the configured enemy wall power");
+const playerFireInputProbe = context.window.TankDefender8.debugPlayerFireInputProbe();
+assert(playerFireInputProbe.firstPress === 1, "a fresh player fire press should create one bullet");
+assert(playerFireInputProbe.heldAfterBulletClears === 0, "holding fire should not automatically shoot again after the active bullet clears");
+assert(playerFireInputProbe.repressAfterRelease === 1, "releasing and pressing fire again should create a new bullet");
+assert(playerFireInputProbe.fullSlotPress === 1 && playerFireInputProbe.fullSlotPressAfterClear === 0, "a fire press made while the bullet slot is full should be discarded");
+assert(playerFireInputProbe.fullSlotRepress === 1, "a new fire press should work after a full bullet slot becomes free");
+assert(playerFireInputProbe.doubleShotCounts.join(",") === "1,2,2", "second-star tanks should fill two bullet slots with separate presses and discard a press when both are occupied");
+assert(playerFireInputProbe.spawnPress === 0 && playerFireInputProbe.spawnPressAfterUnlock === 0, "fire pressed during player spawning should be discarded instead of queued");
+assert(playerFireInputProbe.stunnedPress === 1, "a stunned player should still fire from a fresh press");
 const crossingBulletProbe = context.window.TankDefender8.debugCrossingBulletCancelProbe();
 assert(crossingBulletProbe.speed === 6, "crossing bullet probe should use high-speed bullets that can pass through each other in one frame");
 assert(crossingBulletProbe.remainingBullets === 0, "opposing high-speed bullets should cancel while their paths cross");

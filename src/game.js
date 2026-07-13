@@ -622,6 +622,7 @@
     }
   };
   const keys = new Set();
+  const pendingFirePresses = new Set();
   let audioCtx = null;
 
   const game = {
@@ -2114,6 +2115,7 @@
   }
 
   window.addEventListener("keydown", (event) => {
+    const wasHeld = keys.has(event.code);
     keys.add(event.code);
     const handledCodes = [
       "ArrowUp",
@@ -2143,8 +2145,10 @@
       "Escape"
     ];
     if (handledCodes.includes(event.code)) event.preventDefault();
-    if (event.repeat) return;
+    if (event.repeat || wasHeld) return;
     initAudio();
+
+    if (game.screen === "playing" && !game.paused) pendingFirePresses.add(event.code);
 
     if (game.screen === "title") {
       if (event.code === "Enter" || event.code === "Space") activateTitleMenu();
@@ -2545,7 +2549,11 @@
   }
 
   function updatePlayers() {
+    const firePresses = new Set(pendingFirePresses);
+    pendingFirePresses.clear();
     for (const player of game.players) {
+      const control = getPlayerControl(player.id);
+      const firePressed = hasControlKey(control.fire, firePresses);
       const movementFrame = isPlayerMovementFrame(game.tick);
       if (player.respawn > 0) {
         if (movementFrame) {
@@ -2564,7 +2572,6 @@
         }
         continue;
       }
-      const control = getPlayerControl(player.id);
       if (movementFrame) {
         if (player.stun > 0) {
           player.stun -= 1;
@@ -2579,7 +2586,7 @@
         }
       }
 
-      if (hasControlKey(control.fire)) shoot(player);
+      if (firePressed) shoot(player);
     }
   }
 
@@ -2630,9 +2637,10 @@
     return { up: "KeyW", right: "KeyD", down: "KeyS", left: "KeyA", fire: "KeyF" };
   }
 
-  function hasControlKey(binding) {
-    if (Array.isArray(binding)) return binding.some((key) => keys.has(key));
-    return keys.has(binding);
+  function hasControlKey(binding, source) {
+    const pressed = source || keys;
+    if (Array.isArray(binding)) return binding.some((key) => pressed.has(key));
+    return pressed.has(binding);
   }
 
   function updateEnemies() {
@@ -6044,6 +6052,7 @@
         tick: game.tick
       };
       const previousKeys = Array.from(keys);
+      const previousFirePresses = Array.from(pendingFirePresses);
       const player = {
         kind: "player",
         id: 1,
@@ -6084,6 +6093,8 @@
         keys.clear();
         keys.add("ArrowRight");
         keys.add("Space");
+        pendingFirePresses.clear();
+        pendingFirePresses.add("Space");
 
         const before = {
           x: player.x,
@@ -6152,6 +6163,7 @@
           bullets: game.bullets.length
         };
         game.tick = 4;
+        pendingFirePresses.add("Space");
         updatePlayers();
         const released = {
           x: player.x,
@@ -6192,6 +6204,8 @@
       } finally {
         keys.clear();
         for (const key of previousKeys) keys.add(key);
+        pendingFirePresses.clear();
+        for (const key of previousFirePresses) pendingFirePresses.add(key);
         Object.assign(game, previous);
       }
     },
@@ -6267,6 +6281,108 @@
         };
       } finally {
         game.bullets = previousBullets;
+      }
+    },
+    debugPlayerFireInputProbe() {
+      const previous = {
+        grid: game.grid,
+        base: game.base,
+        players: game.players,
+        enemies: game.enemies,
+        bullets: game.bullets,
+        explosions: game.explosions,
+        powerUp: game.powerUp,
+        playerCount: game.playerCount,
+        tick: game.tick
+      };
+      const previousKeys = Array.from(keys);
+      const previousFirePresses = Array.from(pendingFirePresses);
+      const player = createPlayer(1);
+      const bulletCount = () => game.bullets.filter((bullet) => bullet.ownerKey === "player:1").length;
+      const updateWithPress = () => {
+        pendingFirePresses.add("Space");
+        game.tick += 1;
+        updatePlayers();
+        return bulletCount();
+      };
+      const updateWithoutPress = () => {
+        game.tick += 1;
+        updatePlayers();
+        return bulletCount();
+      };
+
+      try {
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.players = [player];
+        game.enemies = [];
+        game.bullets = [];
+        game.explosions = [];
+        game.powerUp = null;
+        game.playerCount = 1;
+        game.tick = 0;
+        keys.clear();
+        keys.add("Space");
+        pendingFirePresses.clear();
+        player.x = 64;
+        player.y = 64;
+        player.spawnX = 64;
+        player.spawnY = 64;
+        player.alive = true;
+        player.respawn = 0;
+        player.spawnFlash = 0;
+        player.reload = 0;
+        player.stun = 0;
+        player.level = 0;
+
+        const firstPress = updateWithPress();
+        game.bullets = [];
+        player.reload = 0;
+        const heldAfterBulletClears = updateWithoutPress();
+        const repressAfterRelease = updateWithPress();
+
+        player.reload = 0;
+        const fullSlotPress = updateWithPress();
+        game.bullets = [];
+        player.reload = 0;
+        const fullSlotPressAfterClear = updateWithoutPress();
+        const fullSlotRepress = updateWithPress();
+
+        game.bullets = [];
+        player.level = 2;
+        player.reload = 0;
+        const doubleShotCounts = [updateWithPress(), updateWithPress(), updateWithPress()];
+
+        game.bullets = [];
+        player.level = 0;
+        player.reload = 0;
+        player.spawnFlash = 2;
+        const spawnPress = updateWithPress();
+        player.spawnFlash = 0;
+        const spawnPressAfterUnlock = updateWithoutPress();
+
+        player.stun = 10;
+        player.reload = 0;
+        const stunnedPress = updateWithPress();
+
+        return {
+          firstPress,
+          heldAfterBulletClears,
+          repressAfterRelease,
+          fullSlotPress,
+          fullSlotPressAfterClear,
+          fullSlotRepress,
+          doubleShotCounts,
+          spawnPress,
+          spawnPressAfterUnlock,
+          stunnedPress
+        };
+      } finally {
+        keys.clear();
+        for (const key of previousKeys) keys.add(key);
+        pendingFirePresses.clear();
+        for (const key of previousFirePresses) pendingFirePresses.add(key);
+        Object.assign(game, previous);
       }
     },
     debugCrossingBulletCancelProbe() {
