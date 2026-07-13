@@ -77,7 +77,7 @@
       "stageClear": 420,
       "playerRespawn": 24,
       "playerInvulnerability": 3,
-      "enemySpawnFlash": 56,
+      "enemySpawnFlash": 28,
       "enemyInitialReload": 0,
       "enemySpawnRetry": 25,
       "powerUpTtl": 0

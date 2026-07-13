@@ -20,6 +20,9 @@
   const FIELD_H = GRID * TILE;
   const PANEL_X = FIELD_X + FIELD_W;
   const STEP_MS = 1000 / 60;
+  const SPAWN_ANIMATION_FRAMES = 28;
+  const SPAWN_ANIMATION_CYCLE = 14;
+  const SPAWN_PHASE_SIZES = [6, 8, 11, 14];
   const DEFAULT_ENEMY_TOTAL = 20;
   const DEFAULT_ORIGINAL_STAGE_COUNT = 35;
   const DEFAULT_HIGH_SCORE = 20000;
@@ -45,9 +48,9 @@
     stageClear: 420,
     gameOverSlide: 96,
     playerRespawn: 24,
-    playerSpawnFlash: 28,
+    playerSpawnFlash: SPAWN_ANIMATION_FRAMES,
     playerInvulnerability: 3,
-    enemySpawnFlash: 56,
+    enemySpawnFlash: SPAWN_ANIMATION_FRAMES,
     enemyInitialReload: 0,
     enemySpawnRetry: 25,
     powerUpTtl: 0
@@ -2615,10 +2618,8 @@
 
       if (player.reload > 0) player.reload -= 1;
       if (player.spawnFlash > 0) {
-        if (movementFrame) {
-          player.spawnFlash -= 1;
-          if (player.spawnFlash === 0) player.invuln = gameSettings().timings.playerInvulnerability;
-        }
+        player.spawnFlash -= 1;
+        if (player.spawnFlash === 0) player.invuln = gameSettings().timings.playerInvulnerability;
         continue;
       }
       if (movementFrame) {
@@ -4122,13 +4123,30 @@
     return (Math.max(0, Math.floor(Number(tick) || 0)) & 2) === 0 ? "#78d9ff" : "#ffffff";
   }
 
-  function drawSpawn(enemy) {
-    const x = Math.round(FIELD_X + enemy.x + 7);
-    const y = Math.round(FIELD_Y + enemy.y + 7);
-    const s = 14 - Math.floor(enemy.spawnFlash / 5) % 5;
-    const scale = s / 14;
-    const color = enemy.spawnFlash % 10 < 5 ? "#f3f0d4" : "#e0b84b";
-    drawScaledManifestSprite("spawn", "box", x - s / 2, y - s / 2, scale, { primary: color });
+  function drawSpawn(tank) {
+    const x = Math.round(FIELD_X + tank.x + 7);
+    const y = Math.round(FIELD_Y + tank.y + 7);
+    const total = tank.kind === "player"
+      ? gameSettings().timings.playerSpawnFlash
+      : gameSettings().timings.enemySpawnFlash;
+    const presentation = spawnAnimationPresentation(tank.spawnFlash, total);
+    const scale = presentation.size / 14;
+    drawScaledManifestSprite(
+      "spawn",
+      "box",
+      x - presentation.size / 2,
+      y - presentation.size / 2,
+      scale,
+      { primary: "#f3f0d4" }
+    );
+  }
+
+  function spawnAnimationPresentation(remaining, total) {
+    const duration = Math.max(1, Math.floor(Number(total) || SPAWN_ANIMATION_FRAMES));
+    const elapsed = Math.max(0, duration - Math.max(1, Math.floor(Number(remaining) || 1)));
+    const low = elapsed % SPAWN_ANIMATION_CYCLE;
+    const phase = Math.floor(Math.abs(low - 7) / 2);
+    return { elapsed, low, phase, size: SPAWN_PHASE_SIZES[phase] };
   }
 
   function drawBullet(bullet) {
@@ -5110,6 +5128,73 @@
         };
       } finally {
         Object.assign(game, previous);
+      }
+    },
+    debugSpawnAnimationCadenceProbe() {
+      const playerDuration = gameSettings().timings.playerSpawnFlash;
+      const enemyDuration = gameSettings().timings.enemySpawnFlash;
+      const frames = Array.from({ length: enemyDuration }, (_, elapsed) =>
+        spawnAnimationPresentation(enemyDuration - elapsed, enemyDuration)
+      );
+      const previous = {
+        players: game.players,
+        enemies: game.enemies,
+        grid: game.grid,
+        tick: game.tick,
+        freezeTimer: game.freezeTimer,
+        firePresses: Array.from(pendingFirePresses)
+      };
+      try {
+        game.grid = makeGrid();
+        game.freezeTimer = 0;
+        game.enemies = [];
+        const player = {
+          kind: "player",
+          id: 1,
+          alive: true,
+          respawn: 0,
+          spawnFlash: playerDuration,
+          invuln: 0,
+          reload: 0
+        };
+        game.players = [player];
+        game.tick = 2;
+        const beforeSkippedCadenceFrame = player.spawnFlash;
+        updatePlayers();
+        const afterSkippedCadenceFrame = player.spawnFlash;
+        let playerDisplayFrames = 1;
+        while (player.spawnFlash > 0 && playerDisplayFrames < 1000) {
+          game.tick += 1;
+          updatePlayers();
+          playerDisplayFrames += 1;
+        }
+
+        const enemy = { kind: "enemy", id: 100, alive: true, spawnFlash: enemyDuration };
+        game.enemies = [enemy];
+        let enemyDisplayFrames = 0;
+        while (enemy.spawnFlash > 0 && enemyDisplayFrames < 1000) {
+          updateEnemies();
+          enemyDisplayFrames += 1;
+        }
+        return {
+          playerDuration,
+          enemyDuration,
+          playerDisplayFrames,
+          enemyDisplayFrames,
+          beforeSkippedCadenceFrame,
+          afterSkippedCadenceFrame,
+          lows: frames.map((frame) => frame.low),
+          phases: frames.map((frame) => frame.phase),
+          sizes: frames.map((frame) => frame.size)
+        };
+      } finally {
+        game.players = previous.players;
+        game.enemies = previous.enemies;
+        game.grid = previous.grid;
+        game.tick = previous.tick;
+        game.freezeTimer = previous.freezeTimer;
+        pendingFirePresses.clear();
+        for (const code of previous.firePresses) pendingFirePresses.add(code);
       }
     },
     debugTimerRuleProbe() {

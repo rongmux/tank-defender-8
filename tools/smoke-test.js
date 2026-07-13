@@ -424,7 +424,7 @@ assert(schema.gameSettings.timings.gameOverSlide === 96, "schema should expose g
 assert(schema.gameSettings.timings.playerRespawn === 24, "schema should expose the original player death-state ticks");
 assert(schema.gameSettings.timings.playerSpawnFlash === 28, "schema should expose the original player spawn-state ticks");
 assert(schema.gameSettings.timings.playerInvulnerability === 3, "schema should expose post-spawn shield 64-frame units");
-assert(schema.gameSettings.timings.enemySpawnFlash === 56, "schema should expose enemy spawn flash timing");
+assert(schema.gameSettings.timings.enemySpawnFlash === 28, "schema should expose the original twenty-eight-frame enemy spawn state");
 assert(schema.gameSettings.timings.enemyInitialReload === 0, "new enemies should not receive an artificial firing cooldown");
 assert(schema.gameSettings.timings.enemySpawnRetry === 25, "schema should expose enemy spawn retry timing");
 assert(schema.gameSettings.timings.powerUpTtl === 0, "schema should expose non-expiring default power-up TTL");
@@ -520,6 +520,13 @@ assert(onePlayerSpawnTimeline.frames.join(",") === "1,188,375", `one-player stag
 assert(twoPlayerSpawnTimeline.frames.join(",") === "1,168,335", `two-player stage 1 spawn frames: ${twoPlayerSpawnTimeline.frames.join(",")}`);
 assert(onePlayerSpawnTimeline.slots.join(",") === "5,4,3" && twoPlayerSpawnTimeline.slots.join(",") === "7,6,5", "enemy object slots should allocate from the highest available slot downward");
 assert(onePlayerSpawnTimeline.spawnIndices.join(",") === "1,2,0", "the first three enemies should spawn center, right, then left");
+const spawnAnimationProbe = context.window.TankDefender8.debugSpawnAnimationCadenceProbe();
+assert(spawnAnimationProbe.playerDuration === 28 && spawnAnimationProbe.enemyDuration === 28, "players and enemies should share the original two fourteen-frame spawn states");
+assert(spawnAnimationProbe.playerDisplayFrames === 28 && spawnAnimationProbe.enemyDisplayFrames === 28, "spawn locks should last exactly twenty-eight display frames");
+assert(spawnAnimationProbe.beforeSkippedCadenceFrame === 28 && spawnAnimationProbe.afterSkippedCadenceFrame === 27, "player spawn state should advance even on a skipped movement-cadence frame");
+assert(spawnAnimationProbe.lows.join(",") === "0,1,2,3,4,5,6,7,8,9,10,11,12,13,0,1,2,3,4,5,6,7,8,9,10,11,12,13", "spawn animation should run the original low-nibble sequence twice");
+assert(spawnAnimationProbe.phases.join(",") === "3,3,2,2,1,1,0,0,0,1,1,2,2,3,3,3,2,2,1,1,0,0,0,1,1,2,2,3", "spawn animation should shrink and expand symmetrically in each fourteen-frame state");
+assert(spawnAnimationProbe.sizes.join(",") === "14,14,11,11,8,8,6,6,6,8,8,11,11,14,14,14,11,11,8,8,6,6,6,8,8,11,11,14", "replacement spawn art should hold the matching four discrete footprints");
 assert(schema.gameSettings.playerUpgradeRules[0].maxBullets === 1, "schema game settings should expose player upgrade rules");
 assert(schema.gameSettings.playerUpgradeRules.every((rule) => rule.reload === 1), "player firing should be limited by active bullet slots rather than long cooldowns");
 assert(schema.gameSettings.timerFreezesEnemyTime === true, "schema should expose timer freeze rule");
@@ -745,7 +752,7 @@ assert(deathRespawnProbe.afterHit.level === schema.gameSettings.deathPowerLevel 
 assert(deathRespawnProbe.deathDisplayFrames === 32, "24 death-state ticks should resolve after 32 display frames from tick zero");
 assert(deathRespawnProbe.deathResolved.alive === true && deathRespawnProbe.deathResolved.lives === 1 && deathRespawnProbe.deathResolved.spawnFlash === 28, "death completion should consume one life and immediately begin spawning");
 assert(deathRespawnProbe.deathResolved.invuln === 0, "spawn animation should begin before the post-spawn shield timer");
-assert(deathRespawnProbe.spawnDisplayFrames === 37 && deathRespawnProbe.totalDisplayFrames === 69, "28 spawn-state ticks should complete 69 display frames after the hit");
+assert(deathRespawnProbe.spawnDisplayFrames === 28 && deathRespawnProbe.totalDisplayFrames === 60, "the twenty-eight-frame spawn state should complete sixty display frames after the hit");
 assert(deathRespawnProbe.activated.spawnFlash === 0 && deathRespawnProbe.activated.invuln === schema.gameSettings.timings.playerInvulnerability, "post-spawn protection should start when the spawn animation completes");
 assert(deathRespawnProbe.lastLife.displayFrames === 32 && deathRespawnProbe.lastLife.alive === false && deathRespawnProbe.lastLife.lives === 0, "the final life should be consumed only after the death animation completes");
 const activeBulletProbe = context.window.TankDefender8.debugActiveBulletLimitProbe();
