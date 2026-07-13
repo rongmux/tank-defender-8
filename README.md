@@ -27,7 +27,7 @@ git diff --check
 
 ## Controls
 
-- Title: arrow keys or `WASD` select `1 PLAYER`, `2 PLAYERS`, or `CONSTRUCTION`; `Enter`/`Space` activates the selected option. `1`, `2`, and `C`/`E` remain direct shortcuts.
+- Title: arrow keys or `WASD` select `1 PLAYER`, `2 PLAYERS`, or `CONSTRUCTION`; `Enter`/`Space` activates the selected option. `1`, `2`, and `C`/`E` remain direct shortcuts. Leaving the untouched title idle for 2560 frames starts the attract demo; `Enter`, `Space`, or `Escape` returns from the demo.
 - Stage select: `Space`/`Z` acts as NES A and advances through stages 1-35; `F`/`X` acts as NES B and moves backward. Holding A or B repeats every eight frames. `Enter` starts the selected stage and `Escape` returns to the title.
 - Player 1: arrow keys move, `Space` fires. In one-player mode, `WASD` also moves Player 1.
 - Player 2: in two-player mode, `WASD` moves and `F` fires.
@@ -43,6 +43,7 @@ git diff --check
 - Tanks collide with solid terrain, the base, enemy tanks, and teammate tanks.
 - Base defense and base destruction game over; shielding brick or steel absorbs bullets before the base can be hit.
 - One-player and two-player modes.
+- Original-style attract demo after 2560 idle title frames (about 42.7 seconds at the fixed 60 Hz logic rate). It directly starts two AI-controlled players, displays stage 30 with the current free replacement stage data, keeps the four-active-enemy limit, prioritizes available power-ups, and applies combat effects without adding scores or result-table kills. Visiting Construction disables later automatic demos until reset.
 - Four enemy tank classes with different speed, reload, armor, and score.
 - Per-stage enemy sequences with configurable spawn points and active-enemy limits.
 - Player star upgrades: faster bullets at level 1, two bullets at level 2, and steel-destroying plus double brick-wall damage at level 3.

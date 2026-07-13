@@ -28,6 +28,9 @@
   const DEFAULT_HIGH_SCORE = 20000;
   const DEFAULT_MAX_ACTIVE_ENEMIES = 4;
   const DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER = 6;
+  const TITLE_DEMO_IDLE_FRAMES = 0x0a * 0x100;
+  const DEMO_DISPLAY_STAGE = 30;
+  const DEMO_MAX_ACTIVE_ENEMIES = 4;
   const DEFAULT_INITIAL_LIVES = 3;
   const DEFAULT_BONUS_LIFE_SCORES = [20000];
   const DEFAULT_DEATH_POWER_LEVEL = 0;
@@ -665,6 +668,9 @@
     highScore: DEFAULT_HIGH_SCORE,
     stagePack: builtInStagePack,
     titleMenu: 0,
+    titleIdleFrames: 0,
+    demoMode: false,
+    constructionUsed: false,
     stageSelectPlayers: 1,
     stageSelectHoldTimer: 0,
     stageClearElapsed: 0,
@@ -1569,6 +1575,7 @@
   }
 
   function maxActiveEnemies(stage, players) {
+    if (game.demoMode) return DEMO_MAX_ACTIVE_ENEMIES;
     const pack = game.stagePack || builtInStagePack;
     const stageIndex = mapDataStage(stage || game.stage) - 1;
     const playerCount = Math.max(1, Math.floor(Number(players) || game.playerCount || 1));
@@ -1790,7 +1797,8 @@
 
   function startGame(players, options) {
     const opts = options || {};
-    initAudio();
+    if (!opts.demo) initAudio();
+    game.demoMode = Boolean(opts.demo);
     game.playerCount = players;
     game.paused = false;
     game.stage = opts.stage || game.stage || 1;
@@ -1806,8 +1814,40 @@
     startStage(game.stage);
   }
 
+  function startTitleDemo() {
+    startGame(2, { stage: DEMO_DISPLAY_STAGE, useConstruction: false, demo: true });
+    game.screen = "playing";
+    game.transitionTimer = 0;
+    game.titleIdleFrames = 0;
+  }
+
+  function endTitleDemo() {
+    game.demoMode = false;
+    game.stage = 1;
+    game.screen = "title";
+    game.paused = false;
+    game.titleIdleFrames = 0;
+    clearTransientBattleState();
+  }
+
+  function updateTitleIdle() {
+    if (game.constructionUsed || game.demoMode) return;
+    game.titleIdleFrames += 1;
+    if (game.titleIdleFrames >= TITLE_DEMO_IDLE_FRAMES) startTitleDemo();
+  }
+
+  function resetTitleIdleTimer() {
+    game.titleIdleFrames = 0;
+  }
+
+  function resetTitleIdleHighByte() {
+    game.titleIdleFrames &= 0xff;
+  }
+
   function beginStageSelect(players) {
     initAudio();
+    game.demoMode = false;
+    resetTitleIdleTimer();
     game.stageSelectPlayers = players === 2 ? 2 : 1;
     game.stage = 1;
     game.screen = "stageSelect";
@@ -1887,19 +1927,24 @@
 
   function exitEditorToTitle() {
     if (game.editorGrid) game.constructedGrid = cloneGrid(game.editorGrid);
+    game.constructionUsed = true;
     game.customGrid = null;
     game.constructionStageActive = false;
     game.stage = 1;
     game.screen = "title";
     game.paused = false;
+    game.demoMode = false;
+    resetTitleIdleTimer();
     game.editorMoveHoldTimer = 0;
   }
 
   function moveTitleMenu(delta) {
+    resetTitleIdleHighByte();
     game.titleMenu = (game.titleMenu + delta + TITLE_MENU_ITEMS.length) % TITLE_MENU_ITEMS.length;
   }
 
   function setTitleMenu(index) {
+    resetTitleIdleHighByte();
     game.titleMenu = clamp(Math.floor(Number(index) || 0), 0, TITLE_MENU_ITEMS.length - 1);
   }
 
@@ -2015,6 +2060,9 @@
     game.stagePack = pack;
     game.stage = 1;
     game.titleMenu = 0;
+    game.titleIdleFrames = 0;
+    game.demoMode = false;
+    game.constructionUsed = false;
     game.customGrid = null;
     game.constructedGrid = null;
     game.constructionStageActive = false;
@@ -2035,6 +2083,7 @@
   }
 
   function clearTransientBattleState() {
+    game.demoMode = false;
     game.players = [];
     game.enemies = [];
     game.bullets = [];
@@ -2192,6 +2241,12 @@
     if (event.repeat || wasHeld) return;
     initAudio();
 
+    if (game.demoMode && (event.code === "Enter" || event.code === "Space" || event.code === "Escape")) {
+      keys.delete(event.code);
+      endTitleDemo();
+      return;
+    }
+
     if (game.screen === "playing" && !game.paused) pendingFirePresses.add(event.code);
 
     if (game.screen === "title") {
@@ -2239,7 +2294,10 @@
       else if (/^Digit[0-5]$/.test(event.code)) selectEditorBrush(Number(event.code.slice(-1)));
       else if (event.code === "Escape") exitEditorToTitle();
     } else if (game.screen === "gameOver") {
-      if (event.code === "Enter" || event.code === "Escape") game.screen = "title";
+      if (event.code === "Enter" || event.code === "Escape") {
+        game.screen = "title";
+        resetTitleIdleTimer();
+      }
     } else if (game.screen === "stageClear") {
       if (event.code === "Enter" || event.code === "Space") game.transitionTimer = 1;
     } else if (event.code === "KeyP" || event.code === "Escape" || event.code === "Enter") {
@@ -2485,6 +2543,11 @@
   function update() {
     if (game.editorMessageTimer > 0) game.editorMessageTimer -= 1;
 
+    if (game.screen === "title") {
+      updateTitleIdle();
+      return;
+    }
+
     if (game.screen === "stageSelect") {
       updateStageSelectControls();
       return;
@@ -2510,6 +2573,7 @@
         const advance = stageAdvanceResult(game.stage);
         if (!game.customGrid && advance.stops) {
           game.screen = "title";
+          resetTitleIdleTimer();
           return;
         }
         if (!game.customGrid) game.stage = advance.stage;
@@ -2527,6 +2591,7 @@
         return;
       }
       game.screen = "title";
+      resetTitleIdleTimer();
       return;
     }
 
@@ -2601,6 +2666,10 @@
   }
 
   function updatePlayers() {
+    if (game.demoMode) {
+      updateDemoPlayers();
+      return;
+    }
     const firePresses = new Set(pendingFirePresses);
     pendingFirePresses.clear();
     for (const player of game.players) {
@@ -2638,6 +2707,75 @@
 
       if (firePressed) shoot(player);
     }
+  }
+
+  function updateDemoPlayers() {
+    pendingFirePresses.clear();
+    for (const player of game.players) {
+      const movementFrame = isPlayerMovementFrame(game.tick);
+      if (player.respawn > 0) {
+        if (movementFrame) {
+          player.respawn -= 1;
+          if (player.respawn === 0) finishPlayerDeath(player);
+        }
+        continue;
+      }
+      if (!player.alive) continue;
+      if (player.reload > 0) player.reload -= 1;
+      if (player.spawnFlash > 0) {
+        player.spawnFlash -= 1;
+        if (player.spawnFlash === 0) player.invuln = gameSettings().timings.playerInvulnerability;
+        continue;
+      }
+
+      const control = demoControlForPlayer(player);
+      if (movementFrame) {
+        if (player.stun > 0) {
+          player.stun -= 1;
+          updatePlayerMovement(player, -1, true);
+        } else {
+          updatePlayerMovement(player, control.direction);
+        }
+      }
+      if (control.fire) shoot(player);
+    }
+  }
+
+  function demoControlForPlayer(player) {
+    const target = demoTargetForPlayer(player);
+    if (!target) return { direction: -1, fire: false, targetKind: "none", targetId: null };
+    const frameHigh = (Math.max(0, Math.floor(game.tick)) >>> 8) & 0xff;
+    const horizontalFirst = ((((player.id - 1) << 1) ^ frameHigh) & 2) !== 0;
+    return {
+      direction: directionTowardTarget(player, target, horizontalFirst),
+      fire: player.y < FIELD_H - 32,
+      targetKind: target.kind,
+      targetId: target.id === undefined ? null : target.id
+    };
+  }
+
+  function demoTargetForPlayer(player) {
+    if (game.powerUp) {
+      return {
+        kind: "powerUp",
+        id: game.powerUp.type,
+        x: game.powerUp.x + game.powerUp.w / 2,
+        y: game.powerUp.y + game.powerUp.h / 2
+      };
+    }
+    const slotOrder = player.id === 2 ? [3, 5, 4] : [2, 4, 3];
+    for (const slotIndex of slotOrder) {
+      const enemy = game.enemies.find((candidate) => candidate.alive && candidate.spawnFlash <= 0 && candidate.slotIndex === slotIndex);
+      if (enemy) {
+        return {
+          kind: "enemy",
+          id: enemy.id,
+          x: enemy.x + enemy.w / 2,
+          y: enemy.y + enemy.h / 2
+        };
+      }
+    }
+    return null;
   }
 
   function isPlayerMovementFrame(tick) {
@@ -2907,7 +3045,7 @@
     bullet.remove = true;
     addRuleExplosion("baseDestroy", game.base.x + 8, game.base.y + 8);
     playSound("baseHit");
-    enterGameOver();
+    if (!game.demoMode) enterGameOver();
     return true;
   }
 
@@ -3093,8 +3231,8 @@
   function destroyEnemy(enemy, ownerId, options) {
     if (!enemy.alive) return;
     const opts = options || {};
-    const awardScore = opts.awardScore !== false;
-    const trackKill = opts.trackKill !== false;
+    const awardScore = !game.demoMode && opts.awardScore !== false;
+    const trackKill = !game.demoMode && opts.trackKill !== false;
     enemy.alive = false;
     game.enemyKilled += 1;
     const player = game.players.find((candidate) => candidate.id === ownerId);
@@ -3282,19 +3420,21 @@
       popupY: power.y + power.h / 2
     });
     game.powerUp = null;
-    playSound("powerUp");
+    if (!game.demoMode) playSound("powerUp");
   }
 
   function applyPowerUp(player, type, options) {
     const opts = options || {};
     const pickupScore = gameSettings().powerUpRules.pickupScore;
-    addPlayerScore(player, pickupScore);
-    addScorePopup(
-      pickupScore,
-      Number.isFinite(opts.popupX) ? opts.popupX : player.x + player.w / 2,
-      Number.isFinite(opts.popupY) ? opts.popupY : player.y + player.h / 2,
-      { style: "powerUp", ttl: 49 }
-    );
+    if (!game.demoMode) {
+      addPlayerScore(player, pickupScore);
+      addScorePopup(
+        pickupScore,
+        Number.isFinite(opts.popupX) ? opts.popupX : player.x + player.w / 2,
+        Number.isFinite(opts.popupY) ? opts.popupY : player.y + player.h / 2,
+        { style: "powerUp", ttl: 49 }
+      );
+    }
     if (type === "grenade") {
       let destroyedAny = false;
       for (const enemy of game.enemies) {
@@ -3594,6 +3734,11 @@
 
   function checkEndState() {
     game.enemies = game.enemies.filter((enemy) => enemy.alive);
+    if (game.demoMode) {
+      const demoPlayersDone = game.players.every((player) => !player.alive && player.respawn <= 0 && player.lives <= 0);
+      if (!game.base.alive || demoPlayersDone || stageEnemiesCleared()) endTitleDemo();
+      return;
+    }
     if (!game.base.alive) {
       enterGameOver();
       return;
@@ -3627,6 +3772,10 @@
   }
 
   function enterGameOver() {
+    if (game.demoMode) {
+      endTitleDemo();
+      return;
+    }
     if (game.screen === "gameOver") return;
     game.screen = "gameOver";
     game.paused = false;
@@ -4645,12 +4794,125 @@
     debugTitleScoreLayoutProbe(menuIndex) {
       return titleScoreLayout(menuIndex).map((item) => ({ ...item }));
     },
+    debugTitleDemoLifecycleProbe() {
+      const previous = { ...game };
+      try {
+        game.screen = "title";
+        game.stage = 1;
+        game.titleIdleFrames = 0;
+        game.demoMode = false;
+        game.constructionUsed = false;
+        clearTransientBattleState();
+        game.screen = "title";
+
+        game.titleIdleFrames = 0x05ab;
+        resetTitleIdleHighByte();
+        const selectionResetFrames = game.titleIdleFrames;
+        game.titleIdleFrames = 0;
+
+        for (let frame = 0; frame < TITLE_DEMO_IDLE_FRAMES - 1; frame += 1) update();
+        const beforeTimeout = {
+          screen: game.screen,
+          idleFrames: game.titleIdleFrames,
+          demoMode: game.demoMode
+        };
+        update();
+        const afterTimeout = {
+          screen: game.screen,
+          stage: game.stage,
+          playerCount: game.playerCount,
+          playerIds: game.players.map((player) => player.id),
+          maxActiveEnemies: maxActiveEnemies(),
+          transitionTimer: game.transitionTimer,
+          demoMode: game.demoMode
+        };
+
+        const player1 = game.players[0];
+        const player2 = game.players[1];
+        player1.spawnFlash = 0;
+        player2.spawnFlash = 0;
+        player1.x = 80;
+        player1.y = 160;
+        player2.x = 112;
+        player2.y = 160;
+        game.enemies = [
+          { id: 202, slotIndex: 2, alive: true, spawnFlash: 0, x: 32, y: 32, w: 14, h: 14 },
+          { id: 203, slotIndex: 3, alive: true, spawnFlash: 0, x: 160, y: 32, w: 14, h: 14 },
+          { id: 204, slotIndex: 4, alive: true, spawnFlash: 0, x: 96, y: 48, w: 14, h: 14 }
+        ];
+        game.powerUp = null;
+        const enemyTargets = [demoControlForPlayer(player1), demoControlForPlayer(player2)];
+        game.powerUp = { type: "star", x: 64, y: 64, w: POWERUP_SIZE, h: POWERUP_SIZE, ttl: 0 };
+        const powerUpTarget = demoControlForPlayer(player1);
+
+        player1.score = 0;
+        player1.stagePoints = 0;
+        player1.level = 0;
+        player1.stageKills = Array(enemyTypeDefinitions().length).fill(0);
+        game.scorePopups = [];
+        applyPowerUp(player1, "star");
+        const scoredEnemy = {
+          id: 299,
+          alive: true,
+          score: 400,
+          typeIndex: 3,
+          x: 80,
+          y: 80,
+          w: 14,
+          h: 14
+        };
+        destroyEnemy(scoredEnemy, player1.id);
+        const scoreIsolation = {
+          score: player1.score,
+          stagePoints: player1.stagePoints,
+          stageKills: player1.stageKills.slice(),
+          level: player1.level,
+          scorePopupCount: game.scorePopups.length
+        };
+
+        endTitleDemo();
+        const afterExit = {
+          screen: game.screen,
+          stage: game.stage,
+          demoMode: game.demoMode,
+          playerCount: game.players.length,
+          idleFrames: game.titleIdleFrames
+        };
+
+        game.constructionUsed = true;
+        game.titleIdleFrames = TITLE_DEMO_IDLE_FRAMES - 1;
+        update();
+        const afterConstruction = {
+          screen: game.screen,
+          idleFrames: game.titleIdleFrames,
+          demoMode: game.demoMode
+        };
+        return {
+          timeoutFrames: TITLE_DEMO_IDLE_FRAMES,
+          displayStage: DEMO_DISPLAY_STAGE,
+          selectionResetFrames,
+          beforeTimeout,
+          afterTimeout,
+          enemyTargets,
+          powerUpTarget,
+          scoreIsolation,
+          afterExit,
+          afterConstruction
+        };
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
     debugSnapshot() {
       return {
         screen: game.screen,
         paused: game.paused,
         titleMenu: game.titleMenu,
         titleMenuAction: (TITLE_MENU_ITEMS[game.titleMenu] || TITLE_MENU_ITEMS[0]).action,
+        titleIdleFrames: game.titleIdleFrames,
+        titleDemoIdleFrames: TITLE_DEMO_IDLE_FRAMES,
+        demoMode: game.demoMode,
+        constructionUsed: game.constructionUsed,
         stage: game.stage,
         stageSelectPlayers: game.stageSelectPlayers,
         stageSelectLimit: stageSelectLimit(),
