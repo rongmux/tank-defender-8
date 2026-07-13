@@ -42,6 +42,9 @@
   const HIDDEN_MESSAGE_END_FRAME = 887;
   const FULL_GAME_OVER_SCREEN_FRAMES = 180;
   const HIGH_SCORE_SCREEN_FRAMES = 576;
+  const GAME_OVER_TEXT = "GAME OVER";
+  const GAME_OVER_TEXT_START_Y = SCREEN_H;
+  const GAME_OVER_TEXT_TARGET_Y = 0x71;
   const HIGH_SCORE_PALETTE_COLORS = ["#111111", "#345fd1", "#6b6f78", "#f3f0d4"];
   const STAGE_RESULT_TIMING = {
     initialWait: 30,
@@ -71,7 +74,8 @@
     stageIntro: 86,
     stageClearDelay: 128,
     stageClear: 0,
-    gameOverSlide: 96,
+    gameOverSlide: 127,
+    gameOverHold: 129,
     playerRespawn: 24,
     playerSpawnFlash: SPAWN_ANIMATION_FRAMES,
     playerInvulnerability: 3,
@@ -2864,13 +2868,12 @@
     }
 
     if (game.screen === "gameOver") {
-      updateExplosions();
-      updateScorePopups();
-      if (game.gameOverTimer > 0) {
-        game.gameOverTimer -= 1;
+      if (game.gameOverTimer <= 0) {
+        finishGameOverScreen();
         return;
       }
-      finishGameOverScreen();
+      updateBattle({ playerInputEnabled: false, checkEnding: false });
+      game.gameOverTimer -= 1;
       return;
     }
 
@@ -2887,10 +2890,22 @@
       return;
     }
 
+    updateBattle();
+  }
+
+  /**
+   * Advances one active battle frame. Post-game field frames use the same
+   * simulation with controller input cleared and end detection disabled.
+   * @param {{playerInputEnabled?: boolean, checkEnding?: boolean}} [options]
+   */
+  function updateBattle(options) {
+    const opts = options || {};
+    const playerInputEnabled = opts.playerInputEnabled !== false;
+    const checkEnding = opts.checkEnding !== false;
     game.tick += 1;
     updateFreezeTimer();
 
-    updatePlayers();
+    updatePlayers(playerInputEnabled);
     updateEnemies();
     updateShovelTimer();
     updatePlayerInvulnerabilityTimers();
@@ -2899,7 +2914,7 @@
     updateScorePopups();
     updatePowerUp();
     if (shouldSpawnEnemies()) spawnEnemies();
-    checkEndState();
+    if (checkEnding) checkEndState();
   }
 
   function isGlobalTimerTick(tick) {
@@ -2946,16 +2961,17 @@
     return "empty";
   }
 
-  function updatePlayers() {
+  function updatePlayers(inputEnabled) {
     if (game.demoMode) {
       updateDemoPlayers();
       return;
     }
-    const firePresses = new Set(pendingFirePresses);
+    const controlsEnabled = inputEnabled !== false;
+    const firePresses = controlsEnabled ? new Set(pendingFirePresses) : new Set();
     pendingFirePresses.clear();
     for (const player of game.players) {
       const control = getPlayerControl(player.id);
-      const firePressed = hasControlKey(control.fire, firePresses);
+      const firePressed = controlsEnabled && hasControlKey(control.fire, firePresses);
       const movementFrame = isPlayerMovementFrame(game.tick);
       if (player.respawn > 0) {
         if (movementFrame) {
@@ -2978,10 +2994,10 @@
           updatePlayerMovement(player, -1, true);
         } else {
           let desiredDir = -1;
-          if (hasControlKey(control.up)) desiredDir = UP;
-          else if (hasControlKey(control.right)) desiredDir = RIGHT;
-          else if (hasControlKey(control.down)) desiredDir = DOWN;
-          else if (hasControlKey(control.left)) desiredDir = LEFT;
+          if (controlsEnabled && hasControlKey(control.up)) desiredDir = UP;
+          else if (controlsEnabled && hasControlKey(control.right)) desiredDir = RIGHT;
+          else if (controlsEnabled && hasControlKey(control.down)) desiredDir = DOWN;
+          else if (controlsEnabled && hasControlKey(control.left)) desiredDir = LEFT;
           updatePlayerMovement(player, desiredDir);
         }
       }
@@ -4093,7 +4109,12 @@
     game.screen = "gameOver";
     game.paused = false;
     game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
-    game.gameOverTimer = gameSettings().timings.gameOverSlide;
+    game.gameOverTimer = gameOverFieldDuration();
+  }
+
+  function gameOverFieldDuration() {
+    const timings = gameSettings().timings;
+    return timings.gameOverSlide + timings.gameOverHold;
   }
 
   function finishGameOverScreen() {
@@ -5116,19 +5137,19 @@
 
   function renderGameOver() {
     const y = gameOverBannerY(game.gameOverTimer);
-    ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
-    ctx.fillRect(FIELD_X + 34, y, 140, 44);
-    drawText("GAME OVER", FIELD_X + 58, y + 18, 1, "#f05a42");
+    const width = GAME_OVER_TEXT.length * 6 - 1;
+    drawText(GAME_OVER_TEXT, Math.round((SCREEN_W - width) / 2), y, 1, "#f05a42");
   }
 
   function gameOverBannerY(timer) {
-    const targetY = 88;
-    const startY = SCREEN_H;
-    const duration = Math.max(0, gameSettings().timings.gameOverSlide);
-    if (duration <= 0) return targetY;
+    const timings = gameSettings().timings;
+    const slideFrames = Math.max(0, timings.gameOverSlide);
+    if (slideFrames <= 0) return GAME_OVER_TEXT_TARGET_Y;
+    const duration = gameOverFieldDuration();
     const remaining = clamp(Math.floor(Number(timer) || 0), 0, duration);
-    const progress = 1 - remaining / duration;
-    return Math.round(startY + (targetY - startY) * progress);
+    const elapsed = duration - remaining;
+    const progress = clamp(elapsed / slideFrames, 0, 1);
+    return Math.round(GAME_OVER_TEXT_START_Y + (GAME_OVER_TEXT_TARGET_Y - GAME_OVER_TEXT_START_Y) * progress);
   }
 
   function renderPause() {
@@ -9446,8 +9467,17 @@
         paused: game.paused,
         gameOverTimer: game.gameOverTimer
       };
-      const duration = gameSettings().timings.gameOverSlide;
-      const timers = [duration, Math.floor(duration / 2), 0];
+      const timings = gameSettings().timings;
+      const slideDuration = timings.gameOverSlide;
+      const holdDuration = timings.gameOverHold;
+      const duration = gameOverFieldDuration();
+      const timers = [
+        { phase: "start", timer: duration },
+        { phase: "firstMove", timer: Math.max(0, duration - 1) },
+        { phase: "slideEnd", timer: holdDuration },
+        { phase: "firstHold", timer: Math.max(0, holdDuration - 1) },
+        { phase: "end", timer: 0 }
+      ];
       try {
         game.screen = "playing";
         game.paused = true;
@@ -9458,14 +9488,95 @@
           paused: game.paused,
           timer: game.gameOverTimer
         };
-        const frames = timers.map((timer) => {
+        const frames = timers.map(({ phase, timer }) => {
           game.gameOverTimer = timer;
           renderGameOver();
-          return { timer, y: gameOverBannerY(timer) };
+          return { phase, timer, y: gameOverBannerY(timer) };
         });
-        return { duration, entry, frames };
+        return { slideDuration, holdDuration, duration, entry, frames };
       } finally {
         Object.assign(game, previous);
+      }
+    },
+    debugGameOverBattleProbe() {
+      const previous = { ...game };
+      const previousFirePresses = new Set(pendingFirePresses);
+      const rightWasHeld = keys.has("ArrowRight");
+      const player = createPlayer(1);
+      const enemy = { alive: true, spawnFlash: 2 };
+      const bullet = {
+        x: 96,
+        y: 96,
+        w: gameSettings().projectileRules.bulletSize,
+        h: gameSettings().projectileRules.bulletSize,
+        dir: RIGHT,
+        speed: 1,
+        power: 1,
+        ownerKind: "enemy",
+        ownerId: 100,
+        ownerKey: "enemy:100",
+        remove: false
+      };
+      try {
+        player.x = 48;
+        player.y = 48;
+        player.spawnFlash = 0;
+        player.invuln = 0;
+        player.reload = 2;
+        game.screen = "gameOver";
+        game.demoMode = false;
+        game.paused = false;
+        game.tick = 0;
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: false };
+        game.players = [player];
+        game.enemies = [enemy];
+        game.bullets = [bullet];
+        game.explosions = [{ x: 80, y: 80, ttl: 2, max: 2, rule: "enemyHit" }];
+        game.scorePopups = [{ value: 100, x: 80, y: 80, ttl: 2, max: 2, style: "float" }];
+        game.powerUp = { type: "helmet", x: 8, y: 8, w: 16, h: 16, ttl: 2 };
+        game.enemySpawned = enemyTotal();
+        game.nextSpawn = 0;
+        game.gameOverTimer = 2;
+        game.freezeTimer = 0;
+        game.shovelTimer = 0;
+        keys.add("ArrowRight");
+        pendingFirePresses.add("Space");
+
+        const before = {
+          tick: game.tick,
+          timer: game.gameOverTimer,
+          playerX: player.x,
+          playerReload: player.reload,
+          enemySpawnFlash: enemy.spawnFlash,
+          bulletX: bullet.x,
+          explosionTtl: game.explosions[0].ttl,
+          popupTtl: game.scorePopups[0].ttl,
+          powerUpTtl: game.powerUp.ttl,
+          bulletCount: game.bullets.length
+        };
+        update();
+        return {
+          before,
+          after: {
+            screen: game.screen,
+            tick: game.tick,
+            timer: game.gameOverTimer,
+            playerX: player.x,
+            playerReload: player.reload,
+            enemySpawnFlash: enemy.spawnFlash,
+            bulletX: bullet.x,
+            explosionTtl: game.explosions[0] ? game.explosions[0].ttl : 0,
+            popupTtl: game.scorePopups[0] ? game.scorePopups[0].ttl : 0,
+            powerUpTtl: game.powerUp ? game.powerUp.ttl : 0,
+            bulletCount: game.bullets.length
+          }
+        };
+      } finally {
+        Object.assign(game, previous);
+        pendingFirePresses.clear();
+        for (const code of previousFirePresses) pendingFirePresses.add(code);
+        if (!rightWasHeld) keys.delete("ArrowRight");
       }
     },
     debugGameOverReturnProbe() {
@@ -9473,10 +9584,20 @@
       try {
         game.screen = "gameOver";
         game.paused = false;
+        game.tick = 0;
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: false };
+        game.players = [];
+        game.enemies = [];
+        game.bullets = [];
+        game.explosions = [];
+        game.scorePopups = [];
+        game.powerUp = null;
+        game.enemySpawned = enemyTotal();
+        game.nextSpawn = 0;
         game.gameOverTimer = 1;
         game.fullGameOverElapsed = 0;
         game.newHighScoreAtGameOver = false;
-        game.explosions = [];
         update();
         const finalFrame = {
           screen: game.screen,
