@@ -3215,7 +3215,7 @@
       if (destroyedAny) playSound("enemyDestroy");
     } else if (type === "helmet") {
       player.invuln = Math.max(player.invuln, gameSettings().powerUpDurations.helmet);
-    } else if (type === "shovel") {
+    } else if (type === "shovel" && game.base.alive) {
       buildBaseWall(game.grid, STEEL);
       game.shovelTimer = gameSettings().powerUpDurations.shovel;
     } else if (type === "star") {
@@ -4625,6 +4625,43 @@
         expired: tileTypeName(shovelWallTypeForTimer(0, 0)),
         cells
       };
+    },
+    debugShovelDestroyedBaseProbe() {
+      const previous = {
+        grid: game.grid,
+        base: game.base,
+        shovelTimer: game.shovelTimer,
+        scorePopups: game.scorePopups,
+        highScore: game.highScore
+      };
+      const player = {
+        id: 1,
+        x: 64,
+        y: 64,
+        w: 14,
+        h: 14,
+        score: 0,
+        nextBonusLifeIndex: 0,
+        lives: 2
+      };
+      const wallTypes = () => [[5, 11], [6, 11], [7, 11], [5, 12], [7, 12]].map(([c, r]) => tileTypeName(game.grid[r][c].type));
+      try {
+        game.grid = makeGrid();
+        buildBaseWall(game.grid, BRICK);
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: false };
+        game.shovelTimer = 0;
+        game.scorePopups = [];
+        applyPowerUp(player, "shovel");
+        return {
+          score: player.score,
+          pickupScore: gameSettings().powerUpRules.pickupScore,
+          shovelTimer: game.shovelTimer,
+          wallTypes: wallTypes(),
+          popupCount: game.scorePopups.length
+        };
+      } finally {
+        Object.assign(game, previous);
+      }
     },
     debugCarrierReleaseProbe(hpBeforeHit) {
       const hp = Math.max(1, Math.floor(Number(hpBeforeHit) || 1));

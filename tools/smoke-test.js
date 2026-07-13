@@ -549,6 +549,10 @@ assert(shovelProbe.flashA !== shovelProbe.flashB, "shovel flash window should al
 assert(shovelProbe.expired === "brick", "shovel protection should expire back to brick");
 assert(shovelProbe.cells.filter((cell) => cell.type === "steel" && cell.mask === 15).length === 5, "shovel should protect the five wall cells around the base");
 assert(shovelProbe.cells.some((cell) => cell.c === 6 && cell.r === 12 && cell.type === "empty"), "shovel should keep the eagle cell open");
+const destroyedBaseShovelProbe = context.window.TankDefender8.debugShovelDestroyedBaseProbe();
+assert(destroyedBaseShovelProbe.score === destroyedBaseShovelProbe.pickupScore && destroyedBaseShovelProbe.popupCount === 1, "shovel collected after base destruction should still award and display pickup score");
+assert(destroyedBaseShovelProbe.shovelTimer === 0, "shovel collected after base destruction should not start the protection timer");
+assert(destroyedBaseShovelProbe.wallTypes.every((type) => type === "brick"), "shovel collected after base destruction should not replace the base wall with steel");
 const carrierProbe = context.window.TankDefender8.debugCarrierReleaseProbe(4);
 assert(carrierProbe.rule === "hit", "carrier power-up should release on hit by default");
 assert(carrierProbe.releaseOnThisHit === true, "multi-hit carriers should release power-ups on the first hit by default");
