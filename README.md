@@ -143,9 +143,9 @@ const pack = {
     explosionRules: {
       bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: "#f7f1c6" },
       baseDestroy: { ttl: 80, color: "#f05a42", coreColor: "#f7f1c6" },
-      brickHit: { ttl: 12, color: "#d08b52", coreColor: "#f7f1c6" },
-      steelHit: { ttl: 12, color: "#dbe0ef", coreColor: "#f7f1c6" },
-      steelBlocked: { ttl: 8, color: "#dbe0ef", coreColor: "#f7f1c6" },
+      brickHit: { ttl: 9, color: "#d08b52", coreColor: "#f7f1c6" },
+      steelHit: { ttl: 9, color: "#dbe0ef", coreColor: "#f7f1c6" },
+      steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: "#f7f1c6" },
       enemyHit: { ttl: 14, color: "#ffffff", coreColor: "#f7f1c6" },
       enemyDestroy: { ttl: 34, color: "#f0b546", coreColor: "#f7f1c6" },
       playerStun: { ttl: 12, color: "#f7f1c6", coreColor: "#f7f1c6" },
@@ -290,7 +290,7 @@ Packs may set `gameSettings.projectileRules`. `bulletSize` is the bullet collisi
 
 Packs may set `gameSettings.friendlyFire`. By default, player bullets can hit the other player in two-player mode when both center-coordinate differences are below `10` pixels, loading a `200`-tick stun counter rather than destroying them. The counter decrements only on active player movement frames, lasting about `267` display frames with the original cadence. A stunned player cannot move or turn, but can still fire in the current direction; another friendly hit does not refresh an active stun. A teammate protected by a helmet or post-spawn force field absorbs the friendly bullet without being stunned or showing a hit explosion. Set `enabled` to `false` to disable this collision effect, or adjust `stunFrames` from `0` through `3600` movement ticks.
 
-Packs may set `gameSettings.explosionRules` for collision and destruction feedback. Each rule has `ttl`, `color`, and `coreColor`; `ttl` is a 60 FPS frame count from `1` through `3600`, and colors must be `#rrggbb`. Rule names are `bulletCancel`, `baseDestroy`, `brickHit`, `steelHit`, `steelBlocked`, `enemyHit`, `enemyDestroy`, `playerStun`, and `playerDestroy`. `bulletCancel` remains accepted for stage-pack compatibility, although original-style bullet-to-bullet cancellation now removes both bullets without rendering an explosion.
+Packs may set `gameSettings.explosionRules` for collision and destruction feedback. Each rule has `ttl`, `color`, and `coreColor`; `ttl` is a 60 FPS frame count from `1` through `3600`, and colors must be `#rrggbb`. Rule names are `bulletCancel`, `baseDestroy`, `brickHit`, `steelHit`, `steelBlocked`, `enemyHit`, `enemyDestroy`, `playerStun`, and `playerDestroy`. The three wall/border impact rules default to nine visible frames split into three animation phases of three frames each, and pause freezes the current phase. `bulletCancel` remains accepted for stage-pack compatibility, although original-style bullet-to-bullet cancellation now removes both bullets without rendering an explosion.
 
 Packs may set `gameSettings.stageAdvance`. `loopAfterFinalStage` controls whether clearing the final cycle stage wraps back to stage 1. For original-style 35-stage packs, the default cycle continues through stage 70 before wrapping; stages 36 through 70 reuse map data from stages 1 through 35 while using stage 35 enemy pattern data. When stage 70 wraps to stage 1, player score, power level, lives, and cumulative kill totals are preserved; per-stage points, per-stage kill rows, active bullets, active power-ups, and pending power-up spawn memory are reset for the new stage. `extendedLoopEndStage` defaults to `70`, and `extendedLoopEnemyStage` defaults to `35`. Set `loopAfterFinalStage` to `false` for a finite pack that returns to the title screen after the final result screen.
 

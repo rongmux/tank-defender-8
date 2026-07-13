@@ -122,17 +122,17 @@
         "coreColor": "#f7f1c6"
       },
       "brickHit": {
-        "ttl": 12,
+        "ttl": 9,
         "color": "#d08b52",
         "coreColor": "#f7f1c6"
       },
       "steelHit": {
-        "ttl": 12,
+        "ttl": 9,
         "color": "#dbe0ef",
         "coreColor": "#f7f1c6"
       },
       "steelBlocked": {
-        "ttl": 8,
+        "ttl": 9,
         "color": "#dbe0ef",
         "coreColor": "#f7f1c6"
       },

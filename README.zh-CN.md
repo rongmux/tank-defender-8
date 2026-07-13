@@ -143,9 +143,9 @@ const pack = {
     explosionRules: {
       bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: "#f7f1c6" },
       baseDestroy: { ttl: 80, color: "#f05a42", coreColor: "#f7f1c6" },
-      brickHit: { ttl: 12, color: "#d08b52", coreColor: "#f7f1c6" },
-      steelHit: { ttl: 12, color: "#dbe0ef", coreColor: "#f7f1c6" },
-      steelBlocked: { ttl: 8, color: "#dbe0ef", coreColor: "#f7f1c6" },
+      brickHit: { ttl: 9, color: "#d08b52", coreColor: "#f7f1c6" },
+      steelHit: { ttl: 9, color: "#dbe0ef", coreColor: "#f7f1c6" },
+      steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: "#f7f1c6" },
       enemyHit: { ttl: 14, color: "#ffffff", coreColor: "#f7f1c6" },
       enemyDestroy: { ttl: 34, color: "#f0b546", coreColor: "#f7f1c6" },
       playerStun: { ttl: 12, color: "#f7f1c6", coreColor: "#f7f1c6" },
@@ -290,7 +290,7 @@ if (result.ok) window.TankDefender8.loadStagePack(pack);
 
 关卡包可以设置 `gameSettings.friendlyFire`。默认情况下，双人模式中的玩家子弹在两个中心坐标差都小于 `10` 像素时可以命中另一名玩家，并加载一个 `200` tick 的眩晕计数器，而不是将其摧毁。该计数器只在活动玩家移动帧递减，使用原版节奏时约持续 `267` 个显示帧。眩晕玩家不能移动或转向，但仍可朝当前方向射击；再次被友军命中不会刷新已有眩晕。受到头盔或出生后力场保护的队友会吸收友军子弹，不会眩晕，也不会显示命中特效。将 `enabled` 设为 `false` 可禁用该碰撞效果，也可以把 `stunFrames` 调整为 `0` 至 `3600` 个移动 tick。
 
-关卡包可以设置 `gameSettings.explosionRules`，用于碰撞和摧毁反馈。每条规则包含 `ttl`、`color` 和 `coreColor`；`ttl` 是 `1` 至 `3600` 的 60 FPS 帧数，颜色必须采用 `#rrggbb` 格式。规则名称为 `bulletCancel`、`baseDestroy`、`brickHit`、`steelHit`、`steelBlocked`、`enemyHit`、`enemyDestroy`、`playerStun` 和 `playerDestroy`。为兼容旧关卡包，仍接受 `bulletCancel`；但原版风格的子弹互撞现在会直接移除双方，不再渲染爆炸。
+关卡包可以设置 `gameSettings.explosionRules`，用于碰撞和摧毁反馈。每条规则包含 `ttl`、`color` 和 `coreColor`；`ttl` 是 `1` 至 `3600` 的 60 FPS 帧数，颜色必须采用 `#rrggbb` 格式。规则名称为 `bulletCancel`、`baseDestroy`、`brickHit`、`steelHit`、`steelBlocked`、`enemyHit`、`enemyDestroy`、`playerStun` 和 `playerDestroy`。三种墙体/边界撞击规则默认显示 9 帧，并分成三个各持续 3 帧的动画阶段；暂停会冻结当前阶段。为兼容旧关卡包，仍接受 `bulletCancel`；但原版风格的子弹互撞现在会直接移除双方，不再渲染爆炸。
 
 关卡包可以设置 `gameSettings.stageAdvance`。`loopAfterFinalStage` 控制完成循环中的最后一关后是否回到第 1 关。对于原版风格 35 关关卡包，默认循环会持续至第 70 关再返回；第 36 至 70 关复用第 1 至 35 关的地图数据，同时使用第 35 关的敌人模式数据。第 70 关返回第 1 关时，会保留玩家分数、强化等级、生命和累计击杀总数；新关卡会重置单关分数、单关击杀行、活动子弹、活动道具和待处理的道具生成记忆。`extendedLoopEndStage` 默认为 `70`，`extendedLoopEnemyStage` 默认为 `35`。对于在最终结算画面后返回标题画面的有限关卡包，请将 `loopAfterFinalStage` 设为 `false`。
 

@@ -77,12 +77,14 @@
   };
   const CARRIER_FLASH_COLOR = "#dd3d33";
   const DEFAULT_EXPLOSION_CORE_COLOR = "#f7f1c6";
+  const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked"]);
+  const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
   const DEFAULT_EXPLOSION_RULES = {
     bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     baseDestroy: { ttl: 80, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    brickHit: { ttl: 12, color: "#d08b52", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    steelHit: { ttl: 12, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    steelBlocked: { ttl: 8, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
+    brickHit: { ttl: 9, color: "#d08b52", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
+    steelHit: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
+    steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     enemyHit: { ttl: 14, color: "#ffffff", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     enemyDestroy: { ttl: 34, color: "#f0b546", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     playerStun: { ttl: 12, color: "#f7f1c6", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
@@ -3538,7 +3540,14 @@
 
   function addRuleExplosion(ruleName, x, y) {
     const rule = explosionRule(ruleName);
-    addExplosion(x, y, rule.ttl, rule.color, rule.coreColor);
+    addExplosion(
+      x,
+      y,
+      rule.ttl,
+      rule.color,
+      rule.coreColor,
+      BULLET_IMPACT_EXPLOSION_RULES.has(ruleName) ? "bulletImpact" : "default"
+    );
   }
 
   function explosionRule(ruleName) {
@@ -3546,8 +3555,16 @@
     return rules[ruleName] || DEFAULT_EXPLOSION_RULES[ruleName] || DEFAULT_EXPLOSION_RULES.enemyHit;
   }
 
-  function addExplosion(x, y, ttl, color, coreColor) {
-    game.explosions.push({ x, y, ttl, max: ttl, color, coreColor: coreColor || DEFAULT_EXPLOSION_CORE_COLOR });
+  function addExplosion(x, y, ttl, color, coreColor, style) {
+    game.explosions.push({
+      x,
+      y,
+      ttl,
+      max: ttl,
+      color,
+      coreColor: coreColor || DEFAULT_EXPLOSION_CORE_COLOR,
+      style: style || "default"
+    });
   }
 
   function updateExplosions() {
@@ -4197,15 +4214,31 @@
 
   function renderExplosions() {
     for (const explosion of game.explosions) {
-      const age = 1 - explosion.ttl / explosion.max;
-      const size = 3 + Math.floor(age * 13);
-      const x = Math.round(FIELD_X + explosion.x - size / 2);
-      const y = Math.round(FIELD_Y + explosion.y - size / 2);
-      drawScaledManifestSprite("explosion", "burst", x, y, size / 16, {
+      const presentation = explosionPresentation(explosion);
+      drawScaledManifestSprite("explosion", "burst", presentation.x, presentation.y, presentation.size / 16, {
         primary: explosion.color,
         core: explosion.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
       });
     }
+  }
+
+  function explosionPresentation(explosion) {
+    const elapsed = Math.max(0, explosion.max - explosion.ttl);
+    let phase = null;
+    let size;
+    if (explosion.style === "bulletImpact") {
+      phase = Math.min(2, Math.floor((elapsed * 3) / Math.max(1, explosion.max)));
+      size = BULLET_IMPACT_PHASE_SIZES[phase];
+    } else {
+      const age = 1 - explosion.ttl / explosion.max;
+      size = 3 + Math.floor(age * 13);
+    }
+    return {
+      phase,
+      size,
+      x: Math.round(FIELD_X + explosion.x - size / 2),
+      y: Math.round(FIELD_Y + explosion.y - size / 2)
+    };
   }
 
   function renderScorePopups() {
@@ -7694,6 +7727,44 @@
     debugExplosionRuleProbe(ruleName) {
       const key = String(ruleName || "enemyDestroy");
       return { key, ...explosionRule(key) };
+    },
+    debugBulletImpactExplosionProbe() {
+      const previous = {
+        explosions: game.explosions,
+        scorePopups: game.scorePopups,
+        screen: game.screen,
+        paused: game.paused,
+        editorMessageTimer: game.editorMessageTimer
+      };
+      try {
+        game.explosions = [];
+        game.scorePopups = [];
+        game.screen = "playing";
+        game.paused = true;
+        addRuleExplosion("brickHit", 64, 64);
+        const beforePause = game.explosions[0].ttl;
+        update();
+        const afterPause = game.explosions[0].ttl;
+        const frames = [];
+        while (game.explosions.length) {
+          const explosion = game.explosions[0];
+          const presentation = explosionPresentation(explosion);
+          frames.push({ ttl: explosion.ttl, phase: presentation.phase, size: presentation.size });
+          updateExplosions();
+        }
+        return {
+          ruleTtls: Object.fromEntries(Array.from(BULLET_IMPACT_EXPLOSION_RULES, (key) => [key, explosionRule(key).ttl])),
+          beforePause,
+          afterPause,
+          frames
+        };
+      } finally {
+        game.explosions = previous.explosions;
+        game.scorePopups = previous.scorePopups;
+        game.screen = previous.screen;
+        game.paused = previous.paused;
+        game.editorMessageTimer = previous.editorMessageTimer;
+      }
     },
     debugEnemyPanelCounterProbe(spawned, killed, total) {
       const spawnedCount = Math.max(0, Math.floor(Number(spawned) || 0));
