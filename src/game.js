@@ -2839,7 +2839,7 @@
         clamp(bullet.x + bullet.w / 2, 0, FIELD_W),
         clamp(bullet.y + bullet.h / 2, 0, FIELD_H)
       );
-      const sound = fieldBoundarySoundName(bullet);
+      const sound = wallHitSoundName(bullet, true);
       if (sound) playSound(sound);
       return;
     }
@@ -2849,8 +2849,9 @@
     hitTank(bullet);
   }
 
-  function fieldBoundarySoundName(bullet) {
-    return bullet.ownerKind === "player" ? "steelHit" : null;
+  function wallHitSoundName(bullet, wasSteel) {
+    if (bullet.ownerKind !== "player") return null;
+    return wasSteel ? "steelHit" : "brickHit";
   }
 
   function hitBase(bullet) {
@@ -2885,7 +2886,8 @@
           addRuleExplosion("steelBlocked", bullet.x, bullet.y);
         }
         bullet.remove = true;
-        playSound(wasSteel ? "steelHit" : "brickHit");
+        const sound = wallHitSoundName(bullet, wasSteel);
+        if (sound) playSound(sound);
         return true;
       }
     }
@@ -6920,13 +6922,21 @@
             removed: bullet.remove,
             explosionCount: game.explosions.length,
             explosion: explosion ? { x: explosion.x, y: explosion.y, ttl: explosion.ttl } : null,
-            sound: fieldBoundarySoundName(bullet)
+            sound: wallHitSoundName(bullet, true)
           };
         }));
       } finally {
         game.bullets = previousBullets;
         game.explosions = previousExplosions;
       }
+    },
+    debugTerrainHitSoundProbe() {
+      const owners = ["player", "enemy"];
+      return owners.flatMap((ownerKind) => [false, true].map((wasSteel) => ({
+        ownerKind,
+        terrain: wasSteel ? "steel" : "brick",
+        sound: wallHitSoundName({ ownerKind }, wasSteel)
+      })));
     },
     debugFriendlyFireProbe() {
       return {

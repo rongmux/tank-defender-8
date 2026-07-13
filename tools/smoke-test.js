@@ -759,6 +759,10 @@ assert(fieldBoundaryBulletProbe.filter((entry) => entry.edge === "left").every((
 assert(fieldBoundaryBulletProbe.filter((entry) => entry.edge === "right").every((entry) => entry.explosion.x === 208), "right-boundary explosions should be clamped to the battlefield edge");
 assert(fieldBoundaryBulletProbe.filter((entry) => entry.edge === "top").every((entry) => entry.explosion.y === 0), "top-boundary explosions should be clamped to the battlefield edge");
 assert(fieldBoundaryBulletProbe.filter((entry) => entry.edge === "bottom").every((entry) => entry.explosion.y === 208), "bottom-boundary explosions should be clamped to the battlefield edge");
+const terrainHitSoundProbe = context.window.TankDefender8.debugTerrainHitSoundProbe();
+assert(terrainHitSoundProbe.find((entry) => entry.ownerKind === "player" && entry.terrain === "brick").sound === "brickHit", "player bullets hitting brick should use the brick-hit sound");
+assert(terrainHitSoundProbe.find((entry) => entry.ownerKind === "player" && entry.terrain === "steel").sound === "steelHit", "player bullets hitting steel should use the wall-hit sound");
+assert(terrainHitSoundProbe.filter((entry) => entry.ownerKind === "enemy").every((entry) => entry.sound === null), "enemy bullets hitting brick or steel should not trigger player wall-hit sounds");
 const lifeAwardProbe = context.window.TankDefender8.debugLifeAwardProbe();
 assert(lifeAwardProbe.threshold === 20000, "default extra-life threshold should be 20000 points");
 assert(lifeAwardProbe.beforeCrossing.lives === 1, "score below the threshold should not award an extra life");
