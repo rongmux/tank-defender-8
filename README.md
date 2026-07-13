@@ -34,6 +34,7 @@ git diff --check
 - Pause: `Enter` as the keyboard Start button, `P`, or toolbar `PAUSE`.
 - Reset: toolbar `RESET` returns to the title screen, restores the built-in original-style stage pack, and clears temporary gameplay/editor-test state.
 - Construction: arrow keys or `WASD` move the tank cursor one 16x16 cell. `Space`/`Z` acts as NES A and advances through the original 14 block patterns; `F`/`X` acts as NES B and moves backward. The first A/B press after moving places the current pattern without changing it. `Enter` acts as Start, returns to the title, and installs the edited map as stage 1; clearing it continues to the normal stage 2. `TEST` or `E` starts an immediate one-stage test.
+- Hidden message: enter and leave Construction seven times. On the title, hold Player 1 Down and press Player 2 A (`F`) eight times, then hold Player 1 Right and press Player 2 B (`G`) twelve times; press `Enter` as Start. The direction inputs are reserved for the code while the seventh-exit state is active.
 - Editor extensions: number keys `0` through `5` select an 8px mouse brush for empty, brick, steel, water, forest, or ice. Click paints one 8px subtile, Shift-click paints the full 16x16 tile, and Alt-click cycles terrain. `SAVE` stores the map, `LOAD` restores it, `CLEAR` restores the original blank construction field and base wall, `EXPORT` copies/logs JSON, and `IMPORT` loads a stage pack. `Ctrl+S` and `Ctrl+X` mirror Save and Export.
 
 ## Implemented Mechanics
@@ -43,7 +44,8 @@ git diff --check
 - Tanks collide with solid terrain, the base, enemy tanks, and teammate tanks.
 - Base defense and base destruction game over; shielding brick or steel absorbs bullets before the base can be hit.
 - One-player and two-player modes.
-- Original-style attract demo after 2560 idle title frames (about 42.7 seconds at the fixed 60 Hz logic rate). It directly starts two AI-controlled players, displays stage 30 with the current free replacement stage data, keeps the four-active-enemy limit, prioritizes available power-ups, and applies combat effects without adding scores or result-table kills. Visiting Construction disables later automatic demos until reset.
+- Original-style attract demo after 2560 idle title frames (about 42.7 seconds at the fixed 60 Hz logic rate). It directly starts two AI-controlled players, displays stage 30 with the current free replacement stage data, keeps the four-active-enemy limit, prioritizes available power-ups, and applies combat effects without adding scores or result-table kills. Visiting Construction disables automatic demos until a normal game starts or the game is reset.
+- Original hidden-message sequence using both controllers. After a 128-frame black pause, its four text rows and five trailing dots appear at 64-frame intervals. A free procedural green replacement object then morphs for 28 frames, falls from Y 30 through Y 248, and activates the currently selected title option on frame 887 (normally Construction for the documented sequence).
 - Four enemy tank classes with different speed, reload, armor, and score.
 - Per-stage enemy sequences with configurable spawn points and active-enemy limits.
 - Player star upgrades: faster bullets at level 1, two bullets at level 2, and steel-destroying plus double brick-wall damage at level 3.
@@ -66,7 +68,7 @@ For automated checks, `window.TankDefender8.debugSnapshot()` returns the current
 
 `data/free-audio-manifest.json` defines the current free/custom procedural sound set. The runtime exposes the same data through `window.TankDefender8.audioManifest()`, and the smoke test checks that the file and runtime copy stay in sync.
 
-`data/free-sprite-manifest.json` defines the current free/custom procedural rectangle sprites for tanks, result-table mini tanks, bullets, explosions, panel enemy counters, spawn/shield outlines, power-ups, terrain, wall subtiles, and the base. The runtime exposes the same data through `window.TankDefender8.spriteManifest()`, and those renderers draw from that manifest.
+`data/free-sprite-manifest.json` defines the current free/custom procedural rectangle sprites for tanks, result-table mini tanks, bullets, explosions, panel enemy counters, spawn/shield outlines, the hidden-message drop, power-ups, terrain, wall subtiles, and the base. The runtime exposes the same data through `window.TankDefender8.spriteManifest()`, and those renderers draw from that manifest.
 
 To regenerate the free/custom 35-stage replacement pack:
 

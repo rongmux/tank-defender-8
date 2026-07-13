@@ -145,6 +145,36 @@
         ]
       }
     },
+    "hiddenDrop": {
+      "size": 16,
+      "frames": {
+        "morph0": [
+          { "role": "shadow", "rect": [4, 2, 8, 5] },
+          { "role": "primary", "rect": [3, 3, 10, 3] },
+          { "role": "light", "rect": [6, 3, 3, 1] }
+        ],
+        "morph1": [
+          { "role": "shadow", "rect": [5, 1, 6, 7] },
+          { "role": "primary", "rect": [4, 3, 8, 4] },
+          { "role": "light", "rect": [6, 2, 3, 2] }
+        ],
+        "morph2": [
+          { "role": "shadow", "rect": [6, 0, 4, 8] },
+          { "role": "primary", "rect": [5, 3, 6, 4] },
+          { "role": "light", "rect": [7, 1, 2, 3] }
+        ],
+        "morph3": [
+          { "role": "shadow", "rect": [7, 0, 3, 8] },
+          { "role": "primary", "rect": [6, 4, 5, 3] },
+          { "role": "light", "rect": [8, 1, 1, 4] }
+        ],
+        "fall": [
+          { "role": "shadow", "rect": [5, 1, 7, 7] },
+          { "role": "primary", "rect": [4, 3, 9, 4] },
+          { "role": "light", "rect": [7, 2, 3, 2] }
+        ]
+      }
+    },
     "explosion": {
       "size": 16,
       "frames": {

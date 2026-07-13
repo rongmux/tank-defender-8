@@ -31,6 +31,15 @@
   const TITLE_DEMO_IDLE_FRAMES = 0x0a * 0x100;
   const DEMO_DISPLAY_STAGE = 30;
   const DEMO_MAX_ACTIVE_ENEMIES = 4;
+  const HIDDEN_MESSAGE_REQUIRED_VISITS = 7;
+  const HIDDEN_MESSAGE_A_PRESSES = 8;
+  const HIDDEN_MESSAGE_B_PRESSES = 12;
+  const HIDDEN_MESSAGE_TEXT_START = 128;
+  const HIDDEN_MESSAGE_STEP_FRAMES = 64;
+  const HIDDEN_MESSAGE_DROP_START = 640;
+  const HIDDEN_MESSAGE_DROP_MORPH_FRAMES = 28;
+  const HIDDEN_MESSAGE_DROP_FALL_FRAMES = 218;
+  const HIDDEN_MESSAGE_END_FRAME = 887;
   const DEFAULT_INITIAL_LIVES = 3;
   const DEFAULT_BONUS_LIFE_SCORES = [20000];
   const DEFAULT_DEATH_POWER_LEVEL = 0;
@@ -288,6 +297,36 @@
           box: [
             { op: "stroke", role: "primary", rect: [0, 0, 14, 14] },
             { op: "stroke", role: "primary", rect: [3, 3, 8, 8] }
+          ]
+        }
+      },
+      hiddenDrop: {
+        size: 16,
+        frames: {
+          morph0: [
+            { role: "shadow", rect: [4, 2, 8, 5] },
+            { role: "primary", rect: [3, 3, 10, 3] },
+            { role: "light", rect: [6, 3, 3, 1] }
+          ],
+          morph1: [
+            { role: "shadow", rect: [5, 1, 6, 7] },
+            { role: "primary", rect: [4, 3, 8, 4] },
+            { role: "light", rect: [6, 2, 3, 2] }
+          ],
+          morph2: [
+            { role: "shadow", rect: [6, 0, 4, 8] },
+            { role: "primary", rect: [5, 3, 6, 4] },
+            { role: "light", rect: [7, 1, 2, 3] }
+          ],
+          morph3: [
+            { role: "shadow", rect: [7, 0, 3, 8] },
+            { role: "primary", rect: [6, 4, 5, 3] },
+            { role: "light", rect: [8, 1, 1, 4] }
+          ],
+          fall: [
+            { role: "shadow", rect: [5, 1, 7, 7] },
+            { role: "primary", rect: [4, 3, 9, 4] },
+            { role: "light", rect: [7, 2, 3, 2] }
           ]
         }
       },
@@ -671,6 +710,9 @@
     titleIdleFrames: 0,
     demoMode: false,
     constructionUsed: false,
+    constructionVisits: 0,
+    hiddenInputCount: 0,
+    hiddenMessageElapsed: 0,
     stageSelectPlayers: 1,
     stageSelectHoldTimer: 0,
     stageClearElapsed: 0,
@@ -1797,7 +1839,12 @@
 
   function startGame(players, options) {
     const opts = options || {};
-    if (!opts.demo) initAudio();
+    if (!opts.demo) {
+      initAudio();
+      game.constructionUsed = false;
+      game.constructionVisits = 0;
+      game.hiddenInputCount = 0;
+    }
     game.demoMode = Boolean(opts.demo);
     game.playerCount = players;
     game.paused = false;
@@ -1842,6 +1889,68 @@
 
   function resetTitleIdleHighByte() {
     game.titleIdleFrames &= 0xff;
+  }
+
+  function hiddenMessageTriggerReady() {
+    return game.constructionVisits === HIDDEN_MESSAGE_REQUIRED_VISITS &&
+      game.hiddenInputCount === 0x74;
+  }
+
+  function reserveTitleDirectionForHiddenInput(code) {
+    return game.screen === "title" &&
+      game.constructionVisits === HIDDEN_MESSAGE_REQUIRED_VISITS &&
+      (code === "ArrowDown" || code === "ArrowRight");
+  }
+
+  function recordHiddenTitleInput(code) {
+    if (game.screen !== "title" || game.constructionVisits !== HIDDEN_MESSAGE_REQUIRED_VISITS) return false;
+    if (code === "KeyF" && keys.has("ArrowDown")) {
+      game.hiddenInputCount = (game.hiddenInputCount + 0x10) & 0xff;
+      return true;
+    }
+    if (code === "KeyG" && keys.has("ArrowRight")) {
+      game.hiddenInputCount = (game.hiddenInputCount - 1) & 0xff;
+      return true;
+    }
+    return false;
+  }
+
+  function startHiddenMessage() {
+    game.screen = "hiddenMessage";
+    game.paused = false;
+    game.demoMode = false;
+    game.hiddenMessageElapsed = 0;
+    pendingFirePresses.clear();
+  }
+
+  function updateHiddenMessage() {
+    game.hiddenMessageElapsed += 1;
+    if (game.hiddenMessageElapsed < HIDDEN_MESSAGE_END_FRAME) return;
+    game.hiddenInputCount = 0;
+    activateTitleMenu();
+  }
+
+  function hiddenMessagePresentation(elapsed) {
+    const frame = Math.max(0, Math.floor(Number(elapsed) || 0));
+    const lines = ["THIS PROGRAM WAS", "WRITTEN BY", "OPEN-REACH", "WHO LOVES NORIKO"];
+    const visibleLines = lines.filter((line, index) => frame >= HIDDEN_MESSAGE_TEXT_START + index * HIDDEN_MESSAGE_STEP_FRAMES);
+    const firstDotFrame = HIDDEN_MESSAGE_TEXT_START + lines.length * HIDDEN_MESSAGE_STEP_FRAMES;
+    const dots = frame < firstDotFrame
+      ? 0
+      : clamp(Math.floor((frame - firstDotFrame) / HIDDEN_MESSAGE_STEP_FRAMES) + 1, 0, 5);
+    let drop = null;
+    if (frame > HIDDEN_MESSAGE_DROP_START && frame < HIDDEN_MESSAGE_END_FRAME) {
+      const age = frame - HIDDEN_MESSAGE_DROP_START;
+      if (age <= HIDDEN_MESSAGE_DROP_MORPH_FRAMES) {
+        const morphSequence = [3, 2, 1, 0, 1, 2, 3];
+        const phase = morphSequence[Math.floor((age - 1) / 4)];
+        drop = { x: 120, y: 30, frame: `morph${phase}` };
+      } else {
+        const fallAge = Math.min(HIDDEN_MESSAGE_DROP_FALL_FRAMES, age - HIDDEN_MESSAGE_DROP_MORPH_FRAMES);
+        drop = { x: 120, y: 30 + fallAge, frame: "fall" };
+      }
+    }
+    return { frame, visibleLines, dots, drop };
   }
 
   function beginStageSelect(players) {
@@ -1927,7 +2036,9 @@
 
   function exitEditorToTitle() {
     if (game.editorGrid) game.constructedGrid = cloneGrid(game.editorGrid);
-    game.constructionUsed = true;
+    game.constructionVisits = (game.constructionVisits + 1) & 0xff;
+    game.constructionUsed = game.constructionVisits > 0;
+    game.hiddenInputCount = 0;
     game.customGrid = null;
     game.constructionStageActive = false;
     game.stage = 1;
@@ -2063,6 +2174,9 @@
     game.titleIdleFrames = 0;
     game.demoMode = false;
     game.constructionUsed = false;
+    game.constructionVisits = 0;
+    game.hiddenInputCount = 0;
+    game.hiddenMessageElapsed = 0;
     game.customGrid = null;
     game.constructedGrid = null;
     game.constructionStageActive = false;
@@ -2222,6 +2336,7 @@
       "KeyS",
       "KeyD",
       "KeyF",
+      "KeyG",
       "KeyZ",
       "Digit1",
       "Digit2",
@@ -2250,7 +2365,9 @@
     if (game.screen === "playing" && !game.paused) pendingFirePresses.add(event.code);
 
     if (game.screen === "title") {
-      if (event.code === "Enter" || event.code === "Space") activateTitleMenu();
+      if (recordHiddenTitleInput(event.code)) return;
+      if (event.code === "Enter" && hiddenMessageTriggerReady()) startHiddenMessage();
+      else if (event.code === "Enter" || event.code === "Space") activateTitleMenu();
       else if (event.code === "Digit1") {
         setTitleMenu(0);
         beginStageSelect(1);
@@ -2259,7 +2376,9 @@
         beginStageSelect(2);
       }
       else if (event.code === "ArrowUp" || event.code === "KeyW") moveTitleMenu(-1);
-      else if (event.code === "ArrowDown" || event.code === "KeyS") moveTitleMenu(1);
+      else if (event.code === "ArrowDown" || event.code === "KeyS") {
+        if (!reserveTitleDirectionForHiddenInput(event.code)) moveTitleMenu(1);
+      }
       else if (event.code === "KeyC" || event.code === "KeyE") {
         setTitleMenu(2);
         enterEditor();
@@ -2545,6 +2664,11 @@
 
     if (game.screen === "title") {
       updateTitleIdle();
+      return;
+    }
+
+    if (game.screen === "hiddenMessage") {
+      updateHiddenMessage();
       return;
     }
 
@@ -3944,6 +4068,7 @@
     ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
     if (game.screen === "title") renderTitle();
+    else if (game.screen === "hiddenMessage") renderHiddenMessage();
     else if (game.screen === "stageSelect") renderStageSelect();
     else if (game.screen === "editor") renderEditor();
     else if (game.screen === "stageClear") renderStageClear();
@@ -3969,6 +4094,23 @@
     drawText("PIXEL LAB", 88, 184, 1, "#f05a42");
     drawText("2026 OPEN PIXEL LAB", 32, 200, 1, "#f3f0d4");
     drawText("ALL RIGHTS RESERVED", 48, 216, 1, "#f3f0d4");
+  }
+
+  function renderHiddenMessage() {
+    const presentation = hiddenMessagePresentation(game.hiddenMessageElapsed);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+    for (let index = 0; index < presentation.visibleLines.length; index += 1) {
+      drawText(presentation.visibleLines[index], 64, 64 + index * 16, 1, "#f3f0d4");
+    }
+    if (presentation.dots > 0) drawText(".".repeat(presentation.dots), 64, 128, 1, "#f3f0d4");
+    if (presentation.drop) {
+      drawManifestSprite("hiddenDrop", presentation.drop.frame, presentation.drop.x, presentation.drop.y, {
+        primary: "#55b96a",
+        light: "#b7ffbd",
+        shadow: "#245c33"
+      });
+    }
   }
 
   function titleScoreLayout(menuIndex) {
@@ -4903,6 +5045,79 @@
         Object.assign(game, previous);
       }
     },
+    debugHiddenMessageLifecycleProbe() {
+      const previous = { ...game };
+      const previousKeys = new Set(keys);
+      try {
+        game.screen = "editor";
+        game.titleMenu = 2;
+        game.constructionVisits = HIDDEN_MESSAGE_REQUIRED_VISITS - 1;
+        game.constructionUsed = true;
+        game.hiddenInputCount = 0;
+        if (!game.editorGrid) game.editorGrid = makeOriginalConstructionGrid();
+        exitEditorToTitle();
+        const afterSeventhExit = {
+          screen: game.screen,
+          visits: game.constructionVisits,
+          constructionUsed: game.constructionUsed,
+          inputCount: game.hiddenInputCount
+        };
+
+        keys.clear();
+        keys.add("ArrowDown");
+        for (let press = 0; press < HIDDEN_MESSAGE_A_PRESSES; press += 1) recordHiddenTitleInput("KeyF");
+        const afterA = game.hiddenInputCount;
+        keys.delete("ArrowDown");
+        keys.add("ArrowRight");
+        for (let press = 0; press < HIDDEN_MESSAGE_B_PRESSES; press += 1) recordHiddenTitleInput("KeyG");
+        const afterB = game.hiddenInputCount;
+        const triggerReady = hiddenMessageTriggerReady();
+
+        startHiddenMessage();
+        const presentations = [127, 128, 320, 383, 384, 640, 641, 668, 669, 886]
+          .map((frame) => hiddenMessagePresentation(frame));
+        game.hiddenMessageElapsed = HIDDEN_MESSAGE_END_FRAME - 1;
+        update();
+        const afterCutscene = {
+          screen: game.screen,
+          visits: game.constructionVisits,
+          elapsed: game.hiddenMessageElapsed,
+          inputCount: game.hiddenInputCount
+        };
+        game.constructionVisits = 0xff;
+        exitEditorToTitle();
+        const wrappedVisits = game.constructionVisits;
+        game.titleMenu = 0;
+        game.constructionVisits = HIDDEN_MESSAGE_REQUIRED_VISITS;
+        game.hiddenInputCount = 0x74;
+        startHiddenMessage();
+        game.hiddenMessageElapsed = HIDDEN_MESSAGE_END_FRAME - 1;
+        update();
+        const alternateSelection = {
+          screen: game.screen,
+          players: game.stageSelectPlayers
+        };
+        return {
+          requiredVisits: HIDDEN_MESSAGE_REQUIRED_VISITS,
+          requiredAPresses: HIDDEN_MESSAGE_A_PRESSES,
+          requiredBPresses: HIDDEN_MESSAGE_B_PRESSES,
+          expectedInputCount: 0x74,
+          endFrame: HIDDEN_MESSAGE_END_FRAME,
+          afterSeventhExit,
+          afterA,
+          afterB,
+          triggerReady,
+          presentations,
+          afterCutscene,
+          wrappedVisits,
+          alternateSelection
+        };
+      } finally {
+        keys.clear();
+        for (const key of previousKeys) keys.add(key);
+        Object.assign(game, previous);
+      }
+    },
     debugSnapshot() {
       return {
         screen: game.screen,
@@ -4913,6 +5128,9 @@
         titleDemoIdleFrames: TITLE_DEMO_IDLE_FRAMES,
         demoMode: game.demoMode,
         constructionUsed: game.constructionUsed,
+        constructionVisits: game.constructionVisits,
+        hiddenInputCount: game.hiddenInputCount,
+        hiddenMessageElapsed: game.hiddenMessageElapsed,
         stage: game.stage,
         stageSelectPlayers: game.stageSelectPlayers,
         stageSelectLimit: stageSelectLimit(),
