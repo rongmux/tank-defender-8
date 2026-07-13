@@ -760,6 +760,11 @@ assert(helmetProbe.protected.alive === true && helmetProbe.protected.lives === 2
 assert(helmetProbe.protected.invuln === helmetProbe.duration, "helmet should set the player invulnerability timer");
 assert(helmetProbe.protected.score === helmetProbe.pickupScore, "helmet should award the power-up pickup score");
 assert(helmetProbe.protected.bulletRemoved === true, "helmet should absorb the incoming enemy bullet");
+const enemyBulletPlayerProbe = context.window.TankDefender8.debugEnemyBulletPlayerCollisionProbe();
+assert(enemyBulletPlayerProbe.protected.bulletRemoved === true && enemyBulletPlayerProbe.protected.alive === true && enemyBulletPlayerProbe.protected.explosions === 0, "player protection should absorb an enemy bullet without a hit explosion");
+assert(enemyBulletPlayerProbe.positiveNine.bulletRemoved && enemyBulletPlayerProbe.negativeNine.bulletRemoved, "enemy bullets should hit within nine pixels of the player center on both axes");
+assert(!enemyBulletPlayerProbe.positiveNine.alive && !enemyBulletPlayerProbe.negativeNine.alive, "unprotected center-range enemy hits should start player death");
+assert(!enemyBulletPlayerProbe.positiveTen.bulletRemoved && !enemyBulletPlayerProbe.negativeTen.bulletRemoved, "enemy bullets should miss at a ten-pixel player-center difference");
 const spawnLockProbe = context.window.TankDefender8.debugPlayerSpawnLockProbe();
 assert(spawnLockProbe.duration === schema.gameSettings.timings.playerSpawnFlash, "player spawn lock should use the configured timing");
 assert(spawnLockProbe.locked.spawnFlash === spawnLockProbe.before.spawnFlash - 1, "player spawn lock should count down each frame");

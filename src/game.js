@@ -2987,10 +2987,9 @@
     } else {
       for (const player of game.players) {
         if (!player.alive || player.spawnFlash > 0) continue;
-        if (rectsOverlap(bulletRect(bullet), player)) {
+        if (bulletHitsTankByCenter(bullet, player)) {
           if (player.invuln > 0) {
             bullet.remove = true;
-            addRuleExplosion("bulletCancel", bullet.x, bullet.y);
             return true;
           }
           bullet.remove = true;
@@ -6287,6 +6286,61 @@
         game.explosions = previousExplosions;
         game.scorePopups = previousScorePopups;
         game.highScore = previousHighScore;
+      }
+    },
+    debugEnemyBulletPlayerCollisionProbe() {
+      const previous = {
+        players: game.players,
+        explosions: game.explosions
+      };
+      const makePlayer = (invuln) => ({
+        kind: "player",
+        id: 1,
+        x: 64,
+        y: 64,
+        w: 14,
+        h: 14,
+        alive: true,
+        lives: 2,
+        respawn: 0,
+        spawnFlash: 0,
+        invuln,
+        stun: 0,
+        level: 0
+      });
+      const makeBullet = (centerDx, centerDy) => ({
+        x: 64 + 7 + centerDx - gameSettings().projectileRules.bulletSize / 2,
+        y: 64 + 7 + centerDy - gameSettings().projectileRules.bulletSize / 2,
+        w: gameSettings().projectileRules.bulletSize,
+        h: gameSettings().projectileRules.bulletSize,
+        ownerKind: "enemy",
+        ownerId: 100,
+        ownerKey: "enemy:100",
+        remove: false
+      });
+      const run = (invuln, centerDx, centerDy) => {
+        const player = makePlayer(invuln);
+        const bullet = makeBullet(centerDx, centerDy);
+        game.players = [player];
+        game.explosions = [];
+        hitTank(bullet);
+        return {
+          bulletRemoved: bullet.remove,
+          alive: player.alive,
+          respawn: player.respawn,
+          explosions: game.explosions.length
+        };
+      };
+      try {
+        return {
+          protected: run(1, 0, 0),
+          positiveNine: run(0, 9, 9),
+          negativeNine: run(0, -9, -9),
+          positiveTen: run(0, 10, 0),
+          negativeTen: run(0, -10, 0)
+        };
+      } finally {
+        Object.assign(game, previous);
       }
     },
     debugPlayerSpawnLockProbe() {
