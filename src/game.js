@@ -3999,7 +3999,7 @@
   }
 
   function drawPowerUp(power) {
-    if (power.ttl > 0 && power.ttl < 120 && Math.floor(game.tick / 6) % 2 === 0) return;
+    if (!isPowerUpVisible(game.tick)) return;
     const visual = powerUpVisualRect(power);
     const x = visual.x;
     const y = visual.y;
@@ -4015,6 +4015,10 @@
       shade: "#77869a",
       cutout: "#aab4c2"
     });
+  }
+
+  function isPowerUpVisible(tick) {
+    return (Math.max(0, Math.floor(Number(tick) || 0)) & 8) !== 0;
   }
 
   function powerUpVisualRect(power) {
@@ -5238,6 +5242,9 @@
         starFrameParts: starFrame.length,
         starPrimaryParts: starFrame.filter((part) => part.role === "primary").length
       };
+    },
+    debugPowerUpFlashCadenceProbe() {
+      return Array.from({ length: 32 }, (_, tick) => ({ tick, visible: isPowerUpVisible(tick) }));
     },
     debugPowerUpTtlProbe(ttl) {
       const previousPowerUp = game.powerUp;
@@ -6953,7 +6960,8 @@
         enemies: game.enemies,
         bullets: game.bullets,
         powerUp: game.powerUp,
-        playerCount: game.playerCount
+        playerCount: game.playerCount,
+        tick: game.tick
       };
       const grid = makeGrid();
       setTile(grid, 6, 6, FOREST, 0);
@@ -6966,6 +6974,7 @@
         game.bullets = [{ x: 6 * TILE + 6, y: 6 * TILE + 6, w: 4, h: 4, ownerKind: "player" }];
         game.powerUp = power;
         game.playerCount = 1;
+        game.tick = 8;
         renderGame();
         return {
           forestColor: "#315b34",

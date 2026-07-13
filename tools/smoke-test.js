@@ -660,6 +660,11 @@ assert(powerUpTypePoolProbe.randomTable.join(",") === "helmet,timer,shovel,star,
 assert(powerUpTypePoolProbe.sampledTable.join(",") === powerUpTypePoolProbe.randomTable.join(","), "random bytes zero through seven should pass through the production selector in original table order");
 assert(JSON.stringify(powerUpTypePoolProbe.weights) === JSON.stringify({ grenade: 2, helmet: 1, shovel: 1, star: 2, timer: 1, tank: 1 }), "random power-up weights should preserve the original star and grenade double chance");
 assert(powerUpTypePoolProbe.starFrameParts >= 8 && powerUpTypePoolProbe.starPrimaryParts >= 5, "star power-up should use a recognizable multi-part frame");
+const powerUpFlashProbe = context.window.TankDefender8.debugPowerUpFlashCadenceProbe();
+assert(powerUpFlashProbe.slice(0, 8).every((frame) => frame.visible === false), "uncollected power-ups should be hidden for the first eight-frame band");
+assert(powerUpFlashProbe.slice(8, 16).every((frame) => frame.visible === true), "uncollected power-ups should be visible for the second eight-frame band");
+assert(powerUpFlashProbe.slice(16, 24).every((frame) => frame.visible === false), "power-up visibility should repeat with another eight hidden frames");
+assert(powerUpFlashProbe.slice(24, 32).every((frame) => frame.visible === true), "power-up visibility should repeat with another eight visible frames");
 const grenadeScoreProbe = context.window.TankDefender8.debugGrenadeScoreProbe();
 assert(grenadeScoreProbe.scoreGain === grenadeScoreProbe.pickupScore, "grenade should award only the power-up pickup score");
 assert(grenadeScoreProbe.stagePoints === 0, "grenade should not add enemy score to stage points");
