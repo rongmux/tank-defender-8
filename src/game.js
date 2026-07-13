@@ -2834,12 +2834,23 @@
     const padding = gameSettings().projectileRules.boundsPadding;
     if (bullet.x < -padding || bullet.x > FIELD_W + padding || bullet.y < -padding || bullet.y > FIELD_H + padding) {
       bullet.remove = true;
+      addRuleExplosion(
+        "steelBlocked",
+        clamp(bullet.x + bullet.w / 2, 0, FIELD_W),
+        clamp(bullet.y + bullet.h / 2, 0, FIELD_H)
+      );
+      const sound = fieldBoundarySoundName(bullet);
+      if (sound) playSound(sound);
       return;
     }
 
     if (hitTerrain(bullet)) return;
     if (hitBase(bullet)) return;
     hitTank(bullet);
+  }
+
+  function fieldBoundarySoundName(bullet) {
+    return bullet.ownerKind === "player" ? "steelHit" : null;
   }
 
   function hitBase(bullet) {
@@ -6872,6 +6883,50 @@
         spawnOffset: gameSettings().projectileRules.spawnOffset,
         boundsPadding: gameSettings().projectileRules.boundsPadding
       };
+    },
+    debugFieldBoundaryBulletProbe() {
+      const previousBullets = game.bullets;
+      const previousExplosions = game.explosions;
+      const rules = gameSettings().projectileRules;
+      const makeBullet = (x, y, ownerKind) => ({
+        x,
+        y,
+        w: rules.bulletSize,
+        h: rules.bulletSize,
+        dir: UP,
+        speed: 0,
+        power: 1,
+        ownerKind,
+        ownerId: 1,
+        ownerKey: `${ownerKind}:1`,
+        remove: false
+      });
+      const cases = [
+        ["left", -rules.boundsPadding - 1, FIELD_H / 2],
+        ["right", FIELD_W + rules.boundsPadding + 1, FIELD_H / 2],
+        ["top", FIELD_W / 2, -rules.boundsPadding - 1],
+        ["bottom", FIELD_W / 2, FIELD_H + rules.boundsPadding + 1]
+      ];
+      try {
+        return ["player", "enemy"].flatMap((ownerKind) => cases.map(([edge, x, y]) => {
+          const bullet = makeBullet(x, y, ownerKind);
+          game.bullets = [bullet];
+          game.explosions = [];
+          resolveBullet(bullet);
+          const explosion = game.explosions[0] || null;
+          return {
+            edge,
+            ownerKind,
+            removed: bullet.remove,
+            explosionCount: game.explosions.length,
+            explosion: explosion ? { x: explosion.x, y: explosion.y, ttl: explosion.ttl } : null,
+            sound: fieldBoundarySoundName(bullet)
+          };
+        }));
+      } finally {
+        game.bullets = previousBullets;
+        game.explosions = previousExplosions;
+      }
     },
     debugFriendlyFireProbe() {
       return {

@@ -750,6 +750,15 @@ assert(crossingBulletProbe.remainingBullets === 2 && crossingBulletProbe.crossin
 assert(crossingBulletProbe.thresholdFiveCanceled === true && crossingBulletProbe.thresholdSixCanceled === false, "bullets from different tanks should cancel below six center pixels but not at the six-pixel boundary");
 assert(crossingBulletProbe.sameOwnerCanceled === false, "two active bullets owned by the same tank should not cancel each other");
 assert(crossingBulletProbe.explosionCount === 0, "original-style bullet cancellation should remove both bullets without an explosion");
+const fieldBoundaryBulletProbe = context.window.TankDefender8.debugFieldBoundaryBulletProbe();
+assert(fieldBoundaryBulletProbe.length === 8, "field-boundary probe should cover four edges for player and enemy bullets");
+assert(fieldBoundaryBulletProbe.every((entry) => entry.removed && entry.explosionCount === 1), "every bullet leaving the battlefield should become one boundary explosion");
+assert(fieldBoundaryBulletProbe.filter((entry) => entry.ownerKind === "player").every((entry) => entry.sound === "steelHit"), "player bullets hitting the field boundary should use the wall-hit sound");
+assert(fieldBoundaryBulletProbe.filter((entry) => entry.ownerKind === "enemy").every((entry) => entry.sound === null), "enemy bullets hitting the field boundary should not use the player wall-hit sound");
+assert(fieldBoundaryBulletProbe.filter((entry) => entry.edge === "left").every((entry) => entry.explosion.x === 0), "left-boundary explosions should be clamped to the battlefield edge");
+assert(fieldBoundaryBulletProbe.filter((entry) => entry.edge === "right").every((entry) => entry.explosion.x === 208), "right-boundary explosions should be clamped to the battlefield edge");
+assert(fieldBoundaryBulletProbe.filter((entry) => entry.edge === "top").every((entry) => entry.explosion.y === 0), "top-boundary explosions should be clamped to the battlefield edge");
+assert(fieldBoundaryBulletProbe.filter((entry) => entry.edge === "bottom").every((entry) => entry.explosion.y === 208), "bottom-boundary explosions should be clamped to the battlefield edge");
 const lifeAwardProbe = context.window.TankDefender8.debugLifeAwardProbe();
 assert(lifeAwardProbe.threshold === 20000, "default extra-life threshold should be 20000 points");
 assert(lifeAwardProbe.beforeCrossing.lives === 1, "score below the threshold should not award an extra life");
