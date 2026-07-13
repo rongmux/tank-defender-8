@@ -3159,12 +3159,16 @@
       }
     }
     for (const player of game.players) {
-      if (!player.alive) continue;
-      if (rectsOverlap(player, game.powerUp)) {
+      if (canPlayerCollectPowerUp(player, game.powerUp)) {
         collectPowerUp(player, game.powerUp);
         break;
       }
     }
+  }
+
+  function canPlayerCollectPowerUp(player, power) {
+    if (!player.alive || player.respawn > 0 || player.spawnFlash > 0) return false;
+    return Math.abs(player.x - power.x) < 12 && Math.abs(player.y - power.y) < 12;
   }
 
   function collectPowerUp(player, power) {
@@ -5210,6 +5214,25 @@
       };
       game.powerUp = previousPowerUp;
       return result;
+    },
+    debugPowerUpPickupBoundaryProbe() {
+      const player = { alive: true, respawn: 0, spawnFlash: 0, stun: 0, invuln: 0, x: 64, y: 64 };
+      const power = { type: "star", x: 64, y: 64, w: POWERUP_SIZE, h: POWERUP_SIZE };
+      const check = (dx, dy) => canPlayerCollectPowerUp({ ...player, x: player.x + dx, y: player.y + dy }, power);
+      return {
+        samePosition: check(0, 0),
+        positiveEleven: check(11, 11),
+        negativeEleven: check(-11, -11),
+        positiveTwelveX: check(12, 0),
+        negativeTwelveX: check(-12, 0),
+        positiveTwelveY: check(0, 12),
+        negativeTwelveY: check(0, -12),
+        spawning: canPlayerCollectPowerUp({ ...player, spawnFlash: 1 }, power),
+        respawning: canPlayerCollectPowerUp({ ...player, respawn: 1 }, power),
+        dead: canPlayerCollectPowerUp({ ...player, alive: false }, power),
+        stunned: canPlayerCollectPowerUp({ ...player, stun: 1 }, power),
+        invulnerable: canPlayerCollectPowerUp({ ...player, invuln: 1 }, power)
+      };
     },
     debugPowerUpPickupRenderProbe() {
       const previous = {
