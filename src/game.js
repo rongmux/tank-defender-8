@@ -3789,6 +3789,10 @@
     const carrier = enemySpec.carrier;
     const slotIndex = nextEnemySlot();
     if (slotIndex === null) return;
+    if (isEnemySpawnOccupied(point)) {
+      game.nextSpawn = gameSettings().timings.enemySpawnRetry;
+      return;
+    }
     clearPowerUpForCarrierSpawn(carrier);
     game.enemies.push({
       kind: "enemy",
@@ -3823,6 +3827,13 @@
     });
     game.enemySpawned += 1;
     game.nextSpawn = enemySpawnDelay(game.stage, game.enemySpawned);
+  }
+
+  function isEnemySpawnOccupied(point) {
+    const spawnRect = { x: point.x, y: point.y, w: 14, h: 14 };
+    return game.players.concat(game.enemies).some((tank) =>
+      tank.alive && !(tank.respawn > 0) && rectsOverlap(spawnRect, tank)
+    );
   }
 
   function nextEnemySlot() {
@@ -6880,19 +6891,51 @@
         game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
         const spec = getEnemySpec(game.stage, 0);
         const point = enemySpawnPoint(spec.spawnIndex);
-        game.players = [{ kind: "player", id: 1, x: point.x, y: point.y, w: 14, h: 14, alive: true, respawn: 0 }];
-        game.enemies = [];
+        const blocker = {
+          kind: "enemy",
+          id: 200,
+          slotIndex: 2,
+          x: point.x,
+          y: point.y,
+          w: 14,
+          h: 14,
+          alive: true,
+          respawn: 0,
+          spawnFlash: gameSettings().timings.enemySpawnFlash
+        };
+        game.players = [];
+        game.enemies = [blocker];
         game.bullets = [];
         game.explosions = [];
         game.powerUp = null;
         game.enemySpawned = 0;
         game.nextSpawn = 0;
         spawnEnemies();
-        return {
-          playerOverlap: game.enemies.length === 1 && rectsOverlap(game.players[0], game.enemies[0]),
+        const blocked = {
+          enemyCount: game.enemies.length,
           enemySpawned: game.enemySpawned,
+          retry: game.nextSpawn
+        };
+        blocker.x = HALF * 2;
+        blocker.y = HALF * 2;
+        for (let frame = 0; frame < gameSettings().timings.enemySpawnRetry; frame += 1) spawnEnemies();
+        const beforeRetry = {
+          enemyCount: game.enemies.length,
+          enemySpawned: game.enemySpawned,
+          retry: game.nextSpawn
+        };
+        spawnEnemies();
+        const spawnedEnemy = game.enemies.find((enemy) => enemy !== blocker);
+        return {
+          blocked,
+          beforeRetry,
+          afterRetry: {
+            enemyCount: game.enemies.length,
+            enemySpawned: game.enemySpawned,
+            enemyOverlap: Boolean(spawnedEnemy && rectsOverlap(blocker, spawnedEnemy))
+          },
           spawnIndex: spec.spawnIndex,
-          enemyPosition: game.enemies[0] ? { x: game.enemies[0].x, y: game.enemies[0].y } : null
+          enemyPosition: spawnedEnemy ? { x: spawnedEnemy.x, y: spawnedEnemy.y } : null
         };
       } finally {
         Object.assign(game, previous);
