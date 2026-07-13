@@ -69,7 +69,7 @@
   };
   const DEFAULT_TIMINGS = {
     stageIntro: 86,
-    stageClearDelay: 60,
+    stageClearDelay: 128,
     stageClear: 0,
     gameOverSlide: 96,
     playerRespawn: 24,
@@ -4034,6 +4034,7 @@
       game.pauseElapsed = 0;
       if (game.clearPendingTimer <= 0) {
         game.clearPendingTimer = gameSettings().timings.stageClearDelay;
+        if (game.clearPendingTimer > 0) return;
       }
       if (game.clearPendingTimer > 0) {
         game.clearPendingTimer -= 1;

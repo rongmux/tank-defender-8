@@ -73,7 +73,7 @@
     },
     "timings": {
       "stageIntro": 86,
-      "stageClearDelay": 60,
+      "stageClearDelay": 128,
       "stageClear": 0,
       "playerRespawn": 24,
       "playerInvulnerability": 3,

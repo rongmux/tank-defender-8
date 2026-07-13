@@ -319,7 +319,7 @@ const pausedStageEndProbe = context.window.TankDefender8.debugPausedStageEndProb
 assert(pausedStageEndProbe.incomplete.screen === "playing" && pausedStageEndProbe.incomplete.paused === true && pausedStageEndProbe.incomplete.pauseElapsed === 1, "an incomplete stage should remain paused while its display frame advances");
 assert(pausedStageEndProbe.incomplete.tick === 41 && pausedStageEndProbe.detected.tick === 41, "paused stage-end checks should not advance battle time");
 assert(pausedStageEndProbe.detected.enemyCount === 0 && pausedStageEndProbe.detected.paused === false && pausedStageEndProbe.detected.pauseElapsed === 0, "detecting the final defeated enemy during pause should leave the pausable battle loop");
-assert(pausedStageEndProbe.detected.screen === "playing" && pausedStageEndProbe.detected.clearPendingTimer === pausedStageEndProbe.delay - 1, "paused stage completion should begin the active clear delay on its detection frame");
+assert(pausedStageEndProbe.detected.screen === "playing" && pausedStageEndProbe.detected.clearPendingTimer === pausedStageEndProbe.delay, "paused stage completion should load the full active clear delay without consuming a frame on detection");
 assert(pausedStageEndProbe.pauseAcceptedDuringDelay === false, "the post-clear activity delay should reject new pause input");
 canvasContext.calls.length = 0;
 context.window.TankDefender8.debugRenderPauseFrame(15);
@@ -541,7 +541,7 @@ assert(schema.gameSettings.powerUpRules.carrierRelease === "hit", "schema should
 assert(schema.gameSettings.powerUpRules.clearUncollectedOnCarrierSpawn === true, "schema should expose carrier spawn power-up clearing rule");
 assert(schema.gameSettings.powerUpRules.pickupScore === 500, "schema should expose power-up pickup score");
 assert(schema.gameSettings.timings.stageIntro === 86, "schema should expose stage intro timing");
-assert(schema.gameSettings.timings.stageClearDelay === 60, "schema should expose stage clear delay timing");
+assert(schema.gameSettings.timings.stageClearDelay === 128, "schema should expose the original 128-frame stage clear delay");
 assert(schema.gameSettings.timings.stageClear === 0, "zero stage-clear timing should select the dynamic original result schedule");
 const stageIntroStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(schema.gameSettings.timings.stageIntro);
 const stageIntroMidProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(Math.floor(schema.gameSettings.timings.stageIntro / 2));
@@ -1568,8 +1568,8 @@ assert(finiteAdvanceProbe.stops === true && finiteAdvanceProbe.stage === 1, "fin
 const stageClearDelayStartProbe = context.window.TankDefender8.debugStageClearDelayProbe(0, true);
 assert(
   stageClearDelayStartProbe.screen === "playing" &&
-    stageClearDelayStartProbe.clearPendingTimer === context.window.TankDefender8.currentPackInfo().timings.stageClearDelay - 1,
-  "stage clear delay should start from a completed stage without immediately resetting"
+    stageClearDelayStartProbe.clearPendingTimer === context.window.TankDefender8.currentPackInfo().timings.stageClearDelay,
+  "stage completion detection should load the full clear delay without decrementing it"
 );
 assert(context.window.TankDefender8.debugStageClearDelayProbe(2, true).screen === "playing", "stage clear delay should keep gameplay active before result");
 assert(context.window.TankDefender8.debugStageClearDelayProbe(1, true).screen === "stageClear", "stage clear delay should eventually enter result screen");
@@ -1668,6 +1668,7 @@ assert(freePack.enemies.every((sequence) => sequence.length === 20), "free repla
 assert(freePack.gameSettings.playerMovement.speed === 1, "generated 35-stage pack should retain one-pixel player movement steps");
 assert(freePack.gameSettings.playerMovement.frameCadence.join(",") === "true,true,false,true", "generated 35-stage pack should retain the original player movement cadence");
 assert(freePack.gameSettings.friendlyFire.stunFrames === 200, "generated 35-stage pack should retain the original friendly-fire stun ticks");
+assert(freePack.gameSettings.timings.stageClearDelay === 128, "generated 35-stage pack should retain the original 128-frame post-stage battle loop");
 assert(context.window.TankDefender8.validateStagePack(freePack).ok === true, "free replacement stage pack should validate");
 assert(context.window.TankDefender8.loadStagePack(freePack) === true, "free replacement stage pack should load");
 assert(context.window.TankDefender8.currentPackInfo().totalStages === 35, "free replacement pack should expose 35 stages");
@@ -1675,6 +1676,7 @@ assert(context.window.TankDefender8.currentPackInfo().enemySequence.filter((enem
 const completedStageAdvanceProbe = context.window.TankDefender8.debugCompletedStageAdvanceProbe(1);
 assert(completedStageAdvanceProbe.screen === "stageIntro" && completedStageAdvanceProbe.stage === 2, "completed playing stage should automatically start the next stage");
 assert(completedStageAdvanceProbe.transitions.some((entry) => entry.screen === "stageClear"), "completed playing stage should enter the result screen before advancing");
+assert(completedStageAdvanceProbe.transitions.find((entry) => entry.screen === "stageClear").frame === freePack.gameSettings.timings.stageClearDelay + 1, "stage result should begin only after 128 complete active updates following detection");
 const completedLowKillAdvanceProbe = context.window.TankDefender8.debugCompletedStageAdvanceProbe(1, 0);
 assert(completedLowKillAdvanceProbe.screen === "stageIntro" && completedLowKillAdvanceProbe.stage === 2, "cleared stages should advance even if kill-table credit is lower than the enemy total");
 assert(completedLowKillAdvanceProbe.transitions.some((entry) => entry.screen === "stageClear"), "low-credit cleared stages should still show the result screen before advancing");
@@ -1741,7 +1743,7 @@ assert(snapshot.powerUpDurations.shovel === 20, "sample pack should use configur
 assert(snapshot.powerUpDurations.shovelFlash === 4, "sample pack should use configured shovel flash threshold");
 assert(snapshot.powerUpRules.carrierRelease === "hit", "sample pack should use hit-based carrier release rule");
 assert(snapshot.powerUpRules.pickupScore === 500, "sample pack should use configured power-up pickup score");
-assert(snapshot.timings.stageClearDelay === 60, "sample pack should use configured stage clear delay");
+assert(snapshot.timings.stageClearDelay === 128, "sample pack should use the original 128-frame stage clear delay");
 assert(snapshot.timings.playerInvulnerability === 3, "sample pack should use configured post-spawn shield units");
 assert(snapshot.timings.powerUpTtl === 0, "sample pack should use non-expiring default power-up TTL");
 assert(snapshot.enemySpawnPacing.stageStep === 4, "sample pack should expose original enemy spawn pacing");
