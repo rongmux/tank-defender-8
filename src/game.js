@@ -2802,7 +2802,6 @@
         bullet.x += (DIR_X[bullet.dir] * bullet.speed) / steps;
         bullet.y += (DIR_Y[bullet.dir] * bullet.speed) / steps;
         resolveBullet(bullet);
-        resolveBulletCollisions();
       }
     }
 
@@ -2817,15 +2816,18 @@
       for (let j = i + 1; j < game.bullets.length; j += 1) {
         const b = game.bullets[j];
         if (b.remove) continue;
-        if (a.ownerKey !== b.ownerKey && rectsOverlap(bulletRect(a), bulletRect(b))) {
+        if (a.ownerKey !== b.ownerKey && bulletCentersWithin(a, b, 6)) {
           a.remove = true;
           b.remove = true;
-          addRuleExplosion("bulletCancel", (a.x + b.x) / 2, (a.y + b.y) / 2);
-          playSound("bulletCancel");
           break;
         }
       }
     }
+  }
+
+  function bulletCentersWithin(a, b, threshold) {
+    return Math.abs((a.x + a.w / 2) - (b.x + b.w / 2)) < threshold &&
+      Math.abs((a.y + a.h / 2) - (b.y + b.h / 2)) < threshold;
   }
 
   function resolveBullet(bullet) {
@@ -6799,15 +6801,44 @@
           }
         ];
         updateBullets();
+        const crossingRemaining = game.bullets.length;
+        const crossingPositions = game.bullets.map((bullet) => ({ x: bullet.x, y: bullet.y }));
+
+        const makeStaticPair = (difference, sameOwner) => [
+          {
+            x: 40,
+            y: 96,
+            w: gameSettings().projectileRules.bulletSize,
+            h: gameSettings().projectileRules.bulletSize,
+            ownerKey: "player:1",
+            remove: false
+          },
+          {
+            x: 40 + difference,
+            y: 96,
+            w: gameSettings().projectileRules.bulletSize,
+            h: gameSettings().projectileRules.bulletSize,
+            ownerKey: sameOwner ? "player:1" : "enemy:100",
+            remove: false
+          }
+        ];
+        game.bullets = makeStaticPair(5, false);
+        resolveBulletCollisions();
+        const thresholdFiveCanceled = game.bullets.every((bullet) => bullet.remove);
+        game.bullets = makeStaticPair(6, false);
+        resolveBulletCollisions();
+        const thresholdSixCanceled = game.bullets.some((bullet) => bullet.remove);
+        game.bullets = makeStaticPair(0, true);
+        resolveBulletCollisions();
+        const sameOwnerCanceled = game.bullets.some((bullet) => bullet.remove);
         return {
-          remainingBullets: game.bullets.length,
+          remainingBullets: crossingRemaining,
+          crossingPositions,
           speed,
           explosionCount: game.explosions.length,
-          explosion: game.explosions[0] ? {
-            ttl: game.explosions[0].ttl,
-            color: game.explosions[0].color,
-            coreColor: game.explosions[0].coreColor
-          } : null
+          thresholdFiveCanceled,
+          thresholdSixCanceled,
+          sameOwnerCanceled
         };
       } finally {
         game.bullets = previousBullets;

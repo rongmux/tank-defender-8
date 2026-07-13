@@ -744,9 +744,10 @@ assert(playerFireInputProbe.spawnPress === 0 && playerFireInputProbe.spawnPressA
 assert(playerFireInputProbe.stunnedPress === 1, "a stunned player should still fire from a fresh press");
 const crossingBulletProbe = context.window.TankDefender8.debugCrossingBulletCancelProbe();
 assert(crossingBulletProbe.speed === 6, "crossing bullet probe should use high-speed bullets that can pass through each other in one frame");
-assert(crossingBulletProbe.remainingBullets === 0, "opposing high-speed bullets should cancel while their paths cross");
-assert(crossingBulletProbe.explosionCount === 1, "opposing bullet cancellation should create one explosion");
-assert(crossingBulletProbe.explosion.ttl === schema.gameSettings.explosionRules.bulletCancel.ttl, "opposing bullet cancellation should use the bullet-cancel explosion rule");
+assert(crossingBulletProbe.remainingBullets === 2 && crossingBulletProbe.crossingPositions[0].x === 46 && crossingBulletProbe.crossingPositions[1].x === 40, "high-speed bullets should finish their full-frame movement before one collision check and may cross without canceling");
+assert(crossingBulletProbe.thresholdFiveCanceled === true && crossingBulletProbe.thresholdSixCanceled === false, "bullets from different tanks should cancel below six center pixels but not at the six-pixel boundary");
+assert(crossingBulletProbe.sameOwnerCanceled === false, "two active bullets owned by the same tank should not cancel each other");
+assert(crossingBulletProbe.explosionCount === 0, "original-style bullet cancellation should remove both bullets without an explosion");
 const lifeAwardProbe = context.window.TankDefender8.debugLifeAwardProbe();
 assert(lifeAwardProbe.threshold === 20000, "default extra-life threshold should be 20000 points");
 assert(lifeAwardProbe.beforeCrossing.lives === 1, "score below the threshold should not award an extra life");
