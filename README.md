@@ -1,5 +1,7 @@
 # Tank Defender 8
 
+**English** | [简体中文](README.zh-CN.md)
+
 NES-style tank defense game built as a static Canvas app.
 
 This repository does not include original NES ROM data, original sprites, original audio, or original stage maps. Maps, sprites, and audio use free or custom replacement resources. The built-in enemy composition mirrors the publicly documented 35-stage Battle City enemy group table, and the engine remains data-driven so gameplay rules, enemy sequences, and stage packs can be tuned without changing the core code.
