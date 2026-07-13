@@ -4517,7 +4517,7 @@
         drawSpawn(player);
       } else {
         if (player.invuln > 0) drawShield(player);
-        if (isPlayerTankVisible(player, game.tick)) drawTank(player, player.color, player.accent);
+        if (isPlayerTankVisible(player, battleDisplayFrame())) drawTank(player, player.color, player.accent);
       }
     }
 
@@ -4652,7 +4652,7 @@
   function drawTank(tank, color, accent) {
     const x = Math.round(FIELD_X + tank.x);
     const y = Math.round(FIELD_Y + tank.y);
-    const primary = tankPrimaryColor(tank, color, game.tick);
+    const primary = tankPrimaryColor(tank, color, battleDisplayFrame());
     drawManifestSprite("tank", directionName(tank.dir), x, y, {
       primary,
       accent,
@@ -6009,6 +6009,45 @@
         flashColorValue: CARRIER_FLASH_COLOR,
         phaseFrames: 8
       };
+    },
+    debugPausedTankVisualProbe() {
+      const previous = { ...game };
+      const type = enemyTypeDefinitions()[0];
+      const carrier = { carrier: true };
+      const stunnedPlayer = { stun: 1 };
+      try {
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = true;
+        game.pauseElapsed = 0;
+        game.tick = 7;
+        game.scorePopups = [];
+
+        const snapshot = () => {
+          const displayFrame = battleDisplayFrame();
+          return {
+            tick: game.tick,
+            pauseElapsed: game.pauseElapsed,
+            displayFrame,
+            carrierColor: tankPrimaryColor(carrier, type.color, displayFrame),
+            carrierBaseColor: type.color,
+            carrierFlashColor: CARRIER_FLASH_COLOR,
+            stunnedVisible: isPlayerTankVisible(stunnedPlayer, displayFrame)
+          };
+        };
+        const initial = snapshot();
+        update();
+        const afterOneFrame = snapshot();
+        for (let frame = 0; frame < 8; frame += 1) update();
+        const afterNineFrames = snapshot();
+
+        game.paused = false;
+        game.tick = 23;
+        const afterResume = snapshot();
+        return { initial, afterOneFrame, afterNineFrames, afterResume };
+      } finally {
+        Object.assign(game, previous);
+      }
     },
     debugEnemyColorProbe(typeIndex, hp) {
       const type = enemyTypeDefinitions()[clamp(Math.floor(Number(typeIndex) || 0), 0, enemyTypeDefinitions().length - 1)];
