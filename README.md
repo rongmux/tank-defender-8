@@ -47,7 +47,7 @@ git diff --check
 - Per-stage enemy sequences with configurable spawn points and active-enemy limits.
 - Player star upgrades: faster bullets at level 1, two bullets at level 2, and steel-destroying plus double brick-wall damage at level 3.
 - Active bullet limits: base and first-star players can keep one bullet on screen, second-star and max-power players can keep two, and each enemy tank can keep one.
-- Bullets that leave the battlefield end in a small edge-clamped impact explosion. Player bullets use the corresponding wall-hit sound against brick, steel, and the border, while enemy wall impacts remain silent.
+- Bullets that leave the battlefield end in a small edge-clamped impact explosion. Player bullets use the destruction sound against brick and destructible steel, or the blocked-wall sound against ordinary steel and the border; enemy wall impacts remain silent.
 - Six power-ups with distinct original-style 16x16 replacement icons: grenade, helmet, shovel, star, timer, and extra tank. Random releases use the original eight-entry lookup, giving grenade and star two chances each and the other four items one chance each. An uncollected item alternates through eight hidden and eight visible frames using the global frame phase. Active players collect an item only when both center-coordinate differences are below 12 pixels; spawning players cannot collect it. If both players qualify on the same frame, player 2 is checked first. The shovel changes only the five base-wall cells from brick to steel, flashes near expiry, and restores the wall afterward; it never creates ice terrain. A shovel collected after base destruction still awards pickup score but does not alter the wall or start its timer.
 - Flashing enemy carriers that spawn power-ups on hit by default. Built-in and exported defaults mark enemies 4, 11, and 18 as carriers, and packs can switch carrier release to destruction-only behavior.
 - Power-up pickup score, extra-life score thresholds, and grenade clearing without enemy kill-table credit. Grenades clear only fully spawned active enemies; enemies still in their spawn animation remain untouched. Stage completion is based on the full enemy queue being spawned and all active enemies being gone; kill-table credit does not gate advancement.
@@ -260,7 +260,7 @@ Player star upgrade rules:
 - Level `0`: one slow bullet, base player tank visual, normal brick damage, cannot destroy steel.
 - Level `1`: one fast bullet, upgraded tank visual, normal brick damage, cannot destroy steel.
 - Level `2`: two fast bullets, second upgraded tank visual, normal brick damage, cannot destroy steel.
-- Level `3`: two fast bullets, max-power tank visual, double brick damage, can destroy steel after two hits from the same side.
+- Level `3`: two fast bullets, max-power tank visual, double brick damage, and each hit destroys one targeted 8x8 steel subtile.
 
 Packs may override these with `gameSettings.playerUpgradeRules`. The array must contain exactly four entries for levels `0` through `3`; each entry may define `maxBullets`, `bulletSpeed`, `wallPower`, and `reload`. Star upgrades do not add player armor; enemy bullets still cost one life unless the player is protected by spawn invulnerability or the helmet power-up.
 

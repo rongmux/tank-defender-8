@@ -2839,7 +2839,7 @@
         clamp(bullet.x + bullet.w / 2, 0, FIELD_W),
         clamp(bullet.y + bullet.h / 2, 0, FIELD_H)
       );
-      const sound = wallHitSoundName(bullet, true);
+      const sound = wallHitSoundName(bullet, true, false);
       if (sound) playSound(sound);
       return;
     }
@@ -2849,8 +2849,9 @@
     hitTank(bullet);
   }
 
-  function wallHitSoundName(bullet, wasSteel) {
+  function wallHitSoundName(bullet, wasSteel, damaged) {
     if (bullet.ownerKind !== "player") return null;
+    if (wasSteel && damaged) return "brickHit";
     return wasSteel ? "steelHit" : "brickHit";
   }
 
@@ -2879,14 +2880,15 @@
         const hitMask = overlappedQuarters(rect, c, r, cell.mask);
         if (!hitMask) continue;
         const wasSteel = cell.type === STEEL;
+        let damaged = false;
         if (cell.type === BRICK || bullet.power >= 3) {
-          const damaged = damageWall(cell, c, r, bullet);
+          damaged = damageWall(cell, c, r, bullet, hitMask);
           addRuleExplosion(damaged ? (wasSteel ? "steelHit" : "brickHit") : "steelBlocked", bullet.x, bullet.y);
         } else {
           addRuleExplosion("steelBlocked", bullet.x, bullet.y);
         }
         bullet.remove = true;
-        const sound = wallHitSoundName(bullet, wasSteel);
+        const sound = wallHitSoundName(bullet, wasSteel, damaged);
         if (sound) playSound(sound);
         return true;
       }
@@ -2904,8 +2906,8 @@
     return hit;
   }
 
-  function damageWall(cell, c, r, bullet) {
-    if (cell.type === STEEL) return damageSteelWall(cell, bullet);
+  function damageWall(cell, c, r, bullet, hitMask) {
+    if (cell.type === STEEL) return damageSteelWall(cell, bullet, hitMask);
     const clearMask = brickDamageMask(cell, bullet.dir, bullet.power);
     cell.mask &= ~clearMask;
     if (cell.mask === 0) cell.type = EMPTY;
@@ -2941,24 +2943,18 @@
     return count;
   }
 
-  function damageSteelWall(cell, bullet) {
+  function damageSteelWall(cell, bullet, hitMask) {
     if (bullet.power < 3) return false;
-    const side = bullet.dir;
-    cell.steelHits = cell.steelHits || [0, 0, 0, 0];
-    cell.steelHits[side] += 1;
-    if (cell.steelHits[side] < 2) return false;
+    const candidates = cell.mask & (hitMask === undefined ? cell.mask : hitMask);
+    const clearMask = brickImpactOrder(bullet.dir)
+      .map((quarter) => 1 << quarter)
+      .find((quarterMask) => candidates & quarterMask) || 0;
+    if (!clearMask) return false;
 
-    cell.mask &= ~impactHalfMask(side);
-    cell.steelHits[side] = 0;
+    cell.mask &= ~clearMask;
+    cell.steelHits = [0, 0, 0, 0];
     if (cell.mask === 0) cell.type = EMPTY;
     return true;
-  }
-
-  function impactHalfMask(dir) {
-    if (dir === UP) return (1 << 2) | (1 << 3);
-    if (dir === DOWN) return (1 << 0) | (1 << 1);
-    if (dir === LEFT) return (1 << 1) | (1 << 3);
-    return (1 << 0) | (1 << 2);
   }
 
   function quarterRect(c, r, q) {
@@ -3391,7 +3387,7 @@
       brickSameSideHits: 4,
       poweredBrickSameSideHits: 2,
       steelRequiredPower: 3,
-      steelSameSideHits: 2,
+      steelSameSideHits: 1,
       maxPowerBrickHalfDamage: true
     };
   }
@@ -4589,11 +4585,15 @@
       };
     },
     debugSteelRuleProbe() {
+      const blockedCell = makeCell(STEEL, 15);
+      const blocked = damageWall(blockedCell, 0, 0, { power: 2, dir: UP }, 1 << 2);
       const cell = makeCell(STEEL, 15);
-      const first = damageWall(cell, 0, 0, { power: 3, dir: UP, x: 4, y: 15 });
+      const first = damageWall(cell, 0, 0, { power: 3, dir: UP }, 1 << 2);
       const afterFirst = { type: cell.type, mask: cell.mask, steelHits: cell.steelHits.slice() };
-      const second = damageWall(cell, 0, 0, { power: 3, dir: UP, x: 4, y: 15 });
+      const second = damageWall(cell, 0, 0, { power: 3, dir: UP }, 1 << 3);
       return {
+        blocked,
+        blockedMask: blockedCell.mask,
         first,
         afterFirst,
         second,
@@ -6922,7 +6922,7 @@
             removed: bullet.remove,
             explosionCount: game.explosions.length,
             explosion: explosion ? { x: explosion.x, y: explosion.y, ttl: explosion.ttl } : null,
-            sound: wallHitSoundName(bullet, true)
+            sound: wallHitSoundName(bullet, true, false)
           };
         }));
       } finally {
@@ -6931,11 +6931,15 @@
       }
     },
     debugTerrainHitSoundProbe() {
-      const owners = ["player", "enemy"];
-      return owners.flatMap((ownerKind) => [false, true].map((wasSteel) => ({
+      const impacts = [
+        { terrain: "brick", wasSteel: false, damaged: true },
+        { terrain: "steelBlocked", wasSteel: true, damaged: false },
+        { terrain: "steelDestroyed", wasSteel: true, damaged: true }
+      ];
+      return ["player", "enemy"].flatMap((ownerKind) => impacts.map((impact) => ({
         ownerKind,
-        terrain: wasSteel ? "steel" : "brick",
-        sound: wallHitSoundName({ ownerKind }, wasSteel)
+        terrain: impact.terrain,
+        sound: wallHitSoundName({ ownerKind }, impact.wasSteel, impact.damaged)
       })));
     },
     debugFriendlyFireProbe() {
