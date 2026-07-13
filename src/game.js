@@ -2488,7 +2488,11 @@
       return;
     }
 
-    if (game.screen !== "playing" || game.paused) return;
+    if (game.screen !== "playing") return;
+    if (game.paused) {
+      updateScorePopups();
+      return;
+    }
 
     game.tick += 1;
     updateFreezeTimer();
@@ -3181,15 +3185,24 @@
   function collectPowerUp(player, power) {
     const powerType = power.type;
     game.powerUp = null;
-    applyPowerUp(player, powerType);
+    applyPowerUp(player, powerType, {
+      popupX: power.x + power.w / 2,
+      popupY: power.y + power.h / 2
+    });
     game.powerUp = null;
     playSound("powerUp");
   }
 
-  function applyPowerUp(player, type) {
+  function applyPowerUp(player, type, options) {
+    const opts = options || {};
     const pickupScore = gameSettings().powerUpRules.pickupScore;
     addPlayerScore(player, pickupScore);
-    addScorePopup(pickupScore, player.x + player.w / 2, player.y - 2);
+    addScorePopup(
+      pickupScore,
+      Number.isFinite(opts.popupX) ? opts.popupX : player.x + player.w / 2,
+      Number.isFinite(opts.popupY) ? opts.popupY : player.y + player.h / 2,
+      { style: "powerUp", ttl: 49 }
+    );
     if (type === "grenade") {
       for (const enemy of game.enemies) {
         if (enemy.alive) {
@@ -3440,12 +3453,14 @@
     game.explosions = game.explosions.filter((explosion) => explosion.ttl > 0);
   }
 
-  function addScorePopup(points, x, y) {
+  function addScorePopup(points, x, y, options) {
     const value = Math.max(0, Math.floor(Number(points) || 0));
     if (!value) return;
+    const opts = options || {};
     const px = Number.isFinite(Number(x)) ? Number(x) : FIELD_W / 2;
     const py = Number.isFinite(Number(y)) ? Number(y) : FIELD_H / 2;
-    game.scorePopups.push({ value, x: px, y: py, ttl: 54, max: 54 });
+    const ttl = Math.max(1, Math.floor(Number(opts.ttl) || 54));
+    game.scorePopups.push({ value, x: px, y: py, ttl, max: ttl, style: opts.style || "float" });
   }
 
   function updateScorePopups() {
@@ -4067,13 +4082,25 @@
 
   function renderScorePopups() {
     for (const popup of game.scorePopups) {
-      const text = String(popup.value);
-      const width = text.length * 6;
-      const age = 1 - popup.ttl / popup.max;
-      const x = clamp(Math.round(FIELD_X + popup.x - width / 2), FIELD_X, FIELD_X + FIELD_W - width);
-      const y = clamp(Math.round(FIELD_Y + popup.y - 7 - age * 6), FIELD_Y, FIELD_Y + FIELD_H - 7);
-      drawText(text, x, y, 1, popup.ttl % 10 < 5 ? "#f7f1c6" : "#e0b84b");
+      const presentation = scorePopupPresentation(popup);
+      drawText(presentation.text, presentation.x, presentation.y, 1, presentation.color, presentation.advance);
     }
+  }
+
+  function scorePopupPresentation(popup) {
+    const text = String(popup.value);
+    const fixed = popup.style === "powerUp";
+    const advance = fixed ? 5 : 6;
+    const width = text.length * advance;
+    const age = fixed ? 0 : 1 - popup.ttl / popup.max;
+    return {
+      text,
+      width,
+      advance,
+      x: clamp(Math.round(FIELD_X + popup.x - width / 2), FIELD_X, FIELD_X + FIELD_W - width),
+      y: clamp(Math.round(FIELD_Y + popup.y - (fixed ? 4 : 7 + age * 6)), FIELD_Y, FIELD_Y + FIELD_H - 7),
+      color: fixed ? "#f7f1c6" : popup.ttl % 10 < 5 ? "#f7f1c6" : "#e0b84b"
+    };
   }
 
   function renderPanel() {
@@ -4329,9 +4356,10 @@
     }
   }
 
-  function drawText(text, x, y, scale, color) {
+  function drawText(text, x, y, scale, color, advance) {
     ctx.fillStyle = color || "#ffffff";
     const size = Math.max(1, Math.floor(scale || 1));
+    const glyphAdvance = Math.max(5, Math.floor(advance || 6));
     let cursorX = Math.round(x);
     const top = Math.round(y);
     const value = String(text).toUpperCase();
@@ -4344,7 +4372,7 @@
           }
         }
       }
-      cursorX += 6 * size;
+      cursorX += glyphAdvance * size;
     }
   }
 
@@ -5276,6 +5304,7 @@
         enemies: game.enemies,
         bullets: game.bullets,
         explosions: game.explosions,
+        scorePopups: game.scorePopups,
         powerUp: game.powerUp,
         highScore: game.highScore,
         tick: game.tick
@@ -5317,16 +5346,30 @@
         game.enemies = [];
         game.bullets = [];
         game.explosions = [];
+        game.scorePopups = [];
         game.powerUp = power;
 
         updatePowerUp();
+        const popup = game.scorePopups[0] ? { ...game.scorePopups[0] } : null;
+        const presentation = popup ? scorePopupPresentation(popup) : null;
+        const laterPresentation = popup ? scorePopupPresentation({ ...popup, ttl: Math.max(1, popup.ttl - 24) }) : null;
         renderGame();
+        let visibleFrames = 0;
+        while (game.scorePopups.length) {
+          visibleFrames += 1;
+          updateScorePopups();
+        }
 
         return {
           powerUpType: game.powerUp ? game.powerUp.type : null,
           playerLevel: player.level,
           playerScore: player.score,
           pickupScore: gameSettings().powerUpRules.pickupScore,
+          popup,
+          presentation,
+          laterPresentation,
+          visibleFrames,
+          powerCenter: { x: power.x + power.w / 2, y: power.y + power.h / 2 },
           drawRect: { x: FIELD_X + power.x, y: FIELD_Y + power.y, w: power.w, h: power.h }
         };
       } finally {
@@ -5342,6 +5385,7 @@
         enemies: game.enemies,
         bullets: game.bullets,
         explosions: game.explosions,
+        scorePopups: game.scorePopups,
         powerUp: game.powerUp,
         highScore: game.highScore
       };
@@ -5384,6 +5428,7 @@
         game.enemies = [];
         game.bullets = [];
         game.explosions = [];
+        game.scorePopups = [];
         game.powerUp = power;
 
         renderGame();
@@ -5735,6 +5780,29 @@
         game.explosions = previousExplosions;
         game.scorePopups = previousScorePopups;
         game.highScore = previousHighScore;
+      }
+    },
+    debugPausedScorePopupProbe() {
+      const previous = {
+        screen: game.screen,
+        paused: game.paused,
+        tick: game.tick,
+        scorePopups: game.scorePopups
+      };
+      try {
+        game.screen = "playing";
+        game.paused = true;
+        game.tick = 27;
+        game.scorePopups = [{ value: 500, x: 64, y: 64, ttl: 2, max: 2, style: "powerUp" }];
+        update();
+        const afterOneFrame = { tick: game.tick, ttl: game.scorePopups[0] ? game.scorePopups[0].ttl : 0 };
+        update();
+        return {
+          afterOneFrame,
+          afterTwoFrames: { tick: game.tick, popupCount: game.scorePopups.length }
+        };
+      } finally {
+        Object.assign(game, previous);
       }
     },
     debugStarUpgradeProbe() {

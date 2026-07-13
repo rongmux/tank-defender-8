@@ -607,6 +607,12 @@ const pickupRenderProbe = context.window.TankDefender8.debugPowerUpPickupRenderP
 assert(pickupRenderProbe.powerUpType === null, "collected power-up should be cleared from game state");
 assert(pickupRenderProbe.playerLevel === 1, "star pickup should still apply after clearing the power-up object");
 assert(pickupRenderProbe.playerScore === pickupRenderProbe.pickupScore, "power-up pickup should still award score");
+assert(pickupRenderProbe.popup.style === "powerUp" && pickupRenderProbe.popup.ttl === 49, "power-up pickup should create the original-style fixed score state for 49 visible frames");
+assert(pickupRenderProbe.popup.x === pickupRenderProbe.powerCenter.x && pickupRenderProbe.popup.y === pickupRenderProbe.powerCenter.y, "power-up score should remain centered on the collected item position");
+assert(pickupRenderProbe.presentation.x === pickupRenderProbe.laterPresentation.x && pickupRenderProbe.presentation.y === pickupRenderProbe.laterPresentation.y, "power-up score should not drift while its timer counts down");
+assert(pickupRenderProbe.presentation.color === "#f7f1c6" && pickupRenderProbe.laterPresentation.color === "#f7f1c6", "power-up score should use one stable palette color instead of flashing");
+assert(pickupRenderProbe.presentation.width === 15 && pickupRenderProbe.presentation.advance === 5, "the three-digit pickup score should use a compact width close to the original two-sprite graphic");
+assert(pickupRenderProbe.visibleFrames === 49, "power-up score should remain visible for exactly 49 rendered frame states");
 assert(!canvasContext.calls.some((call) =>
   call.op === "strokeRect" &&
   call.x === pickupRenderProbe.drawRect.x &&
@@ -625,6 +631,7 @@ assert(footprintColors["#315b34"] > 0, "collected power-up footprint should redr
 assert(!footprintColors["#101114"], "collected power-up footprint should not leave its black backing");
 assert(!footprintColors["#f3f0d4"], "collected power-up footprint should not leave its border");
 assert(!footprintColors["#e0b84b"], "collected power-up footprint should not leave its sprite color");
+assert(footprintColors["#f7f1c6"] > 0, "collected power-up footprint should contain the fixed pickup-score pixels");
 const terrainMutationProbe = context.window.TankDefender8.debugPowerUpTerrainMutationProbe();
 assert(terrainMutationProbe.length === 6, "terrain mutation probe should cover all six original power-up types");
 assert(terrainMutationProbe.every((entry) => entry.beforeIce === entry.afterIce && entry.addedIce.length === 0), "collecting any power-up must never add ice terrain");
@@ -662,8 +669,13 @@ assert(grenadeScoreProbe.enemyKilled === 2 && grenadeScoreProbe.aliveEnemies ===
 const scorePopupProbe = context.window.TankDefender8.debugScorePopupProbe();
 assert(scorePopupProbe.enemyPopup.value === scorePopupProbe.armorScore, "destroyed enemies should show their score value in the playfield");
 assert(scorePopupProbe.pickupPopup.value === scorePopupProbe.pickupScore, "collected power-ups should show their pickup score value in the playfield");
+assert(scorePopupProbe.enemyPopup.style === "float" && scorePopupProbe.enemyPopup.ttl === 54, "enemy score popups should retain their existing floating style");
+assert(scorePopupProbe.pickupPopup.style === "powerUp" && scorePopupProbe.pickupPopup.ttl === 49, "direct power-up effects should use the fixed original-style score popup");
 assert(scorePopupProbe.grenadePopups.length === 1 && scorePopupProbe.grenadePopups[0].value === scorePopupProbe.pickupScore, "grenade should show only the power-up score popup");
 assert(scorePopupProbe.afterUpdate[0].ttl === scorePopupProbe.grenadePopups[0].ttl - 1, "score popups should count down each frame");
+const pausedScorePopupProbe = context.window.TankDefender8.debugPausedScorePopupProbe();
+assert(pausedScorePopupProbe.afterOneFrame.tick === 27 && pausedScorePopupProbe.afterOneFrame.ttl === 1, "paused gameplay should count down the pickup score without advancing the gameplay tick");
+assert(pausedScorePopupProbe.afterTwoFrames.tick === 27 && pausedScorePopupProbe.afterTwoFrames.popupCount === 0, "pickup score should expire on schedule while gameplay remains paused");
 const starUpgradeProbe = context.window.TankDefender8.debugStarUpgradeProbe();
 assert(starUpgradeProbe.tiers[0].level === 0 && starUpgradeProbe.tiers[0].maxBullets === 1, "base player tank should start with one bullet");
 assert(starUpgradeProbe.tiers[1].level === 1 && starUpgradeProbe.tiers[1].bulletSpeed === starUpgradeProbe.powerTankBulletSpeed, "first star should increase bullet speed");
