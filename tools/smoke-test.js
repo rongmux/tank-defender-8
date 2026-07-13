@@ -292,6 +292,13 @@ function keyPress(code, options = {}) {
   keyUp(code);
 }
 
+function finishStageSelectClosing() {
+  const snapshot = context.window.TankDefender8.debugSnapshot();
+  if (snapshot.screen === "stageSelectClosing") {
+    context.window.TankDefender8.debugAdvanceStageTransition(16);
+  }
+}
+
 assert(context.window.TankDefender8, "TankDefender8 API was not exposed");
 const runtimeAudioManifest = context.window.TankDefender8.audioManifest();
 assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest id should match the free replacement manifest");
@@ -403,7 +410,7 @@ assert(hiddenMessageProbe.presentations[9].drop.y === 248 && hiddenMessageProbe.
 assert(hiddenMessageProbe.afterCutscene.screen === "editor" && hiddenMessageProbe.afterCutscene.visits === 7, "the hidden cutscene should continue into Construction without adding another exit");
 assert(hiddenMessageProbe.afterCutscene.inputCount === 0, "finishing the hidden cutscene should clear its input accumulator");
 assert(hiddenMessageProbe.wrappedVisits === 0, "Construction visit tracking should preserve the original eight-bit wraparound");
-assert(hiddenMessageProbe.alternateSelection.screen === "stageSelect" && hiddenMessageProbe.alternateSelection.players === 1, "the hidden cutscene should continue through the currently selected title handler");
+assert(hiddenMessageProbe.alternateSelection.screen === "stageSelectClosing" && hiddenMessageProbe.alternateSelection.players === 1, "the hidden cutscene should continue through the selected title handler and its curtain close");
 const fullGameOverProbe = context.window.TankDefender8.debugFullGameOverScreenProbe();
 assert(fullGameOverProbe.duration === 180, "full-screen game over should match its three-second replacement fanfare at 60 Hz");
 assert(fullGameOverProbe.entry.screen === "fullGameOver" && fullGameOverProbe.entry.elapsed === 0, "game-over interstitial should start on its own screen at frame zero");
@@ -495,7 +502,10 @@ snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "title" && snapshot.titleMenu === 0 && snapshot.titleMenuAction === "one", "title menu should return to one-player after navigating back up");
 keyPress("Digit1");
 snapshot = context.window.TankDefender8.debugSnapshot();
-assert(snapshot.screen === "stageSelect" && snapshot.stageSelectPlayers === 1, "one-player shortcut should enter the original stage-selection screen");
+assert(snapshot.screen === "stageSelectClosing" && snapshot.stageSelectPlayers === 1, "one-player shortcut should begin the original stage-selection curtain close");
+finishStageSelectClosing();
+snapshot = context.window.TankDefender8.debugSnapshot();
+assert(snapshot.screen === "stageSelect", "the stage-selection screen should appear after the sixteen-frame curtain close");
 assert(snapshot.stage === 1 && snapshot.stageSelectLimit === 35, "stage selection should start at stage 1 and stop at the original stage 35 limit");
 keyPress("Space");
 snapshot = context.window.TankDefender8.debugSnapshot();
@@ -513,6 +523,10 @@ assert(snapshot.screen === "stageIntro" && snapshot.stage === 1 && snapshot.paus
 keyPress("Enter");
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "stageIntro" && snapshot.paused === false, "Start-equivalent Enter should not pause before active gameplay begins");
+const stageIntroBeforeFinalFrame = context.window.TankDefender8.debugAdvanceStageTransition(94);
+assert(stageIntroBeforeFinalFrame.screen === "stageIntro" && stageIntroBeforeFinalFrame.transitionTimer === 1, "stage intro should remain inactive through its first ninety-four frames");
+const stageIntroAfterFinalFrame = context.window.TankDefender8.debugAdvanceStageTransition(1);
+assert(stageIntroAfterFinalFrame.screen === "playing" && stageIntroAfterFinalFrame.transitionTimer === 0, "the ninety-fifth stage-intro frame should prepare the active battle screen");
 buttons.find((button) => button.dataset.action === "reset").click();
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "title" && snapshot.paused === false, "reset after Start-pause probe should return to the title screen");
@@ -540,17 +554,30 @@ assert(schema.gameSettings.powerUpDurations.timer === 10, "schema should expose 
 assert(schema.gameSettings.powerUpRules.carrierRelease === "hit", "schema should expose carrier release rule");
 assert(schema.gameSettings.powerUpRules.clearUncollectedOnCarrierSpawn === true, "schema should expose carrier spawn power-up clearing rule");
 assert(schema.gameSettings.powerUpRules.pickupScore === 500, "schema should expose power-up pickup score");
-assert(schema.gameSettings.timings.stageIntro === 86, "schema should expose stage intro timing");
+assert(schema.gameSettings.timings.stageIntro === 95, "schema should expose the original ninety-five-frame pre-battle interval");
 assert(schema.gameSettings.timings.stageClearDelay === 128, "schema should expose the original 128-frame stage clear delay");
 assert(schema.gameSettings.timings.stageClear === 0, "zero stage-clear timing should select the dynamic original result schedule");
 const stageIntroStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(schema.gameSettings.timings.stageIntro);
-const stageIntroMidProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(Math.floor(schema.gameSettings.timings.stageIntro / 2));
+const stageIntroOpenStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(18);
+const stageIntroFirstOpenProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(17);
+const stageIntroDuplicateOpenProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(16);
+const stageIntroLastOpenProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(3);
+const stageIntroPrepareProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(2);
 const stageIntroEndProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(0);
-assert(stageIntroStartProbe.coverWidth === 104, "stage intro curtain should begin fully covering both battlefield halves");
-assert(stageIntroStartProbe.left.x === 16 && stageIntroStartProbe.left.y === 16 && stageIntroStartProbe.left.h === 208, "stage intro curtain should start inside the original left border");
-assert(stageIntroStartProbe.right.x === 120 && stageIntroStartProbe.right.x + stageIntroStartProbe.right.w === 224, "stage intro right curtain should cover through the original battlefield edge");
-assert(stageIntroMidProbe.coverWidth > 0 && stageIntroMidProbe.coverWidth < stageIntroStartProbe.coverWidth, "stage intro curtain should open during the countdown");
-assert(stageIntroEndProbe.coverWidth === 0 && stageIntroEndProbe.left.w === 0 && stageIntroEndProbe.right.w === 0, "stage intro curtain should be fully open at the end");
+assert(stageIntroStartProbe.loadingFrames === 77 && stageIntroStartProbe.openingFrames === 16 && stageIntroStartProbe.prepareFrames === 2, "stage intro should preserve thirteen map frames, sixty-four attribute frames, sixteen opening frames, and two preparation frames");
+assert(stageIntroStartProbe.phase === "loading" && stageIntroStartProbe.coverRows === 15, "stage intro should begin behind a fully closed thirty-row curtain");
+assert(stageIntroStartProbe.top.w === 256 && stageIntroStartProbe.top.h === 120 && stageIntroStartProbe.bottom.y === 120, "stage curtain should cover the full screen from the top and bottom");
+assert(stageIntroOpenStartProbe.phase === "opening" && stageIntroOpenStartProbe.coverRows === 15, "the first opening wait should begin from a fully closed curtain");
+assert(stageIntroFirstOpenProbe.coverRows === 14 && stageIntroDuplicateOpenProbe.coverRows === 14, "the first two opening writes should restore the same center row pair");
+assert(stageIntroLastOpenProbe.coverRows === 1, "the fifteenth opening write should leave only the outer row pair covered");
+assert(stageIntroPrepareProbe.phase === "prepare" && stageIntroPrepareProbe.coverRows === 0, "tank preparation should begin only after the curtain is fully open");
+assert(stageIntroEndProbe.coverRows === 0 && stageIntroEndProbe.top.h === 0 && stageIntroEndProbe.bottom.h === 0, "stage intro curtain should remain fully open at the end");
+const stageSelectCloseStartProbe = context.window.TankDefender8.debugStageSelectCurtainProbe(16);
+const stageSelectCloseMidProbe = context.window.TankDefender8.debugStageSelectCurtainProbe(8);
+const stageSelectCloseEndProbe = context.window.TankDefender8.debugStageSelectCurtainProbe(0);
+assert(stageSelectCloseStartProbe.coverRows === 0, "stage-selection close should begin with the title unobscured");
+assert(stageSelectCloseMidProbe.coverRows === 8 && stageSelectCloseMidProbe.coverHeight === 64, "stage-selection close should advance one paired tile row per frame");
+assert(stageSelectCloseEndProbe.coverRows === 15 && stageSelectCloseEndProbe.top.h + stageSelectCloseEndProbe.bottom.h === 240, "the final close write should leave the screen fully grey");
 assert(schema.gameSettings.timings.gameOverSlide === 127, "schema should expose the original 127-frame game-over slide");
 assert(schema.gameSettings.timings.gameOverHold === 129, "schema should expose the original 129-frame centered game-over hold");
 assert(schema.gameSettings.timings.playerRespawn === 24, "schema should expose the original player death-state ticks");
@@ -1187,6 +1214,7 @@ keyPress("Enter");
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "title" && snapshot.stage === 1 && snapshot.hasConstructedStage === true, "Start should leave construction and install the edited stage as stage 1");
 byAction.one.click();
+finishStageSelectClosing();
 keyPress("Enter");
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "stageIntro" && snapshot.constructionStageActive === true, "starting stage 1 should activate the constructed map");
@@ -1220,6 +1248,7 @@ const loaded = context.window.TankDefender8.loadStagePack(validPack);
 assert(loaded === true, "loadStagePack should accept a valid pack");
 assert(context.window.TankDefender8.currentPackInfo().id === "smoke", "current pack id should update");
 byAction.one.click();
+finishStageSelectClosing();
 keyPress("Enter");
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.players.length === 1 && snapshot.screen === "stageIntro", "pack state cleanup probe should start from active gameplay");
@@ -1651,6 +1680,7 @@ assert(context.window.TankDefender8.currentPackInfo().playerSpawns[0].x === 3, "
 assert(context.window.TankDefender8.currentPackInfo().enemySpawns[0].x === 1, "current stage should expose custom enemy spawns");
 assert(context.window.TankDefender8.currentPackInfo().powerUpSpawns[1].x === 10, "current stage should expose custom power-up spawns");
 byAction.one.click();
+finishStageSelectClosing();
 keyPress("Enter");
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.nextSpawn === 5, "custom enemy spawn pacing should control the first default spawn delay");
@@ -1731,6 +1761,7 @@ assert(context.window.TankDefender8.currentPackInfo().stageClearBonus.points ===
 assert(carrierNumbers(context.window.TankDefender8.currentPackInfo().enemySequence) === "4,11,18", "free replacement pack should preserve carrier positions");
 assert(context.window.TankDefender8.loadStagePack(quadrantPack) === true, "quadrant stage pack should reload after free pack");
 byAction.one.click();
+finishStageSelectClosing();
 keyPress("Enter");
 canvasContext.calls.length = 0;
 assert(typeof animationFrameCallback === "function", "animation frame callback should be registered");
@@ -1775,10 +1806,16 @@ assert(snapshot.panelEnemyCounter === 20, "new stage panel counter should show a
 assert(snapshot.nextSpawn === 70, "stage should use the first enemy spawnDelay");
 assert(snapshot.players[0].spawnFlash === snapshot.timings.playerSpawnFlash, "new player should start with the spawn flash timer");
 assert(snapshot.players[0].invuln === 0, "new player protection should wait until the spawn animation completes");
-assert(canvasContext.calls.some((call) => call.op === "strokeRect" && (call.style === "#f3f0d4" || call.style === "#e0b84b") && call.w <= 14 && call.h <= 14), "initial render should draw player spawn outline sprite parts");
+assert(!canvasContext.calls.some((call) => call.op === "strokeRect" && (call.style === "#f3f0d4" || call.style === "#e0b84b") && call.w <= 14 && call.h <= 14), "stage-intro loading should not draw player spawn sprites before tank preparation finishes");
 assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#173b67" && call.w === 16 && call.h === 16), "render should draw terrain sprite parts from the manifest");
 assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#d8c17a" && call.w === 10 && call.h === 10), "render should draw base sprite parts from the manifest");
-assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#15161a" && call.w === 7 && call.h === 6), "render should draw enemy counter sprite parts from the manifest");
+assert(!canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#15161a" && call.w === 7 && call.h === 6), "stage-intro loading should not draw the side-panel enemy icons early");
+
+context.window.TankDefender8.debugAdvanceStageTransition(context.window.TankDefender8.debugStageIntroCurtainProbe().remaining);
+canvasContext.calls.length = 0;
+animationFrameCallback(1017);
+assert(canvasContext.calls.some((call) => call.op === "strokeRect" && (call.style === "#f3f0d4" || call.style === "#e0b84b") && call.w <= 14 && call.h <= 14), "the prepared battle frame should draw player spawn outline sprite parts");
+assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#15161a" && call.w === 7 && call.h === 6), "the prepared battle frame should draw enemy counter sprite parts");
 
 canvasContext.calls.length = 0;
 for (let i = 0; i < 50; i += 1) {

@@ -110,7 +110,7 @@ const pack = {
       pickupScore: 500
     },
     timings: {
-      stageIntro: 86,
+      stageIntro: 95,
       stageClearDelay: 128,
       stageClear: 0,
       gameOverSlide: 127,
@@ -286,7 +286,7 @@ if (result.ok) window.TankDefender8.loadStagePack(pack);
 
 关卡包可以设置 `gameSettings.powerUpRules`。`carrierRelease` 默认为 `hit`，符合原版风格中闪烁携带者首次被玩家命中时释放道具的规则；如果自定义关卡包需要等到携带者被摧毁，可将其设为 `destroyed`。`clearUncollectedOnCarrierSpawn` 默认为 `true`，因此新的携带敌人会移除场上任何尚未拾取的道具。`pickupScore` 默认为 `500`，即玩家拾取任意道具获得的分数。
 
-关卡包可以设置 `gameSettings.timings`。大多数值使用 60 FPS 显示帧。`playerRespawn` 按活动的 `[true, true, false, true]` 玩家节奏推进，默认为 24 个死亡 tick；若在 tick 0 被命中，32 个显示帧后扣除生命。`playerSpawnFlash` 和 `enemySpawnFlash` 均默认为 28 个显示帧，并在每个显示帧推进，对应原版两个各 14 帧的出生状态；因此玩家从被命中起累计 60 个显示帧后完成出生。替代出生图标会在每个 14 帧状态中对称地缩小再放大。`playerInvulnerability` 使用 64 帧单位，默认为 `3`；它只在出生完成后开始，并根据全局相位持续 129 至 192 个显示帧。`stageIntro` 控制开始游戏前战场幕布的打开过程。`gameOverSlide` 默认为 `127`，控制战场内 GAME OVER 文字移至最终 Y 坐标；`gameOverHold` 默认为 `129`，在进入结算表前保持战斗模拟继续运行并清空玩家输入。两者共同保留原版 256 帧的游戏结束后战场阶段。`powerUpTtl` 默认为 `0`，表示释放出的道具不会随时间消失，只会在被拾取或后续携带者生成新道具时被移除。自定义限时道具可将其设置为正帧数。`stageClearDelay` 默认为 `128`：完成检测帧只装载计数器而不消耗它，随后仍执行 128 个完整的活动战斗更新，因此游离的玩家子弹仍可能在结算画面前摧毁基地。`stageClear` 默认为 `0`，表示使用原版动态结算时序：初始等待 30 帧；每行先设置一帧；每次可见计数以及每行最后一次空计数都由一帧更新和八帧停顿组成；行间等待 20 帧；TOTAL 前等待 30 帧；领先奖励前等待 15 帧；最后保持 120 帧。自定义关卡包仍可将 `stageClear` 设为正数，以固定覆盖结算总时长。省略时，引擎使用示例中列出的内置时序默认值。
+关卡包可以设置 `gameSettings.timings`。大多数值使用 60 FPS 显示帧。`playerRespawn` 按活动的 `[true, true, false, true]` 玩家节奏推进，默认为 24 个死亡 tick；若在 tick 0 被命中，32 个显示帧后扣除生命。`playerSpawnFlash` 和 `enemySpawnFlash` 均默认为 28 个显示帧，并在每个显示帧推进，对应原版两个各 14 帧的出生状态；因此玩家从被命中起累计 60 个显示帧后完成出生。替代出生图标会在每个 14 帧状态中对称地缩小再放大。`playerInvulnerability` 使用 64 帧单位，默认为 `3`；它只在出生完成后开始，并根据全局相位持续 129 至 192 个显示帧。`stageIntro` 默认为 `95` 个非活动显示帧：13 帧地图写入等待、64 帧属性复制等待、16 帧上下幕布打开，以及 2 帧坦克/侧栏准备等待。准备完成前不会显示动态对象和右侧栏。自定义关卡包可以覆盖总时长；幕布仍会在可用区间末尾按离散步骤打开。进入选关界面另行使用原版固定的 16 帧上下闭幕。`gameOverSlide` 默认为 `127`，控制战场内 GAME OVER 文字移至最终 Y 坐标；`gameOverHold` 默认为 `129`，在进入结算表前保持战斗模拟继续运行并清空玩家输入。两者共同保留原版 256 帧的游戏结束后战场阶段。`powerUpTtl` 默认为 `0`，表示释放出的道具不会随时间消失，只会在被拾取或后续携带者生成新道具时被移除。自定义限时道具可将其设置为正帧数。`stageClearDelay` 默认为 `128`：完成检测帧只装载计数器而不消耗它，随后仍执行 128 个完整的活动战斗更新，因此游离的玩家子弹仍可能在结算画面前摧毁基地。`stageClear` 默认为 `0`，表示使用原版动态结算时序：初始等待 30 帧；每行先设置一帧；每次可见计数以及每行最后一次空计数都由一帧更新和八帧停顿组成；行间等待 20 帧；TOTAL 前等待 30 帧；领先奖励前等待 15 帧；最后保持 120 帧。自定义关卡包仍可将 `stageClear` 设为正数，以固定覆盖结算总时长。省略时，引擎使用示例中列出的内置时序默认值。
 
 关卡包可以设置 `gameSettings.enemySpawnPacing`，以 60 FPS 帧为单位控制默认敌人生成节奏。`firstDelay` 用于首个未显式设置 `spawnDelay` 的敌人；后续敌人使用 `max(minDelay, baseDelay - stage * stageStep)`。对于持续至第 70 关的原版风格 35 关关卡包，第 36 至 70 关使用 `extendedLoopMinDelay` 作为下限。双人模式下，生成的默认延迟会减去 `twoPlayerDelayReduction`；敌人显式设置的 `spawnDelay` 不会改变。省略时，默认值为 `0`、`190`、`4`、`50`、`50` 和 `20`，对应原版立即生成首个敌人以及 `190 - stage * 4` 的间隔。帧数有效范围为 `0` 至 `3600`。仍支持使用 `twoPlayerDelayMultiplier` 的旧版自定义关卡包。
 
@@ -322,3 +322,4 @@ if (result.ok) window.TankDefender8.loadStagePack(pack);
 
 - [StrategyWiki Battle City 攻略](https://strategywiki.org/wiki/Battle_City/Walkthrough)
 - [StrategyWiki Battle City 玩法](https://strategywiki.org/wiki/Battle_City/Gameplay)
+- [Battle City 带注释反汇编](https://github.com/cyneprepou4uk/NES-Games-Disassembly/blob/main/Battle%20City/bank_FF.asm)

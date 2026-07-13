@@ -46,6 +46,16 @@
   const GAME_OVER_TEXT_START_Y = SCREEN_H;
   const GAME_OVER_TEXT_TARGET_Y = 0x71;
   const HIGH_SCORE_PALETTE_COLORS = ["#111111", "#345fd1", "#6b6f78", "#f3f0d4"];
+  const STAGE_CURTAIN_CLOSE_FRAMES = 16;
+  const STAGE_MAP_DRAW_FRAMES = 13;
+  const STAGE_ATTRIBUTE_COPY_FRAMES = 64;
+  const STAGE_CURTAIN_OPEN_FRAMES = 16;
+  const STAGE_PREPARE_FRAMES = 2;
+  const ORIGINAL_STAGE_INTRO_FRAMES =
+    STAGE_MAP_DRAW_FRAMES +
+    STAGE_ATTRIBUTE_COPY_FRAMES +
+    STAGE_CURTAIN_OPEN_FRAMES +
+    STAGE_PREPARE_FRAMES;
   const STAGE_RESULT_TIMING = {
     initialWait: 30,
     rowSetup: 1,
@@ -71,7 +81,7 @@
     pickupScore: 500
   };
   const DEFAULT_TIMINGS = {
-    stageIntro: 86,
+    stageIntro: ORIGINAL_STAGE_INTRO_FRAMES,
     stageClearDelay: 128,
     stageClear: 0,
     gameOverSlide: 127,
@@ -2025,8 +2035,9 @@
     resetTitleIdleTimer();
     game.stageSelectPlayers = players === 2 ? 2 : 1;
     game.stage = 1;
-    game.screen = "stageSelect";
+    game.screen = "stageSelectClosing";
     game.paused = false;
+    game.transitionTimer = STAGE_CURTAIN_CLOSE_FRAMES;
     game.stageSelectHoldTimer = 0;
   }
 
@@ -2303,6 +2314,7 @@
   }
 
   function nextStage(delta) {
+    if (game.screen === "stageSelectClosing") return;
     if (game.screen === "stageSelect") {
       changeStageSelection(delta);
       return;
@@ -2834,6 +2846,12 @@
 
     if (game.screen === "fullGameOver") {
       updateFullGameOverScreen();
+      return;
+    }
+
+    if (game.screen === "stageSelectClosing") {
+      game.transitionTimer -= 1;
+      if (game.transitionTimer <= 0) game.screen = "stageSelect";
       return;
     }
 
@@ -4371,12 +4389,13 @@
     else if (game.screen === "hiddenMessage") renderHiddenMessage();
     else if (game.screen === "highScore") renderHighScore();
     else if (game.screen === "fullGameOver") renderFullGameOver();
+    else if (game.screen === "stageSelectClosing") renderStageSelectClosing();
     else if (game.screen === "stageSelect") renderStageSelect();
     else if (game.screen === "editor") renderEditor();
     else if (game.screen === "stageClear") renderStageClear();
+    else if (game.screen === "stageIntro") renderStageIntro();
     else {
       renderGame();
-      if (game.screen === "stageIntro") renderStageIntro();
       if (game.screen === "gameOver") renderGameOver();
       if (game.paused) renderPause();
     }
@@ -4531,6 +4550,11 @@
     ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
     drawText("STAGE", 96, 112, 1, "#15161a");
     drawText(String(game.stage), 152, 112, 1, "#15161a");
+  }
+
+  function renderStageSelectClosing() {
+    renderTitle();
+    renderCurtain(stageSelectCurtainState());
   }
 
   function renderGame() {
@@ -5010,37 +5034,79 @@
   }
 
   function renderStageIntro() {
+    renderGameBackdrop(game.grid);
+    renderBase();
     const curtain = stageIntroCurtainState();
-    ctx.fillStyle = "#6b6f78";
-    if (curtain.left.w > 0) ctx.fillRect(curtain.left.x, curtain.left.y, curtain.left.w, curtain.left.h);
-    if (curtain.right.w > 0) ctx.fillRect(curtain.right.x, curtain.right.y, curtain.right.w, curtain.right.h);
-    if (curtain.edgeLeft) {
-      ctx.fillStyle = "#8a8e98";
-      ctx.fillRect(curtain.edgeLeft.x, curtain.edgeLeft.y, curtain.edgeLeft.w, curtain.edgeLeft.h);
-      ctx.fillRect(curtain.edgeRight.x, curtain.edgeRight.y, curtain.edgeRight.w, curtain.edgeRight.h);
-    }
-    const clips = [curtain.left, curtain.right].filter((rect) => rect.w > 0);
+    renderCurtain(curtain);
+    const clips = [curtain.top, curtain.bottom].filter((rect) => rect.h > 0);
     drawTextClipped("STAGE", 96, 112, 1, "#15161a", clips);
     drawTextClipped(String(game.stage), 152, 112, 1, "#15161a", clips);
   }
 
-  function stageIntroCurtainState(timer) {
-    const duration = Math.max(1, gameSettings().timings.stageIntro);
+  function renderCurtain(curtain) {
+    ctx.fillStyle = "#6b6f78";
+    if (curtain.top.h > 0) ctx.fillRect(curtain.top.x, curtain.top.y, curtain.top.w, curtain.top.h);
+    if (curtain.bottom.h > 0) ctx.fillRect(curtain.bottom.x, curtain.bottom.y, curtain.bottom.w, curtain.bottom.h);
+  }
+
+  function curtainRects(coverRows) {
+    const rows = clamp(Math.floor(Number(coverRows) || 0), 0, 15);
+    const coverHeight = rows * 8;
+    return {
+      coverRows: rows,
+      coverHeight,
+      top: { x: 0, y: 0, w: SCREEN_W, h: coverHeight },
+      bottom: { x: 0, y: SCREEN_H - coverHeight, w: SCREEN_W, h: coverHeight }
+    };
+  }
+
+  /** Reproduces the original sixteen waits that replace paired top/bottom rows with grey tiles. */
+  function stageSelectCurtainState(timer) {
+    const duration = STAGE_CURTAIN_CLOSE_FRAMES;
     const remaining = clamp(Math.floor(Number(timer === undefined ? game.transitionTimer : timer) || 0), 0, duration);
-    const progress = 1 - remaining / duration;
-    const coverWidth = Math.ceil((FIELD_W / 2) * (1 - progress));
-    const left = { x: FIELD_X, y: FIELD_Y, w: coverWidth, h: FIELD_H };
-    const right = { x: FIELD_X + FIELD_W - coverWidth, y: FIELD_Y, w: coverWidth, h: FIELD_H };
-    const edgeWidth = coverWidth > 0 ? Math.min(2, coverWidth) : 0;
+    const elapsed = duration - remaining;
     return {
       duration,
       remaining,
-      progress,
-      coverWidth,
-      left,
-      right,
-      edgeLeft: edgeWidth ? { x: FIELD_X + coverWidth - edgeWidth, y: FIELD_Y, w: edgeWidth, h: FIELD_H } : null,
-      edgeRight: edgeWidth ? { x: FIELD_X + FIELD_W - coverWidth, y: FIELD_Y, w: edgeWidth, h: FIELD_H } : null,
+      elapsed,
+      progress: elapsed / duration,
+      ...curtainRects(Math.min(15, elapsed))
+    };
+  }
+
+  function openingCurtainRows(completedFrames) {
+    const completed = clamp(Math.floor(Number(completedFrames) || 0), 0, STAGE_CURTAIN_OPEN_FRAMES);
+    if (completed === 0) return 15;
+    return Math.max(0, Math.min(14, STAGE_CURTAIN_OPEN_FRAMES - completed));
+  }
+
+  /** Splits the configurable intro window into load, sixteen-step opening, and tank preparation phases. */
+  function stageIntroCurtainState(timer) {
+    const duration = Math.max(1, gameSettings().timings.stageIntro);
+    const remaining = clamp(Math.floor(Number(timer === undefined ? game.transitionTimer : timer) || 0), 0, duration);
+    const elapsed = duration - remaining;
+    const prepareFrames = Math.min(STAGE_PREPARE_FRAMES, Math.max(0, duration - 1));
+    const openingFrames = Math.min(STAGE_CURTAIN_OPEN_FRAMES, Math.max(1, duration - prepareFrames));
+    const loadingFrames = Math.max(0, duration - openingFrames - prepareFrames);
+    const openingElapsed = clamp(elapsed - loadingFrames, 0, openingFrames);
+    const openingStep = Math.floor((openingElapsed / openingFrames) * STAGE_CURTAIN_OPEN_FRAMES);
+    const phase = elapsed < loadingFrames
+      ? "loading"
+      : elapsed < loadingFrames + openingFrames
+        ? "opening"
+        : "prepare";
+    return {
+      duration,
+      remaining,
+      elapsed,
+      progress: elapsed / duration,
+      phase,
+      loadingFrames,
+      openingFrames,
+      prepareFrames,
+      openingElapsed,
+      openingStep,
+      ...curtainRects(phase === "loading" ? 15 : openingCurtainRows(openingStep)),
       label: `STAGE ${game.stage}`,
       labelX: 96,
       labelY: 112
@@ -9118,6 +9184,22 @@
     },
     debugStageIntroCurtainProbe(timer) {
       return stageIntroCurtainState(timer);
+    },
+    debugStageSelectCurtainProbe(timer) {
+      return stageSelectCurtainState(timer);
+    },
+    debugAdvanceStageTransition(frames) {
+      const count = Math.max(0, Math.floor(Number(frames) || 0));
+      for (let index = 0; index < count; index += 1) {
+        if (game.screen !== "stageSelectClosing" && game.screen !== "stageIntro") break;
+        update();
+      }
+      return {
+        screen: game.screen,
+        transitionTimer: game.transitionTimer,
+        stage: game.stage,
+        players: game.players.length
+      };
     },
     debugStageAdvanceProbe(stage) {
       return stageAdvanceResult(stage === undefined ? stageCount() : Number(stage));
