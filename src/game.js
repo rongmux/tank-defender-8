@@ -43,6 +43,16 @@
   const FULL_GAME_OVER_SCREEN_FRAMES = 180;
   const HIGH_SCORE_SCREEN_FRAMES = 576;
   const HIGH_SCORE_PALETTE_COLORS = ["#111111", "#345fd1", "#6b6f78", "#f3f0d4"];
+  const STAGE_RESULT_TIMING = {
+    initialWait: 30,
+    rowSetup: 1,
+    countUpdate: 1,
+    countHold: 8,
+    betweenRows: 20,
+    beforeTotals: 30,
+    beforeBonus: 15,
+    finalHold: 120
+  };
   const DEFAULT_INITIAL_LIVES = 3;
   const DEFAULT_BONUS_LIFE_SCORES = [20000];
   const DEFAULT_DEATH_POWER_LEVEL = 0;
@@ -60,7 +70,7 @@
   const DEFAULT_TIMINGS = {
     stageIntro: 86,
     stageClearDelay: 60,
-    stageClear: 420,
+    stageClear: 0,
     gameOverSlide: 96,
     playerRespawn: 24,
     playerSpawnFlash: SPAWN_ANIMATION_FRAMES,
@@ -152,8 +162,8 @@
       powerUp: { freq: 740, duration: 0.08, gain: 0.035, wave: "triangle" },
       playerShoot: { freq: 460, duration: 0.03, gain: 0.018, wave: "square" },
       enemyShoot: { freq: 310, duration: 0.03, gain: 0.018, wave: "square" },
-      stageClearA: { freq: 660, duration: 0.08, gain: 0.03, wave: "triangle" },
-      stageClearB: { freq: 880, duration: 0.1, gain: 0.025, wave: "triangle" },
+      scoreCount: { freq: 560, duration: 0.035, gain: 0.022, wave: "square" },
+      stageBonus: { freq: 820, duration: 0.12, gain: 0.03, wave: "triangle" },
       gameOver: {
         duration: 3,
         voices: [
@@ -2810,8 +2820,10 @@
     }
 
     if (game.screen === "stageClear") {
+      const previousVisibleKills = stageResultVisibleKillCount(stageClearPresentation());
       game.stageClearElapsed += 1;
       const presentation = stageClearPresentation();
+      if (stageResultVisibleKillCount(presentation) > previousVisibleKills) playSound("scoreCount");
       if (
         game.stageResultReason === "clear" &&
         !game.stageClearBonusAwarded &&
@@ -4020,9 +4032,7 @@
       : [];
     game.stageClearBonusAwarded = false;
     game.screen = "stageClear";
-    game.transitionTimer = gameSettings().timings.stageClear;
-    playSound("stageClearA");
-    setTimeout(() => playSound("stageClearB"), 90);
+    game.transitionTimer = stageResultDuration(game.players);
   }
 
   function finishStageResult() {
@@ -4154,51 +4164,80 @@
     if (game.stageClearBonusAwarded) return;
     game.stageClearBonusAwarded = true;
     const bonus = gameSettings().stageClearBonus;
+    let awarded = false;
     for (const player of game.players) {
       if (!game.stageClearBonusPlayerIds.includes(player.id)) continue;
       addPlayerScore(player, bonus.points);
       player.stagePoints += bonus.points;
+      awarded = true;
     }
+    if (awarded) playSound("stageBonus");
   }
 
+  /**
+   * Builds the original result-table timeline, including its final empty count loop per row.
+   * @param {Array<object>} players Result participants with per-type stage kill counts.
+   * @param {number} elapsed Display frames elapsed since entering the result screen.
+   * @returns {object} Visible row values and reveal-frame boundaries for the supplied frame.
+   */
   function stageClearPresentation(players, elapsed) {
     const result = stageClearResultSummary(players || game.players);
     const frame = Math.max(0, Math.floor(elapsed === undefined ? game.stageClearElapsed : elapsed));
-    let cursor = 30;
+    const countStep = STAGE_RESULT_TIMING.countUpdate + STAGE_RESULT_TIMING.countHold;
+    let cursor = STAGE_RESULT_TIMING.initialWait;
     const rows = result.rows.map((row, index) => {
-      const steps = Math.max(1, row.p1Kills, row.p2Kills);
-      const countedSteps = frame < cursor ? 0 : clamp(Math.floor((frame - cursor) / 8) + 1, 0, steps);
+      const steps = Math.max(row.p1Kills, row.p2Kills);
+      const firstCountFrame = cursor + STAGE_RESULT_TIMING.rowSetup + STAGE_RESULT_TIMING.countUpdate;
+      const countedSteps = steps <= 0 || frame < firstCountFrame
+        ? 0
+        : clamp(Math.floor((frame - firstCountFrame) / countStep) + 1, 0, steps);
       const visible = {
         ...row,
+        firstCountFrame,
+        countStep,
         p1VisibleKills: Math.min(row.p1Kills, countedSteps),
         p2VisibleKills: Math.min(row.p2Kills, countedSteps)
       };
       visible.p1VisiblePoints = visible.p1VisibleKills * row.score;
       visible.p2VisiblePoints = visible.p2VisibleKills * row.score;
-      cursor += steps * 8;
-      if (index < result.rows.length - 1) cursor += 20;
+      cursor += STAGE_RESULT_TIMING.rowSetup + (steps + 1) * countStep;
+      if (index < result.rows.length - 1) cursor += STAGE_RESULT_TIMING.betweenRows;
       return visible;
     });
-    const totalsRevealFrame = cursor + 30;
-    const bonusRevealFrame = totalsRevealFrame + 15;
+    const totalsRevealFrame = cursor + STAGE_RESULT_TIMING.beforeTotals;
+    const bonusRevealFrame = totalsRevealFrame + STAGE_RESULT_TIMING.beforeBonus;
+    const endFrame = bonusRevealFrame + STAGE_RESULT_TIMING.finalHold;
     return {
       result,
       rows,
       frame,
       totalsRevealFrame,
       bonusRevealFrame,
+      endFrame,
       showTotals: frame >= totalsRevealFrame,
       showBonus: frame >= bonusRevealFrame || game.stageClearBonusAwarded
     };
+  }
+
+  function stageResultVisibleKillCount(presentation) {
+    return presentation.rows.reduce(
+      (sum, row) => sum + row.p1VisibleKills + row.p2VisibleKills,
+      0
+    );
+  }
+
+  function stageResultDuration(players) {
+    const override = gameSettings().timings.stageClear;
+    return override > 0 ? override : stageClearPresentation(players, 0).endFrame;
   }
 
   function stageClearBonusRecipients(players) {
     const bonus = gameSettings().stageClearBonus;
     if (!bonus.points) return [];
     if (bonus.twoPlayerOnly && players.length < 2) return [];
-    const alivePlayers = players.filter(Boolean);
-    if (!alivePlayers.length) return [];
-    const counts = alivePlayers.map((player) => ({
+    const presentPlayers = players.filter(Boolean);
+    if (!presentPlayers.length) return [];
+    const counts = presentPlayers.map((player) => ({
       player,
       count: player.stageKills.reduce((sum, value) => sum + value, 0)
     }));
@@ -4206,7 +4245,7 @@
     if (maxCount <= 0) return [];
     const leaders = counts.filter((entry) => entry.count === maxCount).map((entry) => entry.player);
     if (bonus.requireStrictLead && leaders.length !== 1) return [];
-    return leaders;
+    return leaders.filter((player) => player.lives > 0);
   }
 
   function stageClearResultSummary(players) {
@@ -9080,7 +9119,6 @@
       const stageValue = Math.max(1, Math.floor(Number(stage) || 1));
       const total = enemyTotal(stageValue);
       const timings = gameSettings().timings;
-      const maxFrames = timings.stageClearDelay + timings.stageClear + timings.stageIntro + 5;
       const transitions = [];
       try {
         game.screen = "playing";
@@ -9092,6 +9130,7 @@
         prepareBattleGrid(game.grid);
         game.customGrid = null;
         game.players = [createPlayer(1)];
+        const maxFrames = timings.stageClearDelay + stageResultDuration(game.players) + timings.stageIntro + 5;
         game.enemies = [];
         game.bullets = [];
         game.explosions = [];
@@ -9268,7 +9307,7 @@
           stage: game.stage
         };
         return {
-          duration: gameSettings().timings.stageClear,
+          duration: entry.timer,
           entry,
           visibleRows: counted.rows.map((row) => ({
             typeIndex: row.typeIndex,
@@ -9287,10 +9326,18 @@
         Object.assign(game, previous);
       }
     },
-    debugStageClearBonusProbe(p1Kills, p2Kills) {
+    debugStageClearBonusProbe(p1Kills, p2Kills, p1Lives, p2Lives) {
       const players = [
-        { id: 1, stageKills: [Math.max(0, Math.floor(Number(p1Kills) || 0))] },
-        { id: 2, stageKills: [Math.max(0, Math.floor(Number(p2Kills) || 0))] }
+        {
+          id: 1,
+          lives: p1Lives === undefined ? 1 : Math.max(0, Math.floor(Number(p1Lives) || 0)),
+          stageKills: [Math.max(0, Math.floor(Number(p1Kills) || 0))]
+        },
+        {
+          id: 2,
+          lives: p2Lives === undefined ? 1 : Math.max(0, Math.floor(Number(p2Lives) || 0)),
+          stageKills: [Math.max(0, Math.floor(Number(p2Kills) || 0))]
+        }
       ];
       return {
         points: gameSettings().stageClearBonus.points,
@@ -9330,6 +9377,8 @@
           typeIndex: row.typeIndex,
           p1Kills: row.p1Kills,
           p2Kills: row.p2Kills,
+          firstCountFrame: row.firstCountFrame,
+          countStep: row.countStep,
           p1VisibleKills: row.p1VisibleKills,
           p2VisibleKills: row.p2VisibleKills,
           p1VisiblePoints: row.p1VisiblePoints,
@@ -9337,6 +9386,8 @@
         })),
         totalsRevealFrame: presentation.totalsRevealFrame,
         bonusRevealFrame: presentation.bonusRevealFrame,
+        endFrame: presentation.endFrame,
+        duration: stageResultDuration(players),
         showTotals: presentation.showTotals,
         showBonus: presentation.showBonus
       };

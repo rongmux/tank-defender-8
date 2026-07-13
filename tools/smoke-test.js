@@ -297,6 +297,8 @@ const runtimeAudioManifest = context.window.TankDefender8.audioManifest();
 assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest id should match the free replacement manifest");
 assert(Object.keys(runtimeAudioManifest.events).length >= 18, "runtime audio manifest should expose gameplay sound events");
 assert(runtimeAudioManifest.events.powerUp.wave === "triangle", "runtime audio manifest should expose power-up sound shape");
+assert(runtimeAudioManifest.events.scoreCount.wave === "square", "result-table count ticks should use the replacement score-count sound");
+assert(runtimeAudioManifest.events.stageBonus.wave === "triangle", "result-table leader bonus should use the replacement bonus sound");
 assert(runtimeAudioManifest.events.gameOver.duration === 3, "full-screen game-over replacement fanfare should last three seconds");
 assert(runtimeAudioManifest.events.gameOver.voices.length === 3, "game-over replacement fanfare should preserve a three-voice arrangement");
 assert(runtimeAudioManifest.events.gameOver.voices.every((voice) => voice.notes.length === 15), "each game-over voice should cover the full 180-frame interstitial");
@@ -519,7 +521,7 @@ assert(schema.gameSettings.powerUpRules.clearUncollectedOnCarrierSpawn === true,
 assert(schema.gameSettings.powerUpRules.pickupScore === 500, "schema should expose power-up pickup score");
 assert(schema.gameSettings.timings.stageIntro === 86, "schema should expose stage intro timing");
 assert(schema.gameSettings.timings.stageClearDelay === 60, "schema should expose stage clear delay timing");
-assert(schema.gameSettings.timings.stageClear === 420, "schema should expose stage clear timing");
+assert(schema.gameSettings.timings.stageClear === 0, "zero stage-clear timing should select the dynamic original result schedule");
 const stageIntroStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(schema.gameSettings.timings.stageIntro);
 const stageIntroMidProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(Math.floor(schema.gameSettings.timings.stageIntro / 2));
 const stageIntroEndProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(0);
@@ -579,12 +581,19 @@ assert(stageClearRowsProbe.p2EnemyPoints === expectedP2EnemyPoints, "stage clear
 assert(stageClearRowsProbe.p1BonusPoints === 500 && stageClearRowsProbe.p2BonusPoints === 250, "stage clear result should expose non-kill bonus points separately");
 assert(stageClearRowsProbe.p1StagePoints === expectedP1EnemyPoints + 500, "stage clear result should include P1 bonus in the stage total");
 assert(stageClearRowsProbe.p2StagePoints === expectedP2EnemyPoints + 250, "stage clear result should include P2 bonus in the stage total");
-const stageClearPresentationStart = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 29);
-assert(stageClearPresentationStart.rows.every((row) => row.p1VisibleKills === 0 && row.p2VisibleKills === 0), "stage result should wait 30 frames before counting the first enemy type");
-const stageClearPresentationFirstTick = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 30);
-assert(stageClearPresentationFirstTick.rows[0].p1VisibleKills === 1 && stageClearPresentationFirstTick.rows[0].p2VisibleKills === 1, "stage result should count both players together on the first 8-frame tick");
-const stageClearPresentationSecondTick = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 38);
-assert(stageClearPresentationSecondTick.rows[0].p1VisibleKills === 2 && stageClearPresentationSecondTick.rows[0].p2VisibleKills === 1, "stage result should advance kill counts once every 8 frames");
+const stageClearPresentationStart = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 31);
+assert(stageClearPresentationStart.rows.every((row) => row.p1VisibleKills === 0 && row.p2VisibleKills === 0), "stage result should keep the first enemy row at zero through its setup frame");
+const stageClearPresentationFirstTick = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 32);
+assert(stageClearPresentationFirstTick.rows[0].firstCountFrame === 32 && stageClearPresentationFirstTick.rows[0].countStep === 9, "stage result should start row one on frame 32 and use a nine-frame count cadence");
+assert(stageClearPresentationFirstTick.rows[0].p1VisibleKills === 1 && stageClearPresentationFirstTick.rows[0].p2VisibleKills === 1, "stage result should count both players together on the first count update");
+const stageClearPresentationFirstHold = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 40);
+assert(stageClearPresentationFirstHold.rows[0].p1VisibleKills === 1, "stage result should hold the first value for eight frames");
+const stageClearPresentationSecondTick = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 41);
+assert(stageClearPresentationSecondTick.rows[0].p1VisibleKills === 2 && stageClearPresentationSecondTick.rows[0].p2VisibleKills === 1, "stage result should advance kill counts once every nine frames");
+assert(stageClearPresentationSecondTick.totalsRevealFrame === 187 && stageClearPresentationSecondTick.bonusRevealFrame === 202, "stage result should preserve the per-row gaps before TOTAL and the leader bonus");
+assert(stageClearPresentationSecondTick.endFrame === 322 && stageClearPresentationSecondTick.duration === 322, "default stage result duration should include the original 120-frame final hold");
+assert(context.window.TankDefender8.debugStageClearPresentationProbe([0, 0, 0, 0], [0, 0, 0, 0], 0).endFrame === 295, "a zero-kill result should use the 295-frame minimum schedule");
+assert(context.window.TankDefender8.debugStageClearPresentationProbe([20, 0, 0, 0], [0, 0, 0, 0], 0).endFrame === 475, "a 20-count result should extend to 475 frames instead of ending at a fixed duration");
 const stageClearPresentationBeforeTotal = context.window.TankDefender8.debugStageClearPresentationProbe(
   [2, 1, 0, 0],
   [1, 0, 0, 0],
@@ -1552,7 +1561,7 @@ const gameOverReturnProbe = context.window.TankDefender8.debugGameOverReturnProb
 assert(gameOverReturnProbe.finalFrame.screen === "gameOver" && gameOverReturnProbe.finalFrame.timer === 0, "game-over should render the centered final frame before leaving");
 assert(gameOverReturnProbe.afterFinalFrame.screen === "stageClear" && gameOverReturnProbe.afterFinalFrame.reason === "gameOver", "the in-field game-over banner should continue into the shared stage-result screen");
 const gameOverStageResultProbe = context.window.TankDefender8.debugGameOverStageResultProbe();
-assert(gameOverStageResultProbe.duration === schema.gameSettings.timings.stageClear, "game-over stage result should retain the configured result duration");
+assert(gameOverStageResultProbe.duration === 358 && gameOverStageResultProbe.duration === gameOverStageResultProbe.entry.timer, "game-over stage result should derive its duration from the visible kill counts");
 assert(
   gameOverStageResultProbe.entry.screen === "stageClear" &&
     gameOverStageResultProbe.entry.reason === "gameOver" &&
@@ -1583,6 +1592,8 @@ assert(gameOverStageResultProbe.wrappedStage.screen === "fullGameOver" && gameOv
 const bonusProbe = context.window.TankDefender8.debugStageClearBonusProbe(4, 3);
 assert(bonusProbe.points === 777 && bonusProbe.recipients.join(",") === "1", "stage clear bonus should go to the strict kill leader");
 assert(context.window.TankDefender8.debugStageClearBonusProbe(4, 4).recipients.length === 0, "stage clear bonus should not award ties by default");
+assert(context.window.TankDefender8.debugStageClearBonusProbe(4, 3, 0, 1).recipients.length === 0, "an eliminated kill leader should not pass the result bonus to the runner-up");
+assert(context.window.TankDefender8.debugStageClearPresentationProbe([20, 0, 0, 0], [0, 0, 0, 0], 0).duration === 8, "a positive custom stage-clear timing should override the dynamic result duration");
 assert(context.window.TankDefender8.currentPackInfo().enemyAi.intersectionTurnChance === 0.33, "current pack should expose custom enemy intersection turn settings");
 assert(context.window.TankDefender8.currentPackInfo().enemyAi.blockedRetryTicks === 5, "current pack should expose custom blocked retry timing");
 assert(context.window.TankDefender8.currentPackInfo().playerUpgradeRules[0].maxBullets === 2, "current pack should expose custom player upgrade rules");

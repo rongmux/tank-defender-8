@@ -20,8 +20,8 @@
     "powerUp": { "freq": 740, "duration": 0.08, "gain": 0.035, "wave": "triangle" },
     "playerShoot": { "freq": 460, "duration": 0.03, "gain": 0.018, "wave": "square" },
     "enemyShoot": { "freq": 310, "duration": 0.03, "gain": 0.018, "wave": "square" },
-    "stageClearA": { "freq": 660, "duration": 0.08, "gain": 0.03, "wave": "triangle" },
-    "stageClearB": { "freq": 880, "duration": 0.1, "gain": 0.025, "wave": "triangle" },
+    "scoreCount": { "freq": 560, "duration": 0.035, "gain": 0.022, "wave": "square" },
+    "stageBonus": { "freq": 820, "duration": 0.12, "gain": 0.03, "wave": "triangle" },
     "gameOver": {
       "duration": 3,
       "voices": [

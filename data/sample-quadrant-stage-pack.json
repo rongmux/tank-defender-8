@@ -26,7 +26,7 @@
     "timings": {
       "stageIntro": 86,
       "stageClearDelay": 60,
-      "stageClear": 420,
+      "stageClear": 0,
       "playerRespawn": 24,
       "playerInvulnerability": 3,
       "enemySpawnFlash": 28,
