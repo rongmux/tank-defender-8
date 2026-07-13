@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tank Defender 8</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="cabinet" aria-label="Tank Defender 8">
+        <canvas id="game" width="256" height="240" aria-label="Tank Defender 8 playfield"></canvas>
+      </section>
+      <nav class="toolbar" aria-label="Game actions">
+        <button type="button" data-action="one">1P</button>
+        <button type="button" data-action="two">2P</button>
+        <button type="button" data-action="prev">-</button>
+        <button type="button" data-action="next">+</button>
+        <button type="button" data-action="edit">EDIT</button>
+        <button type="button" data-action="test">TEST</button>
+        <button type="button" data-action="save">SAVE</button>
+        <button type="button" data-action="load">LOAD</button>
+        <button type="button" data-action="clear">CLEAR</button>
+        <button type="button" data-action="export">EXPORT</button>
+        <button type="button" data-action="import">IMPORT</button>
+        <button type="button" data-action="pause">PAUSE</button>
+        <button type="button" data-action="reset">RESET</button>
+        <input id="stage-pack-file" class="visually-hidden" type="file" accept="application/json,.json">
+      </nav>
+    </main>
+    <script src="src/game.js"></script>
+  </body>
+</html>

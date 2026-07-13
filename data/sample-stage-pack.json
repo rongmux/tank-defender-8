@@ -1,0 +1,148 @@
+{
+  "id": "sample-one-stage",
+  "totalStages": 1,
+  "enemyTotal": 20,
+  "enemyTypes": [
+    { "name": "basic", "hp": 1, "speed": 0.5, "bullet": 2.0, "wallPower": 1, "reload": 1, "fireChance": 0.03125, "score": 100, "color": "#a9a176" },
+    { "name": "fast", "hp": 1, "speed": 1.0, "bullet": 2.0, "wallPower": 1, "reload": 1, "fireChance": 0.03125, "score": 200, "color": "#b87854" },
+    { "name": "power", "hp": 1, "speed": 0.5, "bullet": 4.0, "wallPower": 1, "reload": 1, "fireChance": 0.03125, "score": 300, "color": "#7fba72" },
+    { "name": "armor", "hp": 4, "speed": 0.5, "bullet": 2.0, "wallPower": 1, "reload": 1, "fireChance": 0.03125, "score": 400, "color": "#7fba72", "hitColors": ["#b0b5c3", "#9aa2ad", "#79a95e", "#7fba72"] }
+  ],
+  "gameSettings": {
+    "initialLives": 3,
+    "bonusLifeScores": [20000],
+    "deathPowerLevel": 0,
+    "powerUpDurations": {
+      "helmet": 10,
+      "shovel": 20,
+      "shovelFlash": 4,
+      "timer": 10
+    },
+    "powerUpRules": {
+      "carrierRelease": "hit",
+      "clearUncollectedOnCarrierSpawn": true,
+      "pickupScore": 500
+    },
+    "timings": {
+      "stageIntro": 86,
+      "stageClearDelay": 60,
+      "stageClear": 420,
+      "playerRespawn": 24,
+      "playerInvulnerability": 3,
+      "enemySpawnFlash": 56,
+      "enemyInitialReload": 0,
+      "enemySpawnRetry": 25,
+      "powerUpTtl": 0
+    },
+    "enemySpawnPacing": {
+      "firstDelay": 0,
+      "baseDelay": 190,
+      "stageStep": 4,
+      "minDelay": 50,
+      "extendedLoopMinDelay": 50,
+      "twoPlayerDelayReduction": 20
+    },
+    "playerMovement": {
+      "speed": 1.0,
+      "frameCadence": [true, true, false, true],
+      "iceSlideFrames": 28,
+      "iceSlideSpeed": 1.0
+    },
+    "projectileRules": {
+      "bulletSize": 4,
+      "spawnOffset": 9,
+      "boundsPadding": 4
+    },
+    "friendlyFire": {
+      "enabled": true,
+      "stunFrames": 200
+    },
+    "explosionRules": {
+      "bulletCancel": { "ttl": 10, "color": "#f8e08b", "coreColor": "#f7f1c6" },
+      "baseDestroy": { "ttl": 80, "color": "#f05a42", "coreColor": "#f7f1c6" },
+      "brickHit": { "ttl": 12, "color": "#d08b52", "coreColor": "#f7f1c6" },
+      "steelHit": { "ttl": 12, "color": "#dbe0ef", "coreColor": "#f7f1c6" },
+      "steelBlocked": { "ttl": 8, "color": "#dbe0ef", "coreColor": "#f7f1c6" },
+      "enemyHit": { "ttl": 14, "color": "#ffffff", "coreColor": "#f7f1c6" },
+      "enemyDestroy": { "ttl": 34, "color": "#f0b546", "coreColor": "#f7f1c6" },
+      "playerStun": { "ttl": 12, "color": "#f7f1c6", "coreColor": "#f7f1c6" },
+      "playerDestroy": { "ttl": 32, "color": "#f05a42", "coreColor": "#f7f1c6" }
+    },
+    "stageAdvance": {
+      "loopAfterFinalStage": true
+    },
+    "stageClearBonus": {
+      "points": 1000,
+      "twoPlayerOnly": true,
+      "requireStrictLead": true
+    },
+    "enemyAi": {
+      "intersectionTurnChance": 0.0625,
+      "blockedRetryChance": 0.75,
+      "blockedRetryTicks": 2,
+      "horizontalFirstChance": 0.5
+    },
+    "playerUpgradeRules": [
+      { "level": 0, "maxBullets": 1, "bulletSpeed": 2.0, "wallPower": 1, "reload": 1 },
+      { "level": 1, "maxBullets": 1, "bulletSpeed": 4.0, "wallPower": 1, "reload": 1 },
+      { "level": 2, "maxBullets": 2, "bulletSpeed": 4.0, "wallPower": 1, "reload": 1 },
+      { "level": 3, "maxBullets": 2, "bulletSpeed": 4.0, "wallPower": 3, "reload": 1 }
+    ],
+    "timerFreezesEnemyTime": true
+  },
+  "stageSettings": [
+    {
+      "maxActiveEnemies": 4,
+      "maxActiveEnemiesTwoPlayer": 6,
+      "playerSpawns": [{ "x": 4, "y": 12 }, { "x": 8, "y": 12 }],
+      "enemySpawns": [{ "x": 0, "y": 0 }, { "x": 6, "y": 0 }, { "x": 12, "y": 0 }],
+      "powerUpSpawns": [
+        { "x": 1, "y": 1 }, { "x": 6, "y": 1 }, { "x": 11, "y": 1 }, { "x": 3, "y": 2 },
+        { "x": 9, "y": 2 }, { "x": 1, "y": 5 }, { "x": 5, "y": 4 }, { "x": 7, "y": 4 },
+        { "x": 11, "y": 5 }, { "x": 3, "y": 7 }, { "x": 9, "y": 7 }, { "x": 1, "y": 10 },
+        { "x": 5, "y": 9 }, { "x": 7, "y": 9 }, { "x": 11, "y": 10 }, { "x": 6, "y": 11 }
+      ]
+    }
+  ],
+  "maps": [
+    [
+      ".............",
+      "..B.......B..",
+      "..B..S.S..B..",
+      "..B.......B..",
+      "....WWWWW....",
+      ".BBB.....BBB.",
+      ".....FFF.....",
+      ".BBB.....BBB.",
+      "....IIIII....",
+      "..B.......B..",
+      "..B..S.S..B..",
+      ".....BBB.....",
+      ".....B.B....."
+    ]
+  ],
+  "enemies": [
+    [
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 0, "spawnDelay": 70 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 1, "spawnDelay": 96 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 2, "spawnDelay": 96 },
+      { "typeIndex": 0, "carrier": true, "spawnIndex": 0, "powerUpType": "helmet", "spawnDelay": 120 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 1 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 2 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 0 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 1 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 2 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 0 },
+      { "typeIndex": 0, "carrier": true, "spawnIndex": 1, "powerUpType": "timer" },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 2 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 0 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 1 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 2 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 0 },
+      { "typeIndex": 0, "carrier": false, "spawnIndex": 1 },
+      { "typeIndex": 0, "carrier": true, "spawnIndex": 2, "powerUpType": "star" },
+      { "typeIndex": 1, "carrier": false, "spawnIndex": 1 },
+      { "typeIndex": 1, "carrier": false, "spawnIndex": 2 }
+    ]
+  ]
+}
