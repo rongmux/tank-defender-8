@@ -765,6 +765,11 @@ assert(enemyBulletPlayerProbe.protected.bulletRemoved === true && enemyBulletPla
 assert(enemyBulletPlayerProbe.positiveNine.bulletRemoved && enemyBulletPlayerProbe.negativeNine.bulletRemoved, "enemy bullets should hit within nine pixels of the player center on both axes");
 assert(!enemyBulletPlayerProbe.positiveNine.alive && !enemyBulletPlayerProbe.negativeNine.alive, "unprotected center-range enemy hits should start player death");
 assert(!enemyBulletPlayerProbe.positiveTen.bulletRemoved && !enemyBulletPlayerProbe.negativeTen.bulletRemoved, "enemy bullets should miss at a ten-pixel player-center difference");
+const playerBulletEnemyProbe = context.window.TankDefender8.debugPlayerBulletEnemyCollisionProbe();
+assert(playerBulletEnemyProbe.positiveNine.bulletRemoved && playerBulletEnemyProbe.negativeNine.bulletRemoved, "player bullets should hit within nine pixels of the enemy center on both axes");
+assert(!playerBulletEnemyProbe.positiveNine.enemyAlive && !playerBulletEnemyProbe.negativeNine.enemyAlive, "center-range player hits should destroy one-hit enemies");
+assert(!playerBulletEnemyProbe.positiveTen.bulletRemoved && !playerBulletEnemyProbe.negativeTen.bulletRemoved, "player bullets should miss at a ten-pixel enemy-center difference");
+assert(playerBulletEnemyProbe.spawning.enemyAlive && playerBulletEnemyProbe.spawning.enemyHp === 1 && !playerBulletEnemyProbe.spawning.bulletRemoved, "player bullets should pass through enemies still in their spawn animation");
 const spawnLockProbe = context.window.TankDefender8.debugPlayerSpawnLockProbe();
 assert(spawnLockProbe.duration === schema.gameSettings.timings.playerSpawnFlash, "player spawn lock should use the configured timing");
 assert(spawnLockProbe.locked.spawnFlash === spawnLockProbe.before.spawnFlash - 1, "player spawn lock should count down each frame");

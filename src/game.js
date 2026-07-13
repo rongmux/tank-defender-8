@@ -2959,7 +2959,7 @@
     if (bullet.ownerKind === "player") {
       for (const enemy of game.enemies) {
         if (!enemy.alive || enemy.spawnFlash > 0) continue;
-        if (rectsOverlap(bulletRect(bullet), enemy)) {
+        if (bulletHitsTankByCenter(bullet, enemy)) {
           const wasCarrier = enemy.carrier;
           enemy.hp -= 1;
           bullet.remove = true;
@@ -6338,6 +6338,66 @@
           negativeNine: run(0, -9, -9),
           positiveTen: run(0, 10, 0),
           negativeTen: run(0, -10, 0)
+        };
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
+    debugPlayerBulletEnemyCollisionProbe() {
+      const previous = {
+        players: game.players,
+        enemies: game.enemies,
+        enemyKilled: game.enemyKilled,
+        explosions: game.explosions
+      };
+      const type = enemyTypeDefinitions()[0];
+      const makeEnemy = (spawnFlash) => ({
+        kind: "enemy",
+        id: 100,
+        x: 64,
+        y: 64,
+        w: 14,
+        h: 14,
+        alive: true,
+        hp: 1,
+        spawnFlash,
+        carrier: false,
+        typeIndex: 0,
+        score: type.score
+      });
+      const makeBullet = (centerDx, centerDy) => ({
+        x: 64 + 7 + centerDx - gameSettings().projectileRules.bulletSize / 2,
+        y: 64 + 7 + centerDy - gameSettings().projectileRules.bulletSize / 2,
+        w: gameSettings().projectileRules.bulletSize,
+        h: gameSettings().projectileRules.bulletSize,
+        ownerKind: "player",
+        ownerId: 1,
+        ownerKey: "player:1",
+        remove: false
+      });
+      const run = (spawnFlash, centerDx, centerDy) => {
+        const enemy = makeEnemy(spawnFlash);
+        const bullet = makeBullet(centerDx, centerDy);
+        game.players = [];
+        game.enemies = [enemy];
+        game.enemyKilled = 0;
+        game.explosions = [];
+        hitTank(bullet);
+        return {
+          bulletRemoved: bullet.remove,
+          enemyAlive: enemy.alive,
+          enemyHp: enemy.hp,
+          enemyKilled: game.enemyKilled,
+          explosions: game.explosions.length
+        };
+      };
+      try {
+        return {
+          positiveNine: run(0, 9, 9),
+          negativeNine: run(0, -9, -9),
+          positiveTen: run(0, 10, 0),
+          negativeTen: run(0, -10, 0),
+          spawning: run(12, 0, 0)
         };
       } finally {
         Object.assign(game, previous);

@@ -285,7 +285,7 @@ if (result.ok) window.TankDefender8.loadStagePack(pack);
 
 关卡包可以设置 `gameSettings.playerMovement`。`speed` 是每个活动移动帧的移动距离。`frameCadence` 是选择活动移动帧的循环布尔数组；原版默认值 `[true, true, false, true]` 表示每四帧中的三帧移动一个像素。横向和纵向移动之间切换时，会先把玩家的两个坐标对齐到最近的 8 像素网格点再移动；直行或 180 度反向不会吸附。在冰面上，若没有保留的惯性，第一次方向输入会载入 `iceSlideFrames`（默认为 `28`）。当 `0x10` 位仍置位时，前 13 个惯性 tick 会忽略方向输入，并以 `iceSlideSpeed`（`1` 像素）移动；低于 16 后恢复控制。松开输入时会在滑行中消耗剩余计数器。离开冰面会保留但暂停计数器，移动受阻时仍会消耗计数。提供 `speed` 但省略 `frameCadence` 的旧版自定义关卡包会在每一帧移动。
 
-关卡包可以设置 `gameSettings.projectileRules`。`bulletSize` 是子弹碰撞/渲染尺寸（像素），`spawnOffset` 是相对于坦克中心的炮口偏移，`boundsPadding` 是子弹被移除前允许超出战场的边距。敌军或友军子弹仅在与玩家的两个中心坐标差都小于 `10` 像素时命中；头盔或出生后力场会吸收子弹且不显示命中特效。省略时，默认值为 `4`、`9` 和 `4`；有效范围分别为：`bulletSize` `1` 至 `16`，`spawnOffset` `0` 至 `32`，`boundsPadding` `0` 至 `32`。
+关卡包可以设置 `gameSettings.projectileRules`。`bulletSize` 是子弹碰撞/渲染尺寸（像素），`spawnOffset` 是相对于坦克中心的炮口偏移，`boundsPadding` 是子弹被移除前允许超出战场的边距。子弹命中坦克要求子弹与坦克的两个中心坐标差都小于 `10` 像素。仍在出生动画中的敌人会被跳过；玩家的头盔或出生后力场会吸收来袭子弹且不显示命中特效。省略时，默认值为 `4`、`9` 和 `4`；有效范围分别为：`bulletSize` `1` 至 `16`，`spawnOffset` `0` 至 `32`，`boundsPadding` `0` 至 `32`。
 
 关卡包可以设置 `gameSettings.friendlyFire`。默认情况下，双人模式中的玩家子弹在两个中心坐标差都小于 `10` 像素时可以命中另一名玩家，并加载一个 `200` tick 的眩晕计数器，而不是将其摧毁。该计数器只在活动玩家移动帧递减，使用原版节奏时约持续 `267` 个显示帧。眩晕玩家不能移动或转向，但仍可朝当前方向射击；再次被友军命中不会刷新已有眩晕。受到头盔或出生后力场保护的队友会吸收友军子弹，不会眩晕，也不会显示命中特效。将 `enabled` 设为 `false` 可禁用该碰撞效果，也可以把 `stunFrames` 调整为 `0` 至 `3600` 个移动 tick。
 
