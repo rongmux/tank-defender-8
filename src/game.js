@@ -3171,7 +3171,11 @@
 
   function canPlayerCollectPowerUp(player, power) {
     if (!player.alive || player.respawn > 0 || player.spawnFlash > 0) return false;
-    return Math.abs(player.x - power.x) < 12 && Math.abs(player.y - power.y) < 12;
+    const playerCenterX = player.x + player.w / 2;
+    const playerCenterY = player.y + player.h / 2;
+    const powerCenterX = power.x + power.w / 2;
+    const powerCenterY = power.y + power.h / 2;
+    return Math.abs(playerCenterX - powerCenterX) < 12 && Math.abs(playerCenterY - powerCenterY) < 12;
   }
 
   function collectPowerUp(player, power) {
@@ -5219,9 +5223,13 @@
       return result;
     },
     debugPowerUpPickupBoundaryProbe() {
-      const player = { alive: true, respawn: 0, spawnFlash: 0, stun: 0, invuln: 0, x: 64, y: 64 };
+      const player = { alive: true, respawn: 0, spawnFlash: 0, stun: 0, invuln: 0, x: 63, y: 63, w: 14, h: 14 };
       const power = { type: "star", x: 64, y: 64, w: POWERUP_SIZE, h: POWERUP_SIZE };
-      const check = (dx, dy) => canPlayerCollectPowerUp({ ...player, x: player.x + dx, y: player.y + dy }, power);
+      const check = (centerDx, centerDy) => canPlayerCollectPowerUp({
+        ...player,
+        x: power.x + power.w / 2 - player.w / 2 + centerDx,
+        y: power.y + power.h / 2 - player.h / 2 + centerDy
+      }, power);
       return {
         samePosition: check(0, 0),
         positiveEleven: check(11, 11),
@@ -5239,7 +5247,7 @@
     },
     debugPowerUpPickupPriorityProbe() {
       const previousPlayers = game.players;
-      const makePlayer = (id, spawnFlash) => ({ id, alive: true, respawn: 0, spawnFlash: spawnFlash || 0, x: 64, y: 64 });
+      const makePlayer = (id, spawnFlash) => ({ id, alive: true, respawn: 0, spawnFlash: spawnFlash || 0, x: 63, y: 63, w: 14, h: 14 });
       const power = { type: "star", x: 64, y: 64, w: POWERUP_SIZE, h: POWERUP_SIZE };
       try {
         const player1 = makePlayer(1);
