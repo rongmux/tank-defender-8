@@ -2973,7 +2973,11 @@
 
       for (const player of game.players) {
         if (!player.alive || player.id === bullet.ownerId || player.spawnFlash > 0) continue;
-        if (rectsOverlap(bulletRect(bullet), player)) {
+        if (bulletHitsTankByCenter(bullet, player)) {
+          if (player.invuln > 0) {
+            bullet.remove = true;
+            return true;
+          }
           if (gameSettings().friendlyFire.enabled && player.stun <= 0) player.stun = gameSettings().friendlyFire.stunFrames;
           bullet.remove = true;
           addRuleExplosion("playerStun", player.x + 7, player.y + 7);
@@ -2996,6 +3000,14 @@
       }
     }
     return false;
+  }
+
+  function bulletHitsTankByCenter(bullet, tank) {
+    const bulletCenterX = bullet.x + bullet.w / 2;
+    const bulletCenterY = bullet.y + bullet.h / 2;
+    const tankCenterX = tank.x + tank.w / 2;
+    const tankCenterY = tank.y + tank.h / 2;
+    return Math.abs(bulletCenterX - tankCenterX) < 10 && Math.abs(bulletCenterY - tankCenterY) < 10;
   }
 
   function destroyEnemy(enemy, ownerId, options) {
@@ -6414,10 +6426,20 @@
         player.stun = 0;
         const activeFriendlyBullet = friendlyBullet();
         hitTank(activeFriendlyBullet);
-        const friendlyAfterSpawn = {
+        const protectedFriendlyAfterSpawn = {
           stun: player.stun,
           bulletRemoved: activeFriendlyBullet.remove
         };
+        const postSpawnInvuln = player.invuln;
+        player.invuln = 0;
+        const unprotectedFriendlyBullet = friendlyBullet();
+        hitTank(unprotectedFriendlyBullet);
+        const friendlyAfterProtection = {
+          stun: player.stun,
+          bulletRemoved: unprotectedFriendlyBullet.remove
+        };
+        player.invuln = postSpawnInvuln;
+        player.stun = 0;
         const activeEnemyBullet = enemyBullet();
         hitTank(activeEnemyBullet);
         const enemyAfterSpawn = {
@@ -6434,7 +6456,8 @@
           activated,
           released,
           friendlyDuringSpawn,
-          friendlyAfterSpawn,
+          protectedFriendlyAfterSpawn,
+          friendlyAfterProtection,
           enemyDuringSpawn,
           enemyAfterSpawn,
           friendlyFireStunFrames: gameSettings().friendlyFire.enabled ? gameSettings().friendlyFire.stunFrames : 0
@@ -6702,6 +6725,55 @@
         enabled: gameSettings().friendlyFire.enabled,
         stunFrames: gameSettings().friendlyFire.enabled ? gameSettings().friendlyFire.stunFrames : 0
       };
+    },
+    debugFriendlyFireProtectionProbe() {
+      const previous = {
+        players: game.players,
+        enemies: game.enemies,
+        explosions: game.explosions
+      };
+      const makeTarget = (invuln) => ({
+        kind: "player",
+        id: 1,
+        x: 64,
+        y: 64,
+        w: 14,
+        h: 14,
+        alive: true,
+        spawnFlash: 0,
+        invuln,
+        stun: 0
+      });
+      const makeBullet = (centerDx, centerDy) => ({
+        x: 64 + 7 + centerDx - gameSettings().projectileRules.bulletSize / 2,
+        y: 64 + 7 + centerDy - gameSettings().projectileRules.bulletSize / 2,
+        w: gameSettings().projectileRules.bulletSize,
+        h: gameSettings().projectileRules.bulletSize,
+        ownerKind: "player",
+        ownerId: 2,
+        ownerKey: "player:2",
+        remove: false
+      });
+      const run = (invuln, centerDx, centerDy) => {
+        const target = makeTarget(invuln);
+        const bullet = makeBullet(centerDx, centerDy);
+        game.players = [target];
+        game.enemies = [];
+        game.explosions = [];
+        hitTank(bullet);
+        return { bulletRemoved: bullet.remove, stun: target.stun, explosions: game.explosions.length };
+      };
+      try {
+        return {
+          protected: run(1, 0, 0),
+          positiveNine: run(0, 9, 9),
+          negativeNine: run(0, -9, -9),
+          positiveTen: run(0, 10, 0),
+          negativeTen: run(0, -10, 0)
+        };
+      } finally {
+        Object.assign(game, previous);
+      }
     },
     debugPlayerMovementCadenceProbe() {
       const previousTick = game.tick;

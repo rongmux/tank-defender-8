@@ -287,7 +287,7 @@ if (result.ok) window.TankDefender8.loadStagePack(pack);
 
 关卡包可以设置 `gameSettings.projectileRules`。`bulletSize` 是子弹碰撞/渲染尺寸（像素），`spawnOffset` 是相对于坦克中心的炮口偏移，`boundsPadding` 是子弹被移除前允许超出战场的边距。省略时，默认值为 `4`、`9` 和 `4`；有效范围分别为：`bulletSize` `1` 至 `16`，`spawnOffset` `0` 至 `32`，`boundsPadding` `0` 至 `32`。
 
-关卡包可以设置 `gameSettings.friendlyFire`。默认情况下，双人模式中的玩家子弹可以命中另一名玩家，并加载一个 `200` tick 的眩晕计数器，而不是将其摧毁。该计数器只在活动玩家移动帧递减，使用原版节奏时约持续 `267` 个显示帧。眩晕玩家不能移动或转向，但仍可朝当前方向射击；再次被友军命中不会刷新已有眩晕。将 `enabled` 设为 `false` 可禁用该碰撞效果，也可以把 `stunFrames` 调整为 `0` 至 `3600` 个移动 tick。
+关卡包可以设置 `gameSettings.friendlyFire`。默认情况下，双人模式中的玩家子弹在两个中心坐标差都小于 `10` 像素时可以命中另一名玩家，并加载一个 `200` tick 的眩晕计数器，而不是将其摧毁。该计数器只在活动玩家移动帧递减，使用原版节奏时约持续 `267` 个显示帧。眩晕玩家不能移动或转向，但仍可朝当前方向射击；再次被友军命中不会刷新已有眩晕。受到头盔或出生后力场保护的队友会吸收友军子弹，不会眩晕，也不会显示命中特效。将 `enabled` 设为 `false` 可禁用该碰撞效果，也可以把 `stunFrames` 调整为 `0` 至 `3600` 个移动 tick。
 
 关卡包可以设置 `gameSettings.explosionRules`，用于碰撞和摧毁反馈。每条规则包含 `ttl`、`color` 和 `coreColor`；`ttl` 是 `1` 至 `3600` 的 60 FPS 帧数，颜色必须采用 `#rrggbb` 格式。规则名称为 `bulletCancel`、`baseDestroy`、`brickHit`、`steelHit`、`steelBlocked`、`enemyHit`、`enemyDestroy`、`playerStun` 和 `playerDestroy`。
 

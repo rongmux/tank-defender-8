@@ -776,8 +776,9 @@ assert(spawnLockProbe.released.dir === 1, "player should turn after the spawn lo
 assert(spawnLockProbe.released.x > spawnLockProbe.locked.x, "player should move after the spawn lock ends");
 assert(spawnLockProbe.released.bullets === 1, "player should fire after the spawn lock ends");
 assert(spawnLockProbe.released.invuln === schema.gameSettings.timings.playerInvulnerability, "post-spawn protection should wait for the next global 64-frame boundary before counting down");
-assert(spawnLockProbe.friendlyAfterSpawn.stun === spawnLockProbe.friendlyFireStunFrames, "friendly fire should stun after the spawn lock ends");
-assert(spawnLockProbe.friendlyAfterSpawn.bulletRemoved === true, "friendly fire should be consumed after the spawn lock ends");
+assert(spawnLockProbe.protectedFriendlyAfterSpawn.stun === 0 && spawnLockProbe.protectedFriendlyAfterSpawn.bulletRemoved === true, "post-spawn protection should absorb friendly fire without applying stun");
+assert(spawnLockProbe.friendlyAfterProtection.stun === spawnLockProbe.friendlyFireStunFrames, "friendly fire should stun after post-spawn protection ends");
+assert(spawnLockProbe.friendlyAfterProtection.bulletRemoved === true, "friendly fire should be consumed after post-spawn protection ends");
 assert(spawnLockProbe.enemyAfterSpawn.alive === true && spawnLockProbe.enemyAfterSpawn.bulletRemoved === true, "enemy bullets should be absorbed by post-spawn invulnerability");
 const stunProbe = context.window.TankDefender8.debugPlayerStunProbe();
 assert(stunProbe.turned === false, "stunned players should not turn");
@@ -795,6 +796,11 @@ assert(friendlyFireDurationProbe.visibility.map((frame) => frame.visible).join("
 const friendlyFireRefreshProbe = context.window.TankDefender8.debugFriendlyFireRefreshProbe();
 assert(friendlyFireRefreshProbe.before === 37 && friendlyFireRefreshProbe.after === 37, "a repeated friendly hit should not refresh an active stun timer");
 assert(friendlyFireRefreshProbe.bulletRemoved === true, "a repeated friendly hit should still consume the bullet");
+const friendlyProtectionProbe = context.window.TankDefender8.debugFriendlyFireProtectionProbe();
+assert(friendlyProtectionProbe.protected.bulletRemoved === true && friendlyProtectionProbe.protected.stun === 0 && friendlyProtectionProbe.protected.explosions === 0, "player protection should absorb a friendly bullet without stun or hit explosion");
+assert(friendlyProtectionProbe.positiveNine.bulletRemoved && friendlyProtectionProbe.negativeNine.bulletRemoved, "friendly bullets should hit within nine pixels of the teammate center on both axes");
+assert(friendlyProtectionProbe.positiveNine.stun === schema.gameSettings.friendlyFire.stunFrames && friendlyProtectionProbe.negativeNine.stun === schema.gameSettings.friendlyFire.stunFrames, "unprotected center-range friendly hits should apply the configured stun");
+assert(!friendlyProtectionProbe.positiveTen.bulletRemoved && !friendlyProtectionProbe.negativeTen.bulletRemoved, "friendly bullets should miss at a ten-pixel center difference in either horizontal direction");
 const wasdDirectionProbe = context.window.TankDefender8.debugWasdDirectionProbe();
 assert(wasdDirectionProbe.singleAfter.x > wasdDirectionProbe.singleBefore.x && wasdDirectionProbe.singleAfter.dir === 1, "single-player WASD should act as player-one direction keys");
 assert(wasdDirectionProbe.twoAfter.p1.x === wasdDirectionProbe.twoBefore.p1.x && wasdDirectionProbe.twoAfter.p1.dir === wasdDirectionProbe.twoBefore.p1.dir, "two-player WASD should not move player one");
