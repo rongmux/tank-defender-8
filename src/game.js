@@ -2314,7 +2314,7 @@
   }
 
   function nextStage(delta) {
-    if (game.screen === "stageSelectClosing") return;
+    if (game.screen === "stageSelectClosing" || game.screen === "stageClearClosing") return;
     if (game.screen === "stageSelect") {
       changeStageSelection(delta);
       return;
@@ -2584,7 +2584,7 @@
       handleFullGameOverInput(event.code);
     } else if (game.screen === "highScore" || game.screen === "hiddenMessage") {
       return;
-    } else if (game.screen === "stageClear") {
+    } else if (game.screen === "stageClear" || game.screen === "stageClearClosing") {
       return;
     } else if (isPauseInputCode(event.code)) {
       togglePause();
@@ -2857,6 +2857,12 @@
 
     if (game.screen === "stageSelect") {
       updateStageSelectControls();
+      return;
+    }
+
+    if (game.screen === "stageClearClosing") {
+      game.transitionTimer -= 1;
+      if (game.transitionTimer <= 0) finishStageClearClosing();
       return;
     }
 
@@ -4124,8 +4130,13 @@
       resetTitleIdleTimer();
       return;
     }
-    if (!game.customGrid) game.stage = advance.stage;
     game.constructionStageActive = false;
+    game.screen = "stageClearClosing";
+    game.transitionTimer = STAGE_CURTAIN_CLOSE_FRAMES;
+  }
+
+  function finishStageClearClosing() {
+    if (!game.customGrid) game.stage = stageAdvanceResult(game.stage).stage;
     startStage(game.stage);
   }
 
@@ -4404,6 +4415,7 @@
     else if (game.screen === "stageSelect") renderStageSelect();
     else if (game.screen === "editor") renderEditor();
     else if (game.screen === "stageClear") renderStageClear();
+    else if (game.screen === "stageClearClosing") renderStageClearClosing();
     else if (game.screen === "stageIntro") renderStageIntro();
     else {
       renderGame();
@@ -5176,6 +5188,11 @@
       drawTextRight(String(gameSettings().stageClearBonus.points), 200, 208, 1, "#f3f0d4");
       drawText("PTS", 216, 208, 1, "#f3f0d4");
     }
+  }
+
+  function renderStageClearClosing() {
+    renderStageClear();
+    renderCurtain(stageSelectCurtainState());
   }
 
   function totalStageKills(player) {
@@ -9231,6 +9248,37 @@
     debugStageSelectCurtainProbe(timer) {
       return stageSelectCurtainState(timer);
     },
+    debugRenderStageClearClosingFrame(timer) {
+      const previous = {
+        screen: game.screen,
+        stage: game.stage,
+        playerCount: game.playerCount,
+        transitionTimer: game.transitionTimer,
+        players: game.players,
+        stageResultReason: game.stageResultReason,
+        stageClearElapsed: game.stageClearElapsed,
+        stageClearBonusPlayerIds: game.stageClearBonusPlayerIds.slice(),
+        stageClearBonusAwarded: game.stageClearBonusAwarded
+      };
+      try {
+        const player = createPlayer(1);
+        player.score = 12300;
+        player.stageKills = [1, 2, 3, 4];
+        game.screen = "stageClearClosing";
+        game.stage = 1;
+        game.playerCount = 1;
+        game.transitionTimer = clamp(Math.floor(Number(timer) || 0), 0, STAGE_CURTAIN_CLOSE_FRAMES);
+        game.players = [player];
+        game.stageResultReason = "clear";
+        game.stageClearElapsed = stageResultDuration(game.players);
+        game.stageClearBonusPlayerIds = [];
+        game.stageClearBonusAwarded = true;
+        render();
+        return stageSelectCurtainState();
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
     debugAdvanceStageTransition(frames) {
       const count = Math.max(0, Math.floor(Number(frames) || 0));
       for (let index = 0; index < count; index += 1) {
@@ -9393,6 +9441,27 @@
         game.stageClearBonusAwarded = true;
         game.transitionTimer = 1;
         update();
+        const closingStart = {
+          screen: game.screen,
+          stage: game.stage,
+          transitionTimer: game.transitionTimer,
+          curtain: stageSelectCurtainState()
+        };
+        update();
+        const closingFirstStep = {
+          screen: game.screen,
+          stage: game.stage,
+          transitionTimer: game.transitionTimer,
+          curtain: stageSelectCurtainState()
+        };
+        while (game.screen === "stageClearClosing" && game.transitionTimer > 1) update();
+        const closingLastStep = {
+          screen: game.screen,
+          stage: game.stage,
+          transitionTimer: game.transitionTimer,
+          curtain: stageSelectCurtainState()
+        };
+        if (game.screen === "stageClearClosing") update();
         return {
           screen: game.screen,
           stage: game.stage,
@@ -9400,7 +9469,10 @@
           clearPendingTimer: game.clearPendingTimer,
           enemySpawned: game.enemySpawned,
           nextSpawn: game.nextSpawn,
-          constructionStageActive: game.constructionStageActive
+          constructionStageActive: game.constructionStageActive,
+          closingStart,
+          closingFirstStep,
+          closingLastStep
         };
       } finally {
         Object.assign(game, previous);
@@ -9471,6 +9543,7 @@
         game.transitionTimer = 1;
 
         update();
+        while (game.screen === "stageClearClosing") update();
         const after = game.players[0];
         return {
           screen: game.screen,
@@ -9539,7 +9612,7 @@
         prepareBattleGrid(game.grid);
         game.customGrid = null;
         game.players = [createPlayer(1)];
-        const maxFrames = timings.stageClearDelay + stageResultDuration(game.players) + timings.stageIntro + 5;
+        const maxFrames = timings.stageClearDelay + stageResultDuration(game.players) + STAGE_CURTAIN_CLOSE_FRAMES + timings.stageIntro + 5;
         game.enemies = [];
         game.bullets = [];
         game.explosions = [];
