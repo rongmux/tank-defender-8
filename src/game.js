@@ -3849,10 +3849,15 @@
   }
 
   function drawWater(x, y) {
-    drawManifestSprite("terrain", game.tick % 40 < 20 ? "waterA" : "waterB", x, y, {
+    const frame = waterFrameName(game.tick);
+    drawManifestSprite("terrain", frame, x, y, {
       base: "#173b67",
-      wave: game.tick % 40 < 20 ? "#56a6d5" : "#2d789e"
+      wave: frame === "waterA" ? "#56a6d5" : "#2d789e"
     });
+  }
+
+  function waterFrameName(tick) {
+    return (Math.max(0, Math.floor(Number(tick) || 0)) & 32) === 0 ? "waterA" : "waterB";
   }
 
   function drawIce(x, y) {
@@ -5297,6 +5302,9 @@
     },
     debugPowerUpFlashCadenceProbe() {
       return Array.from({ length: 32 }, (_, tick) => ({ tick, visible: isPowerUpVisible(tick) }));
+    },
+    debugWaterAnimationCadenceProbe() {
+      return [0, 31, 32, 63, 64, 95, 96].map((tick) => ({ tick, frame: waterFrameName(tick) }));
     },
     debugPowerUpTtlProbe(ttl) {
       const previousPowerUp = game.powerUp;

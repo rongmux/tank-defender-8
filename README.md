@@ -39,7 +39,7 @@ git diff --check
 ## Implemented Mechanics
 
 - 256x240 logical canvas with the original 16px left border, a 208x208 13x13 battlefield, and a 32px right status panel.
-- Brick, steel, water, forest, and ice terrain. Forest renders as a top cover layer, and ice draws a projectile-cover layer that makes flying bullets harder to see.
+- Brick, steel, water, forest, and ice terrain. Water alternates its two animation frames every 32 gameplay frames. Forest renders as a top cover layer, and ice draws a projectile-cover layer that makes flying bullets harder to see.
 - Tanks collide with solid terrain, the base, enemy tanks, and teammate tanks.
 - Base defense and base destruction game over; shielding brick or steel absorbs bullets before the base can be hit.
 - One-player and two-player modes.

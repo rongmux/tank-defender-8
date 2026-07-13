@@ -669,6 +669,8 @@ assert(powerUpFlashProbe.slice(0, 8).every((frame) => frame.visible === false), 
 assert(powerUpFlashProbe.slice(8, 16).every((frame) => frame.visible === true), "uncollected power-ups should be visible for the second eight-frame band");
 assert(powerUpFlashProbe.slice(16, 24).every((frame) => frame.visible === false), "power-up visibility should repeat with another eight hidden frames");
 assert(powerUpFlashProbe.slice(24, 32).every((frame) => frame.visible === true), "power-up visibility should repeat with another eight visible frames");
+const waterAnimationProbe = context.window.TankDefender8.debugWaterAnimationCadenceProbe();
+assert(waterAnimationProbe.map((entry) => entry.frame).join(",") === "waterA,waterA,waterB,waterB,waterA,waterA,waterB", "water animation should switch on bit five of the global frame counter");
 const grenadeScoreProbe = context.window.TankDefender8.debugGrenadeScoreProbe();
 assert(grenadeScoreProbe.scoreGain === grenadeScoreProbe.pickupScore, "grenade should award only the power-up pickup score");
 assert(grenadeScoreProbe.stagePoints === 0, "grenade should not add enemy score to stage points");
