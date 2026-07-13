@@ -245,9 +245,9 @@ Enemy `typeIndex` values:
 - `2` power
 - `3` armor
 
-Packs may override `enemyTypes`, the four enemy class definitions referenced by `typeIndex`. Each entry may define `name`, `hp`, `speed`, `bullet`, `wallPower`, `reload`, `fireChance`, `score`, `color`, and `hitColors`. `hitColors` is an optional low-health-to-high-health color array used for multi-hit enemies; the default Armor Tank starts green at full health and shifts toward gray as it is damaged. If omitted, the engine uses the built-in original-style defaults. The default Power Tank uses `wallPower: 2`, so its shots cut brick walls faster than ordinary enemy shots.
+Packs may override `enemyTypes`, the four enemy class definitions referenced by `typeIndex`. Each entry may define `name`, `hp`, `speed`, `bullet`, `wallPower`, `reload`, `fireChance`, `score`, `color`, and `hitColors`. `hitColors` is an optional low-health-to-high-health color array used for multi-hit enemies; the default Armor Tank starts green at full health and shifts toward gray as it is damaged. If omitted, the engine uses the built-in original-style defaults. The built-in Power Tank keeps `wallPower: 1`; its faster projectile is its firepower advantage. Custom `wallPower: 2` shots clear one targeted 8x8 brick subtile but cannot destroy steel, while `wallPower: 3` also destroys steel.
 
-Brick walls are peeled from the side hit by the bullet. Ordinary shots need four same-side hits to consume all four 8x8 brick subtiles; powered brick shots remove two subtiles per hit, so the same side takes two hits. This avoids lower-left/lower-right subtiles becoming unreachable because of bullet alignment.
+Brick walls retain the original 4x4 collision fragments inside each 8x8 map subtile. An ordinary shot peels one 8x4 strip perpendicular to a vertical shot, or one 4x8 strip perpendicular to a horizontal shot. Four aligned ordinary shots therefore tunnel one 8-pixel lane through a 16x16 wall while leaving the other lane intact. A powered (`wallPower` 2 or 3) shot removes one targeted 8x8 brick subtile, so two aligned shots tunnel the same lane. Removed 4x4 fragments stop blocking later bullets and tanks.
 
 Enemy `spawnIndex` values:
 

@@ -9,6 +9,9 @@
   const SCREEN_H = 240;
   const TILE = 16;
   const HALF = 8;
+  const WALL_FRAGMENT = 4;
+  const FULL_BRICK_FRAGMENT_MASK = 0xffff;
+  const BRICK_QUARTER_FRAGMENT_MASKS = [0x0033, 0x00cc, 0x3300, 0xcc00];
   const GRID = 13;
   const QUAD_GRID = GRID * 2;
   const FIELD_X = 16;
@@ -680,15 +683,46 @@
   }
 
   function makeCell(type, mask) {
-    return { type: type || EMPTY, mask: mask || 0, steelHits: [0, 0, 0, 0] };
+    const cellType = type || EMPTY;
+    const cellMask = mask || 0;
+    return {
+      type: cellType,
+      mask: cellMask,
+      brickMask: cellType === BRICK ? brickFragmentsFromQuarterMask(cellMask) : 0,
+      steelHits: [0, 0, 0, 0]
+    };
   }
 
   function cloneGrid(grid) {
     return grid.map((row) => row.map((cell) => ({
       type: cell.type,
       mask: cell.mask,
+      brickMask: cell.type === BRICK
+        ? normalizeBrickFragmentMask(cell.brickMask, cell.mask)
+        : 0,
       steelHits: (cell.steelHits || [0, 0, 0, 0]).slice()
     })));
+  }
+
+  function brickFragmentsFromQuarterMask(mask) {
+    let fragments = 0;
+    for (let q = 0; q < 4; q += 1) {
+      if (mask & (1 << q)) fragments |= BRICK_QUARTER_FRAGMENT_MASKS[q];
+    }
+    return fragments;
+  }
+
+  function normalizeBrickFragmentMask(brickMask, quarterMask) {
+    if (!Number.isInteger(brickMask)) return brickFragmentsFromQuarterMask(quarterMask);
+    return brickMask & FULL_BRICK_FRAGMENT_MASK;
+  }
+
+  function quarterMaskFromBrickFragments(brickMask) {
+    let mask = 0;
+    for (let q = 0; q < 4; q += 1) {
+      if (brickMask & BRICK_QUARTER_FRAGMENT_MASKS[q]) mask |= 1 << q;
+    }
+    return mask;
   }
 
   function rng(seed) {
@@ -732,6 +766,7 @@
     const cell = grid[r][c];
     cell.type = type;
     cell.mask = type === BRICK || type === STEEL ? mask || 15 : 0;
+    cell.brickMask = type === BRICK ? brickFragmentsFromQuarterMask(cell.mask) : 0;
     cell.steelHits = [0, 0, 0, 0];
   }
 
@@ -805,12 +840,15 @@
           if (cell.type !== type) {
             cell.type = type;
             cell.mask = 0;
+            cell.brickMask = 0;
             cell.steelHits = [0, 0, 0, 0];
           }
           cell.mask |= 1 << q;
+          if (type === BRICK) cell.brickMask |= BRICK_QUARTER_FRAGMENT_MASKS[q];
         } else if (type !== EMPTY) {
           cell.type = type;
           cell.mask = 0;
+          cell.brickMask = 0;
           cell.steelHits = [0, 0, 0, 0];
         }
       }
@@ -2392,16 +2430,20 @@
       if (cell.type !== type) {
         cell.type = type;
         cell.mask = 0;
+        cell.brickMask = 0;
         cell.steelHits = [0, 0, 0, 0];
       }
       cell.mask |= 1 << q;
+      if (type === BRICK) cell.brickMask |= BRICK_QUARTER_FRAGMENT_MASKS[q];
     } else if (type === EMPTY && (cell.type === BRICK || cell.type === STEEL)) {
       cell.mask &= ~(1 << q);
+      if (cell.type === BRICK) cell.brickMask &= ~BRICK_QUARTER_FRAGMENT_MASKS[q];
       if (!cell.mask) cell.type = EMPTY;
       cell.steelHits = [0, 0, 0, 0];
     } else {
       cell.type = type;
       cell.mask = 0;
+      cell.brickMask = 0;
       cell.steelHits = [0, 0, 0, 0];
     }
   }
@@ -2877,7 +2919,9 @@
       for (let c = c0; c <= c1; c += 1) {
         const cell = game.grid[r][c];
         if ((cell.type !== BRICK && cell.type !== STEEL) || cell.mask === 0) continue;
-        const hitMask = overlappedQuarters(rect, c, r, cell.mask);
+        const hitMask = cell.type === BRICK
+          ? overlappedBrickFragments(rect, c, r, cell)
+          : overlappedQuarters(rect, c, r, cell.mask);
         if (!hitMask) continue;
         const wasSteel = cell.type === STEEL;
         let damaged = false;
@@ -2906,24 +2950,37 @@
     return hit;
   }
 
+  function overlappedBrickFragments(rect, c, r, cell) {
+    const fragments = normalizeBrickFragmentMask(cell.brickMask, cell.mask);
+    let hit = 0;
+    for (let fragment = 0; fragment < 16; fragment += 1) {
+      if (!(fragments & (1 << fragment))) continue;
+      if (rectsOverlap(rect, brickFragmentRect(c, r, fragment))) hit |= 1 << fragment;
+    }
+    return hit;
+  }
+
   function damageWall(cell, c, r, bullet, hitMask) {
     if (cell.type === STEEL) return damageSteelWall(cell, bullet, hitMask);
-    const clearMask = brickDamageMask(cell, bullet.dir, bullet.power);
-    cell.mask &= ~clearMask;
-    if (cell.mask === 0) cell.type = EMPTY;
+    const fragments = normalizeBrickFragmentMask(cell.brickMask, cell.mask);
+    const clearMask = brickDamageMask(fragments, hitMask, bullet.dir, bullet.power);
+    cell.brickMask = fragments & ~clearMask;
+    cell.mask = quarterMaskFromBrickFragments(cell.brickMask);
+    if (cell.mask === 0) {
+      cell.type = EMPTY;
+      cell.brickMask = 0;
+    }
     return clearMask !== 0;
   }
 
-  function brickDamageMask(cell, dir, power) {
-    const order = brickImpactOrder(dir);
-    const hits = power >= 2 ? 2 : 1;
-    let clearMask = 0;
-    for (const q of order) {
-      if (!(cell.mask & (1 << q))) continue;
-      clearMask |= 1 << q;
-      if (bitCount(clearMask) >= hits) break;
-    }
-    return clearMask;
+  function brickDamageMask(fragments, hitFragments, dir, power) {
+    const quarter = brickImpactOrder(dir).find((q) => hitFragments & BRICK_QUARTER_FRAGMENT_MASKS[q]);
+    if (quarter === undefined) return 0;
+    const quarterFragments = fragments & BRICK_QUARTER_FRAGMENT_MASKS[quarter];
+    if (power >= 2) return quarterFragments;
+    return brickImpactStripMasks(quarter, dir)
+      .map((stripMask) => stripMask & quarterFragments)
+      .find((stripMask) => stripMask !== 0) || 0;
   }
 
   function brickImpactOrder(dir) {
@@ -2933,14 +2990,15 @@
     return [0, 2, 1, 3];
   }
 
-  function bitCount(value) {
-    let count = 0;
-    let bits = value;
-    while (bits) {
-      count += bits & 1;
-      bits >>= 1;
-    }
-    return count;
+  function brickImpactStripMasks(quarter, dir) {
+    const row = quarter >= 2 ? 2 : 0;
+    const col = (quarter & 1) * 2;
+    const rowMask = (targetRow) => (1 << (targetRow * 4 + col)) | (1 << (targetRow * 4 + col + 1));
+    const colMask = (targetCol) => (1 << (row * 4 + targetCol)) | (1 << ((row + 1) * 4 + targetCol));
+    if (dir === UP) return [rowMask(row + 1), rowMask(row)];
+    if (dir === DOWN) return [rowMask(row), rowMask(row + 1)];
+    if (dir === LEFT) return [colMask(col + 1), colMask(col)];
+    return [colMask(col), colMask(col + 1)];
   }
 
   function damageSteelWall(cell, bullet, hitMask) {
@@ -2963,6 +3021,15 @@
       y: r * TILE + (q >= 2 ? HALF : 0),
       w: HALF,
       h: HALF
+    };
+  }
+
+  function brickFragmentRect(c, r, fragment) {
+    return {
+      x: c * TILE + (fragment % 4) * WALL_FRAGMENT,
+      y: r * TILE + Math.floor(fragment / 4) * WALL_FRAGMENT,
+      w: WALL_FRAGMENT,
+      h: WALL_FRAGMENT
     };
   }
 
@@ -3386,6 +3453,9 @@
     return {
       brickSameSideHits: 4,
       poweredBrickSameSideHits: 2,
+      brickFragmentSize: WALL_FRAGMENT,
+      normalBrickStripLength: HALF,
+      normalBrickStripDepth: WALL_FRAGMENT,
       steelRequiredPower: 3,
       steelSameSideHits: 1,
       maxPowerBrickHalfDamage: true
@@ -3431,7 +3501,15 @@
           const tileRect = { x: c * TILE, y: r * TILE, w: TILE, h: TILE };
           if (rectsOverlap(rect, tileRect)) return true;
         }
-        if ((cell.type === BRICK || cell.type === STEEL) && cell.mask) {
+        if (cell.type === BRICK && cell.mask) {
+          const fragments = normalizeBrickFragmentMask(cell.brickMask, cell.mask);
+          for (let fragment = 0; fragment < 16; fragment += 1) {
+            if (fragments & (1 << fragment)) {
+              if (rectsOverlap(rect, brickFragmentRect(c, r, fragment))) return true;
+            }
+          }
+        }
+        if (cell.type === STEEL && cell.mask) {
           for (let q = 0; q < 4; q += 1) {
             if (cell.mask & (1 << q)) {
               if (rectsOverlap(rect, quarterRect(c, r, q))) return true;
@@ -3833,7 +3911,7 @@
           if (cell.type === FOREST) drawForest(x, y);
           continue;
         }
-        if (cell.type === BRICK) drawWallCell(x, y, cell.mask, "#a24f32", "#d38658");
+        if (cell.type === BRICK) drawBrickCell(x, y, cell);
         else if (cell.type === STEEL) drawWallCell(x, y, cell.mask, "#626a76", "#c9d0d9");
         else if (cell.type === WATER) drawWater(x, y);
         else if (cell.type === ICE) drawIce(x, y);
@@ -3854,6 +3932,23 @@
         bolt: frameName === "steel" ? "#333943" : dark,
         shadow: "#1b1512"
       });
+    }
+  }
+
+  function drawBrickCell(x, y, cell) {
+    const fragments = normalizeBrickFragmentMask(cell.brickMask, cell.mask);
+    drawWallCell(x, y, quarterMaskFromBrickFragments(fragments), "#a24f32", "#d38658");
+    ctx.fillStyle = "#000000";
+    for (let fragment = 0; fragment < 16; fragment += 1) {
+      const quarter = Math.floor(fragment / 8) * 2 + Math.floor((fragment % 4) / 2);
+      if (!(fragments & BRICK_QUARTER_FRAGMENT_MASKS[quarter])) continue;
+      if (fragments & (1 << fragment)) continue;
+      ctx.fillRect(
+        x + (fragment % 4) * WALL_FRAGMENT,
+        y + Math.floor(fragment / 4) * WALL_FRAGMENT,
+        WALL_FRAGMENT,
+        WALL_FRAGMENT
+      );
     }
   }
 
@@ -4373,7 +4468,7 @@
       ctx.fillStyle = "#000";
       ctx.fillRect(px, py, 10, 10);
       const cell = { type: EDITOR_TILE_TYPES[i], mask: 15 };
-      if (cell.type === BRICK) drawWallCell(px, py, cell.mask, "#a24f32", "#d38658");
+      if (cell.type === BRICK) drawBrickCell(px, py, cell);
       else if (cell.type === STEEL) drawWallCell(px, py, cell.mask, "#626a76", "#c9d0d9");
       else if (cell.type === WATER) drawWater(px, py);
       else if (cell.type === FOREST) drawForest(px, py);
@@ -4603,35 +4698,113 @@
     debugBrickWallPowerProbe() {
       const normalCell = makeCell(BRICK, 15);
       const powerCell = makeCell(BRICK, 15);
+      const powerTwoCell = makeCell(BRICK, 15);
       const normalMasks = [];
-      for (let i = 0; i < 4; i += 1) {
-        damageWall(normalCell, 0, 0, { power: 1, dir: RIGHT, x: 0, y: 8 });
+      const normalBrickMasks = [];
+      for (const hitFragment of [0, 1, 2, 3]) {
+        damageWall(normalCell, 0, 0, { power: 1, dir: RIGHT }, 1 << hitFragment);
         normalMasks.push(normalCell.mask);
+        normalBrickMasks.push(normalCell.brickMask);
       }
-      damageWall(powerCell, 0, 0, { power: 2, dir: RIGHT, x: 0, y: 8 });
+      damageWall(powerCell, 0, 0, { power: 3, dir: RIGHT }, 1 << 0);
+      damageWall(powerTwoCell, 0, 0, { power: 2, dir: RIGHT }, 1 << 0);
 
       const directionMasks = {};
       const directions = [
-        ["up", UP],
-        ["down", DOWN],
-        ["left", LEFT],
-        ["right", RIGHT]
+        ["up", UP, 12, 8],
+        ["down", DOWN, 0, 4],
+        ["left", LEFT, 3, 2],
+        ["right", RIGHT, 0, 1]
       ];
-      for (const [name, dir] of directions) {
+      for (const [name, dir, firstHit, secondHit] of directions) {
         const cell = makeCell(BRICK, 15);
-        damageWall(cell, 0, 0, { power: 1, dir, x: 8, y: 8 });
+        damageWall(cell, 0, 0, { power: 1, dir }, 1 << firstHit);
         const first = cell.mask;
-        damageWall(cell, 0, 0, { power: 1, dir, x: 8, y: 8 });
-        directionMasks[name] = { first, second: cell.mask, removedAfterTwo: 15 ^ cell.mask };
+        const firstBrickMask = cell.brickMask;
+        damageWall(cell, 0, 0, { power: 1, dir }, 1 << secondHit);
+        directionMasks[name] = {
+          first,
+          firstBrickMask,
+          firstRemovedFragments: FULL_BRICK_FRAGMENT_MASK ^ firstBrickMask,
+          second: cell.mask,
+          removedAfterTwo: 15 ^ cell.mask
+        };
+      }
+
+      const collisionCell = makeCell(BRICK, 15);
+      damageWall(collisionCell, 0, 0, { power: 1, dir: RIGHT }, 1 << 0);
+      const removedStripHit = overlappedBrickFragments({ x: 0, y: 0, w: 4, h: 8 }, 0, 0, collisionCell);
+      const remainingStripHit = overlappedBrickFragments({ x: 4, y: 0, w: 4, h: 8 }, 0, 0, collisionCell);
+      const previousGrid = game.grid;
+      const collisionGrid = makeGrid();
+      collisionGrid[0][0] = collisionCell;
+      let removedStripSolid;
+      let remainingStripSolid;
+      try {
+        game.grid = collisionGrid;
+        removedStripSolid = rectHitsSolidTerrain({ x: 0, y: 0, w: 4, h: 8 });
+        remainingStripSolid = rectHitsSolidTerrain({ x: 4, y: 0, w: 4, h: 8 });
+      } finally {
+        game.grid = previousGrid;
+      }
+
+      const previousExplosions = game.explosions;
+      const integrationGrid = makeGrid();
+      integrationGrid[1][1] = makeCell(BRICK, 15);
+      const integrationBullet = {
+        x: TILE,
+        y: TILE,
+        w: WALL_FRAGMENT,
+        h: WALL_FRAGMENT,
+        dir: RIGHT,
+        power: 1,
+        ownerKind: "player",
+        remove: false
+      };
+      let integration;
+      try {
+        game.grid = integrationGrid;
+        game.explosions = [];
+        const hit = hitTerrain(integrationBullet);
+        integration = {
+          hit,
+          bulletRemoved: integrationBullet.remove,
+          mask: integrationGrid[1][1].mask,
+          brickMask: integrationGrid[1][1].brickMask,
+          explosions: game.explosions.length
+        };
+      } finally {
+        game.grid = previousGrid;
+        game.explosions = previousExplosions;
       }
 
       return {
         normalMasks,
+        normalBrickMasks,
         normalTypeAfterFour: tileTypeName(normalCell.type),
         powerMask: powerCell.mask,
+        powerBrickMask: powerCell.brickMask,
+        powerTwoMask: powerTwoCell.mask,
+        powerTwoBrickMask: powerTwoCell.brickMask,
         powerRemoved: 15 ^ powerCell.mask,
         directionMasks,
+        removedStripHit,
+        remainingStripHit,
+        removedStripSolid,
+        remainingStripSolid,
+        integration,
         rules: wallRules()
+      };
+    },
+    debugBrickFragmentRenderProbe() {
+      const cell = makeCell(BRICK, 15);
+      damageWall(cell, 0, 0, { power: 1, dir: RIGHT }, 1 << 0);
+      drawBrickCell(FIELD_X, FIELD_Y, cell);
+      return {
+        removed: { x: FIELD_X, y: FIELD_Y, w: WALL_FRAGMENT, h: HALF },
+        remaining: { x: FIELD_X + WALL_FRAGMENT, y: FIELD_Y, w: WALL_FRAGMENT, h: HALF },
+        mask: cell.mask,
+        brickMask: cell.brickMask
       };
     },
     debugShovelWallProbe() {
