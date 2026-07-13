@@ -3204,13 +3204,15 @@
       { style: "powerUp", ttl: 49 }
     );
     if (type === "grenade") {
+      let destroyedAny = false;
       for (const enemy of game.enemies) {
-        if (enemy.alive) {
-          enemy.hp = 0;
-          destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false });
-          addRuleExplosion("enemyDestroy", enemy.x + 7, enemy.y + 7);
-        }
+        if (!enemy.alive || enemy.spawnFlash > 0) continue;
+        enemy.hp = 0;
+        destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false });
+        addRuleExplosion("enemyDestroy", enemy.x + 7, enemy.y + 7);
+        destroyedAny = true;
       }
+      if (destroyedAny) playSound("enemyDestroy");
     } else if (type === "helmet") {
       player.invuln = Math.max(player.invuln, gameSettings().powerUpDurations.helmet);
     } else if (type === "shovel") {
@@ -5703,6 +5705,64 @@
         game.explosions = previousExplosions;
         game.scorePopups = previousScorePopups;
         game.highScore = previousHighScore;
+      }
+    },
+    debugGrenadeSpawnProtectionProbe() {
+      const previous = {
+        players: game.players,
+        enemies: game.enemies,
+        enemyKilled: game.enemyKilled,
+        explosions: game.explosions,
+        scorePopups: game.scorePopups,
+        highScore: game.highScore
+      };
+      const types = enemyTypeDefinitions();
+      const player = {
+        id: 1,
+        x: 64,
+        y: 64,
+        w: 14,
+        h: 14,
+        score: 0,
+        stagePoints: 0,
+        stageKills: Array(types.length).fill(0),
+        totalKills: Array(types.length).fill(0),
+        nextBonusLifeIndex: 0,
+        lives: 2
+      };
+      const makeEnemy = (id, spawnFlash) => ({
+        id,
+        alive: true,
+        hp: 1,
+        spawnFlash,
+        typeIndex: 0,
+        score: types[0].score,
+        x: 32 + id * 16,
+        y: 32,
+        w: 14,
+        h: 14
+      });
+      const active = makeEnemy(0, 0);
+      const spawning = makeEnemy(1, 12);
+      try {
+        game.players = [player];
+        game.enemies = [active, spawning];
+        game.enemyKilled = 0;
+        game.explosions = [];
+        game.scorePopups = [];
+        applyPowerUp(player, "grenade");
+        return {
+          activeAlive: active.alive,
+          spawningAlive: spawning.alive,
+          spawningHp: spawning.hp,
+          spawningFlash: spawning.spawnFlash,
+          enemyKilled: game.enemyKilled,
+          explosionCount: game.explosions.length,
+          stageKills: player.stageKills.slice(),
+          totalKills: player.totalKills.slice()
+        };
+      } finally {
+        Object.assign(game, previous);
       }
     },
     debugScorePopupProbe() {

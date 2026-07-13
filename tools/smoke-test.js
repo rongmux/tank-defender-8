@@ -671,6 +671,11 @@ assert(grenadeScoreProbe.stagePoints === 0, "grenade should not add enemy score 
 assert(grenadeScoreProbe.stageKills.every((count) => count === 0), "grenade should not credit the stage kill table");
 assert(grenadeScoreProbe.totalKills.every((count) => count === 0), "grenade should not credit total kill counts");
 assert(grenadeScoreProbe.enemyKilled === 2 && grenadeScoreProbe.aliveEnemies === 0, "grenade should still clear live enemies");
+const grenadeSpawnProbe = context.window.TankDefender8.debugGrenadeSpawnProtectionProbe();
+assert(grenadeSpawnProbe.activeAlive === false && grenadeSpawnProbe.enemyKilled === 1, "grenade should destroy an active fully spawned enemy");
+assert(grenadeSpawnProbe.spawningAlive === true && grenadeSpawnProbe.spawningHp === 1 && grenadeSpawnProbe.spawningFlash === 12, "grenade should leave an enemy in its spawn animation untouched");
+assert(grenadeSpawnProbe.explosionCount === 1, "grenade should create one explosion for each active enemy it destroys and none for spawning enemies");
+assert(grenadeSpawnProbe.stageKills.every((count) => count === 0) && grenadeSpawnProbe.totalKills.every((count) => count === 0), "grenade spawn protection should not change kill-table credit rules");
 const scorePopupProbe = context.window.TankDefender8.debugScorePopupProbe();
 assert(scorePopupProbe.enemyPopup.value === scorePopupProbe.armorScore, "destroyed enemies should show their score value in the playfield");
 assert(scorePopupProbe.pickupPopup.value === scorePopupProbe.pickupScore, "collected power-ups should show their pickup score value in the playfield");
