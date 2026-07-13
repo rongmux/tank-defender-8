@@ -4516,7 +4516,7 @@
       if (player.spawnFlash > 0) {
         drawSpawn(player);
       } else {
-        if (player.invuln > 0) drawShield(player);
+        if (isPlayerShieldVisible(player)) drawShield(player);
         if (isPlayerTankVisible(player, battleDisplayFrame())) drawTank(player, player.color, player.accent);
       }
     }
@@ -4743,6 +4743,14 @@
     drawManifestSprite("shield", "box", x, y, {
       primary: shieldColorForTick(game.tick)
     });
+  }
+
+  /**
+   * Keeps protection state active while matching the original paused loop,
+   * which skips submitting the shield sprites for that display frame.
+   */
+  function isPlayerShieldVisible(player) {
+    return player.invuln > 0 && !game.paused;
   }
 
   function shieldColorForTick(tick) {
@@ -6344,6 +6352,37 @@
     },
     debugShieldCadenceProbe() {
       return Array.from({ length: 8 }, (_, tick) => ({ tick, color: shieldColorForTick(tick), visible: true }));
+    },
+    debugPausedShieldProbe() {
+      const previous = { ...game };
+      const player = { invuln: 2 };
+      try {
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = false;
+        game.pauseElapsed = 0;
+        game.tick = 63;
+        game.players = [player];
+        game.scorePopups = [];
+
+        const activeVisible = isPlayerShieldVisible(player);
+        game.paused = true;
+        const pausedVisible = isPlayerShieldVisible(player);
+        const beforePausedUpdate = { tick: game.tick, invuln: player.invuln };
+        update();
+        const afterPausedUpdate = {
+          tick: game.tick,
+          pauseElapsed: game.pauseElapsed,
+          invuln: player.invuln
+        };
+        game.paused = false;
+        const resumedVisible = isPlayerShieldVisible(player);
+        player.invuln = 0;
+        const expiredVisible = isPlayerShieldVisible(player);
+        return { activeVisible, pausedVisible, resumedVisible, expiredVisible, beforePausedUpdate, afterPausedUpdate };
+      } finally {
+        Object.assign(game, previous);
+      }
     },
     debugTimerFreezeBehaviorProbe() {
       const previous = {

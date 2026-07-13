@@ -744,6 +744,11 @@ assert(globalTimerProbe.spawnShieldDisplayFrames.phase0 === 192 && globalTimerPr
 const shieldCadenceProbe = context.window.TankDefender8.debugShieldCadenceProbe();
 assert(shieldCadenceProbe.every((entry) => entry.visible), "active shield should remain visible instead of blinking off");
 assert(shieldCadenceProbe.map((entry) => entry.color).join(",") === "#78d9ff,#78d9ff,#ffffff,#ffffff,#78d9ff,#78d9ff,#ffffff,#ffffff", "shield replacement should alternate its animation color every two frames");
+const pausedShieldProbe = context.window.TankDefender8.debugPausedShieldProbe();
+assert(pausedShieldProbe.activeVisible === true && pausedShieldProbe.pausedVisible === false, "pausing should omit active shield sprites from the original-style display loop");
+assert(pausedShieldProbe.afterPausedUpdate.tick === pausedShieldProbe.beforePausedUpdate.tick && pausedShieldProbe.afterPausedUpdate.invuln === pausedShieldProbe.beforePausedUpdate.invuln, "pause should hide the shield without advancing battle time or consuming protection");
+assert(pausedShieldProbe.afterPausedUpdate.pauseElapsed === 1, "the shield omission should still occur on an advancing paused display frame");
+assert(pausedShieldProbe.resumedVisible === true && pausedShieldProbe.expiredVisible === false, "resuming should reveal retained protection while expired protection remains hidden");
 const timerBehaviorProbe = context.window.TankDefender8.debugTimerFreezeBehaviorProbe();
 assert(timerBehaviorProbe.before.freezeTimer === timerBehaviorProbe.duration, "timer power-up should set the freeze duration");
 assert(timerBehaviorProbe.before.score === timerBehaviorProbe.pickupScore, "timer power-up should award the pickup score");
