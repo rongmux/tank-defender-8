@@ -1883,6 +1883,12 @@ const tankCollisionProbe = context.window.TankDefender8.debugTankCollisionProbe(
 assert(tankCollisionProbe.enemyBlocks === true, "enemy tanks should physically block player movement");
 assert(tankCollisionProbe.teammateBlocks === true, "teammate tanks should physically block player movement");
 assert(tankCollisionProbe.movingAwayFromEnemyAllowed === true, "blocked tanks should still be able to move away from the collision");
+const enemyOverlapRecoveryProbe = context.window.TankDefender8.debugEnemyOverlapRecoveryProbe();
+assert(enemyOverlapRecoveryProbe.startOverlapArea === 84, "enemy overlap recovery probe should begin with intersecting collision boxes");
+assert(enemyOverlapRecoveryProbe.firstTick.x === 41 && enemyOverlapRecoveryProbe.firstTick.overlapArea === 70, "an overlapping enemy should move in the direction that reduces its overlap immediately");
+assert(enemyOverlapRecoveryProbe.firstTick.blockedPauseTicks === 0 && enemyOverlapRecoveryProbe.firstTick.pendingTurn === false, "overlap recovery should clear stale blocked movement state");
+assert(enemyOverlapRecoveryProbe.finalX === 46 && enemyOverlapRecoveryProbe.finalOverlapArea === 0, "overlapping enemies should fully separate after the required movement ticks");
+assert(enemyOverlapRecoveryProbe.contactMoveBlocked === true, "separated enemies should not be allowed to overlap again");
 
 fileInput.files = [{ text: async () => JSON.stringify(validPack) }];
 assert(typeof fileInput.listeners.change === "function", "file input change listener missing");

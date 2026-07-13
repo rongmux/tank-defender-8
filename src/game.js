@@ -3179,6 +3179,8 @@
     const nextRandom = random || Math.random;
     if (!isEnemyMovementFrame(enemy)) return;
 
+    if (recoverEnemyTankOverlap(enemy)) return;
+
     if (enemy.blockedPauseTicks > 0) {
       enemy.blockedPauseTicks -= 1;
       return;
@@ -3211,6 +3213,36 @@
 
     if (isEnemyAtTurnIntersection(enemy)) enemy.pendingTurn = true;
     enemy.dir ^= 2;
+  }
+
+  /**
+   * Moves an enemy out of an invalid tank overlap before normal blocked-state
+   * handling can keep both tanks trapped inside each other's collision boxes.
+   */
+  function recoverEnemyTankOverlap(enemy) {
+    const currentRect = tankRect(enemy);
+    const currentArea = totalTankOverlapArea(enemy, currentRect);
+    if (currentArea <= 0) return false;
+
+    const distance = enemy.alternateMovement ? 1 : Math.max(1, Number(enemy.speed) || 1);
+    const directions = [enemy.dir, enemy.dir ^ 2, (enemy.dir + 1) & 3, (enemy.dir + 3) & 3];
+    let best = null;
+    for (const dir of directions) {
+      const x = enemy.x + DIR_X[dir] * distance;
+      const y = enemy.y + DIR_Y[dir] * distance;
+      if (!canTankOccupy(enemy, x, y)) continue;
+      const area = totalTankOverlapArea(enemy, { x, y, w: enemy.w, h: enemy.h });
+      if (area >= currentArea || (best && area >= best.area)) continue;
+      best = { x, y, dir, area };
+    }
+    if (!best) return false;
+
+    enemy.x = best.x;
+    enemy.y = best.y;
+    enemy.dir = best.dir;
+    enemy.blockedPauseTicks = 0;
+    enemy.pendingTurn = false;
+    return true;
   }
 
   function isEnemyMovementFrame(enemy) {
@@ -3955,12 +3987,35 @@
     if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > FIELD_W || rect.y + rect.h > FIELD_H) return false;
     if (rectsOverlap(rect, game.base) && game.base.alive) return false;
     if (rectHitsSolidTerrain(rect)) return false;
-    const tanks = game.players.concat(game.enemies);
-    for (const other of tanks) {
-      if (other === tank || !other.alive || other.respawn > 0) continue;
-      if (rectsOverlap(rect, other)) return false;
+    const currentRect = tankRect(tank);
+    for (const other of activeTankCollisionPeers(tank)) {
+      const nextOverlap = rectOverlapArea(rect, other);
+      if (nextOverlap <= 0) continue;
+      const currentOverlap = rectOverlapArea(currentRect, other);
+      if (currentOverlap > 0 && nextOverlap < currentOverlap) continue;
+      return false;
     }
     return true;
+  }
+
+  function tankRect(tank) {
+    return { x: tank.x, y: tank.y, w: tank.w, h: tank.h };
+  }
+
+  function activeTankCollisionPeers(tank) {
+    return game.players.concat(game.enemies).filter((other) =>
+      other !== tank && other.alive && !(other.respawn > 0)
+    );
+  }
+
+  function totalTankOverlapArea(tank, rect) {
+    return activeTankCollisionPeers(tank).reduce((total, other) => total + rectOverlapArea(rect, other), 0);
+  }
+
+  function rectOverlapArea(a, b) {
+    const width = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+    const height = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+    return Math.max(0, width) * Math.max(0, height);
   }
 
   function rectHitsSolidTerrain(rect) {
@@ -9190,6 +9245,62 @@
           teammateBlocks,
           movingAwayFromEnemyAllowed,
           finalX: player.x
+        };
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
+    debugEnemyOverlapRecoveryProbe() {
+      const previous = {
+        tick: game.tick,
+        grid: game.grid,
+        base: game.base,
+        players: game.players,
+        enemies: game.enemies
+      };
+      const makeEnemy = (id, x) => ({
+        kind: "enemy",
+        id,
+        slotIndex: id - 98,
+        x,
+        y: 32,
+        w: 14,
+        h: 14,
+        dir: RIGHT,
+        speed: 1,
+        alternateMovement: false,
+        blockedPauseTicks: 2,
+        pendingTurn: true,
+        alive: true,
+        respawn: 0,
+        spawnFlash: 0
+      });
+      try {
+        game.tick = 0;
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.players = [];
+        const blocker = makeEnemy(100, 32);
+        const recovering = makeEnemy(101, 40);
+        game.enemies = [blocker, recovering];
+        const startOverlapArea = rectOverlapArea(blocker, recovering);
+        updateEnemyMovement(recovering, () => 0);
+        const firstTick = {
+          x: recovering.x,
+          dir: recovering.dir,
+          overlapArea: rectOverlapArea(blocker, recovering),
+          blockedPauseTicks: recovering.blockedPauseTicks,
+          pendingTurn: recovering.pendingTurn
+        };
+        for (let tick = 1; tick < 6; tick += 1) updateEnemyMovement(recovering, () => 0);
+        const finalOverlapArea = rectOverlapArea(blocker, recovering);
+        const contactMoveBlocked = !canTankOccupy(recovering, recovering.x - 1, recovering.y);
+        return {
+          startOverlapArea,
+          firstTick,
+          finalX: recovering.x,
+          finalOverlapArea,
+          contactMoveBlocked
         };
       } finally {
         Object.assign(game, previous);
