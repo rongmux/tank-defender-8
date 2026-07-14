@@ -11,7 +11,18 @@
     "editorBrush": { "freq": 300, "duration": 0.025, "gain": 0.016, "wave": "triangle", "brushPitch": 60 },
     "bulletCancel": { "freq": 210, "duration": 0.025, "gain": 0.015, "wave": "square" },
     "baseHit": { "freq": 82, "duration": 0.28, "gain": 0.06, "wave": "sawtooth" },
-    "brickHit": { "freq": 260, "duration": 0.035, "gain": 0.02, "wave": "square" },
+    "brickHit": {
+      "durationFrames": 3,
+      "voices": [
+        {
+          "gain": 0.02,
+          "wave": "triangle",
+          "segments": [
+            { "frequencies": [165, 246, 139], "noteFrames": 1, "repeat": 1 }
+          ]
+        }
+      ]
+    },
     "steelHit": {
       "durationFrames": 4,
       "voices": [

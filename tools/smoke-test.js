@@ -322,6 +322,8 @@ assert(runtimeAudioManifest.events.movementPlayer.stepFrames === 16, "player mov
 assert(runtimeAudioManifest.events.playerShoot.durationFrames === 15, "player shooting should preserve the original fifteen-frame lifetime");
 assert(runtimeAudioManifest.events.playerShoot.voices.length === 1 && runtimeAudioManifest.events.playerShoot.voices[0].wave === "square", "player shooting should use one pulse-like voice");
 assert(!Object.prototype.hasOwnProperty.call(runtimeAudioManifest.events, "enemyShoot"), "enemy shooting should remain silent like the original");
+assert(runtimeAudioManifest.events.brickHit.durationFrames === 3, "brick and destructible-steel impacts should preserve the original three-frame lifetime");
+assert(runtimeAudioManifest.events.brickHit.voices.length === 1 && runtimeAudioManifest.events.brickHit.voices[0].wave === "triangle", "destructive wall impacts should use one triangle voice");
 assert(runtimeAudioManifest.events.steelHit.durationFrames === 4, "steel and field-boundary impacts should preserve the original four-frame lifetime");
 assert(runtimeAudioManifest.events.steelHit.voices.length === 1 && runtimeAudioManifest.events.steelHit.voices[0].wave === "square", "steel and field-boundary impacts should use one pulse-like voice");
 assert(runtimeAudioManifest.events.movementIce.durationFrames === 4, "ice movement cue should preserve the original four-frame lifetime");
@@ -368,6 +370,23 @@ assert(
     movementAudioProbe.ice.voices[0].segments[0].frequencies.length === 4,
   "ice movement should expose one independent four-note cue lasting four fixed logic frames"
 );
+const brickHitAudioProbe = context.window.TankDefender8.debugBrickHitAudioProbe();
+assert(brickHitAudioProbe.durationFrames === 3 && brickHitAudioProbe.voiceDurations.join(",") === "3", "destructive wall impact audio should contain one three-frame voice");
+assert(brickHitAudioProbe.waves.join(",") === "triangle", "destructive wall impact audio should retain its triangle replacement voice");
+assert(brickHitAudioProbe.frames.slice(0, 3).map((frame) => frame.voices[0].frequency).join(",") === "165,246,139", "destructive wall impact audio should follow the original three one-frame pitches");
+assert(brickHitAudioProbe.frames[3].voices[0] === null, "destructive wall impact audio should stop on frame three");
+const brickHitAudioLifecycleProbe = context.window.TankDefender8.debugBrickHitAudioLifecycleProbe();
+assert(brickHitAudioLifecycleProbe.playerBrick.active && brickHitAudioLifecycleProbe.playerBrick.frame === 0 && brickHitAudioLifecycleProbe.playerBrick.audible, "a player brick impact should start destructive wall audio at frame zero");
+assert(brickHitAudioLifecycleProbe.playerBrick.hit && brickHitAudioLifecycleProbe.playerBrick.bulletRemoved && brickHitAudioLifecycleProbe.playerBrick.wallBrickMask !== 0xffff && brickHitAudioLifecycleProbe.playerBrick.explosionCount === 1, "a player brick impact should remove the bullet, damage brick fragments, and create one impact");
+assert(brickHitAudioLifecycleProbe.playerBrick.movementAudioMode === "enemy" && brickHitAudioLifecycleProbe.beforePause.active && brickHitAudioLifecycleProbe.beforePause.frame === 2, "the independent triangle cue should leave movement audio running through frame two");
+assert(brickHitAudioLifecycleProbe.paused.paused && brickHitAudioLifecycleProbe.paused.frame === 2 && !brickHitAudioLifecycleProbe.paused.audible && brickHitAudioLifecycleProbe.paused.pauseFrame === 10, "pause should mute and freeze destructive wall audio while its pause cue advances");
+assert(!brickHitAudioLifecycleProbe.end.active && brickHitAudioLifecycleProbe.end.frame === 3 && brickHitAudioLifecycleProbe.end.pauseActive && brickHitAudioLifecycleProbe.end.movementAudioMode === "none", "resuming should finish destructive wall audio on frame three while the pause cue retains pulse-two priority");
+assert(!brickHitAudioLifecycleProbe.enemyBrick.active && brickHitAudioLifecycleProbe.enemyBrick.frame === 0 && brickHitAudioLifecycleProbe.enemyBrick.hit && brickHitAudioLifecycleProbe.enemyBrick.bulletRemoved && brickHitAudioLifecycleProbe.enemyBrick.wallMask === 15 && brickHitAudioLifecycleProbe.enemyBrick.explosionCount === 1, "an ordinary enemy brick impact should remain silent while retaining wall damage and collision feedback");
+assert(brickHitAudioLifecycleProbe.destructibleSteel.active && brickHitAudioLifecycleProbe.destructibleSteel.audible && brickHitAudioLifecycleProbe.destructibleSteel.hit && brickHitAudioLifecycleProbe.destructibleSteel.bulletRemoved && brickHitAudioLifecycleProbe.destructibleSteel.wallMask === 14, "a max-power player shot destroying steel should use destructive wall audio");
+assert(brickHitAudioLifecycleProbe.separateChannels.active && brickHitAudioLifecycleProbe.separateChannels.audible && brickHitAudioLifecycleProbe.separateChannels.steelHitActive && brickHitAudioLifecycleProbe.separateChannels.steelHitAudible && brickHitAudioLifecycleProbe.separateChannels.playerShootActive && brickHitAudioLifecycleProbe.separateChannels.playerShootAudible, "the triangle impact should play alongside pulse-one shooting and pulse-two steel impacts");
+assert(brickHitAudioLifecycleProbe.stageStartPriority.active && !brickHitAudioLifecycleProbe.stageStartPriority.audible && brickHitAudioLifecycleProbe.stageStartPriority.stageStartActive, "the higher-priority stage-start triangle should mask a simultaneous destructive wall impact");
+assert(!brickHitAudioLifecycleProbe.stageStartSuppressedEnd.active && brickHitAudioLifecycleProbe.stageStartSuppressedEnd.frame === 3, "a stage-start-masked destructive wall impact should still consume its complete three-frame lifetime");
+assert(!brickHitAudioLifecycleProbe.stageCleanup.active && brickHitAudioLifecycleProbe.stageCleanup.frame === 0, "starting a stage should clear any pending destructive wall cue");
 const steelHitAudioProbe = context.window.TankDefender8.debugSteelHitAudioProbe();
 assert(steelHitAudioProbe.durationFrames === 4 && steelHitAudioProbe.voiceDurations.join(",") === "4", "steel-hit audio should contain one four-frame voice");
 assert(steelHitAudioProbe.waves.join(",") === "square", "steel-hit audio should retain its pulse-like replacement voice");
