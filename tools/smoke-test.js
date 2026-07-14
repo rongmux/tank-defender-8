@@ -305,6 +305,9 @@ assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest i
 assert(Object.keys(runtimeAudioManifest.events).length >= 18, "runtime audio manifest should expose gameplay sound events");
 assert(runtimeAudioManifest.events.powerUp.wave === "triangle", "runtime audio manifest should expose power-up sound shape");
 assert(runtimeAudioManifest.events.pause.wave === "square", "entering pause should use the replacement pause sound");
+assert(runtimeAudioManifest.events.stageStart.durationFrames === 264, "stage-start replacement audio should preserve the original 264-frame lifetime");
+assert(runtimeAudioManifest.events.stageStart.voices.length === 3, "stage-start replacement audio should preserve three simultaneous voices");
+assert(runtimeAudioManifest.events.stageStart.voices.map((voice) => voice.wave).join(",") === "square,triangle,square", "stage-start replacement audio should use two pulse-like voices and one triangle voice");
 assert(runtimeAudioManifest.events.movementEnemy.frequencies.join(",") === "72,64", "enemy movement should expose a two-step replacement engine loop");
 assert(runtimeAudioManifest.events.movementEnemy.stepFrames === 4, "enemy movement loop should switch pitch every four fixed logic frames");
 assert(runtimeAudioManifest.events.movementPlayer.frequencies.join(",") === "112,96", "player movement should expose its distinct two-step replacement engine loop");
@@ -322,8 +325,9 @@ const movementAudioProbe = context.window.TankDefender8.debugMovementAudioProbe(
 assert(
   movementAudioProbe.modes.title === "none" &&
     movementAudioProbe.modes.idleBattle === "enemy" &&
+    movementAudioProbe.modes.stageStart === "none" &&
     movementAudioProbe.modes.heldDirection === "player",
-  "active battle audio should start with the enemy loop and give held player movement priority"
+  "active battle audio should suppress movement during the stage fanfare, then use enemy and held-player priorities"
 );
 assert(
   movementAudioProbe.modes.heldDuringDeathState === "player" &&
@@ -346,6 +350,15 @@ assert(
     movementAudioProbe.ice.notes.length === 4,
   "ice movement should use one independent four-note cue lasting 52 fixed logic frames"
 );
+const stageStartAudioProbe = context.window.TankDefender8.debugStageStartAudioProbe();
+assert(stageStartAudioProbe.durationFrames === 264, "stage-start audio probe should expose the original fixed-frame duration");
+assert(stageStartAudioProbe.voiceDurations.join(",") === "264,264,264", "all three stage-start voices should end together on frame 264");
+assert(stageStartAudioProbe.waves.join(",") === "square,triangle,square", "stage-start audio probe should retain its pulse-triangle-pulse channel order");
+assert(stageStartAudioProbe.frames[0].voices.every(Boolean) && stageStartAudioProbe.frames[1].voices[0].frequency === 330, "all stage-start voices should sound from frame zero through the first eight-frame note");
+assert(stageStartAudioProbe.frames[2].voices[0].frequency === 392, "the lead stage-start voice should change pitch on frame eight");
+assert(stageStartAudioProbe.frames[4].voices[0].segmentIndex === 1, "the lead stage-start phrase should enter its second segment on frame 48");
+assert(stageStartAudioProbe.frames[7].voices.every(Boolean), "all stage-start voices should remain active on frame 263");
+assert(stageStartAudioProbe.frames[8].voices.every((voice) => voice === null), "all stage-start voices should stop at frame 264");
 const pauseProbe = context.window.TankDefender8.debugPauseBehaviorProbe();
 assert(pauseProbe.entered === true && pauseProbe.exited === true, "active gameplay should accept both pause and unpause toggles");
 assert(pauseProbe.entry.paused === true && pauseProbe.entry.pauseElapsed === 0, "entering pause should reset its display-frame counter");
@@ -559,13 +572,27 @@ keyPress("Space");
 keyPress("Enter");
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "stageIntro" && snapshot.stage === 1 && snapshot.paused === false, "stage-selection Start should begin the selected stage intro");
+assert(snapshot.stageStartAudio.active === true && snapshot.stageStartAudio.frame === 0, "starting a stage should trigger all stage-start voices at frame zero");
+assert(snapshot.movementAudioMode === "none", "stage-start audio should initially suppress the movement pulse channel");
 keyPress("Enter");
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "stageIntro" && snapshot.paused === false, "Start-equivalent Enter should not pause before active gameplay begins");
 const stageIntroBeforeFinalFrame = context.window.TankDefender8.debugAdvanceStageTransition(94);
 assert(stageIntroBeforeFinalFrame.screen === "stageIntro" && stageIntroBeforeFinalFrame.transitionTimer === 1, "stage intro should remain inactive through its first ninety-four frames");
+snapshot = context.window.TankDefender8.debugSnapshot();
+assert(snapshot.stageStartAudio.active === true && snapshot.stageStartAudio.frame === 94, "stage-start audio should advance with each fixed stage-intro frame");
 const stageIntroAfterFinalFrame = context.window.TankDefender8.debugAdvanceStageTransition(1);
 assert(stageIntroAfterFinalFrame.screen === "playing" && stageIntroAfterFinalFrame.transitionTimer === 0, "the ninety-fifth stage-intro frame should prepare the active battle screen");
+snapshot = context.window.TankDefender8.debugSnapshot();
+assert(snapshot.stageStartAudio.active === true && snapshot.stageStartAudio.frame === 95 && snapshot.movementAudioMode === "none", "the stage fanfare should continue into battle and keep movement audio suppressed");
+keyPress("Enter");
+const pausedStageStartAudio = context.window.TankDefender8.debugAdvanceStageStartAudio(10);
+assert(pausedStageStartAudio.paused === true && pausedStageStartAudio.frame === 95, "pause should mute and freeze the stage-start audio frame");
+keyPress("Enter");
+const stageStartBeforeEnd = context.window.TankDefender8.debugAdvanceStageStartAudio(168);
+assert(stageStartBeforeEnd.active === true && stageStartBeforeEnd.frame === 263 && stageStartBeforeEnd.movementAudioMode === "none", "stage-start audio should span the first 169 battle frames and retain movement-channel priority through frame 263");
+const stageStartAfterEnd = context.window.TankDefender8.debugAdvanceStageStartAudio(1);
+assert(stageStartAfterEnd.active === false && stageStartAfterEnd.frame === 264 && stageStartAfterEnd.movementAudioMode === "enemy", "frame 264 should end the fanfare and restore the enemy movement loop");
 buttons.find((button) => button.dataset.action === "reset").click();
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "title" && snapshot.paused === false, "reset after Start-pause probe should return to the title screen");

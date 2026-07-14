@@ -17,6 +17,58 @@
     "enemyDestroy": { "freq": 94, "duration": 0.12, "gain": 0.05, "wave": "square" },
     "bonusLife": { "freq": 880, "duration": 0.08, "gain": 0.028, "wave": "triangle" },
     "pause": { "freq": 620, "duration": 0.07, "gain": 0.025, "wave": "square" },
+    "stageStart": {
+      "durationFrames": 264,
+      "voices": [
+        {
+          "gain": 0.012,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [330, 392, 440], "noteFrames": 8, "repeat": 2 },
+            { "frequencies": [440, 523, 587], "noteFrames": 8, "repeat": 2 },
+            { "frequencies": [523, 587, 659], "noteFrames": 8, "repeat": 2 },
+            { "frequencies": [659, 784, 880], "noteFrames": 8, "repeat": 2 },
+            { "frequencies": [988], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [988], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [988], "noteFrames": 24, "repeat": 1 }
+          ]
+        },
+        {
+          "gain": 0.018,
+          "wave": "triangle",
+          "segments": [
+            { "frequencies": [110], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [110], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [131], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [131], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [147], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [147], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [165], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [196], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [220], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [220], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [220], "noteFrames": 24, "repeat": 1 }
+          ]
+        },
+        {
+          "gain": 0.01,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [165], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [165], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [196], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [196], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [220], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [220], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [262], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [294], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [330], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [330], "noteFrames": 8, "repeat": 3 },
+            { "frequencies": [330], "noteFrames": 24, "repeat": 1 }
+          ]
+        }
+      ]
+    },
     "movementEnemy": { "frequencies": [72, 64], "stepFrames": 4, "gain": 0.01, "wave": "square", "loop": true },
     "movementPlayer": { "frequencies": [112, 96], "stepFrames": 16, "gain": 0.012, "wave": "square", "loop": true },
     "movementIce": {
