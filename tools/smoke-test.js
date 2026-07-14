@@ -305,6 +305,8 @@ assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest i
 assert(Object.keys(runtimeAudioManifest.events).length >= 18, "runtime audio manifest should expose gameplay sound events");
 assert(runtimeAudioManifest.events.powerUp.durationFrames === 39, "power-up pickup replacement audio should preserve the original thirty-nine-frame lifetime");
 assert(runtimeAudioManifest.events.powerUp.voices.length === 1 && runtimeAudioManifest.events.powerUp.voices[0].wave === "square", "power-up pickup replacement audio should use one pulse-like voice");
+assert(runtimeAudioManifest.events.powerUpAppear.durationFrames === 32, "power-up appearance replacement audio should preserve the original thirty-two-frame lifetime");
+assert(runtimeAudioManifest.events.powerUpAppear.voices.length === 1 && runtimeAudioManifest.events.powerUpAppear.voices[0].wave === "square", "power-up appearance replacement audio should use one pulse-like voice");
 assert(runtimeAudioManifest.events.pause.durationFrames === 36, "pause replacement audio should preserve the original thirty-six-frame lifetime");
 assert(runtimeAudioManifest.events.pause.voices.length === 1 && runtimeAudioManifest.events.pause.voices[0].wave === "square", "pause replacement audio should use one pulse-like voice");
 assert(runtimeAudioManifest.events.bonusLife.durationFrames === 60, "bonus-life replacement audio should retain the original one-second lead voice");
@@ -334,6 +336,7 @@ assert(
     movementAudioProbe.modes.bonusLifePulse2 === "none" &&
     movementAudioProbe.modes.bonusLifePulse1Tail === "enemy" &&
     movementAudioProbe.modes.powerUpPickup === "none" &&
+    movementAudioProbe.modes.powerUpAppear === "none" &&
     movementAudioProbe.modes.pauseCue === "none" &&
     movementAudioProbe.modes.heldDirection === "player",
   "active battle audio should honor stage and bonus pulse-channel priority before enemy and held-player movement"
@@ -401,6 +404,27 @@ assert(!powerUpPickupAudioLifecycleProbe.end.active && powerUpPickupAudioLifecyc
 assert(powerUpPickupAudioLifecycleProbe.suppressedStart.active && !powerUpPickupAudioLifecycleProbe.suppressedStart.audible, "a simultaneous higher-priority bonus-life voice should suppress pickup output");
 assert(!powerUpPickupAudioLifecycleProbe.suppressedEnd.active && powerUpPickupAudioLifecycleProbe.suppressedEnd.frame === 39, "a suppressed pickup event should still consume its complete thirty-nine-frame lifetime");
 assert(powerUpPickupAudioLifecycleProbe.suppressedEnd.bonusLifeActive && powerUpPickupAudioLifecycleProbe.suppressedEnd.bonusLifeFrame === 39 && powerUpPickupAudioLifecycleProbe.suppressedEnd.movementAudioMode === "none", "bonus-life pulse priority should remain after the silent pickup event expires");
+const powerUpAppearAudioProbe = context.window.TankDefender8.debugPowerUpAppearAudioProbe();
+assert(powerUpAppearAudioProbe.durationFrames === 32 && powerUpAppearAudioProbe.voiceDurations.join(",") === "32", "power-up appearance audio should contain one thirty-two-frame voice");
+assert(powerUpAppearAudioProbe.waves.join(",") === "square", "power-up appearance audio should retain its pulse-like replacement voice");
+assert(powerUpAppearAudioProbe.frames[0].voices[0].frequency === 392 && powerUpAppearAudioProbe.frames[1].voices[0].frequency === 392, "the first appearance note should hold through frame three");
+assert(powerUpAppearAudioProbe.frames[2].voices[0].frequency === 330 && powerUpAppearAudioProbe.frames[3].voices[0].frequency === 330, "the appearance phrase should advance on frame four");
+assert(powerUpAppearAudioProbe.frames[4].voices[0].frequency === 392 && powerUpAppearAudioProbe.frames[5].voices[0].frequency === 494, "the appearance phrase should retain its four-frame note cadence through frame twenty-seven");
+assert(powerUpAppearAudioProbe.frames[6].voices[0].frequency === 523 && powerUpAppearAudioProbe.frames[7].voices[0].frequency === 523, "the final appearance note should span frames twenty-eight through thirty-one");
+assert(powerUpAppearAudioProbe.frames[8].voices[0] === null, "the appearance voice should stop on frame thirty-two");
+const powerUpAppearAudioLifecycleProbe = context.window.TankDefender8.debugPowerUpAppearAudioLifecycleProbe();
+assert(powerUpAppearAudioLifecycleProbe.spawned && powerUpAppearAudioLifecycleProbe.start.powerUpType === "star", "a carrier release should create its configured power-up");
+assert(powerUpAppearAudioLifecycleProbe.start.active && powerUpAppearAudioLifecycleProbe.start.frame === 0 && powerUpAppearAudioLifecycleProbe.start.audible && powerUpAppearAudioLifecycleProbe.start.movementAudioMode === "none", "a successful carrier release should start the appearance cue and reserve the movement pulse channel");
+assert(powerUpAppearAudioLifecycleProbe.beforePause.active && powerUpAppearAudioLifecycleProbe.beforePause.frame === 15, "the appearance cue should advance through its first fifteen frames");
+assert(powerUpAppearAudioLifecycleProbe.paused.paused && powerUpAppearAudioLifecycleProbe.paused.frame === 15, "pause should mute and freeze the appearance cue");
+assert(powerUpAppearAudioLifecycleProbe.beforeEnd.active && powerUpAppearAudioLifecycleProbe.beforeEnd.frame === 31, "the appearance cue should remain active through frame thirty-one after resume");
+assert(!powerUpAppearAudioLifecycleProbe.end.active && powerUpAppearAudioLifecycleProbe.end.frame === 32 && powerUpAppearAudioLifecycleProbe.end.movementAudioMode === "enemy", "frame thirty-two should end the appearance cue and restore movement audio");
+assert(!powerUpAppearAudioLifecycleProbe.stageStartPriority.audible, "the stage-start second-pulse voice should mask a simultaneous appearance cue");
+assert(!powerUpAppearAudioLifecycleProbe.bonusLifePriority.audible, "the bonus-life second-pulse voice should mask a simultaneous appearance cue");
+assert(!powerUpAppearAudioLifecycleProbe.pickupPriority.audible, "the higher-priority pickup cue should mask a simultaneous appearance cue");
+assert(!powerUpAppearAudioLifecycleProbe.suppressedEnd.active && powerUpAppearAudioLifecycleProbe.suppressedEnd.frame === 32, "a masked appearance event should still consume its full thirty-two-frame lifetime");
+assert(powerUpAppearAudioLifecycleProbe.suppressedEnd.pickupActive && powerUpAppearAudioLifecycleProbe.suppressedEnd.pickupFrame === 32 && powerUpAppearAudioLifecycleProbe.suppressedEnd.movementAudioMode === "none", "pickup-channel priority should remain after the masked appearance cue expires");
+assert(powerUpAppearAudioLifecycleProbe.noSpotSpawned === false && !powerUpAppearAudioLifecycleProbe.noSpot.active && powerUpAppearAudioLifecycleProbe.noSpot.powerUpType === null, "a map with no reachable power-up location should not create an item or an empty appearance cue");
 const pauseAudioProbe = context.window.TankDefender8.debugPauseAudioProbe();
 assert(pauseAudioProbe.durationFrames === 36 && pauseAudioProbe.voiceDurations.join(",") === "36", "pause audio should contain one thirty-six-frame voice");
 assert(pauseAudioProbe.waves.join(",") === "square", "pause audio should retain its pulse-like replacement voice");
@@ -416,6 +440,7 @@ assert(
     pauseAudioLifecycleProbe.paused.stageStartFrame === 0 &&
     pauseAudioLifecycleProbe.paused.bonusLifeFrame === 0 &&
     pauseAudioLifecycleProbe.paused.powerUpPickupFrame === 0 &&
+    pauseAudioLifecycleProbe.paused.powerUpAppearFrame === 0 &&
     pauseAudioLifecycleProbe.paused.tick === 25,
   "paused display frames should advance only the pause cue while freezing battle time and other fixed-frame sounds"
 );
@@ -425,6 +450,7 @@ assert(
     pauseAudioLifecycleProbe.earlyResume.stageStartAudibility.join(",") === "true,true,false" &&
     pauseAudioLifecycleProbe.earlyResume.bonusLifeAudibility.join(",") === "true,false" &&
     !pauseAudioLifecycleProbe.earlyResume.powerUpPickupAudible &&
+    !pauseAudioLifecycleProbe.earlyResume.powerUpAppearAudible &&
     pauseAudioLifecycleProbe.earlyResume.movementAudioMode === "none",
   "an unfinished pause cue should retain second-pulse priority after an early resume"
 );

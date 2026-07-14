@@ -128,6 +128,18 @@
         }
       ]
     },
+    "powerUpAppear": {
+      "durationFrames": 32,
+      "voices": [
+        {
+          "gain": 0.015,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [392, 330, 392, 440, 392, 440, 494, 523], "noteFrames": 4, "repeat": 1 }
+          ]
+        }
+      ]
+    },
     "playerShoot": { "freq": 460, "duration": 0.03, "gain": 0.018, "wave": "square" },
     "enemyShoot": { "freq": 310, "duration": 0.03, "gain": 0.018, "wave": "square" },
     "scoreCount": { "freq": 560, "duration": 0.035, "gain": 0.022, "wave": "square" },

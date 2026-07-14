@@ -294,6 +294,18 @@
           }
         ]
       },
+      powerUpAppear: {
+        durationFrames: 32,
+        voices: [
+          {
+            gain: 0.015,
+            wave: "square",
+            segments: [
+              { frequencies: [392, 330, 392, 440, 392, 440, 494, 523], noteFrames: 4, repeat: 1 }
+            ]
+          }
+        ]
+      },
       playerShoot: { freq: 460, duration: 0.03, gain: 0.018, wave: "square" },
       enemyShoot: { freq: 310, duration: 0.03, gain: 0.018, wave: "square" },
       scoreCount: { freq: 560, duration: 0.035, gain: 0.022, wave: "square" },
@@ -904,6 +916,11 @@
     nodes: []
   };
   const powerUpPickupAudio = {
+    active: false,
+    frame: 0,
+    nodes: []
+  };
+  const powerUpAppearAudio = {
     active: false,
     frame: 0,
     nodes: []
@@ -2240,6 +2257,7 @@
     stopStageStartAudio();
     stopBonusLifeAudio();
     stopPowerUpPickupAudio();
+    stopPowerUpAppearAudio();
     stopPauseAudio();
     stopSound("movementIce");
     game.screen = "stageIntro";
@@ -2290,6 +2308,7 @@
     stopStageStartAudio();
     stopBonusLifeAudio();
     stopPowerUpPickupAudio();
+    stopPowerUpAppearAudio();
     stopPauseAudio();
     stopSound("movementIce");
     initAudio();
@@ -2472,6 +2491,7 @@
     stopStageStartAudio();
     stopBonusLifeAudio();
     stopPowerUpPickupAudio();
+    stopPowerUpAppearAudio();
     stopPauseAudio();
     stopSound("movementIce");
     stopSound("gameOver");
@@ -2537,6 +2557,7 @@
     syncStageStartAudioNodes();
     syncBonusLifeAudioNodes();
     syncPowerUpPickupAudioNodes();
+    syncPowerUpAppearAudioNodes();
     syncPauseAudioNodes();
     syncMovementAudio();
   }
@@ -2750,6 +2771,7 @@
   function startBonusLifeAudio() {
     startFixedFrameAudio(bonusLifeAudio, "bonusLife");
     syncPowerUpPickupAudioNodes();
+    syncPowerUpAppearAudioNodes();
   }
 
   function stopBonusLifeAudio() {
@@ -2759,6 +2781,7 @@
   function updateBonusLifeAudio() {
     updateFixedFrameAudio(bonusLifeAudio, "bonusLife");
     syncPowerUpPickupAudioNodes();
+    syncPowerUpAppearAudioNodes();
   }
 
   function bonusLifePulse2Active() {
@@ -2779,6 +2802,7 @@
 
   function startPowerUpPickupAudio() {
     startFixedFrameAudio(powerUpPickupAudio, "powerUp", powerUpPickupAudioAudible());
+    syncPowerUpAppearAudioNodes();
   }
 
   function stopPowerUpPickupAudio() {
@@ -2787,6 +2811,35 @@
 
   function updatePowerUpPickupAudio() {
     updateFixedFrameAudio(powerUpPickupAudio, "powerUp", powerUpPickupAudioAudible());
+    syncPowerUpAppearAudioNodes();
+  }
+
+  function powerUpAppearAudioPresentation(frame) {
+    return fixedFrameAudioPresentation("powerUpAppear", frame);
+  }
+
+  // Lower-index original pulse-two events keep the channel while this cue still advances silently.
+  function powerUpAppearAudioAudible() {
+    return !pauseAudio.active &&
+      !stageStartAudio.active &&
+      !bonusLifePulse2Active() &&
+      !powerUpPickupAudio.active;
+  }
+
+  function syncPowerUpAppearAudioNodes() {
+    syncFixedFrameAudioNodes(powerUpAppearAudio, "powerUpAppear", powerUpAppearAudioAudible());
+  }
+
+  function startPowerUpAppearAudio() {
+    startFixedFrameAudio(powerUpAppearAudio, "powerUpAppear", powerUpAppearAudioAudible());
+  }
+
+  function stopPowerUpAppearAudio() {
+    stopFixedFrameAudio(powerUpAppearAudio);
+  }
+
+  function updatePowerUpAppearAudio() {
+    updateFixedFrameAudio(powerUpAppearAudio, "powerUpAppear", powerUpAppearAudioAudible());
   }
 
   function pauseAudioPresentation(frame) {
@@ -2802,6 +2855,7 @@
     syncStageStartAudioNodes();
     syncBonusLifeAudioNodes();
     syncPowerUpPickupAudioNodes();
+    syncPowerUpAppearAudioNodes();
   }
 
   function stopPauseAudio() {
@@ -2815,6 +2869,7 @@
     syncStageStartAudioNodes();
     syncBonusLifeAudioNodes();
     syncPowerUpPickupAudioNodes();
+    syncPowerUpAppearAudioNodes();
     syncMovementAudio();
   }
 
@@ -2919,6 +2974,7 @@
       stageStartAudio.active ||
       bonusLifePulse2Active() ||
       powerUpPickupAudio.active ||
+      powerUpAppearAudio.active ||
       pauseAudio.active
     ) return "none";
     return playerMovementAudioRequested() ? "player" : "enemy";
@@ -2985,6 +3041,10 @@
     }
     if (name === "powerUp") {
       startPowerUpPickupAudio();
+      return;
+    }
+    if (name === "powerUpAppear") {
+      startPowerUpAppearAudio();
       return;
     }
     if (name === "pause") {
@@ -3054,6 +3114,7 @@
     syncStageStartAudioNodes();
     syncBonusLifeAudioNodes();
     syncPowerUpPickupAudioNodes();
+    syncPowerUpAppearAudioNodes();
     syncPauseAudioNodes();
     syncMovementAudio();
     if (game.paused) {
@@ -3428,6 +3489,7 @@
     updateStageStartAudio();
     updateBonusLifeAudio();
     updatePowerUpPickupAudio();
+    updatePowerUpAppearAudio();
     updatePauseAudio();
 
     if (game.screen === "title") {
@@ -4284,8 +4346,10 @@
       : randomPowerUpType();
     const settings = stageSettings();
     const spot = pickPowerUpSpawnSpot(settings ? settings.powerUpSpawns : DEFAULT_POWERUP_SPAWNS);
-    if (!spot) return;
+    if (!spot) return false;
     game.powerUp = { type, x: spot.x, y: spot.y, w: POWERUP_SIZE, h: POWERUP_SIZE, ttl: gameSettings().timings.powerUpTtl };
+    playSound("powerUpAppear");
+    return true;
   }
 
   function randomPowerUpType(random) {
@@ -4799,6 +4863,7 @@
     stopStageStartAudio();
     stopBonusLifeAudio();
     stopPowerUpPickupAudio();
+    stopPowerUpAppearAudio();
     stopPauseAudio();
     stopSound("movementIce");
     const resultReason = reason === "gameOver" ? "gameOver" : "clear";
@@ -4847,6 +4912,7 @@
     stopStageStartAudio();
     stopBonusLifeAudio();
     stopPowerUpPickupAudio();
+    stopPowerUpAppearAudio();
     stopPauseAudio();
     stopSound("movementIce");
     game.screen = "gameOver";
@@ -4910,6 +4976,7 @@
     stopStageStartAudio();
     stopBonusLifeAudio();
     stopPowerUpPickupAudio();
+    stopPowerUpAppearAudio();
     stopPauseAudio();
     stopSound("movementIce");
     stopSound("gameOver");
@@ -6130,6 +6197,10 @@
         active: powerUpPickupAudio.active,
         frame: powerUpPickupAudio.frame
       };
+      const previousPowerUpAppear = {
+        active: powerUpAppearAudio.active,
+        frame: powerUpAppearAudio.frame
+      };
       const previousPause = {
         active: pauseAudio.active,
         frame: pauseAudio.frame
@@ -6149,6 +6220,7 @@
         stageStartAudio.active = false;
         bonusLifeAudio.active = false;
         powerUpPickupAudio.active = false;
+        powerUpAppearAudio.active = false;
         pauseAudio.active = false;
         keys.clear();
         const title = movementAudioModeForState();
@@ -6168,6 +6240,9 @@
         powerUpPickupAudio.frame = 0;
         const powerUpPickup = movementAudioModeForState();
         powerUpPickupAudio.active = false;
+        powerUpAppearAudio.active = true;
+        const powerUpAppear = movementAudioModeForState();
+        powerUpAppearAudio.active = false;
         pauseAudio.active = true;
         const pauseCue = movementAudioModeForState();
         pauseAudio.active = false;
@@ -6196,6 +6271,7 @@
             bonusLifePulse2,
             bonusLifePulse1Tail,
             powerUpPickup,
+            powerUpAppear,
             pauseCue,
             heldDirection,
             heldDuringDeathState,
@@ -6217,6 +6293,8 @@
         bonusLifeAudio.frame = previousBonusLife.frame;
         powerUpPickupAudio.active = previousPowerUpPickup.active;
         powerUpPickupAudio.frame = previousPowerUpPickup.frame;
+        powerUpAppearAudio.active = previousPowerUpAppear.active;
+        powerUpAppearAudio.frame = previousPowerUpAppear.frame;
         pauseAudio.active = previousPause.active;
         pauseAudio.frame = previousPause.frame;
         Object.assign(game, previous);
@@ -6252,6 +6330,148 @@
         frames: frames.map((frame) => powerUpPickupAudioPresentation(frame))
       };
     },
+    debugPowerUpAppearAudioProbe() {
+      const event = FREE_AUDIO_MANIFEST.events.powerUpAppear;
+      const frames = [0, 3, 4, 7, 8, 27, 28, 31, 32];
+      return {
+        durationFrames: event.durationFrames,
+        voiceDurations: event.voices.map(fixedFrameVoiceDuration),
+        waves: event.voices.map((voice) => voice.wave),
+        frames: frames.map((frame) => powerUpAppearAudioPresentation(frame))
+      };
+    },
+    debugPowerUpAppearAudioLifecycleProbe() {
+      const previous = { ...game };
+      const previousKeys = Array.from(keys);
+      const previousStageStart = { active: stageStartAudio.active, frame: stageStartAudio.frame };
+      const previousBonusLife = { active: bonusLifeAudio.active, frame: bonusLifeAudio.frame };
+      const previousPowerUpPickup = { active: powerUpPickupAudio.active, frame: powerUpPickupAudio.frame };
+      const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
+      const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
+      const state = () => ({
+        active: powerUpAppearAudio.active,
+        frame: powerUpAppearAudio.frame,
+        paused: game.paused,
+        audible: powerUpAppearAudioAudible(),
+        movementAudioMode: movementAudio.mode,
+        powerUpType: game.powerUp ? game.powerUp.type : null
+      });
+      try {
+        stopMovementAudio();
+        stopStageStartAudio();
+        stopBonusLifeAudio();
+        stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
+        stopPauseAudio();
+        const player = createPlayer(1);
+        player.spawnFlash = 0;
+        player.respawn = 0;
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = false;
+        game.pauseElapsed = 0;
+        game.tick = 25;
+        game.clearPendingTimer = 0;
+        game.players = [player];
+        game.enemies = [];
+        game.enemySpawned = 0;
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.powerUp = null;
+        game.lastPowerUpSpawn = null;
+        keys.clear();
+
+        const carrier = { carrier: true, powerUpType: "star" };
+        releaseCarrierPowerUp(carrier);
+        const spawned = !carrier.carrier && Boolean(game.powerUp) && game.powerUp.type === "star";
+        const start = state();
+        for (let frame = 0; frame < 15; frame += 1) updatePowerUpAppearAudio();
+        const beforePause = state();
+        game.paused = true;
+        syncPowerUpAppearAudioNodes();
+        syncMovementAudio();
+        for (let frame = 0; frame < 10; frame += 1) updatePowerUpAppearAudio();
+        const paused = state();
+        game.paused = false;
+        syncPowerUpAppearAudioNodes();
+        syncMovementAudio();
+        for (let frame = 0; frame < 16; frame += 1) updatePowerUpAppearAudio();
+        const beforeEnd = state();
+        updatePowerUpAppearAudio();
+        const end = state();
+
+        spawnPowerUp("helmet");
+        stageStartAudio.active = true;
+        const stageStartPriority = state();
+        stageStartAudio.active = false;
+        bonusLifeAudio.active = true;
+        bonusLifeAudio.frame = 0;
+        const bonusLifePriority = state();
+        bonusLifeAudio.active = false;
+        startPowerUpPickupAudio();
+        const pickupPriority = state();
+        for (let frame = 0; frame < 32; frame += 1) {
+          updatePowerUpPickupAudio();
+          updatePowerUpAppearAudio();
+        }
+        const suppressedEnd = {
+          ...state(),
+          pickupActive: powerUpPickupAudio.active,
+          pickupFrame: powerUpPickupAudio.frame
+        };
+
+        stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
+        game.powerUp = null;
+        game.base.alive = false;
+        for (let r = 0; r < GRID; r += 1) {
+          for (let c = 0; c < GRID; c += 1) setTile(game.grid, c, r, STEEL, 15);
+        }
+        const noSpotSpawned = spawnPowerUp("timer");
+        const noSpot = state();
+
+        return {
+          spawned,
+          start,
+          beforePause,
+          paused,
+          beforeEnd,
+          end,
+          stageStartPriority,
+          bonusLifePriority,
+          pickupPriority,
+          suppressedEnd,
+          noSpotSpawned,
+          noSpot
+        };
+      } finally {
+        stopMovementAudio();
+        stopStageStartAudio();
+        stopBonusLifeAudio();
+        stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
+        stopPauseAudio();
+        Object.assign(game, previous);
+        keys.clear();
+        for (const code of previousKeys) keys.add(code);
+        stageStartAudio.active = previousStageStart.active;
+        stageStartAudio.frame = previousStageStart.frame;
+        bonusLifeAudio.active = previousBonusLife.active;
+        bonusLifeAudio.frame = previousBonusLife.frame;
+        powerUpPickupAudio.active = previousPowerUpPickup.active;
+        powerUpPickupAudio.frame = previousPowerUpPickup.frame;
+        powerUpAppearAudio.active = previousPowerUpAppear.active;
+        powerUpAppearAudio.frame = previousPowerUpAppear.frame;
+        pauseAudio.active = previousPause.active;
+        pauseAudio.frame = previousPause.frame;
+        syncStageStartAudioNodes();
+        syncBonusLifeAudioNodes();
+        syncPowerUpPickupAudioNodes();
+        syncPowerUpAppearAudioNodes();
+        syncPauseAudioNodes();
+        syncMovementAudio();
+      }
+    },
     debugPauseAudioProbe() {
       const event = FREE_AUDIO_MANIFEST.events.pause;
       const frames = [0, 3, 4, 7, 8, 23, 24, 35, 36];
@@ -6268,6 +6488,7 @@
       const previousStageStart = { active: stageStartAudio.active, frame: stageStartAudio.frame };
       const previousBonusLife = { active: bonusLifeAudio.active, frame: bonusLifeAudio.frame };
       const previousPowerUpPickup = { active: powerUpPickupAudio.active, frame: powerUpPickupAudio.frame };
+      const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
       const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
       const state = () => ({
         paused: game.paused,
@@ -6278,9 +6499,11 @@
         stageStartFrame: stageStartAudio.frame,
         bonusLifeFrame: bonusLifeAudio.frame,
         powerUpPickupFrame: powerUpPickupAudio.frame,
+        powerUpAppearFrame: powerUpAppearAudio.frame,
         stageStartAudibility: stageStartAudioAudibility(),
         bonusLifeAudibility: bonusLifeAudioAudibility(),
         powerUpPickupAudible: powerUpPickupAudioAudible(),
+        powerUpAppearAudible: powerUpAppearAudioAudible(),
         movementAudioMode: movementAudio.mode
       });
       try {
@@ -6288,6 +6511,7 @@
         stopStageStartAudio();
         stopBonusLifeAudio();
         stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
         stopPauseAudio();
         const player = createPlayer(1);
         player.spawnFlash = 0;
@@ -6307,6 +6531,7 @@
         startStageStartAudio();
         startBonusLifeAudio();
         startPowerUpPickupAudio();
+        startPowerUpAppearAudio();
         const entered = togglePause();
         const entry = state();
         for (let frame = 0; frame < 10; frame += 1) update();
@@ -6319,6 +6544,7 @@
         stopStageStartAudio();
         stopBonusLifeAudio();
         stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
         for (let frame = 0; frame < 35; frame += 1) update();
         const finalPausedFrame = state();
         const exitedBeforeEnd = togglePause();
@@ -6344,6 +6570,7 @@
         stopStageStartAudio();
         stopBonusLifeAudio();
         stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
         stopPauseAudio();
         Object.assign(game, previous);
         keys.clear();
@@ -6354,11 +6581,14 @@
         bonusLifeAudio.frame = previousBonusLife.frame;
         powerUpPickupAudio.active = previousPowerUpPickup.active;
         powerUpPickupAudio.frame = previousPowerUpPickup.frame;
+        powerUpAppearAudio.active = previousPowerUpAppear.active;
+        powerUpAppearAudio.frame = previousPowerUpAppear.frame;
         pauseAudio.active = previousPause.active;
         pauseAudio.frame = previousPause.frame;
         syncStageStartAudioNodes();
         syncBonusLifeAudioNodes();
         syncPowerUpPickupAudioNodes();
+        syncPowerUpAppearAudioNodes();
         syncPauseAudioNodes();
         syncMovementAudio();
       }
@@ -6369,6 +6599,7 @@
       const previousStageStart = { active: stageStartAudio.active, frame: stageStartAudio.frame };
       const previousBonusLife = { active: bonusLifeAudio.active, frame: bonusLifeAudio.frame };
       const previousPowerUpPickup = { active: powerUpPickupAudio.active, frame: powerUpPickupAudio.frame };
+      const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
       const state = () => ({
         active: powerUpPickupAudio.active,
         frame: powerUpPickupAudio.frame,
@@ -6381,6 +6612,7 @@
         stopStageStartAudio();
         stopBonusLifeAudio();
         stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
         const player = createPlayer(1);
         player.spawnFlash = 0;
         player.respawn = 0;
@@ -6425,6 +6657,7 @@
         stopStageStartAudio();
         stopBonusLifeAudio();
         stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
         Object.assign(game, previous);
         keys.clear();
         for (const code of previousKeys) keys.add(code);
@@ -6434,9 +6667,12 @@
         bonusLifeAudio.frame = previousBonusLife.frame;
         powerUpPickupAudio.active = previousPowerUpPickup.active;
         powerUpPickupAudio.frame = previousPowerUpPickup.frame;
+        powerUpAppearAudio.active = previousPowerUpAppear.active;
+        powerUpAppearAudio.frame = previousPowerUpAppear.frame;
         syncStageStartAudioNodes();
         syncBonusLifeAudioNodes();
         syncPowerUpPickupAudioNodes();
+        syncPowerUpAppearAudioNodes();
         syncMovementAudio();
       }
     },
@@ -6445,6 +6681,7 @@
       const previousKeys = Array.from(keys);
       const previousStageStart = { active: stageStartAudio.active, frame: stageStartAudio.frame };
       const previousBonusLife = { active: bonusLifeAudio.active, frame: bonusLifeAudio.frame };
+      const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
       const state = () => ({
         active: bonusLifeAudio.active,
         frame: bonusLifeAudio.frame,
@@ -6456,6 +6693,7 @@
         stopMovementAudio();
         stopStageStartAudio();
         stopBonusLifeAudio();
+        stopPowerUpAppearAudio();
         const player = createPlayer(1);
         player.spawnFlash = 0;
         player.respawn = 0;
@@ -6492,6 +6730,7 @@
         stopMovementAudio();
         stopStageStartAudio();
         stopBonusLifeAudio();
+        stopPowerUpAppearAudio();
         Object.assign(game, previous);
         keys.clear();
         for (const code of previousKeys) keys.add(code);
@@ -6499,8 +6738,11 @@
         stageStartAudio.frame = previousStageStart.frame;
         bonusLifeAudio.active = previousBonusLife.active;
         bonusLifeAudio.frame = previousBonusLife.frame;
+        powerUpAppearAudio.active = previousPowerUpAppear.active;
+        powerUpAppearAudio.frame = previousPowerUpAppear.frame;
         syncStageStartAudioNodes();
         syncBonusLifeAudioNodes();
+        syncPowerUpAppearAudioNodes();
         syncMovementAudio();
       }
     },
@@ -7082,6 +7324,11 @@
           active: powerUpPickupAudio.active,
           frame: powerUpPickupAudio.frame,
           durationFrames: FREE_AUDIO_MANIFEST.events.powerUp.durationFrames
+        },
+        powerUpAppearAudio: {
+          active: powerUpAppearAudio.active,
+          frame: powerUpAppearAudio.frame,
+          durationFrames: FREE_AUDIO_MANIFEST.events.powerUpAppear.durationFrames
         },
         pauseAudio: {
           active: pauseAudio.active,
