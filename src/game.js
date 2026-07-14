@@ -182,6 +182,15 @@
       enemyDestroy: { freq: 94, duration: 0.12, gain: 0.05, wave: "square" },
       bonusLife: { freq: 880, duration: 0.08, gain: 0.028, wave: "triangle" },
       pause: { freq: 620, duration: 0.07, gain: 0.025, wave: "square" },
+      movementEnemy: { frequencies: [72, 64], stepFrames: 4, gain: 0.01, wave: "square", loop: true },
+      movementPlayer: { frequencies: [112, 96], stepFrames: 16, gain: 0.012, wave: "square", loop: true },
+      movementIce: {
+        duration: 52 / 60,
+        gain: 0.016,
+        wave: "square",
+        noteFrames: [8, 16, 22, 6],
+        notes: [330, 330, 330, 220]
+      },
       playerDestroy: { freq: 76, duration: 0.2, gain: 0.055, wave: "sawtooth" },
       powerUp: { freq: 740, duration: 0.08, gain: 0.035, wave: "triangle" },
       playerShoot: { freq: 460, duration: 0.03, gain: 0.018, wave: "square" },
@@ -777,6 +786,12 @@
   const pendingFirePresses = new Set();
   let audioCtx = null;
   const activeSequencedSounds = new Map();
+  const movementAudio = {
+    mode: "none",
+    oscillator: null,
+    gain: null,
+    phase: -1
+  };
 
   const game = {
     screen: "title",
@@ -1982,9 +1997,12 @@
     game.screen = "playing";
     game.transitionTimer = 0;
     game.titleIdleFrames = 0;
+    syncMovementAudio();
   }
 
   function endTitleDemo() {
+    stopMovementAudio();
+    stopSound("movementIce");
     game.demoMode = false;
     game.stage = 1;
     game.screen = "title";
@@ -2097,6 +2115,8 @@
   }
 
   function startStage(stage) {
+    stopMovementAudio();
+    stopSound("movementIce");
     game.screen = "stageIntro";
     game.tick = 0;
     game.transitionTimer = gameSettings().timings.stageIntro;
@@ -2140,6 +2160,8 @@
   }
 
   function enterEditor() {
+    stopMovementAudio();
+    stopSound("movementIce");
     initAudio();
     game.screen = "editor";
     game.paused = false;
@@ -2316,6 +2338,8 @@
   }
 
   function clearTransientBattleState() {
+    stopMovementAudio();
+    stopSound("movementIce");
     stopSound("gameOver");
     stopSound("highScore");
     game.demoMode = false;
@@ -2376,6 +2400,7 @@
     if (audioCtx && audioCtx.state === "suspended") {
       audioCtx.resume();
     }
+    syncMovementAudio();
   }
 
   function trackSequencedSound(name, oscillator) {
@@ -2407,6 +2432,108 @@
     }
   }
 
+  function movementAudioPresentation(mode, tick) {
+    const eventName = mode === "player" ? "movementPlayer" : "movementEnemy";
+    const event = FREE_AUDIO_MANIFEST.events[eventName];
+    const frequencies = event && Array.isArray(event.frequencies) ? event.frequencies : [];
+    if (!frequencies.length) return null;
+    const stepFrames = Math.max(1, Math.floor(Number(event.stepFrames) || 1));
+    const frame = Math.max(0, Math.floor(Number(tick) || 0));
+    const phase = Math.floor(frame / stepFrames) % frequencies.length;
+    return {
+      mode,
+      eventName,
+      phase,
+      frequency: frequencies[phase],
+      stepFrames,
+      gain: event.gain,
+      wave: event.wave
+    };
+  }
+
+  function stopMovementAudioNode() {
+    if (movementAudio.oscillator) {
+      try {
+        movementAudio.oscillator.stop(audioCtx ? audioCtx.currentTime : 0);
+      } catch (_error) {
+        // A stopped oscillator cannot be reused; the next active mode creates a new one.
+      }
+    }
+    movementAudio.oscillator = null;
+    movementAudio.gain = null;
+    movementAudio.phase = -1;
+  }
+
+  function startMovementAudioNode() {
+    if (!audioCtx || movementAudio.mode === "none") return;
+    const presentation = movementAudioPresentation(movementAudio.mode, game.tick);
+    if (!presentation) return;
+    const oscillator = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    oscillator.type = presentation.wave || "square";
+    oscillator.frequency.value = presentation.frequency;
+    gain.gain.value = presentation.gain || 0.01;
+    oscillator.connect(gain);
+    gain.connect(audioCtx.destination);
+    movementAudio.oscillator = oscillator;
+    movementAudio.gain = gain;
+    movementAudio.phase = presentation.phase;
+    oscillator.start();
+  }
+
+  function setMovementAudioMode(mode) {
+    const nextMode = mode === "player" || mode === "enemy" ? mode : "none";
+    if (movementAudio.mode !== nextMode) {
+      stopMovementAudioNode();
+      movementAudio.mode = nextMode;
+    }
+    if (nextMode === "none") {
+      stopMovementAudioNode();
+      return;
+    }
+    if (!movementAudio.oscillator) startMovementAudioNode();
+    const presentation = movementAudioPresentation(nextMode, game.tick);
+    if (!presentation || !movementAudio.oscillator || movementAudio.phase === presentation.phase) return;
+    movementAudio.phase = presentation.phase;
+    movementAudio.oscillator.frequency.value = presentation.frequency;
+  }
+
+  function stopMovementAudio() {
+    setMovementAudioMode("none");
+  }
+
+  function playerHasMovementSoundState(player) {
+    return Boolean(player && (player.alive || player.respawn > 0));
+  }
+
+  function playerMovementAudioRequested() {
+    for (const player of game.players) {
+      if (!playerHasMovementSoundState(player)) continue;
+      if (game.demoMode) {
+        if (demoControlForPlayer(player).direction !== -1) return true;
+        continue;
+      }
+      const control = getPlayerControl(player.id);
+      if ([control.up, control.right, control.down, control.left].some((binding) => hasControlKey(binding))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Mirrors the original pulse-channel priority: held player movement replaces
+   * the always-running enemy engine loop while an active battle is accepting input.
+   */
+  function movementAudioModeForState() {
+    if (game.screen !== "playing" || game.paused || game.clearPendingTimer > 0) return "none";
+    return playerMovementAudioRequested() ? "player" : "enemy";
+  }
+
+  function syncMovementAudio() {
+    setMovementAudioMode(movementAudioModeForState());
+  }
+
   function beep(freq, duration, gain, type, delay, sequenceName) {
     if (!audioCtx) return;
     const now = audioCtx.currentTime + Math.max(0, Number(delay) || 0);
@@ -2425,10 +2552,26 @@
   function playSoundVoice(name, voice, defaults) {
     const notes = Array.isArray(voice.notes) ? voice.notes : [];
     const repeat = Math.max(1, Math.floor(Number(voice.repeat ?? defaults.repeat) || 1));
+    const noteFrames = Array.isArray(voice.noteFrames) && voice.noteFrames.length === notes.length
+      ? voice.noteFrames.map((frames) => Math.max(1, Math.floor(Number(frames) || 1)))
+      : null;
     const step = Math.max(0.01, Number(voice.step ?? defaults.step) || 0.2);
     const noteDuration = Number(voice.noteDuration ?? defaults.noteDuration) || step * 0.7;
     const gain = Number(voice.gain ?? defaults.gain) || 0.025;
     const wave = voice.wave || defaults.wave;
+    if (noteFrames) {
+      const phraseDuration = noteFrames.reduce((sum, frames) => sum + frames, 0) / 60;
+      for (let loop = 0; loop < repeat; loop += 1) {
+        let offset = loop * phraseDuration;
+        for (let index = 0; index < notes.length; index += 1) {
+          const frequency = Number(notes[index]);
+          const duration = noteFrames[index] / 60;
+          if (frequency > 0) beep(frequency, duration, gain, wave, offset, name);
+          offset += duration;
+        }
+      }
+      return;
+    }
     for (let loop = 0; loop < repeat; loop += 1) {
       for (let index = 0; index < notes.length; index += 1) {
         const frequency = Number(notes[index]);
@@ -2502,7 +2645,11 @@
     game.paused = !game.paused;
     game.pauseElapsed = 0;
     pendingFirePresses.clear();
-    if (game.paused) playSound("pause");
+    syncMovementAudio();
+    if (game.paused) {
+      stopSound("movementIce");
+      playSound("pause");
+    }
     return true;
   }
 
@@ -2560,13 +2707,13 @@
     ];
     if (handledCodes.includes(event.code)) event.preventDefault();
     if (event.repeat || wasHeld) return;
-    initAudio();
 
     if (game.demoMode && (event.code === "Enter" || event.code === "Space" || event.code === "Escape")) {
       keys.delete(event.code);
       endTitleDemo();
       return;
     }
+    initAudio();
 
     if (game.screen === "playing" && !game.paused) pendingFirePresses.add(event.code);
 
@@ -2908,7 +3055,10 @@
 
     if (game.screen === "stageIntro") {
       game.transitionTimer -= 1;
-      if (game.transitionTimer <= 0) game.screen = "playing";
+      if (game.transitionTimer <= 0) {
+        game.screen = "playing";
+        syncMovementAudio();
+      }
       return;
     }
 
@@ -2951,6 +3101,7 @@
       game.pauseElapsed += 1;
       updateScorePopups();
       checkEndState();
+      syncMovementAudio();
       return;
     }
 
@@ -2979,6 +3130,7 @@
     updatePowerUp();
     if (shouldSpawnEnemies()) spawnEnemies();
     if (checkEnding) checkEndState();
+    syncMovementAudio();
   }
 
   function isGlobalTimerTick(tick) {
@@ -3152,6 +3304,7 @@
     if (inputDir !== -1) {
       if (onIce && (player.slide & 31) === 0) {
         player.slide = gameSettings().playerMovement.iceSlideFrames;
+        playSound("movementIce");
       }
       if (player.dir !== inputDir) {
         player.pendingSnap = isPerpendicularTurn(player.dir, inputDir);
@@ -4227,6 +4380,8 @@
    * @param {"clear" | "gameOver"} reason
    */
   function enterStageResult(reason) {
+    stopMovementAudio();
+    stopSound("movementIce");
     const resultReason = reason === "gameOver" ? "gameOver" : "clear";
     game.clearPendingTimer = 0;
     game.stageResultReason = resultReason;
@@ -4269,6 +4424,8 @@
       return;
     }
     if (game.screen === "gameOver" || game.screen === "fullGameOver") return;
+    stopMovementAudio();
+    stopSound("movementIce");
     game.screen = "gameOver";
     game.paused = false;
     game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
@@ -4326,6 +4483,8 @@
   }
 
   function returnToTitleAfterGame() {
+    stopMovementAudio();
+    stopSound("movementIce");
     stopSound("gameOver");
     stopSound("highScore");
     game.screen = "title";
@@ -5528,6 +5687,64 @@
     },
     audioManifest() {
       return cloneAudioManifest();
+    },
+    debugMovementAudioProbe() {
+      const previous = { ...game };
+      const previousKeys = Array.from(keys);
+      try {
+        const player = createPlayer(1);
+        player.spawnFlash = 0;
+        player.invuln = 0;
+        player.respawn = 0;
+        game.playerCount = 1;
+        game.players = [player];
+        game.enemies = [];
+        game.demoMode = false;
+        game.paused = false;
+        game.clearPendingTimer = 0;
+        game.screen = "title";
+        keys.clear();
+        const title = movementAudioModeForState();
+
+        game.screen = "playing";
+        const idleBattle = movementAudioModeForState();
+        keys.add("ArrowUp");
+        const heldDirection = movementAudioModeForState();
+        player.alive = false;
+        player.respawn = 12;
+        const heldDuringDeathState = movementAudioModeForState();
+        player.respawn = 0;
+        const heldAfterTankRemoved = movementAudioModeForState();
+        player.alive = true;
+        game.paused = true;
+        const paused = movementAudioModeForState();
+        game.paused = false;
+        game.clearPendingTimer = 128;
+        const clearDelay = movementAudioModeForState();
+        game.clearPendingTimer = 0;
+        game.screen = "gameOver";
+        const gameOver = movementAudioModeForState();
+
+        return {
+          modes: {
+            title,
+            idleBattle,
+            heldDirection,
+            heldDuringDeathState,
+            heldAfterTankRemoved,
+            paused,
+            clearDelay,
+            gameOver
+          },
+          enemyFrames: [0, 3, 4, 7, 8].map((tick) => movementAudioPresentation("enemy", tick)),
+          playerFrames: [0, 15, 16, 31, 32].map((tick) => movementAudioPresentation("player", tick)),
+          ice: { ...FREE_AUDIO_MANIFEST.events.movementIce }
+        };
+      } finally {
+        keys.clear();
+        for (const code of previousKeys) keys.add(code);
+        Object.assign(game, previous);
+      }
     },
     spriteManifest() {
       return cloneSpriteManifest();

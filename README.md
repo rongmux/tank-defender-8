@@ -49,6 +49,7 @@ git diff --check
 - Original hidden-message sequence using both controllers. After a 128-frame black pause, its four text rows and five trailing dots appear at 64-frame intervals. A free procedural green replacement object then morphs for 28 frames, falls from Y 30 through Y 248, and activates the currently selected title option on frame 887 (normally Construction for the documented sequence).
 - Four enemy tank classes with different speed, reload, armor, and score.
 - Player and enemy tanks retain an independent two-frame tread phase. Every active movement attempt flips the tread pixels, including ice coasting and attempts blocked by terrain or another tank; idle frames and enemy retry waits hold the last phase.
+- Battle movement now has free procedural replacement audio with the original channel behavior: the enemy two-pitch engine loop runs throughout active play, while a held player direction takes priority even when a tank is blocked or still has a nonzero death/spawn state. Pause, game over, and the post-clear battle delay silence both loops. Starting a new ice slide triggers its independent four-note, 52-frame cue.
 - Per-stage enemy sequences with configurable spawn points and active-enemy limits.
 - Player star upgrades: faster bullets at level 1, two bullets at level 2, and steel-destroying plus double brick-wall damage at level 3.
 - Active bullet limits: base and first-star players can keep one bullet on screen, second-star and max-power players can keep two, and each enemy tank can keep one.

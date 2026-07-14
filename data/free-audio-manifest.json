@@ -17,6 +17,15 @@
     "enemyDestroy": { "freq": 94, "duration": 0.12, "gain": 0.05, "wave": "square" },
     "bonusLife": { "freq": 880, "duration": 0.08, "gain": 0.028, "wave": "triangle" },
     "pause": { "freq": 620, "duration": 0.07, "gain": 0.025, "wave": "square" },
+    "movementEnemy": { "frequencies": [72, 64], "stepFrames": 4, "gain": 0.01, "wave": "square", "loop": true },
+    "movementPlayer": { "frequencies": [112, 96], "stepFrames": 16, "gain": 0.012, "wave": "square", "loop": true },
+    "movementIce": {
+      "duration": 0.8666666666666667,
+      "gain": 0.016,
+      "wave": "square",
+      "noteFrames": [8, 16, 22, 6],
+      "notes": [330, 330, 330, 220]
+    },
     "playerDestroy": { "freq": 76, "duration": 0.2, "gain": 0.055, "wave": "sawtooth" },
     "powerUp": { "freq": 740, "duration": 0.08, "gain": 0.035, "wave": "triangle" },
     "playerShoot": { "freq": 460, "duration": 0.03, "gain": 0.018, "wave": "square" },

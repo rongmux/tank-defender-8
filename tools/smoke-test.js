@@ -305,6 +305,11 @@ assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest i
 assert(Object.keys(runtimeAudioManifest.events).length >= 18, "runtime audio manifest should expose gameplay sound events");
 assert(runtimeAudioManifest.events.powerUp.wave === "triangle", "runtime audio manifest should expose power-up sound shape");
 assert(runtimeAudioManifest.events.pause.wave === "square", "entering pause should use the replacement pause sound");
+assert(runtimeAudioManifest.events.movementEnemy.frequencies.join(",") === "72,64", "enemy movement should expose a two-step replacement engine loop");
+assert(runtimeAudioManifest.events.movementEnemy.stepFrames === 4, "enemy movement loop should switch pitch every four fixed logic frames");
+assert(runtimeAudioManifest.events.movementPlayer.frequencies.join(",") === "112,96", "player movement should expose its distinct two-step replacement engine loop");
+assert(runtimeAudioManifest.events.movementPlayer.stepFrames === 16, "player movement loop should switch pitch every sixteen fixed logic frames");
+assert(runtimeAudioManifest.events.movementIce.noteFrames.join(",") === "8,16,22,6", "ice movement cue should retain the original 52-frame note schedule");
 assert(runtimeAudioManifest.events.scoreCount.wave === "square", "result-table count ticks should use the replacement score-count sound");
 assert(runtimeAudioManifest.events.stageBonus.wave === "triangle", "result-table leader bonus should use the replacement bonus sound");
 assert(runtimeAudioManifest.events.gameOver.duration === 3, "full-screen game-over replacement fanfare should last three seconds");
@@ -313,6 +318,34 @@ assert(runtimeAudioManifest.events.gameOver.voices.every((voice) => voice.notes.
 assert(runtimeAudioManifest.events.highScore.duration === 9.6 && runtimeAudioManifest.events.highScore.repeat === 3, "high-score replacement fanfare should span the original-style celebration window");
 assert(runtimeAudioManifest.events.highScore.notes.length === 16, "high-score replacement fanfare should expose its complete procedural phrase");
 assert(stableJson(runtimeAudioManifest) === stableJson(audioManifest), "runtime audio manifest should match data/free-audio-manifest.json");
+const movementAudioProbe = context.window.TankDefender8.debugMovementAudioProbe();
+assert(
+  movementAudioProbe.modes.title === "none" &&
+    movementAudioProbe.modes.idleBattle === "enemy" &&
+    movementAudioProbe.modes.heldDirection === "player",
+  "active battle audio should start with the enemy loop and give held player movement priority"
+);
+assert(
+  movementAudioProbe.modes.heldDuringDeathState === "player" &&
+    movementAudioProbe.modes.heldAfterTankRemoved === "enemy",
+  "held movement should continue while the original nonzero tank state exists and yield after removal"
+);
+assert(
+  movementAudioProbe.modes.paused === "none" &&
+    movementAudioProbe.modes.clearDelay === "none" &&
+    movementAudioProbe.modes.gameOver === "none",
+  "pause, the post-clear battle delay, and game over should silence both movement loops"
+);
+assert(
+  movementAudioProbe.enemyFrames.map((frame) => frame.frequency).join(",") === "72,72,64,64,72" &&
+    movementAudioProbe.playerFrames.map((frame) => frame.frequency).join(",") === "112,112,96,96,112",
+  "movement loop phases should advance only at their original four- and sixteen-frame boundaries"
+);
+assert(
+  movementAudioProbe.ice.noteFrames.reduce((sum, frames) => sum + frames, 0) === 52 &&
+    movementAudioProbe.ice.notes.length === 4,
+  "ice movement should use one independent four-note cue lasting 52 fixed logic frames"
+);
 const pauseProbe = context.window.TankDefender8.debugPauseBehaviorProbe();
 assert(pauseProbe.entered === true && pauseProbe.exited === true, "active gameplay should accept both pause and unpause toggles");
 assert(pauseProbe.entry.paused === true && pauseProbe.entry.pauseElapsed === 0, "entering pause should reset its display-frame counter");
