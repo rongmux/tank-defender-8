@@ -134,6 +134,7 @@ function makeAudioContext() {
       this.currentTime = 0;
       this.state = "running";
       this.destination = {};
+      this.sampleRate = 44100;
     }
 
     createOscillator() {
@@ -150,6 +151,27 @@ function makeAudioContext() {
 
     createGain() {
       return gainNode;
+    }
+
+    createBuffer(channels, length) {
+      const channelData = Array.from({ length: channels }, () => new Float32Array(length));
+      return {
+        getChannelData(channel) {
+          return channelData[channel];
+        }
+      };
+    }
+
+    createBufferSource() {
+      return {
+        buffer: null,
+        loop: false,
+        connect() {
+          return gainNode;
+        },
+        start() {},
+        stop() {}
+      };
     }
 
     resume() {
@@ -330,7 +352,9 @@ assert(runtimeAudioManifest.events.enemyHit.durationFrames === 5, "surviving arm
 assert(runtimeAudioManifest.events.enemyHit.voices.length === 1 && runtimeAudioManifest.events.enemyHit.voices[0].wave === "square", "surviving armored-enemy hits should use one pulse-like voice");
 assert(runtimeAudioManifest.events.movementIce.durationFrames === 4, "ice movement cue should preserve the original four-frame lifetime");
 assert(runtimeAudioManifest.events.movementIce.voices.length === 1 && runtimeAudioManifest.events.movementIce.voices[0].wave === "square", "ice movement cue should use one pulse-like voice");
-assert(runtimeAudioManifest.events.scoreCount.wave === "square", "result-table count ticks should use the replacement score-count sound");
+assert(runtimeAudioManifest.events.scoreCount.durationFrames === 1, "result-table count audio should preserve the original one-frame lifetime");
+assert(runtimeAudioManifest.events.scoreCount.voices.length === 2, "result-table count audio should preserve both simultaneous channels");
+assert(runtimeAudioManifest.events.scoreCount.voices.map((voice) => voice.wave).join(",") === "square,noise-short", "result-table count audio should pair pulse two with short-period noise");
 assert(runtimeAudioManifest.events.stageBonus.wave === "triangle", "result-table leader bonus should use the replacement bonus sound");
 assert(runtimeAudioManifest.events.gameOver.duration === 3, "full-screen game-over replacement fanfare should last three seconds");
 assert(runtimeAudioManifest.events.gameOver.voices.length === 3, "game-over replacement fanfare should preserve a three-voice arrangement");
@@ -338,6 +362,18 @@ assert(runtimeAudioManifest.events.gameOver.voices.every((voice) => voice.notes.
 assert(runtimeAudioManifest.events.highScore.duration === 9.6 && runtimeAudioManifest.events.highScore.repeat === 3, "high-score replacement fanfare should span the original-style celebration window");
 assert(runtimeAudioManifest.events.highScore.notes.length === 16, "high-score replacement fanfare should expose its complete procedural phrase");
 assert(stableJson(runtimeAudioManifest) === stableJson(audioManifest), "runtime audio manifest should match data/free-audio-manifest.json");
+const scoreCountAudioProbe = context.window.TankDefender8.debugScoreCountAudioProbe();
+assert(scoreCountAudioProbe.durationFrames === 1 && scoreCountAudioProbe.voiceDurations.join(",") === "1,1", "both score-count voices should last exactly one fixed logic frame");
+assert(scoreCountAudioProbe.frames[0].voices.map((voice) => voice.wave).join(",") === "square,noise-short", "score-count frame zero should expose pulse and short-noise voices together");
+assert(scoreCountAudioProbe.frames[0].voices.map((voice) => voice.frequency).join(",") === "165,27965", "score-count replacement voices should use the original pulse pitch and noise clock rate");
+assert(scoreCountAudioProbe.frames[1].voices.every((voice) => voice === null), "both score-count voices should be silent on frame one");
+const scoreCountAudioLifecycleProbe = context.window.TankDefender8.debugScoreCountAudioLifecycleProbe();
+assert(scoreCountAudioLifecycleProbe.simultaneous.active && scoreCountAudioLifecycleProbe.simultaneous.frame === 0 && scoreCountAudioLifecycleProbe.simultaneous.elapsed === 32, "the first result count should start its paired cue on result frame 32");
+assert(scoreCountAudioLifecycleProbe.simultaneous.visibleKills === 2 && scoreCountAudioLifecycleProbe.simultaneous.voices.filter(Boolean).length === 2, "both players counting on the same frame should produce one simultaneous two-voice event");
+assert(!scoreCountAudioLifecycleProbe.afterOneFrame.active && scoreCountAudioLifecycleProbe.afterOneFrame.frame === 1 && scoreCountAudioLifecycleProbe.afterOneFrame.voices.every((voice) => voice === null), "score-count audio should stop after one fixed logic frame");
+assert(scoreCountAudioLifecycleProbe.nextCadence.active && scoreCountAudioLifecycleProbe.nextCadence.frame === 0 && scoreCountAudioLifecycleProbe.nextCadence.elapsed === 41 && scoreCountAudioLifecycleProbe.nextCadence.visibleKills === 3, "the next visible result count should retrigger once after the original nine-frame cadence");
+assert(!scoreCountAudioLifecycleProbe.zeroKills.active && scoreCountAudioLifecycleProbe.zeroKills.frame === 0, "a zero-kill result should not start count audio");
+assert(!scoreCountAudioLifecycleProbe.stageCleanup.active && scoreCountAudioLifecycleProbe.stageCleanup.frame === 0, "starting the next stage should clear any pending score-count cue");
 const movementAudioProbe = context.window.TankDefender8.debugMovementAudioProbe();
 assert(
   movementAudioProbe.modes.title === "none" &&

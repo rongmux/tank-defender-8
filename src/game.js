@@ -357,7 +357,25 @@
           }
         ]
       },
-      scoreCount: { freq: 560, duration: 0.035, gain: 0.022, wave: "square" },
+      scoreCount: {
+        durationFrames: 1,
+        voices: [
+          {
+            gain: 0.018,
+            wave: "square",
+            segments: [
+              { frequencies: [165], noteFrames: 1, repeat: 1 }
+            ]
+          },
+          {
+            gain: 0.014,
+            wave: "noise-short",
+            segments: [
+              { frequencies: [27965], noteFrames: 1, repeat: 1 }
+            ]
+          }
+        ]
+      },
       stageBonus: { freq: 820, duration: 0.12, gain: 0.03, wave: "triangle" },
       gameOver: {
         duration: 3,
@@ -1004,6 +1022,14 @@
     frame: 0,
     nodes: []
   };
+  const scoreCountAudio = {
+    active: false,
+    frame: 0,
+    nodes: []
+  };
+  let fixedShortNoiseBuffer = null;
+  let fixedShortNoiseSampleRate = 0;
+  let fixedShortNoiseClockRate = 0;
 
   const game = {
     screen: "title",
@@ -2219,6 +2245,7 @@
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
+    stopScoreCountAudio();
     game.demoMode = false;
     game.stage = 1;
     game.screen = "title";
@@ -2342,6 +2369,7 @@
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
+    stopScoreCountAudio();
     game.screen = "stageIntro";
     game.tick = 0;
     game.transitionTimer = gameSettings().timings.stageIntro;
@@ -2397,6 +2425,7 @@
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
+    stopScoreCountAudio();
     initAudio();
     game.screen = "editor";
     game.paused = false;
@@ -2584,6 +2613,7 @@
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
+    stopScoreCountAudio();
     stopSound("gameOver");
     stopSound("highScore");
     game.demoMode = false;
@@ -2654,6 +2684,7 @@
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncPauseAudioNodes();
+    syncScoreCountAudioNodes();
     syncMovementAudio();
   }
 
@@ -2737,11 +2768,62 @@
     };
   }
 
+  function shortNoiseBuffer(clockRate) {
+    if (!audioCtx || typeof audioCtx.createBuffer !== "function") return null;
+    const sampleRate = Math.max(8000, Math.floor(Number(audioCtx.sampleRate) || 44100));
+    const normalizedClockRate = Math.max(1, Math.floor(Number(clockRate) || 27965));
+    if (
+      fixedShortNoiseBuffer &&
+      fixedShortNoiseSampleRate === sampleRate &&
+      fixedShortNoiseClockRate === normalizedClockRate
+    ) return fixedShortNoiseBuffer;
+
+    const lfsrPeriod = 93;
+    const sampleCount = Math.max(2, Math.round(sampleRate * lfsrPeriod / normalizedClockRate));
+    const buffer = audioCtx.createBuffer(1, sampleCount, sampleRate);
+    const samples = buffer.getChannelData(0);
+    let lfsr = 1;
+    let currentStep = -1;
+    for (let index = 0; index < sampleCount; index += 1) {
+      const targetStep = Math.floor(index * normalizedClockRate / sampleRate);
+      while (currentStep < targetStep) {
+        const feedback = (lfsr & 1) ^ ((lfsr >> 6) & 1);
+        lfsr = (lfsr >> 1) | (feedback << 14);
+        currentStep += 1;
+      }
+      samples[index] = (lfsr & 1) ? 1 : -1;
+    }
+    fixedShortNoiseBuffer = buffer;
+    fixedShortNoiseSampleRate = sampleRate;
+    fixedShortNoiseClockRate = normalizedClockRate;
+    return buffer;
+  }
+
+  function createFixedFrameAudioSource(voice) {
+    if (
+      voice.wave === "noise-short" &&
+      audioCtx &&
+      typeof audioCtx.createBufferSource === "function"
+    ) {
+      const buffer = shortNoiseBuffer(voice.frequency);
+      if (buffer) {
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        return source;
+      }
+    }
+    const oscillator = audioCtx.createOscillator();
+    oscillator.type = voice.wave === "noise-short" ? "square" : voice.wave;
+    oscillator.frequency.value = voice.frequency;
+    return oscillator;
+  }
+
   function stopFixedFrameAudioNodes(state) {
     for (const node of state.nodes) {
       if (!node) continue;
       try {
-        node.oscillator.stop(audioCtx ? audioCtx.currentTime : 0);
+        node.source.stop(audioCtx ? audioCtx.currentTime : 0);
       } catch (_error) {
         // Pausing or leaving a screen discards these nodes; resume creates fresh ones.
       }
@@ -2770,7 +2852,7 @@
       if (!voice) {
         if (node) {
           try {
-            node.oscillator.stop(audioCtx.currentTime);
+            node.source.stop(audioCtx.currentTime);
           } catch (_error) {
             // A voice that ended on the previous frame is already silent.
           }
@@ -2779,18 +2861,16 @@
         return;
       }
       if (!node) {
-        const oscillator = audioCtx.createOscillator();
+        const source = createFixedFrameAudioSource(voice);
         const gain = audioCtx.createGain();
-        oscillator.type = voice.wave;
-        oscillator.frequency.value = voice.frequency;
         gain.gain.value = voice.gain;
-        oscillator.connect(gain);
+        source.connect(gain);
         gain.connect(audioCtx.destination);
-        oscillator.start();
-        node = { oscillator, gain };
+        source.start();
+        node = { source, gain };
         state.nodes[index] = node;
       }
-      node.oscillator.frequency.value = voice.frequency;
+      if (node.source.frequency) node.source.frequency.value = voice.frequency;
     });
   }
 
@@ -3136,6 +3216,26 @@
     syncMovementAudio();
   }
 
+  function scoreCountAudioPresentation(frame) {
+    return fixedFrameAudioPresentation("scoreCount", frame);
+  }
+
+  function syncScoreCountAudioNodes() {
+    syncFixedFrameAudioNodes(scoreCountAudio, "scoreCount", true);
+  }
+
+  function startScoreCountAudio() {
+    startFixedFrameAudio(scoreCountAudio, "scoreCount", true);
+  }
+
+  function stopScoreCountAudio() {
+    stopFixedFrameAudio(scoreCountAudio);
+  }
+
+  function updateScoreCountAudio() {
+    updateFixedFrameAudio(scoreCountAudio, "scoreCount", true);
+  }
+
   function movementAudioPresentation(mode, tick) {
     const eventName = mode === "player" ? "movementPlayer" : "movementEnemy";
     const event = FREE_AUDIO_MANIFEST.events[eventName];
@@ -3334,6 +3434,10 @@
     }
     if (name === "pause") {
       startPauseAudio();
+      return;
+    }
+    if (name === "scoreCount") {
+      startScoreCountAudio();
       return;
     }
     const opts = options || {};
@@ -3785,6 +3889,7 @@
     updatePlayerShootAudio();
     updateMovementIceAudio();
     updatePauseAudio();
+    updateScoreCountAudio();
 
     if (game.screen === "title") {
       updateTitleIdle();
@@ -5164,6 +5269,7 @@
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
+    stopScoreCountAudio();
     const resultReason = reason === "gameOver" ? "gameOver" : "clear";
     game.clearPendingTimer = 0;
     game.stageResultReason = resultReason;
@@ -5177,6 +5283,7 @@
   }
 
   function finishStageResult() {
+    stopScoreCountAudio();
     if (game.stageResultReason === "gameOver") {
       const advance = stageAdvanceResult(game.stage);
       if (!game.customGrid && !advance.stops) game.stage = advance.stage;
@@ -5217,6 +5324,7 @@
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
+    stopScoreCountAudio();
     game.screen = "gameOver";
     game.paused = false;
     game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
@@ -5233,6 +5341,7 @@
   }
 
   function startFullGameOverScreen() {
+    stopScoreCountAudio();
     game.screen = "fullGameOver";
     game.paused = false;
     game.fullGameOverElapsed = 0;
@@ -5285,6 +5394,7 @@
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
+    stopScoreCountAudio();
     stopSound("gameOver");
     stopSound("highScore");
     game.screen = "title";
@@ -6487,6 +6597,118 @@
     },
     audioManifest() {
       return cloneAudioManifest();
+    },
+    debugScoreCountAudioProbe() {
+      const event = FREE_AUDIO_MANIFEST.events.scoreCount;
+      const frames = [0, 1];
+      return {
+        durationFrames: event.durationFrames,
+        voiceDurations: event.voices.map((voice) => fixedFrameVoiceDuration(voice)),
+        frames: frames.map((frame) => {
+          const presentation = scoreCountAudioPresentation(frame);
+          return {
+            frame,
+            voices: presentation.voices.map((voice) => voice
+              ? { frequency: voice.frequency, gain: voice.gain, wave: voice.wave }
+              : null)
+          };
+        })
+      };
+    },
+    debugScoreCountAudioLifecycleProbe() {
+      const previous = { ...game };
+      const audioStates = [
+        stageStartAudio,
+        bonusLifeAudio,
+        powerUpPickupAudio,
+        powerUpAppearAudio,
+        brickHitAudio,
+        steelHitAudio,
+        enemyHitAudio,
+        playerShootAudio,
+        movementIceAudio,
+        pauseAudio,
+        scoreCountAudio
+      ];
+      const previousAudio = audioStates.map((state) => ({ active: state.active, frame: state.frame }));
+      const state = () => {
+        const presentation = scoreCountAudioPresentation(scoreCountAudio.frame);
+        return {
+          active: scoreCountAudio.active,
+          frame: scoreCountAudio.frame,
+          voices: presentation.voices.map((voice) => voice
+            ? { frequency: voice.frequency, wave: voice.wave }
+            : null)
+        };
+      };
+      try {
+        stopMovementAudio();
+        for (const audioState of audioStates) stopFixedFrameAudio(audioState);
+        game.screen = "stageClear";
+        game.paused = false;
+        game.stageResultReason = "clear";
+        game.stageClearBonusAwarded = true;
+        game.stageClearBonusPlayerIds = [];
+        game.stageClearElapsed = 31;
+        game.transitionTimer = 999;
+        game.players = [
+          makeStageClearResultProbePlayer(1, [2, 0, 0, 0], 0),
+          makeStageClearResultProbePlayer(2, [1, 0, 0, 0], 0)
+        ];
+
+        update();
+        const firstPresentation = stageClearPresentation();
+        const simultaneous = {
+          ...state(),
+          elapsed: game.stageClearElapsed,
+          visibleKills: stageResultVisibleKillCount(firstPresentation)
+        };
+        update();
+        const afterOneFrame = state();
+
+        game.stageClearElapsed = 40;
+        update();
+        const nextCadence = {
+          ...state(),
+          elapsed: game.stageClearElapsed,
+          visibleKills: stageResultVisibleKillCount(stageClearPresentation())
+        };
+
+        stopScoreCountAudio();
+        game.players = [
+          makeStageClearResultProbePlayer(1, [0, 0, 0, 0], 0),
+          makeStageClearResultProbePlayer(2, [0, 0, 0, 0], 0)
+        ];
+        game.stageClearElapsed = 31;
+        update();
+        const zeroKills = state();
+
+        game.players = [createPlayer(1)];
+        startScoreCountAudio();
+        startStage(game.stage);
+        const stageCleanup = state();
+
+        return { simultaneous, afterOneFrame, nextCadence, zeroKills, stageCleanup };
+      } finally {
+        for (const audioState of audioStates) stopFixedFrameAudio(audioState);
+        Object.assign(game, previous);
+        audioStates.forEach((audioState, index) => {
+          audioState.active = previousAudio[index].active;
+          audioState.frame = previousAudio[index].frame;
+        });
+        syncStageStartAudioNodes();
+        syncBonusLifeAudioNodes();
+        syncPowerUpPickupAudioNodes();
+        syncPowerUpAppearAudioNodes();
+        syncBrickHitAudioNodes();
+        syncSteelHitAudioNodes();
+        syncEnemyHitAudioNodes();
+        syncPlayerShootAudioNodes();
+        syncMovementIceAudioNodes();
+        syncPauseAudioNodes();
+        syncScoreCountAudioNodes();
+        syncMovementAudio();
+      }
     },
     debugMovementAudioProbe() {
       const previous = { ...game };
@@ -8735,6 +8957,11 @@
           active: pauseAudio.active,
           frame: pauseAudio.frame,
           durationFrames: FREE_AUDIO_MANIFEST.events.pause.durationFrames
+        },
+        scoreCountAudio: {
+          active: scoreCountAudio.active,
+          frame: scoreCountAudio.frame,
+          durationFrames: FREE_AUDIO_MANIFEST.events.scoreCount.durationFrames
         },
         maxActiveEnemies: maxActiveEnemies(),
         initialLives: gameSettings().initialLives,
