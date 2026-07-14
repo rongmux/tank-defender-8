@@ -3565,6 +3565,11 @@
             return true;
           }
           bullet.remove = true;
+          addRuleExplosion(
+            "steelBlocked",
+            bullet.x + bullet.w / 2,
+            bullet.y + bullet.h / 2
+          );
           killPlayer(player);
           return true;
         }
@@ -8079,11 +8084,18 @@
         game.players = [player];
         game.explosions = [];
         hitTank(bullet);
+        const explosionDetails = game.explosions.map((explosion) => ({
+          x: explosion.x,
+          y: explosion.y,
+          ttl: explosion.ttl,
+          style: explosion.style
+        }));
         return {
           bulletRemoved: bullet.remove,
           alive: player.alive,
           respawn: player.respawn,
-          explosions: game.explosions.length
+          explosions: explosionDetails.length,
+          explosionDetails
         };
       };
       try {

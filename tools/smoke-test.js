@@ -1000,6 +1000,10 @@ const enemyBulletPlayerProbe = context.window.TankDefender8.debugEnemyBulletPlay
 assert(enemyBulletPlayerProbe.protected.bulletRemoved === true && enemyBulletPlayerProbe.protected.alive === true && enemyBulletPlayerProbe.protected.explosions === 0, "player protection should absorb an enemy bullet without a hit explosion");
 assert(enemyBulletPlayerProbe.positiveNine.bulletRemoved && enemyBulletPlayerProbe.negativeNine.bulletRemoved, "enemy bullets should hit within nine pixels of the player center on both axes");
 assert(!enemyBulletPlayerProbe.positiveNine.alive && !enemyBulletPlayerProbe.negativeNine.alive, "unprotected center-range enemy hits should start player death");
+assert(enemyBulletPlayerProbe.positiveNine.explosionDetails.map((explosion) => explosion.style).join(",") === "bulletImpact,default", "an unprotected player hit should show the bullet impact before the tank destruction explosion");
+assert(enemyBulletPlayerProbe.positiveNine.explosionDetails.map((explosion) => explosion.ttl).join(",") === "9,32", "player hits should retain the original-sized bullet impact and player destruction durations");
+assert(enemyBulletPlayerProbe.positiveNine.explosionDetails[0].x === 80 && enemyBulletPlayerProbe.positiveNine.explosionDetails[0].y === 80, "the small player-hit explosion should remain at the enemy bullet center");
+assert(enemyBulletPlayerProbe.positiveNine.explosionDetails[1].x === 71 && enemyBulletPlayerProbe.positiveNine.explosionDetails[1].y === 71, "the player destruction explosion should remain centered on the tank");
 assert(!enemyBulletPlayerProbe.positiveTen.bulletRemoved && !enemyBulletPlayerProbe.negativeTen.bulletRemoved, "enemy bullets should miss at a ten-pixel player-center difference");
 const playerBulletEnemyProbe = context.window.TankDefender8.debugPlayerBulletEnemyCollisionProbe();
 assert(playerBulletEnemyProbe.positiveNine.bulletRemoved && playerBulletEnemyProbe.negativeNine.bulletRemoved, "player bullets should hit within nine pixels of the enemy center on both axes");
