@@ -322,6 +322,8 @@ assert(runtimeAudioManifest.events.movementPlayer.stepFrames === 16, "player mov
 assert(runtimeAudioManifest.events.playerShoot.durationFrames === 15, "player shooting should preserve the original fifteen-frame lifetime");
 assert(runtimeAudioManifest.events.playerShoot.voices.length === 1 && runtimeAudioManifest.events.playerShoot.voices[0].wave === "square", "player shooting should use one pulse-like voice");
 assert(!Object.prototype.hasOwnProperty.call(runtimeAudioManifest.events, "enemyShoot"), "enemy shooting should remain silent like the original");
+assert(runtimeAudioManifest.events.steelHit.durationFrames === 4, "steel and field-boundary impacts should preserve the original four-frame lifetime");
+assert(runtimeAudioManifest.events.steelHit.voices.length === 1 && runtimeAudioManifest.events.steelHit.voices[0].wave === "square", "steel and field-boundary impacts should use one pulse-like voice");
 assert(runtimeAudioManifest.events.movementIce.durationFrames === 4, "ice movement cue should preserve the original four-frame lifetime");
 assert(runtimeAudioManifest.events.movementIce.voices.length === 1 && runtimeAudioManifest.events.movementIce.voices[0].wave === "square", "ice movement cue should use one pulse-like voice");
 assert(runtimeAudioManifest.events.scoreCount.wave === "square", "result-table count ticks should use the replacement score-count sound");
@@ -366,6 +368,25 @@ assert(
     movementAudioProbe.ice.voices[0].segments[0].frequencies.length === 4,
   "ice movement should expose one independent four-note cue lasting four fixed logic frames"
 );
+const steelHitAudioProbe = context.window.TankDefender8.debugSteelHitAudioProbe();
+assert(steelHitAudioProbe.durationFrames === 4 && steelHitAudioProbe.voiceDurations.join(",") === "4", "steel-hit audio should contain one four-frame voice");
+assert(steelHitAudioProbe.waves.join(",") === "square", "steel-hit audio should retain its pulse-like replacement voice");
+assert(steelHitAudioProbe.frames[0].voices[0].frequency === 1045 && steelHitAudioProbe.frames[1].voices[0].frequency === 1045, "the first steel-hit pitch should hold through frame one");
+assert(steelHitAudioProbe.frames[2].voices[0].frequency === 2072 && steelHitAudioProbe.frames[3].voices[0].frequency === 2072, "the second steel-hit pitch should span frames two and three");
+assert(steelHitAudioProbe.frames[4].voices[0] === null, "steel-hit audio should stop on frame four");
+const steelHitAudioLifecycleProbe = context.window.TankDefender8.debugSteelHitAudioLifecycleProbe();
+assert(steelHitAudioLifecycleProbe.playerBoundary.active && steelHitAudioLifecycleProbe.playerBoundary.frame === 0 && steelHitAudioLifecycleProbe.playerBoundary.audible, "a player boundary impact should start steel-hit audio at frame zero");
+assert(steelHitAudioLifecycleProbe.playerBoundary.bulletRemoved && steelHitAudioLifecycleProbe.playerBoundary.explosionCount === 1 && steelHitAudioLifecycleProbe.playerBoundary.movementAudioMode === "none", "a player boundary impact should remove the bullet, create one impact, and reserve the movement pulse channel");
+assert(steelHitAudioLifecycleProbe.beforePause.active && steelHitAudioLifecycleProbe.beforePause.frame === 3, "steel-hit audio should remain active through frame three");
+assert(steelHitAudioLifecycleProbe.paused.paused && steelHitAudioLifecycleProbe.paused.frame === 3 && !steelHitAudioLifecycleProbe.paused.audible && steelHitAudioLifecycleProbe.paused.pauseFrame === 10, "pause should mute and freeze steel-hit audio while its pause cue advances");
+assert(!steelHitAudioLifecycleProbe.end.active && steelHitAudioLifecycleProbe.end.frame === 4 && steelHitAudioLifecycleProbe.end.pauseActive && steelHitAudioLifecycleProbe.end.movementAudioMode === "none", "resuming should finish the masked final steel-hit frame while the unfinished pause cue keeps pulse-two priority");
+assert(!steelHitAudioLifecycleProbe.enemyBoundary.active && steelHitAudioLifecycleProbe.enemyBoundary.frame === 0 && steelHitAudioLifecycleProbe.enemyBoundary.bulletRemoved && steelHitAudioLifecycleProbe.enemyBoundary.explosionCount === 1, "an enemy boundary impact should remain silent while retaining collision feedback");
+assert(steelHitAudioLifecycleProbe.separatePulseChannels.active && steelHitAudioLifecycleProbe.separatePulseChannels.audible && steelHitAudioLifecycleProbe.separatePulseChannels.playerShootActive && steelHitAudioLifecycleProbe.separatePulseChannels.playerShootAudible, "steel-hit pulse two should play independently alongside player-shot pulse one");
+assert(steelHitAudioLifecycleProbe.appearancePriority.active && !steelHitAudioLifecycleProbe.appearancePriority.audible && steelHitAudioLifecycleProbe.appearancePriority.powerUpAppearActive, "the higher-priority appearance pulse should mask a simultaneous steel hit");
+assert(!steelHitAudioLifecycleProbe.appearanceSuppressedEnd.active && steelHitAudioLifecycleProbe.appearanceSuppressedEnd.frame === 4, "an appearance-masked steel hit should still consume its complete four-frame lifetime");
+assert(steelHitAudioLifecycleProbe.stageStartPriority.active && !steelHitAudioLifecycleProbe.stageStartPriority.audible, "stage-start pulse two should mask a simultaneous steel hit");
+assert(!steelHitAudioLifecycleProbe.stageStartSuppressedEnd.active && steelHitAudioLifecycleProbe.stageStartSuppressedEnd.frame === 4, "a stage-start-masked steel hit should still consume its complete four-frame lifetime");
+assert(!steelHitAudioLifecycleProbe.stageCleanup.active && steelHitAudioLifecycleProbe.stageCleanup.frame === 0, "starting a stage should clear any pending steel-hit cue");
 const playerShootAudioProbe = context.window.TankDefender8.debugPlayerShootAudioProbe();
 assert(playerShootAudioProbe.durationFrames === 15 && playerShootAudioProbe.voiceDurations.join(",") === "15", "player shooting audio should contain one fifteen-frame voice");
 assert(playerShootAudioProbe.waves.join(",") === "square", "player shooting audio should retain its pulse-like replacement voice");
