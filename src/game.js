@@ -66,6 +66,15 @@
     beforeBonus: 15,
     finalHold: 120
   };
+  const STAGE_RESULT_ROW_LAYOUT = Object.freeze({
+    p1KillsRightX: 104,
+    leftArrowX: 112,
+    arrowWidth: 8,
+    miniTankX: 121,
+    miniTankWidth: 14,
+    rightArrowX: 136,
+    p2KillsX: 152
+  });
   const DEFAULT_INITIAL_LIVES = 3;
   const DEFAULT_BONUS_LIFE_SCORES = [20000];
   const DEFAULT_DEATH_POWER_LEVEL = 0;
@@ -5233,12 +5242,12 @@
       const y = 96 + row.typeIndex * 24;
       drawTextRight(String(row.p1VisiblePoints), 56, y, 1, "#f3f0d4");
       drawText("PTS", 64, y, 1, "#f3f0d4");
-      drawTextRight(String(row.p1VisibleKills), 104, y, 1, "#f3f0d4");
-      drawResultArrow(112, y + 2, -1);
-      drawMiniTank(129, y - 3, row.color);
+      drawTextRight(String(row.p1VisibleKills), STAGE_RESULT_ROW_LAYOUT.p1KillsRightX, y, 1, "#f3f0d4");
+      drawResultArrow(STAGE_RESULT_ROW_LAYOUT.leftArrowX, y + 2, -1);
+      drawMiniTank(STAGE_RESULT_ROW_LAYOUT.miniTankX, y - 3, row.color);
       if (game.playerCount > 1) {
-        drawResultArrow(144, y + 2, 1);
-        drawText(String(row.p2VisibleKills), 152, y, 1, "#f3f0d4");
+        drawResultArrow(STAGE_RESULT_ROW_LAYOUT.rightArrowX, y + 2, 1);
+        drawText(String(row.p2VisibleKills), STAGE_RESULT_ROW_LAYOUT.p2KillsX, y, 1, "#f3f0d4");
         drawTextRight(String(row.p2VisiblePoints), 200, y, 1, "#f3f0d4");
         drawText("PTS", 208, y, 1, "#f3f0d4");
       }
@@ -10178,6 +10187,18 @@
         p2BonusPoints: summary.p2BonusPoints,
         p1StagePoints: summary.p1StagePoints,
         p2StagePoints: summary.p2StagePoints
+      };
+    },
+    debugStageClearRowLayoutProbe() {
+      const layout = STAGE_RESULT_ROW_LAYOUT;
+      const leftArrowRight = layout.leftArrowX + layout.arrowWidth;
+      const miniTankRight = layout.miniTankX + layout.miniTankWidth;
+      return {
+        ...layout,
+        leftGap: layout.miniTankX - leftArrowRight,
+        rightGap: layout.rightArrowX - miniTankRight,
+        leftOverlapsTank: leftArrowRight > layout.miniTankX,
+        tankOverlapsRight: miniTankRight > layout.rightArrowX
       };
     },
     debugStageClearPresentationProbe(p1Kills, p2Kills, elapsed) {

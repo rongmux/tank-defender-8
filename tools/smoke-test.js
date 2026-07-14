@@ -638,6 +638,20 @@ assert(stageClearRowsProbe.p2EnemyPoints === expectedP2EnemyPoints, "stage clear
 assert(stageClearRowsProbe.p1BonusPoints === 500 && stageClearRowsProbe.p2BonusPoints === 250, "stage clear result should expose non-kill bonus points separately");
 assert(stageClearRowsProbe.p1StagePoints === expectedP1EnemyPoints + 500, "stage clear result should include P1 bonus in the stage total");
 assert(stageClearRowsProbe.p2StagePoints === expectedP2EnemyPoints + 250, "stage clear result should include P2 bonus in the stage total");
+const stageClearRowLayoutProbe = context.window.TankDefender8.debugStageClearRowLayoutProbe();
+assert(
+  stageClearRowLayoutProbe.leftArrowX === 112 &&
+    stageClearRowLayoutProbe.miniTankX === 121 &&
+    stageClearRowLayoutProbe.rightArrowX === 136,
+  "stage result enemy rows should use the original left-arrow, tank, and right-arrow anchors"
+);
+assert(
+  stageClearRowLayoutProbe.leftGap === 1 &&
+    stageClearRowLayoutProbe.rightGap === 1 &&
+    stageClearRowLayoutProbe.leftOverlapsTank === false &&
+    stageClearRowLayoutProbe.tankOverlapsRight === false,
+  "stage result enemy icons should retain one clear pixel on both sides without touching either arrow"
+);
 const stageClearPresentationStart = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 31);
 assert(stageClearPresentationStart.rows.every((row) => row.p1VisibleKills === 0 && row.p2VisibleKills === 0), "stage result should keep the first enemy row at zero through its setup frame");
 const stageClearPresentationFirstTick = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 32);
