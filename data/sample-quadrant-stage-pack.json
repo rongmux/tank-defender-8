@@ -67,7 +67,7 @@
       "steelBlocked": { "ttl": 9, "color": "#dbe0ef", "coreColor": "#f7f1c6" },
       "enemyHit": { "ttl": 14, "color": "#ffffff", "coreColor": "#f7f1c6" },
       "enemyDestroy": { "ttl": 34, "color": "#f0b546", "coreColor": "#f7f1c6" },
-      "playerStun": { "ttl": 12, "color": "#f7f1c6", "coreColor": "#f7f1c6" },
+      "playerStun": { "ttl": 9, "color": "#f7f1c6", "coreColor": "#f7f1c6" },
       "playerDestroy": { "ttl": 32, "color": "#f05a42", "coreColor": "#f7f1c6" }
     },
     "stageAdvance": {

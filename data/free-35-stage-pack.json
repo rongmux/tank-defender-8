@@ -149,7 +149,7 @@
         "coreColor": "#f7f1c6"
       },
       "playerStun": {
-        "ttl": 12,
+        "ttl": 9,
         "color": "#f7f1c6",
         "coreColor": "#f7f1c6"
       },

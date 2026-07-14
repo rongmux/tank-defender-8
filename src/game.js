@@ -119,7 +119,7 @@
   };
   const CARRIER_FLASH_COLOR = "#dd3d33";
   const DEFAULT_EXPLOSION_CORE_COLOR = "#f7f1c6";
-  const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked"]);
+  const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "playerStun"]);
   const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
   const DEFAULT_EXPLOSION_RULES = {
     bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
@@ -129,7 +129,7 @@
     steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     enemyHit: { ttl: 14, color: "#ffffff", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     enemyDestroy: { ttl: 34, color: "#f0b546", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    playerStun: { ttl: 12, color: "#f7f1c6", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
+    playerStun: { ttl: 9, color: "#f7f1c6", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     playerDestroy: { ttl: 32, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR }
   };
   const DEFAULT_STAGE_ADVANCE = {
@@ -3552,7 +3552,7 @@
           }
           if (gameSettings().friendlyFire.enabled && player.stun <= 0) player.stun = gameSettings().friendlyFire.stunFrames;
           bullet.remove = true;
-          addRuleExplosion("playerStun", player.x + 7, player.y + 7);
+          addRuleExplosion("playerStun", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
           return true;
         }
       }
@@ -8727,7 +8727,18 @@
         game.enemies = [];
         game.explosions = [];
         hitTank(bullet);
-        return { bulletRemoved: bullet.remove, stun: target.stun, explosions: game.explosions.length };
+        const explosion = game.explosions[0] || null;
+        return {
+          bulletRemoved: bullet.remove,
+          stun: target.stun,
+          explosions: game.explosions.length,
+          explosion: explosion ? {
+            x: explosion.x,
+            y: explosion.y,
+            ttl: explosion.ttl,
+            style: explosion.style
+          } : null
+        };
       };
       try {
         return {

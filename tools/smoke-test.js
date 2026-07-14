@@ -610,6 +610,7 @@ assert(schema.gameSettings.friendlyFire.stunFrames === 200, "schema should expos
 assert(schema.gameSettings.explosionRules.bulletCancel.ttl === 10, "schema should expose bullet cancel explosion timing");
 assert(schema.gameSettings.explosionRules.brickHit.ttl === 9, "brick impacts should use the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.steelHit.ttl === 9 && schema.gameSettings.explosionRules.steelBlocked.ttl === 9, "steel impacts and field boundaries should share the original nine-frame bullet explosion");
+assert(schema.gameSettings.explosionRules.playerStun.ttl === 9, "friendly-player hits should use the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.baseDestroy.color === "#f05a42", "schema should expose base destruction explosion color");
 assert(schema.gameSettings.explosionRules.enemyDestroy.coreColor === "#f7f1c6", "schema should expose explosion core color");
 assert(schema.gameSettings.explosionRules.playerDestroy.ttl === 32, "player destruction replacement should remain visible for the original death duration");
@@ -1050,6 +1051,8 @@ const friendlyProtectionProbe = context.window.TankDefender8.debugFriendlyFirePr
 assert(friendlyProtectionProbe.protected.bulletRemoved === true && friendlyProtectionProbe.protected.stun === 0 && friendlyProtectionProbe.protected.explosions === 0, "player protection should absorb a friendly bullet without stun or hit explosion");
 assert(friendlyProtectionProbe.positiveNine.bulletRemoved && friendlyProtectionProbe.negativeNine.bulletRemoved, "friendly bullets should hit within nine pixels of the teammate center on both axes");
 assert(friendlyProtectionProbe.positiveNine.stun === schema.gameSettings.friendlyFire.stunFrames && friendlyProtectionProbe.negativeNine.stun === schema.gameSettings.friendlyFire.stunFrames, "unprotected center-range friendly hits should apply the configured stun");
+assert(friendlyProtectionProbe.positiveNine.explosion.style === "bulletImpact" && friendlyProtectionProbe.positiveNine.explosion.ttl === 9, "an unprotected friendly hit should use the nine-frame three-phase bullet impact");
+assert(friendlyProtectionProbe.positiveNine.explosion.x === 80 && friendlyProtectionProbe.positiveNine.explosion.y === 80, "the friendly-hit explosion should remain centered on the bullet");
 assert(!friendlyProtectionProbe.positiveTen.bulletRemoved && !friendlyProtectionProbe.negativeTen.bulletRemoved, "friendly bullets should miss at a ten-pixel center difference in either horizontal direction");
 const wasdDirectionProbe = context.window.TankDefender8.debugWasdDirectionProbe();
 assert(wasdDirectionProbe.singleAfter.x > wasdDirectionProbe.singleBefore.x && wasdDirectionProbe.singleAfter.dir === 1, "single-player WASD should act as player-one direction keys");
