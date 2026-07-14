@@ -105,11 +105,16 @@
     "movementEnemy": { "frequencies": [72, 64], "stepFrames": 4, "gain": 0.01, "wave": "square", "loop": true },
     "movementPlayer": { "frequencies": [112, 96], "stepFrames": 16, "gain": 0.012, "wave": "square", "loop": true },
     "movementIce": {
-      "duration": 0.8666666666666667,
-      "gain": 0.016,
-      "wave": "square",
-      "noteFrames": [8, 16, 22, 6],
-      "notes": [330, 330, 330, 220]
+      "durationFrames": 4,
+      "voices": [
+        {
+          "gain": 0.016,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [279, 349, 415, 523], "noteFrames": 1, "repeat": 1 }
+          ]
+        }
+      ]
     },
     "playerDestroy": { "freq": 76, "duration": 0.2, "gain": 0.055, "wave": "sawtooth" },
     "powerUp": {

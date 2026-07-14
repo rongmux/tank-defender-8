@@ -319,7 +319,8 @@ assert(runtimeAudioManifest.events.movementEnemy.frequencies.join(",") === "72,6
 assert(runtimeAudioManifest.events.movementEnemy.stepFrames === 4, "enemy movement loop should switch pitch every four fixed logic frames");
 assert(runtimeAudioManifest.events.movementPlayer.frequencies.join(",") === "112,96", "player movement should expose its distinct two-step replacement engine loop");
 assert(runtimeAudioManifest.events.movementPlayer.stepFrames === 16, "player movement loop should switch pitch every sixteen fixed logic frames");
-assert(runtimeAudioManifest.events.movementIce.noteFrames.join(",") === "8,16,22,6", "ice movement cue should retain the original 52-frame note schedule");
+assert(runtimeAudioManifest.events.movementIce.durationFrames === 4, "ice movement cue should preserve the original four-frame lifetime");
+assert(runtimeAudioManifest.events.movementIce.voices.length === 1 && runtimeAudioManifest.events.movementIce.voices[0].wave === "square", "ice movement cue should use one pulse-like voice");
 assert(runtimeAudioManifest.events.scoreCount.wave === "square", "result-table count ticks should use the replacement score-count sound");
 assert(runtimeAudioManifest.events.stageBonus.wave === "triangle", "result-table leader bonus should use the replacement bonus sound");
 assert(runtimeAudioManifest.events.gameOver.duration === 3, "full-screen game-over replacement fanfare should last three seconds");
@@ -358,10 +359,27 @@ assert(
   "movement loop phases should advance only at their original four- and sixteen-frame boundaries"
 );
 assert(
-  movementAudioProbe.ice.noteFrames.reduce((sum, frames) => sum + frames, 0) === 52 &&
-    movementAudioProbe.ice.notes.length === 4,
-  "ice movement should use one independent four-note cue lasting 52 fixed logic frames"
+  movementAudioProbe.ice.durationFrames === 4 &&
+    movementAudioProbe.ice.voices[0].segments[0].frequencies.length === 4,
+  "ice movement should expose one independent four-note cue lasting four fixed logic frames"
 );
+const movementIceAudioProbe = context.window.TankDefender8.debugMovementIceAudioProbe();
+assert(movementIceAudioProbe.durationFrames === 4 && movementIceAudioProbe.voiceDurations.join(",") === "4", "ice movement audio should contain one four-frame voice");
+assert(movementIceAudioProbe.waves.join(",") === "square", "ice movement audio should retain its pulse-like replacement voice");
+assert(movementIceAudioProbe.frames.slice(0, 4).map((frame) => frame.voices[0].frequency).join(",") === "279,349,415,523", "ice movement audio should rise through four one-frame notes");
+assert(movementIceAudioProbe.frames[4].voices[0] === null, "ice movement audio should stop on frame four");
+const movementIceAudioLifecycleProbe = context.window.TankDefender8.debugMovementIceAudioLifecycleProbe();
+assert(movementIceAudioLifecycleProbe.start.active && movementIceAudioLifecycleProbe.start.frame === 0 && movementIceAudioLifecycleProbe.start.audible, "entering ice movement should trigger the cue at frame zero");
+assert(movementIceAudioLifecycleProbe.start.movementAudioMode === "enemy", "the pulse-one ice cue should remain independent from the pulse-two movement loop");
+assert(movementIceAudioLifecycleProbe.beforePause.active && movementIceAudioLifecycleProbe.beforePause.frame === 3, "ice movement audio should remain active through frame three");
+assert(movementIceAudioLifecycleProbe.paused.paused && movementIceAudioLifecycleProbe.paused.frame === 3 && movementIceAudioLifecycleProbe.paused.movementAudioMode === "none", "pause should mute and freeze ice movement audio without discarding its frame");
+assert(!movementIceAudioLifecycleProbe.end.active && movementIceAudioLifecycleProbe.end.frame === 4 && movementIceAudioLifecycleProbe.end.movementAudioMode === "enemy", "resuming should finish the final ice note and restore movement audio");
+assert(movementIceAudioLifecycleProbe.retriggered.active && movementIceAudioLifecycleProbe.retriggered.frame === 0, "a new ice entry should restart the cue from frame zero");
+assert(movementIceAudioLifecycleProbe.stageStartPriority.active && !movementIceAudioLifecycleProbe.stageStartPriority.audible && movementIceAudioLifecycleProbe.stageStartPriority.movementAudioMode === "none", "stage-start pulse one should mask a simultaneous ice cue");
+assert(!movementIceAudioLifecycleProbe.stageStartSuppressedEnd.active && movementIceAudioLifecycleProbe.stageStartSuppressedEnd.frame === 4, "a stage-start-masked ice cue should still consume its four-frame lifetime");
+assert(movementIceAudioLifecycleProbe.bonusLifePriority.active && !movementIceAudioLifecycleProbe.bonusLifePriority.audible && movementIceAudioLifecycleProbe.bonusLifePriority.movementAudioMode === "none", "bonus-life pulse one should mask a simultaneous ice cue");
+assert(!movementIceAudioLifecycleProbe.bonusLifeSuppressedEnd.active && movementIceAudioLifecycleProbe.bonusLifeSuppressedEnd.frame === 4, "a bonus-life-masked ice cue should still consume its four-frame lifetime");
+assert(!movementIceAudioLifecycleProbe.stageCleanup.active && movementIceAudioLifecycleProbe.stageCleanup.frame === 0, "starting a stage should clear any pending ice movement cue");
 const stageStartAudioProbe = context.window.TankDefender8.debugStageStartAudioProbe();
 assert(stageStartAudioProbe.durationFrames === 264, "stage-start audio probe should expose the original fixed-frame duration");
 assert(stageStartAudioProbe.voiceDurations.join(",") === "264,264,264", "all three stage-start voices should end together on frame 264");
