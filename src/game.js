@@ -119,11 +119,11 @@
   };
   const CARRIER_FLASH_COLOR = "#dd3d33";
   const DEFAULT_EXPLOSION_CORE_COLOR = "#f7f1c6";
-  const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
+  const BULLET_IMPACT_EXPLOSION_RULES = new Set(["baseDestroy", "brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
   const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
   const DEFAULT_EXPLOSION_RULES = {
     bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    baseDestroy: { ttl: 80, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
+    baseDestroy: { ttl: 9, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     brickHit: { ttl: 9, color: "#d08b52", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     steelHit: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
@@ -3396,7 +3396,7 @@
     if (!rectsOverlap(bulletRect(bullet), game.base)) return false;
     game.base.alive = false;
     bullet.remove = true;
-    addRuleExplosion("baseDestroy", game.base.x + 8, game.base.y + 8);
+    addRuleExplosion("baseDestroy", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
     playSound("baseHit");
     if (!game.demoMode) enterGameOver();
     return true;
@@ -9228,18 +9228,26 @@
           baseAlive: game.base.alive,
           bulletRemoved: shieldedBullet.remove,
           topWallMask: game.grid[11][6].mask,
-          screen: game.screen
+          screen: game.screen,
+          explosions: game.explosions.map(({ x, y, ttl, style }) => ({ x, y, ttl, style }))
         };
 
         game.screen = "playing";
         game.grid = makeGrid();
         game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.explosions = [];
         const exposedBullet = makeBaseBullet();
+        const bulletCenter = {
+          x: exposedBullet.x + exposedBullet.w / 2,
+          y: exposedBullet.y + exposedBullet.h / 2
+        };
         resolveBullet(exposedBullet);
         const exposed = {
           baseAlive: game.base.alive,
           bulletRemoved: exposedBullet.remove,
-          screen: game.screen
+          screen: game.screen,
+          bulletCenter,
+          explosions: game.explosions.map(({ x, y, ttl, style }) => ({ x, y, ttl, style }))
         };
 
         return { shielded, exposed };

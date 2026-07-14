@@ -119,7 +119,7 @@
         "coreColor": "#f7f1c6"
       },
       "baseDestroy": {
-        "ttl": 80,
+        "ttl": 9,
         "color": "#f05a42",
         "coreColor": "#f7f1c6"
       },

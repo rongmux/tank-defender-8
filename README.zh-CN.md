@@ -148,7 +148,7 @@ const pack = {
     },
     explosionRules: {
       bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: "#f7f1c6" },
-      baseDestroy: { ttl: 80, color: "#f05a42", coreColor: "#f7f1c6" },
+      baseDestroy: { ttl: 9, color: "#f05a42", coreColor: "#f7f1c6" },
       brickHit: { ttl: 9, color: "#d08b52", coreColor: "#f7f1c6" },
       steelHit: { ttl: 9, color: "#dbe0ef", coreColor: "#f7f1c6" },
       steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: "#f7f1c6" },
@@ -296,11 +296,11 @@ if (result.ok) window.TankDefender8.loadStagePack(pack);
 
 关卡包可以设置 `gameSettings.playerMovement`。`speed` 是每个活动移动帧的移动距离。`frameCadence` 是选择活动移动帧的循环布尔数组；原版默认值 `[true, true, false, true]` 表示每四帧中的三帧移动一个像素。横向和纵向移动之间切换时，会先把玩家的两个坐标对齐到最近的 8 像素网格点再移动；直行或 180 度反向不会吸附。在冰面上，若没有保留的惯性，第一次方向输入会载入 `iceSlideFrames`（默认为 `28`）。当 `0x10` 位仍置位时，前 13 个惯性 tick 会忽略方向输入，并以 `iceSlideSpeed`（`1` 像素）移动；低于 16 后恢复控制。松开输入时会在滑行中消耗剩余计数器。离开冰面会保留但暂停计数器，移动受阻时仍会消耗计数。提供 `speed` 但省略 `frameCadence` 的旧版自定义关卡包会在每一帧移动。
 
-关卡包可以设置 `gameSettings.projectileRules`。`bulletSize` 是子弹碰撞/渲染尺寸（像素），`spawnOffset` 是相对于坦克中心的炮口偏移，`boundsPadding` 是子弹被移除前允许超出战场的边距。子弹命中坦克要求子弹与坦克的两个中心坐标差都小于 `10` 像素。仍在出生动画中的敌人会被跳过；玩家的头盔或出生后力场会吸收来袭子弹且不显示命中特效。未受保护的玩家被命中时，除玩家摧毁爆炸外，还会在子弹中心显示九帧子弹命中爆炸。玩家子弹每次命中活动敌军时，也会在子弹中心显示相同的九帧爆炸；如果该敌军被摧毁，还会叠加独立的坦克爆炸。每颗子弹完成整帧移动后，来自不同坦克的子弹若两个中心差都小于 `6` 像素，则直接相消且不显示爆炸；同一坦克的两颗子弹跳过该检查。省略时，默认值为 `4`、`9` 和 `4`；有效范围分别为：`bulletSize` `1` 至 `16`，`spawnOffset` `0` 至 `32`，`boundsPadding` `0` 至 `32`。
+关卡包可以设置 `gameSettings.projectileRules`。`bulletSize` 是子弹碰撞/渲染尺寸（像素），`spawnOffset` 是相对于坦克中心的炮口偏移，`boundsPadding` 是子弹被移除前允许超出战场的边距。子弹命中坦克要求子弹与坦克的两个中心坐标差都小于 `10` 像素。仍在出生动画中的敌人会被跳过；玩家的头盔或出生后力场会吸收来袭子弹且不显示命中特效。未受保护的玩家被命中时，除玩家摧毁爆炸外，还会在子弹中心显示九帧子弹命中爆炸。玩家子弹每次命中活动敌军时，也会在子弹中心显示相同的九帧爆炸；如果该敌军被摧毁，还会叠加独立的坦克爆炸。暴露的基地被命中时会立即切换为被摧毁图案，并在子弹中心显示相同的九帧弹着爆炸；保护墙会优先处理并阻止基地被命中。每颗子弹完成整帧移动后，来自不同坦克的子弹若两个中心差都小于 `6` 像素，则直接相消且不显示爆炸；同一坦克的两颗子弹跳过该检查。省略时，默认值为 `4`、`9` 和 `4`；有效范围分别为：`bulletSize` `1` 至 `16`，`spawnOffset` `0` 至 `32`，`boundsPadding` `0` 至 `32`。
 
 关卡包可以设置 `gameSettings.friendlyFire`。默认情况下，双人模式中的玩家子弹在两个中心坐标差都小于 `10` 像素时可以命中另一名玩家，并加载一个 `200` tick 的眩晕计数器，而不是将其摧毁。命中时还会在子弹中心显示原版风格的九帧子弹爆炸。该计数器只在活动玩家移动帧递减，使用原版节奏时约持续 `267` 个显示帧。眩晕玩家不能移动或转向，但仍可朝当前方向射击；再次被友军命中不会刷新已有眩晕。暂停会冻结眩晕计数器，但坦克按 8 帧显示、8 帧隐藏的节奏继续基于显示时间闪烁。受到头盔或出生后力场保护的队友会吸收友军子弹，不会眩晕，也不会显示命中特效。将 `enabled` 设为 `false` 可禁用该碰撞效果，也可以把 `stunFrames` 调整为 `0` 至 `3600` 个移动 tick。
 
-关卡包可以设置 `gameSettings.explosionRules`，用于碰撞和摧毁反馈。每条规则包含 `ttl`、`color` 和 `coreColor`；`ttl` 是 `1` 至 `3600` 的 60 FPS 帧数，颜色必须采用 `#rrggbb` 格式。规则名称为 `bulletCancel`、`baseDestroy`、`brickHit`、`steelHit`、`steelBlocked`、`enemyHit`、`enemyDestroy`、`playerStun` 和 `playerDestroy`。三种墙体/边界撞击规则、`enemyHit` 和 `playerStun` 默认显示 9 帧，并分成三个各持续 3 帧的动画阶段；暂停会冻结当前阶段。为兼容旧关卡包，仍接受 `bulletCancel`；但原版风格的子弹互撞现在会直接移除双方，不再渲染爆炸。
+关卡包可以设置 `gameSettings.explosionRules`，用于碰撞和摧毁反馈。每条规则包含 `ttl`、`color` 和 `coreColor`；`ttl` 是 `1` 至 `3600` 的 60 FPS 帧数，颜色必须采用 `#rrggbb` 格式。规则名称为 `bulletCancel`、`baseDestroy`、`brickHit`、`steelHit`、`steelBlocked`、`enemyHit`、`enemyDestroy`、`playerStun` 和 `playerDestroy`。`baseDestroy`、三种墙体/边界撞击规则、`enemyHit` 和 `playerStun` 默认显示 9 帧，并分成三个各持续 3 帧的动画阶段；暂停会冻结当前阶段。为兼容旧关卡包，仍接受 `bulletCancel`；但原版风格的子弹互撞现在会直接移除双方，不再渲染爆炸。
 
 关卡包可以设置 `gameSettings.stageAdvance`。`loopAfterFinalStage` 控制完成循环中的最后一关后是否回到第 1 关。对于原版风格 35 关关卡包，默认循环会持续至第 70 关再返回；第 36 至 70 关复用第 1 至 35 关的地图数据，同时使用第 35 关的敌人模式数据。第 70 关返回第 1 关时，会保留玩家分数、强化等级、生命和累计击杀总数；新关卡会重置单关分数、单关击杀行、活动子弹、活动道具和待处理的道具生成记忆。`extendedLoopEndStage` 默认为 `70`，`extendedLoopEnemyStage` 默认为 `35`。对于在最终结算画面后返回标题画面的有限关卡包，请将 `loopAfterFinalStage` 设为 `false`。
 

@@ -612,6 +612,7 @@ assert(schema.gameSettings.explosionRules.brickHit.ttl === 9, "brick impacts sho
 assert(schema.gameSettings.explosionRules.steelHit.ttl === 9 && schema.gameSettings.explosionRules.steelBlocked.ttl === 9, "steel impacts and field boundaries should share the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.enemyHit.ttl === 9, "enemy tank hits should use the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.playerStun.ttl === 9, "friendly-player hits should use the original nine-frame bullet explosion");
+assert(schema.gameSettings.explosionRules.baseDestroy.ttl === 9, "base hits should use the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.baseDestroy.color === "#f05a42", "schema should expose base destruction explosion color");
 assert(schema.gameSettings.explosionRules.enemyDestroy.coreColor === "#f7f1c6", "schema should expose explosion core color");
 assert(schema.gameSettings.explosionRules.playerDestroy.ttl === 32, "player destruction replacement should remain visible for the original death duration");
@@ -1823,7 +1824,7 @@ assert(snapshot.projectileRules.spawnOffset === 9, "sample pack should expose pr
 assert(snapshot.friendlyFire.enabled === true && snapshot.friendlyFire.stunFrames === 200, "sample pack should expose friendly-fire stun rules");
 assert(context.window.TankDefender8.debugFriendlyFireProbe().stunFrames === 200, "default friendly-fire should stun the other player");
 assert(snapshot.explosionRules.enemyDestroy.ttl === 34, "sample pack should expose enemy destruction explosion rules");
-assert(context.window.TankDefender8.debugExplosionRuleProbe("baseDestroy").ttl === 80, "default base destruction explosion should use configured timing");
+assert(context.window.TankDefender8.debugExplosionRuleProbe("baseDestroy").ttl === 9, "default base hit explosion should use the original nine-frame timing");
 assert(snapshot.stageAdvance.loopAfterFinalStage === true, "sample pack should expose final-stage loop rule");
 assert(snapshot.stageClearBonus.points === 1000, "sample pack should expose stage clear bonus");
 assert(snapshot.enemyAi.intersectionTurnChance === 1 / 16 && snapshot.enemyAi.blockedRetryChance === 3 / 4, "sample pack should expose original enemy AI rolls");
@@ -1891,8 +1892,12 @@ const baseWallPriorityProbe = context.window.TankDefender8.debugBaseWallPriority
 assert(baseWallPriorityProbe.shielded.baseAlive === true, "base wall should absorb a bullet before the base is destroyed");
 assert(baseWallPriorityProbe.shielded.bulletRemoved === true, "base-shielding wall should consume the bullet");
 assert(baseWallPriorityProbe.shielded.screen === "playing", "base should not enter game over while its wall absorbs the hit");
+assert(baseWallPriorityProbe.shielded.explosions.length === 1, "base-shielding wall should produce only its own bullet impact");
 assert(baseWallPriorityProbe.exposed.baseAlive === false, "exposed base should be destroyed by an overlapping bullet");
 assert(baseWallPriorityProbe.exposed.screen === "gameOver", "exposed base destruction should enter game over");
+assert(baseWallPriorityProbe.exposed.explosions.length === 1, "exposed base hit should produce one bullet impact");
+assert(baseWallPriorityProbe.exposed.explosions[0].ttl === 9 && baseWallPriorityProbe.exposed.explosions[0].style === "bulletImpact", "base hit should enter the original nine-frame bullet explosion state");
+assert(baseWallPriorityProbe.exposed.explosions[0].x === baseWallPriorityProbe.exposed.bulletCenter.x && baseWallPriorityProbe.exposed.explosions[0].y === baseWallPriorityProbe.exposed.bulletCenter.y, "base hit explosion should stay centered on the bullet rather than the base");
 const tankCollisionProbe = context.window.TankDefender8.debugTankCollisionProbe();
 assert(tankCollisionProbe.enemyBlocks === true, "enemy tanks should physically block player movement");
 assert(tankCollisionProbe.teammateBlocks === true, "teammate tanks should physically block player movement");
