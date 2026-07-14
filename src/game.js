@@ -3992,8 +3992,12 @@
     const rect = { x, y, w: tank.w, h: tank.h };
     if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > FIELD_W || rect.y + rect.h > FIELD_H) return false;
     if (rectsOverlap(rect, game.base) && game.base.alive) return false;
-    if (rectHitsSolidTerrain(rect)) return false;
     const currentRect = tankRect(tank);
+    const nextTerrainOverlap = solidTerrainOverlapArea(rect);
+    if (nextTerrainOverlap > 0) {
+      const currentTerrainOverlap = solidTerrainOverlapArea(currentRect);
+      if (currentTerrainOverlap <= 0 || nextTerrainOverlap >= currentTerrainOverlap) return false;
+    }
     for (const other of activeTankCollisionPeers(tank)) {
       const nextOverlap = rectOverlapArea(rect, other);
       if (nextOverlap <= 0) continue;
@@ -4025,36 +4029,41 @@
   }
 
   function rectHitsSolidTerrain(rect) {
+    return solidTerrainOverlapArea(rect) > 0;
+  }
+
+  function solidTerrainOverlapArea(rect) {
     const c0 = clamp(Math.floor(rect.x / TILE), 0, GRID - 1);
     const r0 = clamp(Math.floor(rect.y / TILE), 0, GRID - 1);
     const c1 = clamp(Math.floor((rect.x + rect.w - 1) / TILE), 0, GRID - 1);
     const r1 = clamp(Math.floor((rect.y + rect.h - 1) / TILE), 0, GRID - 1);
+    let total = 0;
 
     for (let r = r0; r <= r1; r += 1) {
       for (let c = c0; c <= c1; c += 1) {
         const cell = game.grid[r][c];
         if (cell.type === WATER) {
           const tileRect = { x: c * TILE, y: r * TILE, w: TILE, h: TILE };
-          if (rectsOverlap(rect, tileRect)) return true;
+          total += rectOverlapArea(rect, tileRect);
         }
         if (cell.type === BRICK && cell.mask) {
           const fragments = normalizeBrickFragmentMask(cell.brickMask, cell.mask);
           for (let fragment = 0; fragment < 16; fragment += 1) {
             if (fragments & (1 << fragment)) {
-              if (rectsOverlap(rect, brickFragmentRect(c, r, fragment))) return true;
+              total += rectOverlapArea(rect, brickFragmentRect(c, r, fragment));
             }
           }
         }
         if (cell.type === STEEL && cell.mask) {
           for (let q = 0; q < 4; q += 1) {
             if (cell.mask & (1 << q)) {
-              if (rectsOverlap(rect, quarterRect(c, r, q))) return true;
+              total += rectOverlapArea(rect, quarterRect(c, r, q));
             }
           }
         }
       }
     }
-    return false;
+    return total;
   }
 
   function isTankOnIce(tank) {
@@ -4064,8 +4073,12 @@
   }
 
   function snapForDirection(tank) {
-    tank.x = Math.floor((tank.x + 4) / HALF) * HALF;
-    tank.y = Math.floor((tank.y + 4) / HALF) * HALF;
+    const x = Math.floor((tank.x + 4) / HALF) * HALF;
+    const y = Math.floor((tank.y + 4) / HALF) * HALF;
+    if (!canTankOccupy(tank, x, y)) return false;
+    tank.x = x;
+    tank.y = y;
+    return true;
   }
 
   function isPerpendicularTurn(fromDir, toDir) {
@@ -8981,6 +8994,74 @@
           reverse: run(RIGHT, LEFT),
           same: run(RIGHT, RIGHT),
           gridSize: HALF
+        };
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
+    debugPlayerBrickRecoveryProbe() {
+      const previous = {
+        grid: game.grid,
+        base: game.base,
+        players: game.players,
+        enemies: game.enemies
+      };
+      const makePlayer = (x, y, dir) => {
+        const player = createPlayer(1);
+        player.x = x;
+        player.y = y;
+        player.dir = dir;
+        player.alive = true;
+        player.respawn = 0;
+        player.spawnFlash = 0;
+        player.invuln = 0;
+        player.stun = 0;
+        player.slide = 0;
+        player.pendingSnap = false;
+        return player;
+      };
+
+      try {
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.enemies = [];
+
+        game.grid = makeGrid();
+        const turnCell = makeCell(BRICK, 1);
+        turnCell.brickMask = 1 << 1;
+        turnCell.mask = quarterMaskFromBrickFragments(turnCell.brickMask);
+        game.grid[5][5] = turnCell;
+        const turningPlayer = makePlayer(69, 70, RIGHT);
+        game.players = [turningPlayer];
+        const turnBefore = {
+          x: turningPlayer.x,
+          y: turningPlayer.y,
+          overlap: solidTerrainOverlapArea(tankRect(turningPlayer))
+        };
+        updatePlayerMovement(turningPlayer, DOWN);
+        const turnAfter = {
+          x: turningPlayer.x,
+          y: turningPlayer.y,
+          dir: turningPlayer.dir,
+          overlap: solidTerrainOverlapArea(tankRect(turningPlayer))
+        };
+
+        game.grid = makeGrid();
+        setTile(game.grid, 5, 11, BRICK, 15);
+        const coveredPlayer = makePlayer(90, 177, RIGHT);
+        game.players = [coveredPlayer];
+        const overlapHistory = [solidTerrainOverlapArea(tankRect(coveredPlayer))];
+        for (let step = 0; step < 6; step += 1) {
+          updatePlayerMovement(coveredPlayer, RIGHT);
+          overlapHistory.push(solidTerrainOverlapArea(tankRect(coveredPlayer)));
+        }
+
+        return {
+          blockedTurnSnap: { before: turnBefore, after: turnAfter },
+          restoredWallEscape: {
+            x: coveredPlayer.x,
+            y: coveredPlayer.y,
+            overlapHistory
+          }
         };
       } finally {
         Object.assign(game, previous);

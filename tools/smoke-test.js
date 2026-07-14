@@ -1072,6 +1072,12 @@ assert(playerTurnProbe.perpendicular.x === 64 && playerTurnProbe.perpendicular.y
 assert(playerTurnProbe.reverse.x === 66 && playerTurnProbe.reverse.y === 70 && playerTurnProbe.reverse.dir === 3, "a 180-degree reverse should move immediately without coordinate snapping");
 assert(playerTurnProbe.same.x === 68 && playerTurnProbe.same.y === 70 && playerTurnProbe.same.dir === 1, "continuing in the same direction should not snap coordinates");
 assert(playerTurnProbe.perpendicular.pendingSnap === false && playerTurnProbe.reverse.pendingSnap === false, "turn alignment should complete in the current movement tick");
+const playerBrickRecoveryProbe = context.window.TankDefender8.debugPlayerBrickRecoveryProbe();
+assert(playerBrickRecoveryProbe.blockedTurnSnap.before.overlap === 0, "brick recovery fixture should start outside the remaining brick fragment");
+assert(playerBrickRecoveryProbe.blockedTurnSnap.after.x === 69 && playerBrickRecoveryProbe.blockedTurnSnap.after.y === 71 && playerBrickRecoveryProbe.blockedTurnSnap.after.dir === 2, "a perpendicular turn should skip an unsafe grid snap while still moving in the selected direction");
+assert(playerBrickRecoveryProbe.blockedTurnSnap.after.overlap === 0, "turn alignment should never push a player into a brick fragment");
+assert(playerBrickRecoveryProbe.restoredWallEscape.overlapHistory.join(",") === "84,70,56,42,28,14,0", "a player covered by a restored brick wall should reduce overlap on every outward movement tick");
+assert(playerBrickRecoveryProbe.restoredWallEscape.x === 96 && playerBrickRecoveryProbe.restoredWallEscape.y === 177, "a covered player should be able to leave the restored wall without lateral displacement");
 const iceMovementProbe = context.window.TankDefender8.debugIceMovementProbe();
 assert(iceMovementProbe.configuredTicks === 28 && iceMovementProbe.configuredSpeed === 1, "ice movement should use the original 28-count full-speed inertia");
 assert(iceMovementProbe.afterEntry.slide === 28 && iceMovementProbe.afterEntry.x === 33, "first direction input on ice should arm inertia and move one pixel");
