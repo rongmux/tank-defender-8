@@ -311,7 +311,7 @@ if (result.ok) window.TankDefender8.loadStagePack(pack);
 
 关卡包可以设置 `gameSettings.enemyAi`。在 8 像素交叉点，`intersectionTurnChance` 控制敌人是否重新评估路线。发生碰撞时，`blockedRetryChance` 控制敌人是暂停 `blockedRetryTicks` 个移动回合并重试同一方向，还是进入转向状态。`horizontalFirstChance` 决定目标寻路先处理水平轴还是垂直轴。默认值为 `1/16`、`3/4`、`2` 和 `1/2`，与原版状态机一致。在一关内，当关卡帧计数器高字节先后越过 `spawnInterval/8` 和 `spawnInterval/4` 时，寻路目标会从随机方向推进为玩家，最后推进为总部。双人模式中，偶数敌人槽位优先选择玩家 1，奇数敌人槽位优先选择玩家 2，并在目标玩家阵亡时改选仍存活的玩家。
 
-关卡包可以设置 `gameSettings.timerFreezesEnemyTime`。省略时默认为 `true`：定时器道具的 64 帧计数器非零期间，会暂停敌人移动以及敌人的装填、AI 和出生闪烁计时器。敌人生成倒计时仍会继续；新生成的敌人会出现，但停留在出生动画中。计数器在 64 帧边界递减至零时，敌人处理会立即恢复。
+关卡包可以设置 `gameSettings.timerFreezesEnemyTime`。省略时默认为 `true`：定时器道具的 64 帧计数器非零期间，敌人生成倒计时和出生动画仍会正常推进。新生成的敌人会完成出生，随后停在原地，不推进装填计时、不运行 AI，也不会发射子弹。计数器在 64 帧边界递减至零时，活动敌人的处理会立即恢复。
 
 每一关都可以设置 `stageSettings[index].maxActiveEnemies` 和 `maxActiveEnemiesTwoPlayer`，分别表示单人和双人模式下允许同时存活的最大敌人数。省略时默认为 `4` 和 `6`；有效值为 `1` 至 `8`。为保持向后兼容，仅设置 `maxActiveEnemies` 的自定义关卡会在两种模式中使用同一个显式上限。
 

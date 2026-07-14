@@ -1166,7 +1166,11 @@ assert(timerFinalFrameProbe.after.freezeTimer === 0, "timer should reach zero at
 const timerSpawnProbe = context.window.TankDefender8.debugTimerSpawnDuringFreezeProbe();
 assert(timerSpawnProbe.afterSpawn.enemyCount === 1 && timerSpawnProbe.afterSpawn.enemySpawned === 1, "timer should not block an enemy from spawning");
 assert(timerSpawnProbe.afterSpawn.spawnedEnemyFlash === timerSpawnProbe.expectedSpawnFlash, "enemy spawned during timer should enter its normal spawn flash");
-assert(timerSpawnProbe.afterFrozenFrame.spawnedEnemyFlash === timerSpawnProbe.afterSpawn.spawnedEnemyFlash, "enemy spawned during timer should stay frozen until the timer expires");
+assert(timerSpawnProbe.afterFrozenFrame.spawnedEnemyFlash === timerSpawnProbe.afterSpawn.spawnedEnemyFlash - 1, "enemy spawn animation should continue while the timer is active");
+assert(timerSpawnProbe.afterSpawnAnimation.spawnedEnemyFlash === 0 && timerSpawnProbe.afterSpawnAnimation.freezeTimer > 0, "an enemy should finish spawning before an active timer expires");
+assert(timerSpawnProbe.afterFrozenActiveFrame.enemyX === timerSpawnProbe.afterSpawnAnimation.enemyX && timerSpawnProbe.afterFrozenActiveFrame.enemyY === timerSpawnProbe.afterSpawnAnimation.enemyY, "a newly active enemy should remain stationary while the timer is active");
+assert(timerSpawnProbe.afterFrozenActiveFrame.enemyReload === timerSpawnProbe.afterSpawnAnimation.enemyReload, "a newly active enemy should keep its reload timer frozen");
+assert(timerSpawnProbe.afterSpawnAnimation.enemyBulletCount === 0 && timerSpawnProbe.afterFrozenActiveFrame.enemyBulletCount === 0, "a newly active enemy should not fire while the timer is active");
 const noExpirePowerUpProbe = context.window.TankDefender8.debugPowerUpTtlProbe(0);
 assert(noExpirePowerUpProbe.survives === true && noExpirePowerUpProbe.ttl === 0, "zero power-up TTL should not expire by time");
 const expiringPowerUpProbe = context.window.TankDefender8.debugPowerUpTtlProbe(1);

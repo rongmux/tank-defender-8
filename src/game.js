@@ -4365,7 +4365,7 @@
   }
 
   function updateEnemies() {
-    if (isEnemyTimeFrozen()) return;
+    const enemyTimeFrozen = isEnemyTimeFrozen();
 
     for (const enemy of game.enemies) {
       if (!enemy.alive) continue;
@@ -4373,6 +4373,7 @@
         enemy.spawnFlash -= 1;
         continue;
       }
+      if (enemyTimeFrozen) continue;
       if (enemy.reload > 0) enemy.reload -= 1;
       updateEnemyMovement(enemy);
       if (enemy.reload <= 0 && shouldEnemyFire(enemy)) shoot(enemy);
@@ -10408,13 +10409,43 @@
         };
 
         update();
+        const afterFrozenFrame = {
+          enemyCount: game.enemies.length,
+          enemySpawned: game.enemySpawned,
+          spawnedEnemyFlash: spawnedEnemy ? spawnedEnemy.spawnFlash : null,
+          freezeTimer: game.freezeTimer,
+          nextSpawn: game.nextSpawn
+        };
+        for (let frame = 1; frame < gameSettings().timings.enemySpawnFlash; frame += 1) update();
+        if (spawnedEnemy) {
+          spawnedEnemy.reload = 0;
+          spawnedEnemy.fireChance = 1;
+        }
+        const afterSpawnAnimation = {
+          spawnedEnemyFlash: spawnedEnemy ? spawnedEnemy.spawnFlash : null,
+          enemyX: spawnedEnemy ? spawnedEnemy.x : null,
+          enemyY: spawnedEnemy ? spawnedEnemy.y : null,
+          enemyReload: spawnedEnemy ? spawnedEnemy.reload : null,
+          enemyBulletCount: spawnedEnemy
+            ? game.bullets.filter((bullet) => bullet.ownerKey === `enemy:${spawnedEnemy.id}`).length
+            : null,
+          freezeTimer: game.freezeTimer,
+          nextSpawn: game.nextSpawn
+        };
+        update();
         return {
           expectedSpawnFlash: gameSettings().timings.enemySpawnFlash,
           afterSpawn,
-          afterFrozenFrame: {
-            enemyCount: game.enemies.length,
-            enemySpawned: game.enemySpawned,
+          afterFrozenFrame,
+          afterSpawnAnimation,
+          afterFrozenActiveFrame: {
             spawnedEnemyFlash: spawnedEnemy ? spawnedEnemy.spawnFlash : null,
+            enemyX: spawnedEnemy ? spawnedEnemy.x : null,
+            enemyY: spawnedEnemy ? spawnedEnemy.y : null,
+            enemyReload: spawnedEnemy ? spawnedEnemy.reload : null,
+            enemyBulletCount: spawnedEnemy
+              ? game.bullets.filter((bullet) => bullet.ownerKey === `enemy:${spawnedEnemy.id}`).length
+              : null,
             freezeTimer: game.freezeTimer,
             nextSpawn: game.nextSpawn
           }
