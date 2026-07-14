@@ -311,8 +311,18 @@
           }
         ]
       },
-      playerShoot: { freq: 460, duration: 0.03, gain: 0.018, wave: "square" },
-      enemyShoot: { freq: 310, duration: 0.03, gain: 0.018, wave: "square" },
+      playerShoot: {
+        durationFrames: 15,
+        voices: [
+          {
+            gain: 0.018,
+            wave: "square",
+            segments: [
+              { frequencies: [1165], noteFrames: 15, repeat: 1 }
+            ]
+          }
+        ]
+      },
       scoreCount: { freq: 560, duration: 0.035, gain: 0.022, wave: "square" },
       stageBonus: { freq: 820, duration: 0.12, gain: 0.03, wave: "triangle" },
       gameOver: {
@@ -911,6 +921,11 @@
     phase: -1
   };
   const movementIceAudio = {
+    active: false,
+    frame: 0,
+    nodes: []
+  };
+  const playerShootAudio = {
     active: false,
     frame: 0,
     nodes: []
@@ -2150,6 +2165,7 @@
 
   function endTitleDemo() {
     stopMovementAudio();
+    stopPlayerShootAudio();
     stopMovementIceAudio();
     game.demoMode = false;
     game.stage = 1;
@@ -2269,6 +2285,7 @@
     stopPowerUpPickupAudio();
     stopPowerUpAppearAudio();
     stopPauseAudio();
+    stopPlayerShootAudio();
     stopMovementIceAudio();
     game.screen = "stageIntro";
     game.tick = 0;
@@ -2320,6 +2337,7 @@
     stopPowerUpPickupAudio();
     stopPowerUpAppearAudio();
     stopPauseAudio();
+    stopPlayerShootAudio();
     stopMovementIceAudio();
     initAudio();
     game.screen = "editor";
@@ -2503,6 +2521,7 @@
     stopPowerUpPickupAudio();
     stopPowerUpAppearAudio();
     stopPauseAudio();
+    stopPlayerShootAudio();
     stopMovementIceAudio();
     stopSound("gameOver");
     stopSound("highScore");
@@ -2568,6 +2587,7 @@
     syncBonusLifeAudioNodes();
     syncPowerUpPickupAudioNodes();
     syncPowerUpAppearAudioNodes();
+    syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncPauseAudioNodes();
     syncMovementAudio();
@@ -2783,6 +2803,7 @@
     startFixedFrameAudio(bonusLifeAudio, "bonusLife");
     syncPowerUpPickupAudioNodes();
     syncPowerUpAppearAudioNodes();
+    syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
   }
 
@@ -2794,6 +2815,7 @@
     updateFixedFrameAudio(bonusLifeAudio, "bonusLife");
     syncPowerUpPickupAudioNodes();
     syncPowerUpAppearAudioNodes();
+    syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
   }
 
@@ -2859,12 +2881,38 @@
     updateFixedFrameAudio(powerUpAppearAudio, "powerUpAppear", powerUpAppearAudioAudible());
   }
 
+  function playerShootAudioPresentation(frame) {
+    return fixedFrameAudioPresentation("playerShoot", frame);
+  }
+
+  function playerShootAudioAudible() {
+    return !stageStartAudio.active && !bonusLifePulse1Active();
+  }
+
+  function syncPlayerShootAudioNodes() {
+    syncFixedFrameAudioNodes(playerShootAudio, "playerShoot", playerShootAudioAudible());
+  }
+
+  function startPlayerShootAudio() {
+    startFixedFrameAudio(playerShootAudio, "playerShoot", playerShootAudioAudible());
+    syncMovementIceAudioNodes();
+  }
+
+  function stopPlayerShootAudio() {
+    stopFixedFrameAudio(playerShootAudio);
+  }
+
+  function updatePlayerShootAudio() {
+    updateFixedFrameAudio(playerShootAudio, "playerShoot", playerShootAudioAudible());
+    syncMovementIceAudioNodes();
+  }
+
   function movementIceAudioPresentation(frame) {
     return fixedFrameAudioPresentation("movementIce", frame);
   }
 
   function movementIceAudioAudible() {
-    return !stageStartAudio.active && !bonusLifePulse1Active();
+    return !stageStartAudio.active && !bonusLifePulse1Active() && !playerShootAudio.active;
   }
 
   function syncMovementIceAudioNodes() {
@@ -2897,6 +2945,7 @@
     syncBonusLifeAudioNodes();
     syncPowerUpPickupAudioNodes();
     syncPowerUpAppearAudioNodes();
+    syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
   }
 
@@ -2912,6 +2961,7 @@
     syncBonusLifeAudioNodes();
     syncPowerUpPickupAudioNodes();
     syncPowerUpAppearAudioNodes();
+    syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncMovementAudio();
   }
@@ -3078,6 +3128,10 @@
   function playSound(name, options) {
     const event = FREE_AUDIO_MANIFEST.events[name];
     if (!event) return;
+    if (name === "playerShoot") {
+      startPlayerShootAudio();
+      return;
+    }
     if (name === "movementIce") {
       startMovementIceAudio();
       return;
@@ -3162,6 +3216,7 @@
     syncBonusLifeAudioNodes();
     syncPowerUpPickupAudioNodes();
     syncPowerUpAppearAudioNodes();
+    syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncPauseAudioNodes();
     syncMovementAudio();
@@ -3537,6 +3592,7 @@
     updateBonusLifeAudio();
     updatePowerUpPickupAudio();
     updatePowerUpAppearAudio();
+    updatePlayerShootAudio();
     updateMovementIceAudio();
     updatePauseAudio();
 
@@ -4660,7 +4716,7 @@
 
     game.bullets.push(createBullet(tank, key, upgrade));
     tank.reload = upgrade ? upgrade.reload : tank.reloadBase;
-    playSound(tank.kind === "player" ? "playerShoot" : "enemyShoot");
+    if (tank.kind === "player") playSound("playerShoot");
   }
 
   function createBullet(tank, key, upgrade) {
@@ -4913,6 +4969,7 @@
     stopPowerUpPickupAudio();
     stopPowerUpAppearAudio();
     stopPauseAudio();
+    stopPlayerShootAudio();
     stopMovementIceAudio();
     const resultReason = reason === "gameOver" ? "gameOver" : "clear";
     game.clearPendingTimer = 0;
@@ -4962,6 +5019,7 @@
     stopPowerUpPickupAudio();
     stopPowerUpAppearAudio();
     stopPauseAudio();
+    stopPlayerShootAudio();
     stopMovementIceAudio();
     game.screen = "gameOver";
     game.paused = false;
@@ -5026,6 +5084,7 @@
     stopPowerUpPickupAudio();
     stopPowerUpAppearAudio();
     stopPauseAudio();
+    stopPlayerShootAudio();
     stopMovementIceAudio();
     stopSound("gameOver");
     stopSound("highScore");
@@ -6253,6 +6312,10 @@
         active: movementIceAudio.active,
         frame: movementIceAudio.frame
       };
+      const previousPlayerShoot = {
+        active: playerShootAudio.active,
+        frame: playerShootAudio.frame
+      };
       const previousPause = {
         active: pauseAudio.active,
         frame: pauseAudio.frame
@@ -6274,6 +6337,7 @@
         powerUpPickupAudio.active = false;
         powerUpAppearAudio.active = false;
         movementIceAudio.active = false;
+        playerShootAudio.active = false;
         pauseAudio.active = false;
         keys.clear();
         const title = movementAudioModeForState();
@@ -6350,6 +6414,8 @@
         powerUpAppearAudio.frame = previousPowerUpAppear.frame;
         movementIceAudio.active = previousMovementIce.active;
         movementIceAudio.frame = previousMovementIce.frame;
+        playerShootAudio.active = previousPlayerShoot.active;
+        playerShootAudio.frame = previousPlayerShoot.frame;
         pauseAudio.active = previousPause.active;
         pauseAudio.frame = previousPause.frame;
         Object.assign(game, previous);
@@ -6365,6 +6431,188 @@
         frames: frames.map((frame) => movementIceAudioPresentation(frame))
       };
     },
+    debugPlayerShootAudioProbe() {
+      const event = FREE_AUDIO_MANIFEST.events.playerShoot;
+      const frames = [0, 14, 15];
+      return {
+        durationFrames: event.durationFrames,
+        voiceDurations: event.voices.map(fixedFrameVoiceDuration),
+        waves: event.voices.map((voice) => voice.wave),
+        frames: frames.map((frame) => playerShootAudioPresentation(frame))
+      };
+    },
+    debugPlayerShootAudioLifecycleProbe() {
+      const previous = { ...game };
+      const previousKeys = Array.from(keys);
+      const previousStageStart = { active: stageStartAudio.active, frame: stageStartAudio.frame };
+      const previousBonusLife = { active: bonusLifeAudio.active, frame: bonusLifeAudio.frame };
+      const previousPowerUpPickup = { active: powerUpPickupAudio.active, frame: powerUpPickupAudio.frame };
+      const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
+      const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
+      const previousMovementIce = { active: movementIceAudio.active, frame: movementIceAudio.frame };
+      const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
+      const state = () => ({
+        active: playerShootAudio.active,
+        frame: playerShootAudio.frame,
+        paused: game.paused,
+        audible: playerShootAudio.active && playerShootAudioAudible(),
+        iceActive: movementIceAudio.active,
+        iceFrame: movementIceAudio.frame,
+        iceAudible: movementIceAudio.active && movementIceAudioAudible()
+      });
+      try {
+        stopMovementAudio();
+        stopStageStartAudio();
+        stopBonusLifeAudio();
+        stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
+        stopPlayerShootAudio();
+        stopMovementIceAudio();
+        stopPauseAudio();
+        const player = createPlayer(1);
+        player.x = 32;
+        player.y = 32;
+        player.dir = RIGHT;
+        player.spawnFlash = 0;
+        player.invuln = 0;
+        player.respawn = 0;
+        player.reload = 0;
+        const enemyType = enemyTypeDefinitions()[0];
+        const enemy = {
+          kind: "enemy",
+          id: 100,
+          x: 64,
+          y: 32,
+          w: 14,
+          h: 14,
+          dir: LEFT,
+          alive: true,
+          spawnFlash: 0,
+          reload: 0,
+          reloadBase: enemyType.reload,
+          bulletSpeed: enemyType.bullet,
+          bulletPower: enemyType.wallPower
+        };
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = false;
+        game.clearPendingTimer = 0;
+        game.players = [player];
+        game.enemies = [enemy];
+        game.bullets = [];
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        keys.clear();
+
+        shoot(player);
+        const playerStart = { ...state(), bulletCount: game.bullets.length };
+        for (let frame = 0; frame < 5; frame += 1) updatePlayerShootAudio();
+        player.reload = 0;
+        shoot(player);
+        const failedRetrigger = { ...state(), bulletCount: game.bullets.length };
+        for (let frame = 0; frame < 9; frame += 1) updatePlayerShootAudio();
+        const beforePause = state();
+        game.paused = true;
+        syncPlayerShootAudioNodes();
+        for (let frame = 0; frame < 10; frame += 1) updatePlayerShootAudio();
+        const paused = state();
+        game.paused = false;
+        syncPlayerShootAudioNodes();
+        updatePlayerShootAudio();
+        const end = state();
+
+        stopPlayerShootAudio();
+        game.bullets = [];
+        shoot(enemy);
+        const enemyShot = { ...state(), bulletCount: game.bullets.length };
+
+        game.bullets = [];
+        player.reload = 0;
+        shoot(player);
+        startMovementIceAudio();
+        const shotPriority = state();
+        for (let frame = 0; frame < 4; frame += 1) {
+          updatePlayerShootAudio();
+          updateMovementIceAudio();
+        }
+        const iceSuppressedEnd = state();
+
+        stopPlayerShootAudio();
+        player.reload = 0;
+        game.bullets = [];
+        shoot(player);
+        startStageStartAudio();
+        syncPlayerShootAudioNodes();
+        const stageStartPriority = state();
+        for (let frame = 0; frame < 15; frame += 1) updatePlayerShootAudio();
+        const stageStartSuppressedEnd = state();
+
+        stopStageStartAudio();
+        player.reload = 0;
+        game.bullets = [];
+        shoot(player);
+        startBonusLifeAudio();
+        const bonusLifePriority = state();
+        for (let frame = 0; frame < 15; frame += 1) updatePlayerShootAudio();
+        const bonusLifeSuppressedEnd = state();
+
+        stopBonusLifeAudio();
+        player.reload = 0;
+        game.bullets = [];
+        shoot(player);
+        startStage(game.stage);
+        const stageCleanup = state();
+        return {
+          playerStart,
+          failedRetrigger,
+          beforePause,
+          paused,
+          end,
+          enemyShot,
+          shotPriority,
+          iceSuppressedEnd,
+          stageStartPriority,
+          stageStartSuppressedEnd,
+          bonusLifePriority,
+          bonusLifeSuppressedEnd,
+          stageCleanup
+        };
+      } finally {
+        stopMovementAudio();
+        stopStageStartAudio();
+        stopBonusLifeAudio();
+        stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
+        stopPlayerShootAudio();
+        stopMovementIceAudio();
+        stopPauseAudio();
+        Object.assign(game, previous);
+        keys.clear();
+        for (const code of previousKeys) keys.add(code);
+        stageStartAudio.active = previousStageStart.active;
+        stageStartAudio.frame = previousStageStart.frame;
+        bonusLifeAudio.active = previousBonusLife.active;
+        bonusLifeAudio.frame = previousBonusLife.frame;
+        powerUpPickupAudio.active = previousPowerUpPickup.active;
+        powerUpPickupAudio.frame = previousPowerUpPickup.frame;
+        powerUpAppearAudio.active = previousPowerUpAppear.active;
+        powerUpAppearAudio.frame = previousPowerUpAppear.frame;
+        playerShootAudio.active = previousPlayerShoot.active;
+        playerShootAudio.frame = previousPlayerShoot.frame;
+        movementIceAudio.active = previousMovementIce.active;
+        movementIceAudio.frame = previousMovementIce.frame;
+        pauseAudio.active = previousPause.active;
+        pauseAudio.frame = previousPause.frame;
+        syncStageStartAudioNodes();
+        syncBonusLifeAudioNodes();
+        syncPowerUpPickupAudioNodes();
+        syncPowerUpAppearAudioNodes();
+        syncPlayerShootAudioNodes();
+        syncMovementIceAudioNodes();
+        syncPauseAudioNodes();
+        syncMovementAudio();
+      }
+    },
     debugMovementIceAudioLifecycleProbe() {
       const previous = { ...game };
       const previousKeys = Array.from(keys);
@@ -6372,6 +6620,7 @@
       const previousBonusLife = { active: bonusLifeAudio.active, frame: bonusLifeAudio.frame };
       const previousPowerUpPickup = { active: powerUpPickupAudio.active, frame: powerUpPickupAudio.frame };
       const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
+      const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
       const previousMovementIce = { active: movementIceAudio.active, frame: movementIceAudio.frame };
       const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
       const state = () => ({
@@ -6387,6 +6636,7 @@
         stopBonusLifeAudio();
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
+        stopPlayerShootAudio();
         stopMovementIceAudio();
         stopPauseAudio();
         const player = createPlayer(1);
@@ -6464,6 +6714,7 @@
         stopBonusLifeAudio();
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
+        stopPlayerShootAudio();
         stopMovementIceAudio();
         stopPauseAudio();
         Object.assign(game, previous);
@@ -6477,6 +6728,8 @@
         powerUpPickupAudio.frame = previousPowerUpPickup.frame;
         powerUpAppearAudio.active = previousPowerUpAppear.active;
         powerUpAppearAudio.frame = previousPowerUpAppear.frame;
+        playerShootAudio.active = previousPlayerShoot.active;
+        playerShootAudio.frame = previousPlayerShoot.frame;
         movementIceAudio.active = previousMovementIce.active;
         movementIceAudio.frame = previousMovementIce.frame;
         pauseAudio.active = previousPause.active;
@@ -6485,6 +6738,7 @@
         syncBonusLifeAudioNodes();
         syncPowerUpPickupAudioNodes();
         syncPowerUpAppearAudioNodes();
+        syncPlayerShootAudioNodes();
         syncMovementIceAudioNodes();
         syncPauseAudioNodes();
         syncMovementAudio();
@@ -7519,6 +7773,11 @@
           active: powerUpAppearAudio.active,
           frame: powerUpAppearAudio.frame,
           durationFrames: FREE_AUDIO_MANIFEST.events.powerUpAppear.durationFrames
+        },
+        playerShootAudio: {
+          active: playerShootAudio.active,
+          frame: playerShootAudio.frame,
+          durationFrames: FREE_AUDIO_MANIFEST.events.playerShoot.durationFrames
         },
         movementIceAudio: {
           active: movementIceAudio.active,
@@ -9941,6 +10200,7 @@
     },
     debugActiveBulletLimitProbe() {
       const previousBullets = game.bullets;
+      const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
       const makePlayer = (level) => ({
         kind: "player",
         id: 1,
@@ -10004,13 +10264,19 @@
       };
 
       try {
+        stopPlayerShootAudio();
         return {
           base: attempt(0, 2),
           upgraded: attempt(2, 3),
           enemy: attemptEnemy(2)
         };
       } finally {
+        stopPlayerShootAudio();
         game.bullets = previousBullets;
+        playerShootAudio.active = previousPlayerShoot.active;
+        playerShootAudio.frame = previousPlayerShoot.frame;
+        syncPlayerShootAudioNodes();
+        syncMovementIceAudioNodes();
       }
     },
     debugPlayerFireInputProbe() {
@@ -10027,6 +10293,7 @@
       };
       const previousKeys = Array.from(keys);
       const previousFirePresses = Array.from(pendingFirePresses);
+      const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
       const player = createPlayer(1);
       const bulletCount = () => game.bullets.filter((bullet) => bullet.ownerKey === "player:1").length;
       const updateWithPress = () => {
@@ -10042,6 +10309,7 @@
       };
 
       try {
+        stopPlayerShootAudio();
         game.grid = makeGrid();
         game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
         game.players = [player];
@@ -10108,11 +10376,16 @@
           stunnedPress
         };
       } finally {
+        stopPlayerShootAudio();
         keys.clear();
         for (const key of previousKeys) keys.add(key);
         pendingFirePresses.clear();
         for (const key of previousFirePresses) pendingFirePresses.add(key);
         Object.assign(game, previous);
+        playerShootAudio.active = previousPlayerShoot.active;
+        playerShootAudio.frame = previousPlayerShoot.frame;
+        syncPlayerShootAudioNodes();
+        syncMovementIceAudioNodes();
       }
     },
     debugCrossingBulletCancelProbe() {
@@ -10528,6 +10801,7 @@
       }
     },
     debugPlayerStunProbe() {
+      const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
       const player = {
         kind: "player",
         id: 1,
@@ -10549,16 +10823,23 @@
       updatePlayerMovement(player, RIGHT);
       const previousBullets = game.bullets;
       game.bullets = [];
+      stopPlayerShootAudio();
       shoot(player);
       const fired = game.bullets.length === 1;
       game.bullets = previousBullets;
-      return {
+      const result = {
         before,
         after: { x: player.x, y: player.y, dir: player.dir, slide: player.slide, pendingSnap: player.pendingSnap },
         turned: player.dir === RIGHT,
         moved: player.x !== before.x || player.y !== before.y,
         fired
       };
+      stopPlayerShootAudio();
+      playerShootAudio.active = previousPlayerShoot.active;
+      playerShootAudio.frame = previousPlayerShoot.frame;
+      syncPlayerShootAudioNodes();
+      syncMovementIceAudioNodes();
+      return result;
     },
     debugWasdDirectionProbe() {
       const previous = {

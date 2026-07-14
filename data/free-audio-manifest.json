@@ -145,8 +145,18 @@
         }
       ]
     },
-    "playerShoot": { "freq": 460, "duration": 0.03, "gain": 0.018, "wave": "square" },
-    "enemyShoot": { "freq": 310, "duration": 0.03, "gain": 0.018, "wave": "square" },
+    "playerShoot": {
+      "durationFrames": 15,
+      "voices": [
+        {
+          "gain": 0.018,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [1165], "noteFrames": 15, "repeat": 1 }
+          ]
+        }
+      ]
+    },
     "scoreCount": { "freq": 560, "duration": 0.035, "gain": 0.022, "wave": "square" },
     "stageBonus": { "freq": 820, "duration": 0.12, "gain": 0.03, "wave": "triangle" },
     "gameOver": {

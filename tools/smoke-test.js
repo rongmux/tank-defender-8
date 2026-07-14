@@ -319,6 +319,9 @@ assert(runtimeAudioManifest.events.movementEnemy.frequencies.join(",") === "72,6
 assert(runtimeAudioManifest.events.movementEnemy.stepFrames === 4, "enemy movement loop should switch pitch every four fixed logic frames");
 assert(runtimeAudioManifest.events.movementPlayer.frequencies.join(",") === "112,96", "player movement should expose its distinct two-step replacement engine loop");
 assert(runtimeAudioManifest.events.movementPlayer.stepFrames === 16, "player movement loop should switch pitch every sixteen fixed logic frames");
+assert(runtimeAudioManifest.events.playerShoot.durationFrames === 15, "player shooting should preserve the original fifteen-frame lifetime");
+assert(runtimeAudioManifest.events.playerShoot.voices.length === 1 && runtimeAudioManifest.events.playerShoot.voices[0].wave === "square", "player shooting should use one pulse-like voice");
+assert(!Object.prototype.hasOwnProperty.call(runtimeAudioManifest.events, "enemyShoot"), "enemy shooting should remain silent like the original");
 assert(runtimeAudioManifest.events.movementIce.durationFrames === 4, "ice movement cue should preserve the original four-frame lifetime");
 assert(runtimeAudioManifest.events.movementIce.voices.length === 1 && runtimeAudioManifest.events.movementIce.voices[0].wave === "square", "ice movement cue should use one pulse-like voice");
 assert(runtimeAudioManifest.events.scoreCount.wave === "square", "result-table count ticks should use the replacement score-count sound");
@@ -363,6 +366,25 @@ assert(
     movementAudioProbe.ice.voices[0].segments[0].frequencies.length === 4,
   "ice movement should expose one independent four-note cue lasting four fixed logic frames"
 );
+const playerShootAudioProbe = context.window.TankDefender8.debugPlayerShootAudioProbe();
+assert(playerShootAudioProbe.durationFrames === 15 && playerShootAudioProbe.voiceDurations.join(",") === "15", "player shooting audio should contain one fifteen-frame voice");
+assert(playerShootAudioProbe.waves.join(",") === "square", "player shooting audio should retain its pulse-like replacement voice");
+assert(playerShootAudioProbe.frames[0].voices[0].frequency === 1165 && playerShootAudioProbe.frames[1].voices[0].frequency === 1165, "player shooting audio should hold its single pitch through frame fourteen");
+assert(playerShootAudioProbe.frames[2].voices[0] === null, "player shooting audio should stop on frame fifteen");
+const playerShootAudioLifecycleProbe = context.window.TankDefender8.debugPlayerShootAudioLifecycleProbe();
+assert(playerShootAudioLifecycleProbe.playerStart.active && playerShootAudioLifecycleProbe.playerStart.frame === 0 && playerShootAudioLifecycleProbe.playerStart.audible && playerShootAudioLifecycleProbe.playerStart.bulletCount === 1, "a successful player shot should create one bullet and start its cue at frame zero");
+assert(playerShootAudioLifecycleProbe.failedRetrigger.frame === 5 && playerShootAudioLifecycleProbe.failedRetrigger.bulletCount === 1, "a rejected player shot should not restart the active shooting cue");
+assert(playerShootAudioLifecycleProbe.beforePause.active && playerShootAudioLifecycleProbe.beforePause.frame === 14, "player shooting audio should remain active through frame fourteen");
+assert(playerShootAudioLifecycleProbe.paused.paused && playerShootAudioLifecycleProbe.paused.frame === 14, "pause should mute and freeze player shooting audio without discarding its frame");
+assert(!playerShootAudioLifecycleProbe.end.active && playerShootAudioLifecycleProbe.end.frame === 15, "resuming should finish the final shooting frame exactly on frame fifteen");
+assert(!playerShootAudioLifecycleProbe.enemyShot.active && playerShootAudioLifecycleProbe.enemyShot.frame === 0 && playerShootAudioLifecycleProbe.enemyShot.bulletCount === 1, "an enemy shot should create its bullet without starting player shooting audio");
+assert(playerShootAudioLifecycleProbe.shotPriority.active && playerShootAudioLifecycleProbe.shotPriority.iceActive && !playerShootAudioLifecycleProbe.shotPriority.iceAudible, "player shooting pulse one should mask a simultaneous lower-priority ice cue");
+assert(playerShootAudioLifecycleProbe.iceSuppressedEnd.active && playerShootAudioLifecycleProbe.iceSuppressedEnd.frame === 4 && !playerShootAudioLifecycleProbe.iceSuppressedEnd.iceActive && playerShootAudioLifecycleProbe.iceSuppressedEnd.iceFrame === 4, "a shot-masked ice cue should expire after four frames while the shot continues");
+assert(playerShootAudioLifecycleProbe.stageStartPriority.active && !playerShootAudioLifecycleProbe.stageStartPriority.audible, "stage-start pulse one should mask a simultaneous player shot");
+assert(!playerShootAudioLifecycleProbe.stageStartSuppressedEnd.active && playerShootAudioLifecycleProbe.stageStartSuppressedEnd.frame === 15, "a stage-start-masked shot should still consume its fifteen-frame lifetime");
+assert(playerShootAudioLifecycleProbe.bonusLifePriority.active && !playerShootAudioLifecycleProbe.bonusLifePriority.audible, "bonus-life pulse one should mask a simultaneous player shot");
+assert(!playerShootAudioLifecycleProbe.bonusLifeSuppressedEnd.active && playerShootAudioLifecycleProbe.bonusLifeSuppressedEnd.frame === 15, "a bonus-life-masked shot should still consume its fifteen-frame lifetime");
+assert(!playerShootAudioLifecycleProbe.stageCleanup.active && playerShootAudioLifecycleProbe.stageCleanup.frame === 0, "starting a stage should clear any pending player shooting cue");
 const movementIceAudioProbe = context.window.TankDefender8.debugMovementIceAudioProbe();
 assert(movementIceAudioProbe.durationFrames === 4 && movementIceAudioProbe.voiceDurations.join(",") === "4", "ice movement audio should contain one four-frame voice");
 assert(movementIceAudioProbe.waves.join(",") === "square", "ice movement audio should retain its pulse-like replacement voice");
