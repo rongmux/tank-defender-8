@@ -214,7 +214,20 @@
           }
         ]
       },
-      enemyDestroy: { freq: 94, duration: 0.12, gain: 0.05, wave: "square" },
+      enemyDestroy: {
+        durationFrames: 14,
+        voices: [
+          {
+            gain: 0.05,
+            wave: "noise-long",
+            segments: [
+              { frequencies: [3523], noteFrames: 2, repeat: 1, gain: 0.05 },
+              { frequencies: [3523], noteFrames: 2, repeat: 1, gain: 0.045 },
+              { frequencies: [3523], noteFrames: 10, repeat: 1, gain: 0.022 }
+            ]
+          }
+        ]
+      },
       bonusLife: {
         durationFrames: 60,
         voices: [
@@ -1004,6 +1017,11 @@
     frame: 0,
     nodes: []
   };
+  const enemyDestroyAudio = {
+    active: false,
+    frame: 0,
+    nodes: []
+  };
   const brickHitAudio = {
     active: false,
     frame: 0,
@@ -1047,6 +1065,9 @@
   let fixedShortNoiseBuffer = null;
   let fixedShortNoiseSampleRate = 0;
   let fixedShortNoiseClockRate = 0;
+  let fixedLongNoiseBuffer = null;
+  let fixedLongNoiseSampleRate = 0;
+  let fixedLongNoiseClockRate = 0;
 
   const game = {
     screen: "title",
@@ -2259,6 +2280,7 @@
     stopMovementAudio();
     stopBrickHitAudio();
     stopEnemyHitAudio();
+    stopEnemyDestroyAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -2384,6 +2406,7 @@
     stopPauseAudio();
     stopBrickHitAudio();
     stopEnemyHitAudio();
+    stopEnemyDestroyAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -2441,6 +2464,7 @@
     stopPauseAudio();
     stopBrickHitAudio();
     stopEnemyHitAudio();
+    stopEnemyDestroyAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -2630,6 +2654,7 @@
     stopPauseAudio();
     stopBrickHitAudio();
     stopEnemyHitAudio();
+    stopEnemyDestroyAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -2702,6 +2727,7 @@
     syncBrickHitAudioNodes();
     syncSteelHitAudioNodes();
     syncEnemyHitAudioNodes();
+    syncEnemyDestroyAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncPauseAudioNodes();
@@ -2763,8 +2789,8 @@
           if (targetFrame < cursor + noteFrames) {
             return {
               frequency: frequencies[noteIndex],
-              gain: Number(voice.gain) || 0.01,
-              wave: voice.wave || "square",
+              gain: Number(segment.gain ?? voice.gain) || 0.01,
+              wave: segment.wave || voice.wave || "square",
               segmentIndex,
               repeatIndex,
               noteIndex,
@@ -2821,13 +2847,46 @@
     return buffer;
   }
 
+  function longNoiseBuffer(clockRate) {
+    if (!audioCtx || typeof audioCtx.createBuffer !== "function") return null;
+    const sampleRate = Math.max(8000, Math.floor(Number(audioCtx.sampleRate) || 44100));
+    const normalizedClockRate = Math.max(1, Math.floor(Number(clockRate) || 3523));
+    if (
+      fixedLongNoiseBuffer &&
+      fixedLongNoiseSampleRate === sampleRate &&
+      fixedLongNoiseClockRate === normalizedClockRate
+    ) return fixedLongNoiseBuffer;
+
+    const lfsrPeriod = 32767;
+    const sampleCount = Math.max(2, Math.round(sampleRate * lfsrPeriod / normalizedClockRate));
+    const buffer = audioCtx.createBuffer(1, sampleCount, sampleRate);
+    const samples = buffer.getChannelData(0);
+    let lfsr = 1;
+    let currentStep = -1;
+    for (let index = 0; index < sampleCount; index += 1) {
+      const targetStep = Math.floor(index * normalizedClockRate / sampleRate);
+      while (currentStep < targetStep) {
+        const feedback = (lfsr & 1) ^ ((lfsr >> 1) & 1);
+        lfsr = (lfsr >> 1) | (feedback << 14);
+        currentStep += 1;
+      }
+      samples[index] = (lfsr & 1) ? 1 : -1;
+    }
+    fixedLongNoiseBuffer = buffer;
+    fixedLongNoiseSampleRate = sampleRate;
+    fixedLongNoiseClockRate = normalizedClockRate;
+    return buffer;
+  }
+
   function createFixedFrameAudioSource(voice) {
     if (
-      voice.wave === "noise-short" &&
+      (voice.wave === "noise-short" || voice.wave === "noise-long") &&
       audioCtx &&
       typeof audioCtx.createBufferSource === "function"
     ) {
-      const buffer = shortNoiseBuffer(voice.frequency);
+      const buffer = voice.wave === "noise-short"
+        ? shortNoiseBuffer(voice.frequency)
+        : longNoiseBuffer(voice.frequency);
       if (buffer) {
         const source = audioCtx.createBufferSource();
         source.buffer = buffer;
@@ -2836,7 +2895,7 @@
       }
     }
     const oscillator = audioCtx.createOscillator();
-    oscillator.type = voice.wave === "noise-short" ? "square" : voice.wave;
+    oscillator.type = voice.wave === "noise-short" || voice.wave === "noise-long" ? "square" : voice.wave;
     oscillator.frequency.value = voice.frequency;
     return oscillator;
   }
@@ -2893,6 +2952,7 @@
         state.nodes[index] = node;
       }
       if (node.source.frequency) node.source.frequency.value = voice.frequency;
+      node.gain.gain.value = voice.gain;
     });
   }
 
@@ -3150,6 +3210,26 @@
     updateFixedFrameAudio(enemyHitAudio, "enemyHit", enemyHitAudioAudible());
   }
 
+  function enemyDestroyAudioPresentation(frame) {
+    return fixedFrameAudioPresentation("enemyDestroy", frame);
+  }
+
+  function syncEnemyDestroyAudioNodes() {
+    syncFixedFrameAudioNodes(enemyDestroyAudio, "enemyDestroy", true);
+  }
+
+  function startEnemyDestroyAudio() {
+    startFixedFrameAudio(enemyDestroyAudio, "enemyDestroy", true);
+  }
+
+  function stopEnemyDestroyAudio() {
+    stopFixedFrameAudio(enemyDestroyAudio);
+  }
+
+  function updateEnemyDestroyAudio() {
+    updateFixedFrameAudio(enemyDestroyAudio, "enemyDestroy", true);
+  }
+
   function playerShootAudioPresentation(frame) {
     return fixedFrameAudioPresentation("playerShoot", frame);
   }
@@ -3217,6 +3297,7 @@
     syncBrickHitAudioNodes();
     syncSteelHitAudioNodes();
     syncEnemyHitAudioNodes();
+    syncEnemyDestroyAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
   }
@@ -3236,6 +3317,7 @@
     syncBrickHitAudioNodes();
     syncSteelHitAudioNodes();
     syncEnemyHitAudioNodes();
+    syncEnemyDestroyAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncMovementAudio();
@@ -3461,6 +3543,10 @@
       startEnemyHitAudio();
       return;
     }
+    if (name === "enemyDestroy") {
+      startEnemyDestroyAudio();
+      return;
+    }
     if (name === "playerShoot") {
       startPlayerShootAudio();
       return;
@@ -3560,6 +3646,7 @@
     syncBrickHitAudioNodes();
     syncSteelHitAudioNodes();
     syncEnemyHitAudioNodes();
+    syncEnemyDestroyAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncPauseAudioNodes();
@@ -3939,6 +4026,7 @@
     updateBrickHitAudio();
     updateSteelHitAudio();
     updateEnemyHitAudio();
+    updateEnemyDestroyAudio();
     updatePlayerShootAudio();
     updateMovementIceAudio();
     updatePauseAudio();
@@ -4923,15 +5011,13 @@
       );
     }
     if (type === "grenade") {
-      let destroyedAny = false;
+      playSound("enemyDestroy");
       for (const enemy of game.enemies) {
         if (!enemy.alive || enemy.spawnFlash > 0) continue;
         enemy.hp = 0;
         destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false });
         addRuleExplosion("enemyDestroy", enemy.x + 7, enemy.y + 7);
-        destroyedAny = true;
       }
-      if (destroyedAny) playSound("enemyDestroy");
     } else if (type === "helmet") {
       player.invuln = Math.max(player.invuln, gameSettings().powerUpDurations.helmet);
     } else if (type === "shovel" && game.base.alive) {
@@ -5320,6 +5406,7 @@
     stopPauseAudio();
     stopBrickHitAudio();
     stopEnemyHitAudio();
+    stopEnemyDestroyAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -5377,6 +5464,7 @@
     stopPauseAudio();
     stopBrickHitAudio();
     stopEnemyHitAudio();
+    stopEnemyDestroyAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -5449,6 +5537,7 @@
     stopPauseAudio();
     stopBrickHitAudio();
     stopEnemyHitAudio();
+    stopEnemyDestroyAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -6684,6 +6773,7 @@
         brickHitAudio,
         steelHitAudio,
         enemyHitAudio,
+        enemyDestroyAudio,
         playerShootAudio,
         movementIceAudio,
         pauseAudio,
@@ -6763,6 +6853,7 @@
         syncBrickHitAudioNodes();
         syncSteelHitAudioNodes();
         syncEnemyHitAudioNodes();
+        syncEnemyDestroyAudioNodes();
         syncPlayerShootAudioNodes();
         syncMovementIceAudioNodes();
         syncPauseAudioNodes();
@@ -6799,6 +6890,7 @@
         brickHitAudio,
         steelHitAudio,
         enemyHitAudio,
+        enemyDestroyAudio,
         playerShootAudio,
         movementIceAudio,
         pauseAudio,
@@ -6925,6 +7017,7 @@
         syncBrickHitAudioNodes();
         syncSteelHitAudioNodes();
         syncEnemyHitAudioNodes();
+        syncEnemyDestroyAudioNodes();
         syncPlayerShootAudioNodes();
         syncMovementIceAudioNodes();
         syncPauseAudioNodes();
@@ -7518,6 +7611,7 @@
       const previousBrickHit = { active: brickHitAudio.active, frame: brickHitAudio.frame };
       const previousSteelHit = { active: steelHitAudio.active, frame: steelHitAudio.frame };
       const previousEnemyHit = { active: enemyHitAudio.active, frame: enemyHitAudio.frame };
+      const previousEnemyDestroy = { active: enemyDestroyAudio.active, frame: enemyDestroyAudio.frame };
       const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
       const previousMovementIce = { active: movementIceAudio.active, frame: movementIceAudio.frame };
       const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
@@ -7535,6 +7629,8 @@
           brickHitActive: brickHitAudio.active,
           brickHitAudible: brickHitAudio.active && brickHitAudioAudible(),
           steelHitActive: steelHitAudio.active,
+          enemyDestroyActive: enemyDestroyAudio.active,
+          enemyDestroyFrame: enemyDestroyAudio.frame,
           playerShootActive: playerShootAudio.active,
           playerShootAudible: playerShootAudio.active && playerShootAudioAudible(),
           pauseActive: pauseAudio.active,
@@ -7576,6 +7672,7 @@
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
         stopEnemyHitAudio();
+        stopEnemyDestroyAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -7646,6 +7743,8 @@
           enemyKilled: game.enemyKilled,
           explosionCount: game.explosions.length
         };
+
+        stopEnemyDestroyAudio();
 
         game.explosions = [];
         game.enemies = [];
@@ -7728,6 +7827,7 @@
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
         stopEnemyHitAudio();
+        stopEnemyDestroyAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -7749,6 +7849,8 @@
         steelHitAudio.frame = previousSteelHit.frame;
         enemyHitAudio.active = previousEnemyHit.active;
         enemyHitAudio.frame = previousEnemyHit.frame;
+        enemyDestroyAudio.active = previousEnemyDestroy.active;
+        enemyDestroyAudio.frame = previousEnemyDestroy.frame;
         playerShootAudio.active = previousPlayerShoot.active;
         playerShootAudio.frame = previousPlayerShoot.frame;
         movementIceAudio.active = previousMovementIce.active;
@@ -7762,9 +7864,184 @@
         syncBrickHitAudioNodes();
         syncSteelHitAudioNodes();
         syncEnemyHitAudioNodes();
+        syncEnemyDestroyAudioNodes();
         syncPlayerShootAudioNodes();
         syncMovementIceAudioNodes();
         syncPauseAudioNodes();
+        syncMovementAudio();
+      }
+    },
+    debugEnemyDestroyAudioProbe() {
+      const event = FREE_AUDIO_MANIFEST.events.enemyDestroy;
+      const frames = [0, 1, 2, 3, 4, 13, 14];
+      return {
+        durationFrames: event.durationFrames,
+        voiceDurations: event.voices.map(fixedFrameVoiceDuration),
+        waves: event.voices.map((voice) => voice.wave),
+        frames: frames.map((frame) => enemyDestroyAudioPresentation(frame))
+      };
+    },
+    debugEnemyDestroyAudioLifecycleProbe() {
+      const previous = { ...game };
+      const audioStates = [
+        stageStartAudio,
+        bonusLifeAudio,
+        powerUpPickupAudio,
+        powerUpAppearAudio,
+        brickHitAudio,
+        steelHitAudio,
+        enemyHitAudio,
+        enemyDestroyAudio,
+        playerShootAudio,
+        movementIceAudio,
+        pauseAudio,
+        scoreCountAudio,
+        stageBonusAudio
+      ];
+      const previousAudio = audioStates.map((audioState) => ({
+        active: audioState.active,
+        frame: audioState.frame
+      }));
+      const state = () => {
+        const voice = enemyDestroyAudioPresentation(enemyDestroyAudio.frame).voices[0];
+        return {
+          active: enemyDestroyAudio.active,
+          frame: enemyDestroyAudio.frame,
+          frequency: voice ? voice.frequency : null,
+          gain: voice ? voice.gain : null,
+          wave: voice ? voice.wave : null,
+          audible: enemyDestroyAudio.active && Boolean(voice) && !game.paused,
+          paused: game.paused,
+          enemyHitActive: enemyHitAudio.active
+        };
+      };
+      const makeEnemy = (id, spawnFlash) => ({
+        kind: "enemy",
+        id,
+        x: 64 + id * 16,
+        y: 64,
+        w: 14,
+        h: 14,
+        alive: true,
+        hp: 1,
+        spawnFlash: Math.max(0, Math.floor(Number(spawnFlash) || 0)),
+        carrier: false,
+        typeIndex: 0,
+        score: enemyTypeDefinitions()[0].score
+      });
+      const makeBullet = () => ({
+        x: 85,
+        y: 69,
+        w: gameSettings().projectileRules.bulletSize,
+        h: gameSettings().projectileRules.bulletSize,
+        dir: RIGHT,
+        speed: 0,
+        power: 1,
+        ownerKind: "player",
+        ownerId: 1,
+        ownerKey: "player:1",
+        remove: false
+      });
+      try {
+        stopMovementAudio();
+        for (const audioState of audioStates) stopFixedFrameAudio(audioState);
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = false;
+        game.clearPendingTimer = 0;
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.players = [createPlayer(1)];
+        game.enemies = [makeEnemy(1, 0)];
+        game.bullets = [];
+        game.explosions = [];
+        game.scorePopups = [];
+        game.enemyKilled = 0;
+        const lethalBullet = makeBullet();
+        const lethalHitResult = hitTank(lethalBullet);
+        const lethalHit = {
+          ...state(),
+          hit: lethalHitResult,
+          bulletRemoved: lethalBullet.remove,
+          enemyAlive: game.enemies[0].alive,
+          enemyKilled: game.enemyKilled,
+          explosionCount: game.explosions.length
+        };
+
+        updateEnemyDestroyAudio();
+        updateEnemyDestroyAudio();
+        const secondEnvelope = state();
+        updateEnemyDestroyAudio();
+        updateEnemyDestroyAudio();
+        const tailEnvelope = state();
+
+        game.paused = true;
+        startPauseAudio();
+        syncEnemyDestroyAudioNodes();
+        for (let frame = 0; frame < 10; frame += 1) {
+          updateEnemyDestroyAudio();
+          updatePauseAudio();
+        }
+        const paused = state();
+        game.paused = false;
+        syncEnemyDestroyAudioNodes();
+        for (let frame = 0; frame < 9; frame += 1) updateEnemyDestroyAudio();
+        const finalFrame = state();
+        updateEnemyDestroyAudio();
+        const end = state();
+
+        stopPauseAudio();
+        stopEnemyDestroyAudio();
+        game.players = [createPlayer(1)];
+        const grenadeTargets = [makeEnemy(1, 0), makeEnemy(2, 0), makeEnemy(3, 12)];
+        game.enemies = grenadeTargets;
+        game.enemyKilled = 0;
+        game.explosions = [];
+        applyPowerUp(game.players[0], "grenade");
+        const grenade = {
+          ...state(),
+          activeEnemies: grenadeTargets.filter((enemy) => enemy.alive && enemy.spawnFlash <= 0).length,
+          spawningAlive: grenadeTargets[2].alive,
+          enemyKilled: game.enemyKilled,
+          explosionCount: game.explosions.length
+        };
+
+        stopEnemyDestroyAudio();
+        game.enemies = [makeEnemy(1, 12)];
+        game.enemyKilled = 0;
+        game.explosions = [];
+        applyPowerUp(game.players[0], "grenade");
+        const noActiveTargets = {
+          ...state(),
+          spawningAlive: game.enemies[0].alive,
+          enemyKilled: game.enemyKilled,
+          explosionCount: game.explosions.length
+        };
+
+        startEnemyDestroyAudio();
+        startStage(game.stage);
+        const stageCleanup = state();
+
+        return { lethalHit, secondEnvelope, tailEnvelope, paused, finalFrame, end, grenade, noActiveTargets, stageCleanup };
+      } finally {
+        for (const audioState of audioStates) stopFixedFrameAudio(audioState);
+        Object.assign(game, previous);
+        audioStates.forEach((audioState, index) => {
+          audioState.active = previousAudio[index].active;
+          audioState.frame = previousAudio[index].frame;
+        });
+        syncStageStartAudioNodes();
+        syncBonusLifeAudioNodes();
+        syncPowerUpPickupAudioNodes();
+        syncPowerUpAppearAudioNodes();
+        syncBrickHitAudioNodes();
+        syncSteelHitAudioNodes();
+        syncEnemyHitAudioNodes();
+        syncEnemyDestroyAudioNodes();
+        syncPlayerShootAudioNodes();
+        syncMovementIceAudioNodes();
+        syncPauseAudioNodes();
+        syncScoreCountAudioNodes();
+        syncStageBonusAudioNodes();
         syncMovementAudio();
       }
     },
@@ -9165,6 +9442,11 @@
           active: enemyHitAudio.active,
           frame: enemyHitAudio.frame,
           durationFrames: FREE_AUDIO_MANIFEST.events.enemyHit.durationFrames
+        },
+        enemyDestroyAudio: {
+          active: enemyDestroyAudio.active,
+          frame: enemyDestroyAudio.frame,
+          durationFrames: FREE_AUDIO_MANIFEST.events.enemyDestroy.durationFrames
         },
         playerShootAudio: {
           active: playerShootAudio.active,
@@ -10682,6 +10964,7 @@
       return result;
     },
     debugGrenadeScoreProbe() {
+      const previousEnemyDestroy = { active: enemyDestroyAudio.active, frame: enemyDestroyAudio.frame };
       const previousPlayers = game.players;
       const previousEnemies = game.enemies;
       const previousEnemyKilled = game.enemyKilled;
@@ -10711,6 +10994,7 @@
       game.enemyKilled = 0;
       game.explosions = [];
       game.scorePopups = [];
+      stopEnemyDestroyAudio();
 
       try {
         applyPowerUp(player, "grenade");
@@ -10730,9 +11014,14 @@
         game.explosions = previousExplosions;
         game.scorePopups = previousScorePopups;
         game.highScore = previousHighScore;
+        stopEnemyDestroyAudio();
+        enemyDestroyAudio.active = previousEnemyDestroy.active;
+        enemyDestroyAudio.frame = previousEnemyDestroy.frame;
+        syncEnemyDestroyAudioNodes();
       }
     },
     debugGrenadeSpawnProtectionProbe() {
+      const previousEnemyDestroy = { active: enemyDestroyAudio.active, frame: enemyDestroyAudio.frame };
       const previous = {
         players: game.players,
         enemies: game.enemies,
@@ -10770,6 +11059,7 @@
       const active = makeEnemy(0, 0);
       const spawning = makeEnemy(1, 12);
       try {
+        stopEnemyDestroyAudio();
         game.players = [player];
         game.enemies = [active, spawning];
         game.enemyKilled = 0;
@@ -10788,9 +11078,14 @@
         };
       } finally {
         Object.assign(game, previous);
+        stopEnemyDestroyAudio();
+        enemyDestroyAudio.active = previousEnemyDestroy.active;
+        enemyDestroyAudio.frame = previousEnemyDestroy.frame;
+        syncEnemyDestroyAudioNodes();
       }
     },
     debugScorePopupProbe() {
+      const previousEnemyDestroy = { active: enemyDestroyAudio.active, frame: enemyDestroyAudio.frame };
       const previousPlayers = game.players;
       const previousEnemies = game.enemies;
       const previousEnemyKilled = game.enemyKilled;
@@ -10828,6 +11123,7 @@
       };
 
       try {
+        stopEnemyDestroyAudio();
         game.players = [player];
         game.enemies = [enemy];
         game.enemyKilled = 0;
@@ -10872,6 +11168,10 @@
         game.explosions = previousExplosions;
         game.scorePopups = previousScorePopups;
         game.highScore = previousHighScore;
+        stopEnemyDestroyAudio();
+        enemyDestroyAudio.active = previousEnemyDestroy.active;
+        enemyDestroyAudio.frame = previousEnemyDestroy.frame;
+        syncEnemyDestroyAudioNodes();
       }
     },
     debugPausedScorePopupProbe() {
@@ -11359,6 +11659,7 @@
     },
     debugPlayerBulletEnemyCollisionProbe() {
       const previousEnemyHit = { active: enemyHitAudio.active, frame: enemyHitAudio.frame };
+      const previousEnemyDestroy = { active: enemyDestroyAudio.active, frame: enemyDestroyAudio.frame };
       const previous = {
         players: game.players,
         enemies: game.enemies,
@@ -11415,6 +11716,7 @@
       };
       try {
         stopEnemyHitAudio();
+        stopEnemyDestroyAudio();
         return {
           positiveNine: run(0, 9, 9),
           negativeNine: run(0, -9, -9),
@@ -11425,10 +11727,14 @@
         };
       } finally {
         stopEnemyHitAudio();
+        stopEnemyDestroyAudio();
         Object.assign(game, previous);
         enemyHitAudio.active = previousEnemyHit.active;
         enemyHitAudio.frame = previousEnemyHit.frame;
+        enemyDestroyAudio.active = previousEnemyDestroy.active;
+        enemyDestroyAudio.frame = previousEnemyDestroy.frame;
         syncEnemyHitAudioNodes();
+        syncEnemyDestroyAudioNodes();
         syncMovementAudio();
       }
     },
