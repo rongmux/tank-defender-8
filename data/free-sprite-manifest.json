@@ -43,6 +43,35 @@
         ]
       }
     },
+    "tankTracks": {
+      "size": 14,
+      "frames": {
+        "verticalA": [
+          { "role": "primary", "rect": [0, 1, 4, 12] },
+          { "role": "primary", "rect": [10, 1, 4, 12] },
+          { "role": "shadow", "rect": [1, 3, 2, 2] },
+          { "role": "shadow", "rect": [11, 9, 2, 2] }
+        ],
+        "verticalB": [
+          { "role": "primary", "rect": [0, 1, 4, 12] },
+          { "role": "primary", "rect": [10, 1, 4, 12] },
+          { "role": "shadow", "rect": [1, 9, 2, 2] },
+          { "role": "shadow", "rect": [11, 3, 2, 2] }
+        ],
+        "horizontalA": [
+          { "role": "primary", "rect": [1, 0, 12, 4] },
+          { "role": "primary", "rect": [1, 10, 12, 4] },
+          { "role": "shadow", "rect": [3, 1, 2, 2] },
+          { "role": "shadow", "rect": [9, 11, 2, 2] }
+        ],
+        "horizontalB": [
+          { "role": "primary", "rect": [1, 0, 12, 4] },
+          { "role": "primary", "rect": [1, 10, 12, 4] },
+          { "role": "shadow", "rect": [9, 1, 2, 2] },
+          { "role": "shadow", "rect": [3, 11, 2, 2] }
+        ]
+      }
+    },
     "wallQuarter": {
       "size": 8,
       "frames": {

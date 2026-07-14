@@ -339,6 +339,12 @@ assert(canvasContext.calls.every((call) => call.x >= 100 && call.x < 130 && call
 const runtimeSpriteManifest = context.window.TankDefender8.spriteManifest();
 assert(runtimeSpriteManifest.id === "free-procedural-sprites", "runtime sprite manifest id should match the free replacement manifest");
 assert(runtimeSpriteManifest.sprites.tank.frames.up.length === 7, "runtime sprite manifest should expose tank frames");
+assert(Object.keys(runtimeSpriteManifest.sprites.tankTracks.frames).join(",") === "verticalA,verticalB,horizontalA,horizontalB", "tank sprite manifest should expose both tread phases for both orientations");
+assert(
+  stableJson(runtimeSpriteManifest.sprites.tankTracks.frames.verticalA) !== stableJson(runtimeSpriteManifest.sprites.tankTracks.frames.verticalB) &&
+    stableJson(runtimeSpriteManifest.sprites.tankTracks.frames.horizontalA) !== stableJson(runtimeSpriteManifest.sprites.tankTracks.frames.horizontalB),
+  "tank tread phases should use visibly different pixel geometry"
+);
 assert(runtimeSpriteManifest.sprites.powerUp.size === 16, "power-up replacement sprites should retain the original 16x16 footprint");
 assert(runtimeSpriteManifest.sprites.powerUp.frames.timer.length === 10, "timer power-up should use a recognizable stopwatch silhouette");
 assert(runtimeSpriteManifest.sprites.powerUp.frames.shovel.length === 12, "shovel power-up should use a recognizable handle and blade silhouette");
@@ -1063,6 +1069,19 @@ assert(playerCadenceProbe.speed === 1, "default player movement should advance o
 assert(playerCadenceProbe.cadence.join(",") === "true,true,false,true", "default player cadence should skip only the third frame in each four-frame cycle");
 assert(playerCadenceProbe.frames.map((frame) => frame.active).join(",") === "true,true,false,true,true,true,false,true", "player cadence should repeat over successive four-frame cycles");
 assert(playerCadenceProbe.activeFrames === 6 && playerCadenceProbe.distanceOverEightFrames === 6, "player should travel six pixels over eight unobstructed display frames");
+canvasContext.calls.length = 0;
+canvasContext.resetPixels();
+const tankTrackProbe = context.window.TankDefender8.debugTankTrackAnimationProbe();
+assert(tankTrackProbe.frames.join(",") === "verticalA,verticalB,horizontalA,horizontalB", "tank tread rendering should select phase by direction and per-tank wheel state");
+assert(tankTrackProbe.player.initial.phase === 0 && tankTrackProbe.player.moved.phase === 1 && tankTrackProbe.player.moved.x === 33, "an active player movement step should switch tread phase");
+assert(tankTrackProbe.player.blocked.x === 0 && tankTrackProbe.player.blocked.phase === 0, "a blocked player movement attempt should still switch tread phase like the original movement handler");
+assert(tankTrackProbe.player.idle.phase === tankTrackProbe.player.blocked.phase, "an idle player should retain the last tread phase");
+assert(tankTrackProbe.player.iceCoast.x === 33 && tankTrackProbe.player.iceCoast.slide === 1 && tankTrackProbe.player.iceCoast.phase === 1, "ice coasting should advance the player tread animation with movement");
+assert(tankTrackProbe.enemy.moved.x === 33 && tankTrackProbe.enemy.moved.phase === 1, "an enemy movement step should switch tread phase");
+assert(tankTrackProbe.enemy.blocked.phase === 0 && tankTrackProbe.enemy.blocked.blockedPauseTicks === 2, "a blocked enemy attempt should switch tread phase before entering its retry wait");
+assert(tankTrackProbe.render.frame === "verticalB", "the rendered probe tank should select its second vertical tread frame");
+assert(canvasContext.pixelColors({ x: tankTrackProbe.render.x + 1, y: tankTrackProbe.render.y + 3, w: 2, h: 2 })[tankTrackProbe.render.primary] === 4, "phase B should cover the old phase-A tread mark with tank color");
+assert(canvasContext.pixelColors({ x: tankTrackProbe.render.x + 1, y: tankTrackProbe.render.y + 9, w: 2, h: 2 })[tankTrackProbe.render.shadow] === 4, "phase B should draw its new tread mark at the alternate pixel position");
 const friendlyFireDurationProbe = context.window.TankDefender8.debugFriendlyFireDurationProbe();
 assert(friendlyFireDurationProbe.stunTicks === 200 && friendlyFireDurationProbe.displayFrames === 267 && friendlyFireDurationProbe.remaining === 0, "friendly-fire stun should consume 200 movement ticks over 267 display frames");
 assert(friendlyFireDurationProbe.visibility.map((frame) => frame.visible).join(",") === "true,true,false,false,true", "stunned player tank should blink in eight-frame visible and hidden bands");

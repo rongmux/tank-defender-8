@@ -48,6 +48,7 @@ git diff --check
 - Original-style attract demo after 2560 idle title frames (about 42.7 seconds at the fixed 60 Hz logic rate). It directly starts two AI-controlled players, displays stage 30 with the current free replacement stage data, keeps the four-active-enemy limit, prioritizes available power-ups, and applies combat effects without adding scores or result-table kills. Visiting Construction disables automatic demos until a normal game starts or the game is reset.
 - Original hidden-message sequence using both controllers. After a 128-frame black pause, its four text rows and five trailing dots appear at 64-frame intervals. A free procedural green replacement object then morphs for 28 frames, falls from Y 30 through Y 248, and activates the currently selected title option on frame 887 (normally Construction for the documented sequence).
 - Four enemy tank classes with different speed, reload, armor, and score.
+- Player and enemy tanks retain an independent two-frame tread phase. Every active movement attempt flips the tread pixels, including ice coasting and attempts blocked by terrain or another tank; idle frames and enemy retry waits hold the last phase.
 - Per-stage enemy sequences with configurable spawn points and active-enemy limits.
 - Player star upgrades: faster bullets at level 1, two bullets at level 2, and steel-destroying plus double brick-wall damage at level 3.
 - Active bullet limits: base and first-star players can keep one bullet on screen, second-star and max-power players can keep two, and each enemy tank can keep one.

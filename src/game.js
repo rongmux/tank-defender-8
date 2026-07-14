@@ -268,8 +268,37 @@
             { role: "shadow", rect: [3, 1, 2, 2] },
             { role: "shadow", rect: [9, 11, 2, 2] }
           ]
-      }
-    },
+        }
+      },
+      tankTracks: {
+        size: 14,
+        frames: {
+          verticalA: [
+            { role: "primary", rect: [0, 1, 4, 12] },
+            { role: "primary", rect: [10, 1, 4, 12] },
+            { role: "shadow", rect: [1, 3, 2, 2] },
+            { role: "shadow", rect: [11, 9, 2, 2] }
+          ],
+          verticalB: [
+            { role: "primary", rect: [0, 1, 4, 12] },
+            { role: "primary", rect: [10, 1, 4, 12] },
+            { role: "shadow", rect: [1, 9, 2, 2] },
+            { role: "shadow", rect: [11, 3, 2, 2] }
+          ],
+          horizontalA: [
+            { role: "primary", rect: [1, 0, 12, 4] },
+            { role: "primary", rect: [1, 10, 12, 4] },
+            { role: "shadow", rect: [3, 1, 2, 2] },
+            { role: "shadow", rect: [9, 11, 2, 2] }
+          ],
+          horizontalB: [
+            { role: "primary", rect: [1, 0, 12, 4] },
+            { role: "primary", rect: [1, 10, 12, 4] },
+            { role: "shadow", rect: [9, 1, 2, 2] },
+            { role: "shadow", rect: [3, 11, 2, 2] }
+          ]
+        }
+      },
       wallQuarter: {
         size: 8,
         frames: {
@@ -1898,6 +1927,7 @@
       stageKills: Array(enemyTypeDefinitions().length).fill(0),
       totalKills: Array(enemyTypeDefinitions().length).fill(0),
       slide: 0,
+      trackPhase: 0,
       color: id === 1 ? "#e3c64e" : "#55b96a",
       accent: id === 1 ? "#fff0a8" : "#b7ffbd"
     };
@@ -1915,6 +1945,7 @@
     player.pendingSnap = false;
     player.reload = 0;
     player.slide = 0;
+    player.trackPhase = 0;
   }
 
   function startGame(players, options) {
@@ -3131,6 +3162,7 @@
         player.pendingSnap = false;
       }
       moveTank(player, DIR_X[player.dir] * player.speed, DIR_Y[player.dir] * player.speed);
+      advanceTankTracks(player);
     } else if (player.slide > 0 && onIce) {
       player.slide -= 1;
       moveTank(
@@ -3138,6 +3170,7 @@
         DIR_X[player.dir] * gameSettings().playerMovement.iceSlideSpeed,
         DIR_Y[player.dir] * gameSettings().playerMovement.iceSlideSpeed
       );
+      advanceTankTracks(player);
     }
   }
 
@@ -3213,6 +3246,7 @@
 
     const distance = enemy.alternateMovement ? 1 : enemy.speed;
     const moved = moveTank(enemy, DIR_X[enemy.dir] * distance, DIR_Y[enemy.dir] * distance);
+    advanceTankTracks(enemy);
     if (moved) return;
 
     if (aiRoll(ai.blockedRetryChance, nextRandom)) {
@@ -3251,6 +3285,7 @@
     enemy.dir = best.dir;
     enemy.blockedPauseTicks = 0;
     enemy.pendingTurn = false;
+    advanceTankTracks(enemy);
     return true;
   }
 
@@ -3876,7 +3911,8 @@
       pendingTurn: false,
       spawnFlash: gameSettings().timings.enemySpawnFlash,
       alive: true,
-      slide: 0
+      slide: 0,
+      trackPhase: 0
     });
     game.enemySpawned += 1;
     game.nextSpawn = enemySpawnDelay(game.stage, game.enemySpawned);
@@ -3995,6 +4031,10 @@
     tank.x = nx;
     tank.y = ny;
     return true;
+  }
+
+  function advanceTankTracks(tank) {
+    tank.trackPhase = ((Math.floor(Number(tank.trackPhase) || 0) & 1) ^ 1);
   }
 
   function canTankOccupy(tank, x, y) {
@@ -4818,7 +4858,17 @@
       accent,
       shadow: "#111111"
     });
+    drawManifestSprite("tankTracks", tankTrackFrameName(tank), x, y, {
+      primary,
+      shadow: "#111111"
+    });
     if (tank.kind === "player") drawPlayerUpgradeOverlay(tank, x, y, accent);
+  }
+
+  function tankTrackFrameName(tank) {
+    const orientation = tank.dir === UP || tank.dir === DOWN ? "vertical" : "horizontal";
+    const phase = (Math.floor(Number(tank.trackPhase) || 0) & 1) === 0 ? "A" : "B";
+    return `${orientation}${phase}`;
   }
 
   function drawPlayerUpgradeOverlay(tank, x, y, accent) {
@@ -8800,6 +8850,118 @@
         };
       } finally {
         game.tick = previousTick;
+      }
+    },
+    debugTankTrackAnimationProbe() {
+      const previous = {
+        tick: game.tick,
+        grid: game.grid,
+        base: game.base,
+        players: game.players,
+        enemies: game.enemies
+      };
+      try {
+        game.tick = 0;
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.enemies = [];
+
+        const player = createPlayer(1);
+        Object.assign(player, {
+          x: 32,
+          y: 32,
+          dir: RIGHT,
+          alive: true,
+          respawn: 0,
+          spawnFlash: 0,
+          invuln: 0,
+          stun: 0,
+          slide: 0,
+          trackPhase: 0
+        });
+        game.players = [player];
+        const playerInitial = { x: player.x, phase: player.trackPhase, frame: tankTrackFrameName(player) };
+        updatePlayerMovement(player, RIGHT);
+        const playerMoved = { x: player.x, phase: player.trackPhase, frame: tankTrackFrameName(player) };
+        player.x = 0;
+        player.dir = LEFT;
+        updatePlayerMovement(player, LEFT);
+        const playerBlocked = { x: player.x, phase: player.trackPhase, frame: tankTrackFrameName(player) };
+        updatePlayerMovement(player, -1);
+        const playerIdle = { x: player.x, phase: player.trackPhase, frame: tankTrackFrameName(player) };
+
+        setTile(game.grid, 2, 2, ICE, 15);
+        Object.assign(player, { x: 32, y: 32, dir: RIGHT, slide: 2, trackPhase: 0 });
+        updatePlayerMovement(player, -1);
+        const playerIceCoast = {
+          x: player.x,
+          slide: player.slide,
+          phase: player.trackPhase,
+          frame: tankTrackFrameName(player)
+        };
+
+        game.players = [];
+        const enemy = {
+          kind: "enemy",
+          id: 100,
+          slotIndex: 2,
+          x: 32,
+          y: 48,
+          w: 14,
+          h: 14,
+          dir: RIGHT,
+          speed: 1,
+          alternateMovement: false,
+          blockedPauseTicks: 0,
+          pendingTurn: false,
+          trackPhase: 0,
+          alive: true
+        };
+        game.enemies = [enemy];
+        updateEnemyMovement(enemy, () => 1 / 256);
+        const enemyMoved = { x: enemy.x, phase: enemy.trackPhase, frame: tankTrackFrameName(enemy) };
+        Object.assign(enemy, { x: FIELD_W - enemy.w, dir: RIGHT, blockedPauseTicks: 0, pendingTurn: false });
+        updateEnemyMovement(enemy, () => 1 / 256);
+        const enemyBlocked = {
+          x: enemy.x,
+          phase: enemy.trackPhase,
+          frame: tankTrackFrameName(enemy),
+          blockedPauseTicks: enemy.blockedPauseTicks
+        };
+        const renderedTank = {
+          kind: "enemy",
+          x: 0,
+          y: 0,
+          dir: UP,
+          trackPhase: 1
+        };
+        drawTank(renderedTank, "#e3c64e", "#fff0a8");
+
+        return {
+          player: {
+            initial: playerInitial,
+            moved: playerMoved,
+            blocked: playerBlocked,
+            idle: playerIdle,
+            iceCoast: playerIceCoast
+          },
+          enemy: { moved: enemyMoved, blocked: enemyBlocked },
+          render: {
+            x: FIELD_X,
+            y: FIELD_Y,
+            frame: tankTrackFrameName(renderedTank),
+            primary: "#e3c64e",
+            shadow: "#111111"
+          },
+          frames: [
+            tankTrackFrameName({ dir: UP, trackPhase: 0 }),
+            tankTrackFrameName({ dir: UP, trackPhase: 1 }),
+            tankTrackFrameName({ dir: LEFT, trackPhase: 0 }),
+            tankTrackFrameName({ dir: LEFT, trackPhase: 1 })
+          ]
+        };
+      } finally {
+        Object.assign(game, previous);
       }
     },
     debugFriendlyFireDurationProbe() {
