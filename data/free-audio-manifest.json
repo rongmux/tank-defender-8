@@ -35,7 +35,19 @@
         }
       ]
     },
-    "enemyHit": { "freq": 330, "duration": 0.025, "gain": 0.02, "wave": "square" },
+    "enemyHit": {
+      "durationFrames": 5,
+      "voices": [
+        {
+          "gain": 0.02,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [2601], "noteFrames": 1, "repeat": 1 },
+            { "frequencies": [2728], "noteFrames": 2, "repeat": 1 }
+          ]
+        }
+      ]
+    },
     "enemyDestroy": { "freq": 94, "duration": 0.12, "gain": 0.05, "wave": "square" },
     "bonusLife": {
       "durationFrames": 60,

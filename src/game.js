@@ -201,7 +201,19 @@
           }
         ]
       },
-      enemyHit: { freq: 330, duration: 0.025, gain: 0.02, wave: "square" },
+      enemyHit: {
+        durationFrames: 5,
+        voices: [
+          {
+            gain: 0.02,
+            wave: "square",
+            segments: [
+              { frequencies: [2601], noteFrames: 1, repeat: 1 },
+              { frequencies: [2728], noteFrames: 2, repeat: 1 }
+            ]
+          }
+        ]
+      },
       enemyDestroy: { freq: 94, duration: 0.12, gain: 0.05, wave: "square" },
       bonusLife: {
         durationFrames: 60,
@@ -953,6 +965,11 @@
     nodes: []
   };
   const steelHitAudio = {
+    active: false,
+    frame: 0,
+    nodes: []
+  };
+  const enemyHitAudio = {
     active: false,
     frame: 0,
     nodes: []
@@ -2198,6 +2215,7 @@
   function endTitleDemo() {
     stopMovementAudio();
     stopBrickHitAudio();
+    stopEnemyHitAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -2320,6 +2338,7 @@
     stopPowerUpAppearAudio();
     stopPauseAudio();
     stopBrickHitAudio();
+    stopEnemyHitAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -2374,6 +2393,7 @@
     stopPowerUpAppearAudio();
     stopPauseAudio();
     stopBrickHitAudio();
+    stopEnemyHitAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -2560,6 +2580,7 @@
     stopPowerUpAppearAudio();
     stopPauseAudio();
     stopBrickHitAudio();
+    stopEnemyHitAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -2629,6 +2650,7 @@
     syncPowerUpAppearAudioNodes();
     syncBrickHitAudioNodes();
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncPauseAudioNodes();
@@ -2820,6 +2842,7 @@
   function startStageStartAudio() {
     startFixedFrameAudio(stageStartAudio, "stageStart");
     syncBrickHitAudioNodes();
+    syncEnemyHitAudioNodes();
   }
 
   function stopStageStartAudio() {
@@ -2829,6 +2852,7 @@
   function updateStageStartAudio() {
     updateFixedFrameAudio(stageStartAudio, "stageStart");
     syncBrickHitAudioNodes();
+    syncEnemyHitAudioNodes();
   }
 
   function bonusLifeAudioPresentation(frame) {
@@ -2848,6 +2872,7 @@
     syncPowerUpPickupAudioNodes();
     syncPowerUpAppearAudioNodes();
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
   }
@@ -2861,6 +2886,7 @@
     syncPowerUpPickupAudioNodes();
     syncPowerUpAppearAudioNodes();
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
   }
@@ -2889,6 +2915,7 @@
     startFixedFrameAudio(powerUpPickupAudio, "powerUp", powerUpPickupAudioAudible());
     syncPowerUpAppearAudioNodes();
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
   }
 
   function stopPowerUpPickupAudio() {
@@ -2899,6 +2926,7 @@
     updateFixedFrameAudio(powerUpPickupAudio, "powerUp", powerUpPickupAudioAudible());
     syncPowerUpAppearAudioNodes();
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
   }
 
   function powerUpAppearAudioPresentation(frame) {
@@ -2920,6 +2948,7 @@
   function startPowerUpAppearAudio() {
     startFixedFrameAudio(powerUpAppearAudio, "powerUpAppear", powerUpAppearAudioAudible());
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
   }
 
   function stopPowerUpAppearAudio() {
@@ -2929,6 +2958,7 @@
   function updatePowerUpAppearAudio() {
     updateFixedFrameAudio(powerUpAppearAudio, "powerUpAppear", powerUpAppearAudioAudible());
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
   }
 
   function brickHitAudioPresentation(frame) {
@@ -2973,14 +3003,46 @@
 
   function startSteelHitAudio() {
     startFixedFrameAudio(steelHitAudio, "steelHit", steelHitAudioAudible());
+    syncEnemyHitAudioNodes();
   }
 
   function stopSteelHitAudio() {
     stopFixedFrameAudio(steelHitAudio);
+    syncEnemyHitAudioNodes();
   }
 
   function updateSteelHitAudio() {
     updateFixedFrameAudio(steelHitAudio, "steelHit", steelHitAudioAudible());
+    syncEnemyHitAudioNodes();
+  }
+
+  function enemyHitAudioPresentation(frame) {
+    return fixedFrameAudioPresentation("enemyHit", frame);
+  }
+
+  function enemyHitAudioAudible() {
+    return !pauseAudio.active &&
+      !stageStartAudio.active &&
+      !bonusLifePulse2Active() &&
+      !powerUpPickupAudio.active &&
+      !powerUpAppearAudio.active &&
+      !steelHitAudio.active;
+  }
+
+  function syncEnemyHitAudioNodes() {
+    syncFixedFrameAudioNodes(enemyHitAudio, "enemyHit", enemyHitAudioAudible());
+  }
+
+  function startEnemyHitAudio() {
+    startFixedFrameAudio(enemyHitAudio, "enemyHit", enemyHitAudioAudible());
+  }
+
+  function stopEnemyHitAudio() {
+    stopFixedFrameAudio(enemyHitAudio);
+  }
+
+  function updateEnemyHitAudio() {
+    updateFixedFrameAudio(enemyHitAudio, "enemyHit", enemyHitAudioAudible());
   }
 
   function playerShootAudioPresentation(frame) {
@@ -3049,6 +3111,7 @@
     syncPowerUpAppearAudioNodes();
     syncBrickHitAudioNodes();
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
   }
@@ -3067,6 +3130,7 @@
     syncPowerUpAppearAudioNodes();
     syncBrickHitAudioNodes();
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncMovementAudio();
@@ -3175,6 +3239,7 @@
       powerUpPickupAudio.active ||
       powerUpAppearAudio.active ||
       steelHitAudio.active ||
+      enemyHitAudio.active ||
       pauseAudio.active
     ) return "none";
     return playerMovementAudioRequested() ? "player" : "enemy";
@@ -3241,6 +3306,10 @@
     }
     if (name === "steelHit") {
       startSteelHitAudio();
+      return;
+    }
+    if (name === "enemyHit") {
+      startEnemyHitAudio();
       return;
     }
     if (name === "playerShoot") {
@@ -3333,6 +3402,7 @@
     syncPowerUpAppearAudioNodes();
     syncBrickHitAudioNodes();
     syncSteelHitAudioNodes();
+    syncEnemyHitAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
     syncPauseAudioNodes();
@@ -3711,6 +3781,7 @@
     updatePowerUpAppearAudio();
     updateBrickHitAudio();
     updateSteelHitAudio();
+    updateEnemyHitAudio();
     updatePlayerShootAudio();
     updateMovementIceAudio();
     updatePauseAudio();
@@ -5089,6 +5160,7 @@
     stopPowerUpAppearAudio();
     stopPauseAudio();
     stopBrickHitAudio();
+    stopEnemyHitAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -5141,6 +5213,7 @@
     stopPowerUpAppearAudio();
     stopPauseAudio();
     stopBrickHitAudio();
+    stopEnemyHitAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -5208,6 +5281,7 @@
     stopPowerUpAppearAudio();
     stopPauseAudio();
     stopBrickHitAudio();
+    stopEnemyHitAudio();
     stopSteelHitAudio();
     stopPlayerShootAudio();
     stopMovementIceAudio();
@@ -6445,6 +6519,10 @@
         active: steelHitAudio.active,
         frame: steelHitAudio.frame
       };
+      const previousEnemyHit = {
+        active: enemyHitAudio.active,
+        frame: enemyHitAudio.frame
+      };
       const previousPause = {
         active: pauseAudio.active,
         frame: pauseAudio.frame
@@ -6468,6 +6546,7 @@
         movementIceAudio.active = false;
         playerShootAudio.active = false;
         steelHitAudio.active = false;
+        enemyHitAudio.active = false;
         pauseAudio.active = false;
         keys.clear();
         const title = movementAudioModeForState();
@@ -6490,6 +6569,9 @@
         powerUpAppearAudio.active = true;
         const powerUpAppear = movementAudioModeForState();
         powerUpAppearAudio.active = false;
+        enemyHitAudio.active = true;
+        const enemyHit = movementAudioModeForState();
+        enemyHitAudio.active = false;
         pauseAudio.active = true;
         const pauseCue = movementAudioModeForState();
         pauseAudio.active = false;
@@ -6519,6 +6601,7 @@
             bonusLifePulse1Tail,
             powerUpPickup,
             powerUpAppear,
+            enemyHit,
             pauseCue,
             heldDirection,
             heldDuringDeathState,
@@ -6548,6 +6631,8 @@
         playerShootAudio.frame = previousPlayerShoot.frame;
         steelHitAudio.active = previousSteelHit.active;
         steelHitAudio.frame = previousSteelHit.frame;
+        enemyHitAudio.active = previousEnemyHit.active;
+        enemyHitAudio.frame = previousEnemyHit.frame;
         pauseAudio.active = previousPause.active;
         pauseAudio.frame = previousPause.frame;
         Object.assign(game, previous);
@@ -6582,6 +6667,7 @@
       const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
       const previousBrickHit = { active: brickHitAudio.active, frame: brickHitAudio.frame };
       const previousSteelHit = { active: steelHitAudio.active, frame: steelHitAudio.frame };
+      const previousEnemyHit = { active: enemyHitAudio.active, frame: enemyHitAudio.frame };
       const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
       const previousMovementIce = { active: movementIceAudio.active, frame: movementIceAudio.frame };
       const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
@@ -6624,6 +6710,7 @@
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
+        stopEnemyHitAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -6728,6 +6815,7 @@
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
+        stopEnemyHitAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -6747,6 +6835,8 @@
         brickHitAudio.frame = previousBrickHit.frame;
         steelHitAudio.active = previousSteelHit.active;
         steelHitAudio.frame = previousSteelHit.frame;
+        enemyHitAudio.active = previousEnemyHit.active;
+        enemyHitAudio.frame = previousEnemyHit.frame;
         playerShootAudio.active = previousPlayerShoot.active;
         playerShootAudio.frame = previousPlayerShoot.frame;
         movementIceAudio.active = previousMovementIce.active;
@@ -6759,6 +6849,7 @@
         syncPowerUpAppearAudioNodes();
         syncBrickHitAudioNodes();
         syncSteelHitAudioNodes();
+        syncEnemyHitAudioNodes();
         syncPlayerShootAudioNodes();
         syncMovementIceAudioNodes();
         syncPauseAudioNodes();
@@ -6784,6 +6875,7 @@
       const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
       const previousBrickHit = { active: brickHitAudio.active, frame: brickHitAudio.frame };
       const previousSteelHit = { active: steelHitAudio.active, frame: steelHitAudio.frame };
+      const previousEnemyHit = { active: enemyHitAudio.active, frame: enemyHitAudio.frame };
       const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
       const previousMovementIce = { active: movementIceAudio.active, frame: movementIceAudio.frame };
       const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
@@ -6822,6 +6914,7 @@
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
+        stopEnemyHitAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -6919,6 +7012,7 @@
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
+        stopEnemyHitAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -6938,6 +7032,8 @@
         brickHitAudio.frame = previousBrickHit.frame;
         steelHitAudio.active = previousSteelHit.active;
         steelHitAudio.frame = previousSteelHit.frame;
+        enemyHitAudio.active = previousEnemyHit.active;
+        enemyHitAudio.frame = previousEnemyHit.frame;
         playerShootAudio.active = previousPlayerShoot.active;
         playerShootAudio.frame = previousPlayerShoot.frame;
         movementIceAudio.active = previousMovementIce.active;
@@ -6950,6 +7046,277 @@
         syncPowerUpAppearAudioNodes();
         syncBrickHitAudioNodes();
         syncSteelHitAudioNodes();
+        syncEnemyHitAudioNodes();
+        syncPlayerShootAudioNodes();
+        syncMovementIceAudioNodes();
+        syncPauseAudioNodes();
+        syncMovementAudio();
+      }
+    },
+    debugEnemyHitAudioProbe() {
+      const event = FREE_AUDIO_MANIFEST.events.enemyHit;
+      const frames = [0, 1, 2, 3, 4, 5];
+      return {
+        durationFrames: event.durationFrames,
+        voiceDurations: event.voices.map(fixedFrameVoiceDuration),
+        waves: event.voices.map((voice) => voice.wave),
+        frames: frames.map((frame) => enemyHitAudioPresentation(frame))
+      };
+    },
+    debugEnemyHitAudioLifecycleProbe() {
+      const previous = { ...game };
+      const previousKeys = Array.from(keys);
+      const previousStageStart = { active: stageStartAudio.active, frame: stageStartAudio.frame };
+      const previousBonusLife = { active: bonusLifeAudio.active, frame: bonusLifeAudio.frame };
+      const previousPowerUpPickup = { active: powerUpPickupAudio.active, frame: powerUpPickupAudio.frame };
+      const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
+      const previousBrickHit = { active: brickHitAudio.active, frame: brickHitAudio.frame };
+      const previousSteelHit = { active: steelHitAudio.active, frame: steelHitAudio.frame };
+      const previousEnemyHit = { active: enemyHitAudio.active, frame: enemyHitAudio.frame };
+      const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
+      const previousMovementIce = { active: movementIceAudio.active, frame: movementIceAudio.frame };
+      const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
+      const state = () => {
+        const voice = enemyHitAudioPresentation(enemyHitAudio.frame).voices[0];
+        const voiceActive = Boolean(voice);
+        return {
+          active: enemyHitAudio.active,
+          frame: enemyHitAudio.frame,
+          paused: game.paused,
+          voiceActive,
+          frequency: voice ? voice.frequency : null,
+          audible: enemyHitAudio.active && voiceActive && enemyHitAudioAudible(),
+          movementAudioMode: movementAudio.mode,
+          brickHitActive: brickHitAudio.active,
+          brickHitAudible: brickHitAudio.active && brickHitAudioAudible(),
+          steelHitActive: steelHitAudio.active,
+          playerShootActive: playerShootAudio.active,
+          playerShootAudible: playerShootAudio.active && playerShootAudioAudible(),
+          pauseActive: pauseAudio.active,
+          pauseFrame: pauseAudio.frame
+        };
+      };
+      const makeEnemy = (hp) => ({
+        kind: "enemy",
+        id: 100,
+        x: 64,
+        y: 64,
+        w: 14,
+        h: 14,
+        alive: true,
+        hp,
+        spawnFlash: 0,
+        carrier: false,
+        typeIndex: 3,
+        score: enemyTypeDefinitions()[3].score
+      });
+      const makeBullet = (ownerKind, ownerId) => ({
+        x: 69,
+        y: 69,
+        w: gameSettings().projectileRules.bulletSize,
+        h: gameSettings().projectileRules.bulletSize,
+        dir: RIGHT,
+        speed: 0,
+        power: 1,
+        ownerKind,
+        ownerId,
+        ownerKey: `${ownerKind}:${ownerId}`,
+        remove: false
+      });
+      try {
+        stopMovementAudio();
+        stopStageStartAudio();
+        stopBonusLifeAudio();
+        stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
+        stopBrickHitAudio();
+        stopEnemyHitAudio();
+        stopSteelHitAudio();
+        stopPlayerShootAudio();
+        stopMovementIceAudio();
+        stopPauseAudio();
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = false;
+        game.clearPendingTimer = 0;
+        game.players = [];
+        game.enemies = [];
+        game.bullets = [];
+        game.explosions = [];
+        game.scorePopups = [];
+        game.enemyKilled = 0;
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        keys.clear();
+        syncMovementAudio();
+
+        const armoredEnemy = makeEnemy(2);
+        const armoredBullet = makeBullet("player", 1);
+        game.enemies = [armoredEnemy];
+        const armoredHitResult = hitTank(armoredBullet);
+        const armoredHit = {
+          ...state(),
+          hit: armoredHitResult,
+          bulletRemoved: armoredBullet.remove,
+          enemyAlive: armoredEnemy.alive,
+          enemyHp: armoredEnemy.hp,
+          explosionCount: game.explosions.length
+        };
+        updateEnemyHitAudio();
+        const secondPitch = state();
+        updateEnemyHitAudio();
+        updateEnemyHitAudio();
+        const silentTail = state();
+
+        game.paused = true;
+        startPauseAudio();
+        syncEnemyHitAudioNodes();
+        syncMovementAudio();
+        for (let frame = 0; frame < 10; frame += 1) {
+          updateEnemyHitAudio();
+          updatePauseAudio();
+        }
+        const paused = state();
+        game.paused = false;
+        syncEnemyHitAudioNodes();
+        syncMovementAudio();
+        updateEnemyHitAudio();
+        updateEnemyHitAudio();
+        const end = state();
+
+        stopPauseAudio();
+        stopEnemyHitAudio();
+        syncMovementAudio();
+        game.explosions = [];
+        game.enemyKilled = 0;
+        const lethalEnemy = makeEnemy(1);
+        const lethalBullet = makeBullet("player", 1);
+        game.enemies = [lethalEnemy];
+        const lethalHitResult = hitTank(lethalBullet);
+        const lethalHit = {
+          ...state(),
+          hit: lethalHitResult,
+          bulletRemoved: lethalBullet.remove,
+          enemyAlive: lethalEnemy.alive,
+          enemyHp: lethalEnemy.hp,
+          enemyKilled: game.enemyKilled,
+          explosionCount: game.explosions.length
+        };
+
+        game.explosions = [];
+        game.enemies = [];
+        const teammate = createPlayer(2);
+        teammate.x = 64;
+        teammate.y = 64;
+        teammate.spawnFlash = 0;
+        teammate.invuln = 0;
+        teammate.stun = 0;
+        game.players = [teammate];
+        const friendlyBullet = makeBullet("player", 1);
+        const friendlyHitResult = hitTank(friendlyBullet);
+        const friendlyHit = {
+          ...state(),
+          hit: friendlyHitResult,
+          bulletRemoved: friendlyBullet.remove,
+          stun: teammate.stun,
+          explosionCount: game.explosions.length
+        };
+
+        game.explosions = [];
+        const targetPlayer = createPlayer(1);
+        targetPlayer.x = 64;
+        targetPlayer.y = 64;
+        targetPlayer.spawnFlash = 0;
+        targetPlayer.invuln = 0;
+        game.players = [targetPlayer];
+        const enemyBullet = makeBullet("enemy", 100);
+        const playerHitResult = hitTank(enemyBullet);
+        const playerHit = {
+          ...state(),
+          hit: playerHitResult,
+          bulletRemoved: enemyBullet.remove,
+          playerAlive: targetPlayer.alive,
+          playerRespawn: targetPlayer.respawn,
+          explosionCount: game.explosions.length
+        };
+
+        stopEnemyHitAudio();
+        startEnemyHitAudio();
+        startBrickHitAudio();
+        startPlayerShootAudio();
+        const separateChannels = state();
+
+        stopBrickHitAudio();
+        stopPlayerShootAudio();
+        stopEnemyHitAudio();
+        startEnemyHitAudio();
+        startSteelHitAudio();
+        const steelPriority = state();
+        for (let frame = 0; frame < 5; frame += 1) {
+          updateSteelHitAudio();
+          updateEnemyHitAudio();
+        }
+        const steelSuppressedEnd = state();
+
+        stopSteelHitAudio();
+        startEnemyHitAudio();
+        startStage(game.stage);
+        const stageCleanup = state();
+        return {
+          armoredHit,
+          secondPitch,
+          silentTail,
+          paused,
+          end,
+          lethalHit,
+          friendlyHit,
+          playerHit,
+          separateChannels,
+          steelPriority,
+          steelSuppressedEnd,
+          stageCleanup
+        };
+      } finally {
+        stopMovementAudio();
+        stopStageStartAudio();
+        stopBonusLifeAudio();
+        stopPowerUpPickupAudio();
+        stopPowerUpAppearAudio();
+        stopBrickHitAudio();
+        stopEnemyHitAudio();
+        stopSteelHitAudio();
+        stopPlayerShootAudio();
+        stopMovementIceAudio();
+        stopPauseAudio();
+        Object.assign(game, previous);
+        keys.clear();
+        for (const code of previousKeys) keys.add(code);
+        stageStartAudio.active = previousStageStart.active;
+        stageStartAudio.frame = previousStageStart.frame;
+        bonusLifeAudio.active = previousBonusLife.active;
+        bonusLifeAudio.frame = previousBonusLife.frame;
+        powerUpPickupAudio.active = previousPowerUpPickup.active;
+        powerUpPickupAudio.frame = previousPowerUpPickup.frame;
+        powerUpAppearAudio.active = previousPowerUpAppear.active;
+        powerUpAppearAudio.frame = previousPowerUpAppear.frame;
+        brickHitAudio.active = previousBrickHit.active;
+        brickHitAudio.frame = previousBrickHit.frame;
+        steelHitAudio.active = previousSteelHit.active;
+        steelHitAudio.frame = previousSteelHit.frame;
+        enemyHitAudio.active = previousEnemyHit.active;
+        enemyHitAudio.frame = previousEnemyHit.frame;
+        playerShootAudio.active = previousPlayerShoot.active;
+        playerShootAudio.frame = previousPlayerShoot.frame;
+        movementIceAudio.active = previousMovementIce.active;
+        movementIceAudio.frame = previousMovementIce.frame;
+        pauseAudio.active = previousPause.active;
+        pauseAudio.frame = previousPause.frame;
+        syncStageStartAudioNodes();
+        syncBonusLifeAudioNodes();
+        syncPowerUpPickupAudioNodes();
+        syncPowerUpAppearAudioNodes();
+        syncBrickHitAudioNodes();
+        syncSteelHitAudioNodes();
+        syncEnemyHitAudioNodes();
         syncPlayerShootAudioNodes();
         syncMovementIceAudioNodes();
         syncPauseAudioNodes();
@@ -6975,6 +7342,7 @@
       const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
       const previousBrickHit = { active: brickHitAudio.active, frame: brickHitAudio.frame };
       const previousSteelHit = { active: steelHitAudio.active, frame: steelHitAudio.frame };
+      const previousEnemyHit = { active: enemyHitAudio.active, frame: enemyHitAudio.frame };
       const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
       const previousMovementIce = { active: movementIceAudio.active, frame: movementIceAudio.frame };
       const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
@@ -6994,6 +7362,7 @@
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
+        stopEnemyHitAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -7113,6 +7482,7 @@
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
+        stopEnemyHitAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -7132,6 +7502,8 @@
         brickHitAudio.frame = previousBrickHit.frame;
         steelHitAudio.active = previousSteelHit.active;
         steelHitAudio.frame = previousSteelHit.frame;
+        enemyHitAudio.active = previousEnemyHit.active;
+        enemyHitAudio.frame = previousEnemyHit.frame;
         playerShootAudio.active = previousPlayerShoot.active;
         playerShootAudio.frame = previousPlayerShoot.frame;
         movementIceAudio.active = previousMovementIce.active;
@@ -7144,6 +7516,7 @@
         syncPowerUpAppearAudioNodes();
         syncBrickHitAudioNodes();
         syncSteelHitAudioNodes();
+        syncEnemyHitAudioNodes();
         syncPlayerShootAudioNodes();
         syncMovementIceAudioNodes();
         syncPauseAudioNodes();
@@ -7159,6 +7532,7 @@
       const previousPowerUpAppear = { active: powerUpAppearAudio.active, frame: powerUpAppearAudio.frame };
       const previousBrickHit = { active: brickHitAudio.active, frame: brickHitAudio.frame };
       const previousSteelHit = { active: steelHitAudio.active, frame: steelHitAudio.frame };
+      const previousEnemyHit = { active: enemyHitAudio.active, frame: enemyHitAudio.frame };
       const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
       const previousMovementIce = { active: movementIceAudio.active, frame: movementIceAudio.frame };
       const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
@@ -7176,6 +7550,7 @@
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
+        stopEnemyHitAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -7256,6 +7631,7 @@
         stopPowerUpPickupAudio();
         stopPowerUpAppearAudio();
         stopBrickHitAudio();
+        stopEnemyHitAudio();
         stopSteelHitAudio();
         stopPlayerShootAudio();
         stopMovementIceAudio();
@@ -7275,6 +7651,8 @@
         brickHitAudio.frame = previousBrickHit.frame;
         steelHitAudio.active = previousSteelHit.active;
         steelHitAudio.frame = previousSteelHit.frame;
+        enemyHitAudio.active = previousEnemyHit.active;
+        enemyHitAudio.frame = previousEnemyHit.frame;
         playerShootAudio.active = previousPlayerShoot.active;
         playerShootAudio.frame = previousPlayerShoot.frame;
         movementIceAudio.active = previousMovementIce.active;
@@ -7287,6 +7665,7 @@
         syncPowerUpAppearAudioNodes();
         syncBrickHitAudioNodes();
         syncSteelHitAudioNodes();
+        syncEnemyHitAudioNodes();
         syncPlayerShootAudioNodes();
         syncMovementIceAudioNodes();
         syncPauseAudioNodes();
@@ -7461,6 +7840,7 @@
         syncBonusLifeAudioNodes();
         syncPowerUpPickupAudioNodes();
         syncPowerUpAppearAudioNodes();
+        syncEnemyHitAudioNodes();
         syncPauseAudioNodes();
         syncMovementAudio();
       }
@@ -7582,6 +7962,7 @@
         syncBonusLifeAudioNodes();
         syncPowerUpPickupAudioNodes();
         syncPowerUpAppearAudioNodes();
+        syncEnemyHitAudioNodes();
         syncPauseAudioNodes();
         syncMovementAudio();
       }
@@ -7666,6 +8047,7 @@
         syncBonusLifeAudioNodes();
         syncPowerUpPickupAudioNodes();
         syncPowerUpAppearAudioNodes();
+        syncEnemyHitAudioNodes();
         syncMovementAudio();
       }
     },
@@ -7736,6 +8118,7 @@
         syncStageStartAudioNodes();
         syncBonusLifeAudioNodes();
         syncPowerUpAppearAudioNodes();
+        syncEnemyHitAudioNodes();
         syncMovementAudio();
       }
     },
@@ -8332,6 +8715,11 @@
           active: steelHitAudio.active,
           frame: steelHitAudio.frame,
           durationFrames: FREE_AUDIO_MANIFEST.events.steelHit.durationFrames
+        },
+        enemyHitAudio: {
+          active: enemyHitAudio.active,
+          frame: enemyHitAudio.frame,
+          durationFrames: FREE_AUDIO_MANIFEST.events.enemyHit.durationFrames
         },
         playerShootAudio: {
           active: playerShootAudio.active,
@@ -10515,6 +10903,7 @@
       }
     },
     debugPlayerBulletEnemyCollisionProbe() {
+      const previousEnemyHit = { active: enemyHitAudio.active, frame: enemyHitAudio.frame };
       const previous = {
         players: game.players,
         enemies: game.enemies,
@@ -10570,6 +10959,7 @@
         };
       };
       try {
+        stopEnemyHitAudio();
         return {
           positiveNine: run(0, 9, 9),
           negativeNine: run(0, -9, -9),
@@ -10579,7 +10969,12 @@
           armored: run(0, 9, 9, 2)
         };
       } finally {
+        stopEnemyHitAudio();
         Object.assign(game, previous);
+        enemyHitAudio.active = previousEnemyHit.active;
+        enemyHitAudio.frame = previousEnemyHit.frame;
+        syncEnemyHitAudioNodes();
+        syncMovementAudio();
       }
     },
     debugPlayerSpawnLockProbe() {

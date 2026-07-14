@@ -326,6 +326,8 @@ assert(runtimeAudioManifest.events.brickHit.durationFrames === 3, "brick and des
 assert(runtimeAudioManifest.events.brickHit.voices.length === 1 && runtimeAudioManifest.events.brickHit.voices[0].wave === "triangle", "destructive wall impacts should use one triangle voice");
 assert(runtimeAudioManifest.events.steelHit.durationFrames === 4, "steel and field-boundary impacts should preserve the original four-frame lifetime");
 assert(runtimeAudioManifest.events.steelHit.voices.length === 1 && runtimeAudioManifest.events.steelHit.voices[0].wave === "square", "steel and field-boundary impacts should use one pulse-like voice");
+assert(runtimeAudioManifest.events.enemyHit.durationFrames === 5, "surviving armored-enemy hits should preserve the original five-frame channel lifetime");
+assert(runtimeAudioManifest.events.enemyHit.voices.length === 1 && runtimeAudioManifest.events.enemyHit.voices[0].wave === "square", "surviving armored-enemy hits should use one pulse-like voice");
 assert(runtimeAudioManifest.events.movementIce.durationFrames === 4, "ice movement cue should preserve the original four-frame lifetime");
 assert(runtimeAudioManifest.events.movementIce.voices.length === 1 && runtimeAudioManifest.events.movementIce.voices[0].wave === "square", "ice movement cue should use one pulse-like voice");
 assert(runtimeAudioManifest.events.scoreCount.wave === "square", "result-table count ticks should use the replacement score-count sound");
@@ -345,6 +347,7 @@ assert(
     movementAudioProbe.modes.bonusLifePulse1Tail === "enemy" &&
     movementAudioProbe.modes.powerUpPickup === "none" &&
     movementAudioProbe.modes.powerUpAppear === "none" &&
+    movementAudioProbe.modes.enemyHit === "none" &&
     movementAudioProbe.modes.pauseCue === "none" &&
     movementAudioProbe.modes.heldDirection === "player",
   "active battle audio should honor stage and bonus pulse-channel priority before enemy and held-player movement"
@@ -406,6 +409,26 @@ assert(!steelHitAudioLifecycleProbe.appearanceSuppressedEnd.active && steelHitAu
 assert(steelHitAudioLifecycleProbe.stageStartPriority.active && !steelHitAudioLifecycleProbe.stageStartPriority.audible, "stage-start pulse two should mask a simultaneous steel hit");
 assert(!steelHitAudioLifecycleProbe.stageStartSuppressedEnd.active && steelHitAudioLifecycleProbe.stageStartSuppressedEnd.frame === 4, "a stage-start-masked steel hit should still consume its complete four-frame lifetime");
 assert(!steelHitAudioLifecycleProbe.stageCleanup.active && steelHitAudioLifecycleProbe.stageCleanup.frame === 0, "starting a stage should clear any pending steel-hit cue");
+const enemyHitAudioProbe = context.window.TankDefender8.debugEnemyHitAudioProbe();
+assert(enemyHitAudioProbe.durationFrames === 5 && enemyHitAudioProbe.voiceDurations.join(",") === "3", "surviving armored-enemy hit audio should retain a five-frame event with three audible frames");
+assert(enemyHitAudioProbe.waves.join(",") === "square", "surviving armored-enemy hit audio should retain its pulse-like replacement voice");
+assert(enemyHitAudioProbe.frames[0].voices[0].frequency === 2601, "the first armored-hit pitch should last one frame");
+assert(enemyHitAudioProbe.frames[1].voices[0].frequency === 2728 && enemyHitAudioProbe.frames[2].voices[0].frequency === 2728, "the second armored-hit pitch should last two frames");
+assert(enemyHitAudioProbe.frames[3].voices[0] === null && enemyHitAudioProbe.frames[4].voices[0] === null && enemyHitAudioProbe.frames[5].voices[0] === null, "armored-hit audio should preserve its two silent tail frames and stop on frame five");
+const enemyHitAudioLifecycleProbe = context.window.TankDefender8.debugEnemyHitAudioLifecycleProbe();
+assert(enemyHitAudioLifecycleProbe.armoredHit.active && enemyHitAudioLifecycleProbe.armoredHit.frame === 0 && enemyHitAudioLifecycleProbe.armoredHit.audible && enemyHitAudioLifecycleProbe.armoredHit.frequency === 2601, "a surviving armored-enemy hit should start its first pulse pitch at frame zero");
+assert(enemyHitAudioLifecycleProbe.armoredHit.hit && enemyHitAudioLifecycleProbe.armoredHit.bulletRemoved && enemyHitAudioLifecycleProbe.armoredHit.enemyAlive && enemyHitAudioLifecycleProbe.armoredHit.enemyHp === 1 && enemyHitAudioLifecycleProbe.armoredHit.explosionCount === 1, "the real armored collision should remove the bullet, reduce one hit point, and retain the enemy");
+assert(enemyHitAudioLifecycleProbe.armoredHit.movementAudioMode === "none" && enemyHitAudioLifecycleProbe.secondPitch.active && enemyHitAudioLifecycleProbe.secondPitch.frame === 1 && enemyHitAudioLifecycleProbe.secondPitch.frequency === 2728, "the second pulse channel should suppress movement and switch pitch on frame one");
+assert(enemyHitAudioLifecycleProbe.silentTail.active && enemyHitAudioLifecycleProbe.silentTail.frame === 3 && !enemyHitAudioLifecycleProbe.silentTail.voiceActive && !enemyHitAudioLifecycleProbe.silentTail.audible && enemyHitAudioLifecycleProbe.silentTail.movementAudioMode === "none", "the two-frame muted tail should retain pulse-two ownership without producing a tone");
+assert(enemyHitAudioLifecycleProbe.paused.paused && enemyHitAudioLifecycleProbe.paused.frame === 3 && enemyHitAudioLifecycleProbe.paused.pauseFrame === 10 && enemyHitAudioLifecycleProbe.paused.movementAudioMode === "none", "pause should freeze the armored-hit silent tail while the pause cue advances");
+assert(!enemyHitAudioLifecycleProbe.end.active && enemyHitAudioLifecycleProbe.end.frame === 5 && enemyHitAudioLifecycleProbe.end.pauseActive && enemyHitAudioLifecycleProbe.end.movementAudioMode === "none", "resuming should finish the five-frame armored-hit event while the pause cue keeps pulse-two priority");
+assert(!enemyHitAudioLifecycleProbe.lethalHit.active && enemyHitAudioLifecycleProbe.lethalHit.hit && enemyHitAudioLifecycleProbe.lethalHit.bulletRemoved && !enemyHitAudioLifecycleProbe.lethalHit.enemyAlive && enemyHitAudioLifecycleProbe.lethalHit.enemyHp === 0 && enemyHitAudioLifecycleProbe.lethalHit.enemyKilled === 1 && enemyHitAudioLifecycleProbe.lethalHit.explosionCount === 2, "a lethal enemy hit should use destruction feedback without starting armored-hit audio");
+assert(!enemyHitAudioLifecycleProbe.friendlyHit.active && enemyHitAudioLifecycleProbe.friendlyHit.hit && enemyHitAudioLifecycleProbe.friendlyHit.bulletRemoved && enemyHitAudioLifecycleProbe.friendlyHit.stun === 200 && enemyHitAudioLifecycleProbe.friendlyHit.explosionCount === 1, "friendly-fire stun should remain silent for the armored-hit event");
+assert(!enemyHitAudioLifecycleProbe.playerHit.active && enemyHitAudioLifecycleProbe.playerHit.hit && enemyHitAudioLifecycleProbe.playerHit.bulletRemoved && !enemyHitAudioLifecycleProbe.playerHit.playerAlive && enemyHitAudioLifecycleProbe.playerHit.playerRespawn === 24 && enemyHitAudioLifecycleProbe.playerHit.explosionCount === 2, "an enemy bullet destroying a player should not trigger armored-hit audio");
+assert(enemyHitAudioLifecycleProbe.separateChannels.active && enemyHitAudioLifecycleProbe.separateChannels.audible && enemyHitAudioLifecycleProbe.separateChannels.brickHitActive && enemyHitAudioLifecycleProbe.separateChannels.brickHitAudible && enemyHitAudioLifecycleProbe.separateChannels.playerShootActive && enemyHitAudioLifecycleProbe.separateChannels.playerShootAudible, "armored-hit pulse two should play alongside the brick triangle and player-shot pulse one");
+assert(enemyHitAudioLifecycleProbe.steelPriority.active && !enemyHitAudioLifecycleProbe.steelPriority.audible && enemyHitAudioLifecycleProbe.steelPriority.steelHitActive, "the higher-priority steel-impact pulse should mask a simultaneous armored hit");
+assert(!enemyHitAudioLifecycleProbe.steelSuppressedEnd.active && enemyHitAudioLifecycleProbe.steelSuppressedEnd.frame === 5, "a steel-masked armored hit should still consume its complete five-frame lifetime");
+assert(!enemyHitAudioLifecycleProbe.stageCleanup.active && enemyHitAudioLifecycleProbe.stageCleanup.frame === 0, "starting a stage should clear pending armored-hit audio");
 const playerShootAudioProbe = context.window.TankDefender8.debugPlayerShootAudioProbe();
 assert(playerShootAudioProbe.durationFrames === 15 && playerShootAudioProbe.voiceDurations.join(",") === "15", "player shooting audio should contain one fifteen-frame voice");
 assert(playerShootAudioProbe.waves.join(",") === "square", "player shooting audio should retain its pulse-like replacement voice");
