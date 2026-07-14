@@ -305,7 +305,8 @@ assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest i
 assert(Object.keys(runtimeAudioManifest.events).length >= 18, "runtime audio manifest should expose gameplay sound events");
 assert(runtimeAudioManifest.events.powerUp.durationFrames === 39, "power-up pickup replacement audio should preserve the original thirty-nine-frame lifetime");
 assert(runtimeAudioManifest.events.powerUp.voices.length === 1 && runtimeAudioManifest.events.powerUp.voices[0].wave === "square", "power-up pickup replacement audio should use one pulse-like voice");
-assert(runtimeAudioManifest.events.pause.wave === "square", "entering pause should use the replacement pause sound");
+assert(runtimeAudioManifest.events.pause.durationFrames === 36, "pause replacement audio should preserve the original thirty-six-frame lifetime");
+assert(runtimeAudioManifest.events.pause.voices.length === 1 && runtimeAudioManifest.events.pause.voices[0].wave === "square", "pause replacement audio should use one pulse-like voice");
 assert(runtimeAudioManifest.events.bonusLife.durationFrames === 60, "bonus-life replacement audio should retain the original one-second lead voice");
 assert(runtimeAudioManifest.events.bonusLife.voices.length === 2, "bonus-life replacement audio should preserve both pulse voices");
 assert(runtimeAudioManifest.events.bonusLife.voices.every((voice) => voice.wave === "square"), "bonus-life replacement audio should keep both voices pulse-like");
@@ -333,6 +334,7 @@ assert(
     movementAudioProbe.modes.bonusLifePulse2 === "none" &&
     movementAudioProbe.modes.bonusLifePulse1Tail === "enemy" &&
     movementAudioProbe.modes.powerUpPickup === "none" &&
+    movementAudioProbe.modes.pauseCue === "none" &&
     movementAudioProbe.modes.heldDirection === "player",
   "active battle audio should honor stage and bonus pulse-channel priority before enemy and held-player movement"
 );
@@ -399,11 +401,44 @@ assert(!powerUpPickupAudioLifecycleProbe.end.active && powerUpPickupAudioLifecyc
 assert(powerUpPickupAudioLifecycleProbe.suppressedStart.active && !powerUpPickupAudioLifecycleProbe.suppressedStart.audible, "a simultaneous higher-priority bonus-life voice should suppress pickup output");
 assert(!powerUpPickupAudioLifecycleProbe.suppressedEnd.active && powerUpPickupAudioLifecycleProbe.suppressedEnd.frame === 39, "a suppressed pickup event should still consume its complete thirty-nine-frame lifetime");
 assert(powerUpPickupAudioLifecycleProbe.suppressedEnd.bonusLifeActive && powerUpPickupAudioLifecycleProbe.suppressedEnd.bonusLifeFrame === 39 && powerUpPickupAudioLifecycleProbe.suppressedEnd.movementAudioMode === "none", "bonus-life pulse priority should remain after the silent pickup event expires");
+const pauseAudioProbe = context.window.TankDefender8.debugPauseAudioProbe();
+assert(pauseAudioProbe.durationFrames === 36 && pauseAudioProbe.voiceDurations.join(",") === "36", "pause audio should contain one thirty-six-frame voice");
+assert(pauseAudioProbe.waves.join(",") === "square", "pause audio should retain its pulse-like replacement voice");
+assert(pauseAudioProbe.frames[0].voices[0].frequency === 659 && pauseAudioProbe.frames[1].voices[0].frequency === 659, "the first pause note should hold through frame three");
+assert(pauseAudioProbe.frames[2].voices[0].frequency === 740 && pauseAudioProbe.frames[3].voices[0].frequency === 740, "the pause phrase should advance on frame four");
+assert(pauseAudioProbe.frames[4].voices[0].frequency === 784 && pauseAudioProbe.frames[5].voices[0].frequency === 1175, "the six short pause notes should retain their four-frame cadence");
+assert(pauseAudioProbe.frames[6].voices[0].frequency === 988 && pauseAudioProbe.frames[7].voices[0].frequency === 988, "the pause tail should span frames twenty-four through thirty-five");
+assert(pauseAudioProbe.frames[8].voices[0] === null, "the pause voice should stop on frame thirty-six");
+const pauseAudioLifecycleProbe = context.window.TankDefender8.debugPauseAudioLifecycleProbe();
+assert(pauseAudioLifecycleProbe.entered && pauseAudioLifecycleProbe.entry.paused && pauseAudioLifecycleProbe.entry.active && pauseAudioLifecycleProbe.entry.frame === 0, "entering pause should start its cue at frame zero");
+assert(
+  pauseAudioLifecycleProbe.paused.frame === 10 &&
+    pauseAudioLifecycleProbe.paused.stageStartFrame === 0 &&
+    pauseAudioLifecycleProbe.paused.bonusLifeFrame === 0 &&
+    pauseAudioLifecycleProbe.paused.powerUpPickupFrame === 0 &&
+    pauseAudioLifecycleProbe.paused.tick === 25,
+  "paused display frames should advance only the pause cue while freezing battle time and other fixed-frame sounds"
+);
+assert(
+  pauseAudioLifecycleProbe.exitedEarly &&
+    pauseAudioLifecycleProbe.earlyResume.active &&
+    pauseAudioLifecycleProbe.earlyResume.stageStartAudibility.join(",") === "true,true,false" &&
+    pauseAudioLifecycleProbe.earlyResume.bonusLifeAudibility.join(",") === "true,false" &&
+    !pauseAudioLifecycleProbe.earlyResume.powerUpPickupAudible &&
+    pauseAudioLifecycleProbe.earlyResume.movementAudioMode === "none",
+  "an unfinished pause cue should retain second-pulse priority after an early resume"
+);
+assert(pauseAudioLifecycleProbe.reentered && pauseAudioLifecycleProbe.restart.paused && pauseAudioLifecycleProbe.restart.active && pauseAudioLifecycleProbe.restart.frame === 0, "entering pause again should restart the cue from frame zero");
+assert(pauseAudioLifecycleProbe.finalPausedFrame.paused && pauseAudioLifecycleProbe.finalPausedFrame.active && pauseAudioLifecycleProbe.finalPausedFrame.frame === 35, "the pause cue should stay active through frame thirty-five while paused");
+assert(pauseAudioLifecycleProbe.exitedBeforeEnd && !pauseAudioLifecycleProbe.finalActiveFrame.paused && pauseAudioLifecycleProbe.finalActiveFrame.frame === 35 && pauseAudioLifecycleProbe.finalActiveFrame.movementAudioMode === "none", "resuming on the final cue frame should keep movement audio suppressed");
+assert(!pauseAudioLifecycleProbe.ended.active && pauseAudioLifecycleProbe.ended.frame === 36 && pauseAudioLifecycleProbe.ended.movementAudioMode === "enemy" && pauseAudioLifecycleProbe.ended.tick === 26, "frame thirty-six should end the pause cue and restore active battle movement audio");
 const pauseProbe = context.window.TankDefender8.debugPauseBehaviorProbe();
 assert(pauseProbe.entered === true && pauseProbe.exited === true, "active gameplay should accept both pause and unpause toggles");
 assert(pauseProbe.entry.paused === true && pauseProbe.entry.pauseElapsed === 0, "entering pause should reset its display-frame counter");
 assert(pauseProbe.entry.pendingFirePresses === 0, "entering pause should discard queued fire presses");
 assert(pauseProbe.pausedUpdate.tick === 15 && pauseProbe.pausedUpdate.pauseElapsed === 1, "paused display frames should advance pause flashing without advancing gameplay time");
+assert(pauseProbe.entry.pauseAudioActive && pauseProbe.entry.pauseAudioFrame === 0 && pauseProbe.pausedUpdate.pauseAudioFrame === 1, "the pause cue should begin immediately and advance during paused display frames");
+assert(!pauseProbe.exit.paused && pauseProbe.exit.pauseAudioActive && pauseProbe.exit.pauseAudioFrame === 1, "leaving pause early should not truncate the active cue");
 assert(pauseProbe.stageIntroAccepted === false && pauseProbe.demoAccepted === false, "stage intro and title demo should reject pause toggles");
 assert(pauseProbe.inputs.map((entry) => `${entry.code}:${entry.accepted}`).join(",") === "Enter:true,KeyP:true,Escape:false", "only Start and the documented P extension should pause active gameplay");
 assert(pauseProbe.frames[0].visible === false && pauseProbe.frames[1].visible === true && pauseProbe.frames[2].visible === true && pauseProbe.frames[3].visible === false, "PAUSE should alternate through sixteen hidden and sixteen visible frames");

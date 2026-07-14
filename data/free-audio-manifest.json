@@ -37,7 +37,19 @@
         }
       ]
     },
-    "pause": { "freq": 620, "duration": 0.07, "gain": 0.025, "wave": "square" },
+    "pause": {
+      "durationFrames": 36,
+      "voices": [
+        {
+          "gain": 0.018,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [659, 740, 784, 988, 1109, 1175], "noteFrames": 4, "repeat": 1 },
+            { "frequencies": [988], "noteFrames": 12, "repeat": 1 }
+          ]
+        }
+      ]
+    },
     "stageStart": {
       "durationFrames": 264,
       "voices": [
