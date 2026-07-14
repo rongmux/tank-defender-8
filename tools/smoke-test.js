@@ -610,6 +610,7 @@ assert(schema.gameSettings.friendlyFire.stunFrames === 200, "schema should expos
 assert(schema.gameSettings.explosionRules.bulletCancel.ttl === 10, "schema should expose bullet cancel explosion timing");
 assert(schema.gameSettings.explosionRules.brickHit.ttl === 9, "brick impacts should use the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.steelHit.ttl === 9 && schema.gameSettings.explosionRules.steelBlocked.ttl === 9, "steel impacts and field boundaries should share the original nine-frame bullet explosion");
+assert(schema.gameSettings.explosionRules.enemyHit.ttl === 9, "enemy tank hits should use the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.playerStun.ttl === 9, "friendly-player hits should use the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.baseDestroy.color === "#f05a42", "schema should expose base destruction explosion color");
 assert(schema.gameSettings.explosionRules.enemyDestroy.coreColor === "#f7f1c6", "schema should expose explosion core color");
@@ -1009,6 +1010,12 @@ assert(!enemyBulletPlayerProbe.positiveTen.bulletRemoved && !enemyBulletPlayerPr
 const playerBulletEnemyProbe = context.window.TankDefender8.debugPlayerBulletEnemyCollisionProbe();
 assert(playerBulletEnemyProbe.positiveNine.bulletRemoved && playerBulletEnemyProbe.negativeNine.bulletRemoved, "player bullets should hit within nine pixels of the enemy center on both axes");
 assert(!playerBulletEnemyProbe.positiveNine.enemyAlive && !playerBulletEnemyProbe.negativeNine.enemyAlive, "center-range player hits should destroy one-hit enemies");
+assert(playerBulletEnemyProbe.positiveNine.explosionDetails.map((explosion) => explosion.style).join(",") === "bulletImpact,default", "destroying an enemy should show the bullet impact before the tank explosion");
+assert(playerBulletEnemyProbe.positiveNine.explosionDetails.map((explosion) => explosion.ttl).join(",") === "9,34", "enemy destruction should preserve separate bullet-impact and tank-explosion durations");
+assert(playerBulletEnemyProbe.positiveNine.explosionDetails[0].x === 80 && playerBulletEnemyProbe.positiveNine.explosionDetails[0].y === 80, "the enemy-hit bullet explosion should remain at the bullet center");
+assert(playerBulletEnemyProbe.positiveNine.explosionDetails[1].x === 71 && playerBulletEnemyProbe.positiveNine.explosionDetails[1].y === 71, "the enemy destruction explosion should remain at the tank center");
+assert(playerBulletEnemyProbe.armored.enemyAlive && playerBulletEnemyProbe.armored.enemyHp === 1, "a surviving armored enemy should lose exactly one hit point");
+assert(playerBulletEnemyProbe.armored.explosionDetails.length === 1 && playerBulletEnemyProbe.armored.explosionDetails[0].style === "bulletImpact" && playerBulletEnemyProbe.armored.explosionDetails[0].ttl === 9, "a surviving armored enemy should show only the nine-frame bullet impact");
 assert(!playerBulletEnemyProbe.positiveTen.bulletRemoved && !playerBulletEnemyProbe.negativeTen.bulletRemoved, "player bullets should miss at a ten-pixel enemy-center difference");
 assert(playerBulletEnemyProbe.spawning.enemyAlive && playerBulletEnemyProbe.spawning.enemyHp === 1 && !playerBulletEnemyProbe.spawning.bulletRemoved, "player bullets should pass through enemies still in their spawn animation");
 const spawnLockProbe = context.window.TankDefender8.debugPlayerSpawnLockProbe();

@@ -119,7 +119,7 @@
   };
   const CARRIER_FLASH_COLOR = "#dd3d33";
   const DEFAULT_EXPLOSION_CORE_COLOR = "#f7f1c6";
-  const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "playerStun"]);
+  const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
   const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
   const DEFAULT_EXPLOSION_RULES = {
     bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
@@ -127,7 +127,7 @@
     brickHit: { ttl: 9, color: "#d08b52", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     steelHit: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    enemyHit: { ttl: 14, color: "#ffffff", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
+    enemyHit: { ttl: 9, color: "#ffffff", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     enemyDestroy: { ttl: 34, color: "#f0b546", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     playerStun: { ttl: 9, color: "#f7f1c6", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     playerDestroy: { ttl: 32, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR }
@@ -3535,7 +3535,8 @@
           const wasCarrier = enemy.carrier;
           enemy.hp -= 1;
           bullet.remove = true;
-          addRuleExplosion(enemy.hp <= 0 ? "enemyDestroy" : "enemyHit", enemy.x + 7, enemy.y + 7);
+          addRuleExplosion("enemyHit", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
+          if (enemy.hp <= 0) addRuleExplosion("enemyDestroy", enemy.x + 7, enemy.y + 7);
           playSound(enemy.hp <= 0 ? "enemyDestroy" : "enemyHit");
           if (shouldReleaseCarrierPowerUp(wasCarrier, enemy.hp <= 0)) releaseCarrierPowerUp(enemy);
           if (enemy.hp <= 0) destroyEnemy(enemy, bullet.ownerId);
@@ -8118,7 +8119,7 @@
         explosions: game.explosions
       };
       const type = enemyTypeDefinitions()[0];
-      const makeEnemy = (spawnFlash) => ({
+      const makeEnemy = (spawnFlash, hp) => ({
         kind: "enemy",
         id: 100,
         x: 64,
@@ -8126,7 +8127,7 @@
         w: 14,
         h: 14,
         alive: true,
-        hp: 1,
+        hp,
         spawnFlash,
         carrier: false,
         typeIndex: 0,
@@ -8142,20 +8143,27 @@
         ownerKey: "player:1",
         remove: false
       });
-      const run = (spawnFlash, centerDx, centerDy) => {
-        const enemy = makeEnemy(spawnFlash);
+      const run = (spawnFlash, centerDx, centerDy, hp) => {
+        const enemy = makeEnemy(spawnFlash, hp === undefined ? 1 : hp);
         const bullet = makeBullet(centerDx, centerDy);
         game.players = [];
         game.enemies = [enemy];
         game.enemyKilled = 0;
         game.explosions = [];
         hitTank(bullet);
+        const explosionDetails = game.explosions.map((explosion) => ({
+          x: explosion.x,
+          y: explosion.y,
+          ttl: explosion.ttl,
+          style: explosion.style
+        }));
         return {
           bulletRemoved: bullet.remove,
           enemyAlive: enemy.alive,
           enemyHp: enemy.hp,
           enemyKilled: game.enemyKilled,
-          explosions: game.explosions.length
+          explosions: explosionDetails.length,
+          explosionDetails
         };
       };
       try {
@@ -8164,7 +8172,8 @@
           negativeNine: run(0, -9, -9),
           positiveTen: run(0, 10, 0),
           negativeTen: run(0, -10, 0),
-          spawning: run(12, 0, 0)
+          spawning: run(12, 0, 0),
+          armored: run(0, 9, 9, 2)
         };
       } finally {
         Object.assign(game, previous);
