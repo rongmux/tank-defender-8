@@ -100,7 +100,22 @@
       "notes": [330, 330, 330, 220]
     },
     "playerDestroy": { "freq": 76, "duration": 0.2, "gain": 0.055, "wave": "sawtooth" },
-    "powerUp": { "freq": 740, "duration": 0.08, "gain": 0.035, "wave": "triangle" },
+    "powerUp": {
+      "durationFrames": 39,
+      "voices": [
+        {
+          "gain": 0.016,
+          "wave": "square",
+          "segments": [
+            {
+              "frequencies": [988, 659, 784, 988, 880, 587, 740, 880, 659, 784, 988, 659, 784],
+              "noteFrames": 3,
+              "repeat": 1
+            }
+          ]
+        }
+      ]
+    },
     "playerShoot": { "freq": 460, "duration": 0.03, "gain": 0.018, "wave": "square" },
     "enemyShoot": { "freq": 310, "duration": 0.03, "gain": 0.018, "wave": "square" },
     "scoreCount": { "freq": 560, "duration": 0.035, "gain": 0.022, "wave": "square" },

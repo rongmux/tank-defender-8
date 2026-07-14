@@ -303,7 +303,8 @@ assert(context.window.TankDefender8, "TankDefender8 API was not exposed");
 const runtimeAudioManifest = context.window.TankDefender8.audioManifest();
 assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest id should match the free replacement manifest");
 assert(Object.keys(runtimeAudioManifest.events).length >= 18, "runtime audio manifest should expose gameplay sound events");
-assert(runtimeAudioManifest.events.powerUp.wave === "triangle", "runtime audio manifest should expose power-up sound shape");
+assert(runtimeAudioManifest.events.powerUp.durationFrames === 39, "power-up pickup replacement audio should preserve the original thirty-nine-frame lifetime");
+assert(runtimeAudioManifest.events.powerUp.voices.length === 1 && runtimeAudioManifest.events.powerUp.voices[0].wave === "square", "power-up pickup replacement audio should use one pulse-like voice");
 assert(runtimeAudioManifest.events.pause.wave === "square", "entering pause should use the replacement pause sound");
 assert(runtimeAudioManifest.events.bonusLife.durationFrames === 60, "bonus-life replacement audio should retain the original one-second lead voice");
 assert(runtimeAudioManifest.events.bonusLife.voices.length === 2, "bonus-life replacement audio should preserve both pulse voices");
@@ -331,6 +332,7 @@ assert(
     movementAudioProbe.modes.stageStart === "none" &&
     movementAudioProbe.modes.bonusLifePulse2 === "none" &&
     movementAudioProbe.modes.bonusLifePulse1Tail === "enemy" &&
+    movementAudioProbe.modes.powerUpPickup === "none" &&
     movementAudioProbe.modes.heldDirection === "player",
   "active battle audio should honor stage and bonus pulse-channel priority before enemy and held-player movement"
 );
@@ -382,6 +384,21 @@ assert(bonusLifeAudioLifecycleProbe.pulse2End.frame === 54 && !bonusLifeAudioLif
 assert(bonusLifeAudioLifecycleProbe.paused.paused && bonusLifeAudioLifecycleProbe.paused.frame === 54, "pause should mute and freeze the remaining bonus-life voice");
 assert(bonusLifeAudioLifecycleProbe.beforeEnd.active && bonusLifeAudioLifecycleProbe.beforeEnd.frame === 59, "the lead bonus-life voice should remain active through frame fifty-nine after resume");
 assert(!bonusLifeAudioLifecycleProbe.end.active && bonusLifeAudioLifecycleProbe.end.frame === 60, "the bonus-life event should finish on frame sixty");
+const powerUpPickupAudioProbe = context.window.TankDefender8.debugPowerUpPickupAudioProbe();
+assert(powerUpPickupAudioProbe.durationFrames === 39 && powerUpPickupAudioProbe.voiceDurations.join(",") === "39", "power-up pickup audio should contain one thirty-nine-frame voice");
+assert(powerUpPickupAudioProbe.waves.join(",") === "square", "power-up pickup audio should retain its pulse-like replacement voice");
+assert(powerUpPickupAudioProbe.frames[0].voices[0].frequency === 988 && powerUpPickupAudioProbe.frames[1].voices[0].frequency === 988, "the first pickup note should hold through its three-frame interval");
+assert(powerUpPickupAudioProbe.frames[2].voices[0].frequency === 659, "the pickup phrase should advance on frame three");
+assert(powerUpPickupAudioProbe.frames[4].voices[0].frequency === 784 && powerUpPickupAudioProbe.frames[5].voices[0].frequency === 784, "the final pickup note should span frames thirty-six through thirty-eight");
+assert(powerUpPickupAudioProbe.frames[6].voices[0] === null, "the pickup voice should stop on frame thirty-nine");
+const powerUpPickupAudioLifecycleProbe = context.window.TankDefender8.debugPowerUpPickupAudioLifecycleProbe();
+assert(powerUpPickupAudioLifecycleProbe.start.active && powerUpPickupAudioLifecycleProbe.start.audible && powerUpPickupAudioLifecycleProbe.start.movementAudioMode === "none", "ordinary pickup audio should start audibly and reserve the movement pulse channel");
+assert(powerUpPickupAudioLifecycleProbe.beforePause.frame === 38 && powerUpPickupAudioLifecycleProbe.beforePause.active, "pickup audio should remain active through frame thirty-eight");
+assert(powerUpPickupAudioLifecycleProbe.paused.paused && powerUpPickupAudioLifecycleProbe.paused.frame === 38, "pause should mute and freeze pickup audio");
+assert(!powerUpPickupAudioLifecycleProbe.end.active && powerUpPickupAudioLifecycleProbe.end.frame === 39 && powerUpPickupAudioLifecycleProbe.end.movementAudioMode === "enemy", "pickup audio should finish on frame thirty-nine and restore movement audio");
+assert(powerUpPickupAudioLifecycleProbe.suppressedStart.active && !powerUpPickupAudioLifecycleProbe.suppressedStart.audible, "a simultaneous higher-priority bonus-life voice should suppress pickup output");
+assert(!powerUpPickupAudioLifecycleProbe.suppressedEnd.active && powerUpPickupAudioLifecycleProbe.suppressedEnd.frame === 39, "a suppressed pickup event should still consume its complete thirty-nine-frame lifetime");
+assert(powerUpPickupAudioLifecycleProbe.suppressedEnd.bonusLifeActive && powerUpPickupAudioLifecycleProbe.suppressedEnd.bonusLifeFrame === 39 && powerUpPickupAudioLifecycleProbe.suppressedEnd.movementAudioMode === "none", "bonus-life pulse priority should remain after the silent pickup event expires");
 const pauseProbe = context.window.TankDefender8.debugPauseBehaviorProbe();
 assert(pauseProbe.entered === true && pauseProbe.exited === true, "active gameplay should accept both pause and unpause toggles");
 assert(pauseProbe.entry.paused === true && pauseProbe.entry.pauseElapsed === 0, "entering pause should reset its display-frame counter");
@@ -932,6 +949,7 @@ assert(pickupRenderProbe.playerLevel === 1, "star pickup should still apply afte
 assert(pickupRenderProbe.playerScore === pickupRenderProbe.pickupScore, "power-up pickup should still award score");
 assert(pickupRenderProbe.popup.style === "powerUp" && pickupRenderProbe.popup.ttl === 49, "power-up pickup should create the original-style fixed score state for 49 visible frames");
 assert(pickupRenderProbe.popup.x === pickupRenderProbe.powerCenter.x && pickupRenderProbe.popup.y === pickupRenderProbe.powerCenter.y, "power-up score should remain centered on the collected item position");
+assert(pickupRenderProbe.pickupAudio.active && pickupRenderProbe.pickupAudio.frame === 0 && pickupRenderProbe.pickupAudio.audible, "an ordinary star pickup should start the audible thirty-nine-frame pickup event");
 assert(pickupRenderProbe.presentation.x === pickupRenderProbe.laterPresentation.x && pickupRenderProbe.presentation.y === pickupRenderProbe.laterPresentation.y, "power-up score should not drift while its timer counts down");
 assert(pickupRenderProbe.presentation.color === "#f7f1c6" && pickupRenderProbe.laterPresentation.color === "#f7f1c6", "power-up score should use one stable palette color instead of flashing");
 assert(pickupRenderProbe.presentation.width === 15 && pickupRenderProbe.presentation.advance === 5, "the three-digit pickup score should use a compact width close to the original two-sprite graphic");
@@ -1097,6 +1115,7 @@ assert(lifeAwardProbe.afterRepeat.lives === 2, "the same extra-life score thresh
 assert(lifeAwardProbe.tank.score === lifeAwardProbe.pickupScore && lifeAwardProbe.tank.lives === 2, "tank power-up should award pickup score and one extra life");
 assert(lifeAwardProbe.thresholdAudio.active && lifeAwardProbe.thresholdAudio.frame === 0, "crossing the score threshold should trigger the two-voice bonus-life event");
 assert(lifeAwardProbe.tankAudio.active && lifeAwardProbe.tankAudio.frame === 0, "collecting the extra-tank power-up should restart the same bonus-life event");
+assert(lifeAwardProbe.tankPickupAudio.active && lifeAwardProbe.tankPickupAudio.frame === 0 && !lifeAwardProbe.tankPickupAudio.audible, "extra-tank pickup audio should begin silently behind the higher-priority bonus-life pulse voice");
 const helmetProbe = context.window.TankDefender8.debugHelmetProtectionProbe();
 assert(helmetProbe.duration === schema.gameSettings.powerUpDurations.helmet, "helmet should use the configured protection duration");
 assert(helmetProbe.unprotected.alive === false && helmetProbe.unprotected.bulletRemoved === true, "enemy bullets should destroy an unprotected player");
