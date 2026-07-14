@@ -15,7 +15,28 @@
     "steelHit": { "freq": 155, "duration": 0.035, "gain": 0.02, "wave": "square" },
     "enemyHit": { "freq": 330, "duration": 0.025, "gain": 0.02, "wave": "square" },
     "enemyDestroy": { "freq": 94, "duration": 0.12, "gain": 0.05, "wave": "square" },
-    "bonusLife": { "freq": 880, "duration": 0.08, "gain": 0.028, "wave": "triangle" },
+    "bonusLife": {
+      "durationFrames": 60,
+      "voices": [
+        {
+          "gain": 0.018,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [659, 784, 659, 988, 659, 784, 523], "noteFrames": 6, "repeat": 1 },
+            { "frequencies": [988], "noteFrames": 18, "repeat": 1 }
+          ]
+        },
+        {
+          "gain": 0.014,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [523], "noteFrames": 2, "repeat": 1 },
+            { "frequencies": [784, 988, 784, 659, 784, 988, 659], "noteFrames": 6, "repeat": 1 },
+            { "frequencies": [587], "noteFrames": 10, "repeat": 1 }
+          ]
+        }
+      ]
+    },
     "pause": { "freq": 620, "duration": 0.07, "gain": 0.025, "wave": "square" },
     "stageStart": {
       "durationFrames": 264,

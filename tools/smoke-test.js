@@ -305,6 +305,9 @@ assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest i
 assert(Object.keys(runtimeAudioManifest.events).length >= 18, "runtime audio manifest should expose gameplay sound events");
 assert(runtimeAudioManifest.events.powerUp.wave === "triangle", "runtime audio manifest should expose power-up sound shape");
 assert(runtimeAudioManifest.events.pause.wave === "square", "entering pause should use the replacement pause sound");
+assert(runtimeAudioManifest.events.bonusLife.durationFrames === 60, "bonus-life replacement audio should retain the original one-second lead voice");
+assert(runtimeAudioManifest.events.bonusLife.voices.length === 2, "bonus-life replacement audio should preserve both pulse voices");
+assert(runtimeAudioManifest.events.bonusLife.voices.every((voice) => voice.wave === "square"), "bonus-life replacement audio should keep both voices pulse-like");
 assert(runtimeAudioManifest.events.stageStart.durationFrames === 264, "stage-start replacement audio should preserve the original 264-frame lifetime");
 assert(runtimeAudioManifest.events.stageStart.voices.length === 3, "stage-start replacement audio should preserve three simultaneous voices");
 assert(runtimeAudioManifest.events.stageStart.voices.map((voice) => voice.wave).join(",") === "square,triangle,square", "stage-start replacement audio should use two pulse-like voices and one triangle voice");
@@ -326,8 +329,10 @@ assert(
   movementAudioProbe.modes.title === "none" &&
     movementAudioProbe.modes.idleBattle === "enemy" &&
     movementAudioProbe.modes.stageStart === "none" &&
+    movementAudioProbe.modes.bonusLifePulse2 === "none" &&
+    movementAudioProbe.modes.bonusLifePulse1Tail === "enemy" &&
     movementAudioProbe.modes.heldDirection === "player",
-  "active battle audio should suppress movement during the stage fanfare, then use enemy and held-player priorities"
+  "active battle audio should honor stage and bonus pulse-channel priority before enemy and held-player movement"
 );
 assert(
   movementAudioProbe.modes.heldDuringDeathState === "player" &&
@@ -359,6 +364,24 @@ assert(stageStartAudioProbe.frames[2].voices[0].frequency === 392, "the lead sta
 assert(stageStartAudioProbe.frames[4].voices[0].segmentIndex === 1, "the lead stage-start phrase should enter its second segment on frame 48");
 assert(stageStartAudioProbe.frames[7].voices.every(Boolean), "all stage-start voices should remain active on frame 263");
 assert(stageStartAudioProbe.frames[8].voices.every((voice) => voice === null), "all stage-start voices should stop at frame 264");
+const bonusLifeAudioProbe = context.window.TankDefender8.debugBonusLifeAudioProbe();
+assert(bonusLifeAudioProbe.durationFrames === 60, "bonus-life audio should use the original sixty-frame event lifetime");
+assert(bonusLifeAudioProbe.voiceDurations.join(",") === "60,54", "bonus-life pulse voices should preserve their distinct sixty- and fifty-four-frame lengths");
+assert(bonusLifeAudioProbe.waves.join(",") === "square,square", "bonus-life audio should retain two pulse-like replacement voices");
+assert(bonusLifeAudioProbe.frames[0].voices.every(Boolean) && bonusLifeAudioProbe.frames[1].voices[1].frequency === 523, "both bonus-life voices should begin together and hold the two-frame opening pulse");
+assert(bonusLifeAudioProbe.frames[2].voices[1].frequency === 784, "the second bonus-life voice should enter its six-frame phrase on frame two");
+assert(bonusLifeAudioProbe.frames[4].voices[0].frequency === 784, "the first bonus-life voice should advance after its opening six-frame note");
+assert(bonusLifeAudioProbe.frames[6].voices[0].frequency === 988, "the first bonus-life voice should enter its final eighteen-frame note on frame forty-two");
+assert(bonusLifeAudioProbe.frames[7].voices.every(Boolean), "both bonus-life voices should remain active through frame fifty-three");
+assert(Boolean(bonusLifeAudioProbe.frames[8].voices[0]) && bonusLifeAudioProbe.frames[8].voices[1] === null, "the second bonus-life voice should release the movement pulse channel on frame fifty-four");
+assert(Boolean(bonusLifeAudioProbe.frames[9].voices[0]) && bonusLifeAudioProbe.frames[10].voices.every((voice) => voice === null), "the lead bonus-life voice should hold through frame fifty-nine and stop on frame sixty");
+const bonusLifeAudioLifecycleProbe = context.window.TankDefender8.debugBonusLifeAudioLifecycleProbe();
+assert(bonusLifeAudioLifecycleProbe.start.active && bonusLifeAudioLifecycleProbe.start.frame === 0 && bonusLifeAudioLifecycleProbe.start.movementAudioMode === "none", "starting bonus-life audio should immediately reserve the movement pulse channel");
+assert(bonusLifeAudioLifecycleProbe.beforePulse2End.frame === 53 && bonusLifeAudioLifecycleProbe.beforePulse2End.pulse2Active, "bonus-life pulse two should stay active through frame fifty-three");
+assert(bonusLifeAudioLifecycleProbe.pulse2End.frame === 54 && !bonusLifeAudioLifecycleProbe.pulse2End.pulse2Active && bonusLifeAudioLifecycleProbe.pulse2End.movementAudioMode === "enemy", "movement audio should resume on the exact frame that bonus pulse two ends");
+assert(bonusLifeAudioLifecycleProbe.paused.paused && bonusLifeAudioLifecycleProbe.paused.frame === 54, "pause should mute and freeze the remaining bonus-life voice");
+assert(bonusLifeAudioLifecycleProbe.beforeEnd.active && bonusLifeAudioLifecycleProbe.beforeEnd.frame === 59, "the lead bonus-life voice should remain active through frame fifty-nine after resume");
+assert(!bonusLifeAudioLifecycleProbe.end.active && bonusLifeAudioLifecycleProbe.end.frame === 60, "the bonus-life event should finish on frame sixty");
 const pauseProbe = context.window.TankDefender8.debugPauseBehaviorProbe();
 assert(pauseProbe.entered === true && pauseProbe.exited === true, "active gameplay should accept both pause and unpause toggles");
 assert(pauseProbe.entry.paused === true && pauseProbe.entry.pauseElapsed === 0, "entering pause should reset its display-frame counter");
@@ -1072,6 +1095,8 @@ assert(lifeAwardProbe.beforeCrossing.lives === 1, "score below the threshold sho
 assert(lifeAwardProbe.afterCrossing.score === 20000 && lifeAwardProbe.afterCrossing.lives === 2, "crossing the threshold should award one extra life");
 assert(lifeAwardProbe.afterRepeat.lives === 2, "the same extra-life score threshold should not award twice");
 assert(lifeAwardProbe.tank.score === lifeAwardProbe.pickupScore && lifeAwardProbe.tank.lives === 2, "tank power-up should award pickup score and one extra life");
+assert(lifeAwardProbe.thresholdAudio.active && lifeAwardProbe.thresholdAudio.frame === 0, "crossing the score threshold should trigger the two-voice bonus-life event");
+assert(lifeAwardProbe.tankAudio.active && lifeAwardProbe.tankAudio.frame === 0, "collecting the extra-tank power-up should restart the same bonus-life event");
 const helmetProbe = context.window.TankDefender8.debugHelmetProtectionProbe();
 assert(helmetProbe.duration === schema.gameSettings.powerUpDurations.helmet, "helmet should use the configured protection duration");
 assert(helmetProbe.unprotected.alive === false && helmetProbe.unprotected.bulletRemoved === true, "enemy bullets should destroy an unprotected player");
