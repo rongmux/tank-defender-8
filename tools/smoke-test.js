@@ -355,7 +355,8 @@ assert(runtimeAudioManifest.events.movementIce.voices.length === 1 && runtimeAud
 assert(runtimeAudioManifest.events.scoreCount.durationFrames === 1, "result-table count audio should preserve the original one-frame lifetime");
 assert(runtimeAudioManifest.events.scoreCount.voices.length === 2, "result-table count audio should preserve both simultaneous channels");
 assert(runtimeAudioManifest.events.scoreCount.voices.map((voice) => voice.wave).join(",") === "square,noise-short", "result-table count audio should pair pulse two with short-period noise");
-assert(runtimeAudioManifest.events.stageBonus.wave === "triangle", "result-table leader bonus should use the replacement bonus sound");
+assert(runtimeAudioManifest.events.stageBonus.durationFrames === 28, "result-table leader bonus should preserve the original twenty-eight-frame lifetime");
+assert(runtimeAudioManifest.events.stageBonus.voices.length === 1 && runtimeAudioManifest.events.stageBonus.voices[0].wave === "square", "result-table leader bonus should use one pulse-two replacement voice");
 assert(runtimeAudioManifest.events.gameOver.duration === 3, "full-screen game-over replacement fanfare should last three seconds");
 assert(runtimeAudioManifest.events.gameOver.voices.length === 3, "game-over replacement fanfare should preserve a three-voice arrangement");
 assert(runtimeAudioManifest.events.gameOver.voices.every((voice) => voice.notes.length === 15), "each game-over voice should cover the full 180-frame interstitial");
@@ -374,6 +375,23 @@ assert(!scoreCountAudioLifecycleProbe.afterOneFrame.active && scoreCountAudioLif
 assert(scoreCountAudioLifecycleProbe.nextCadence.active && scoreCountAudioLifecycleProbe.nextCadence.frame === 0 && scoreCountAudioLifecycleProbe.nextCadence.elapsed === 41 && scoreCountAudioLifecycleProbe.nextCadence.visibleKills === 3, "the next visible result count should retrigger once after the original nine-frame cadence");
 assert(!scoreCountAudioLifecycleProbe.zeroKills.active && scoreCountAudioLifecycleProbe.zeroKills.frame === 0, "a zero-kill result should not start count audio");
 assert(!scoreCountAudioLifecycleProbe.stageCleanup.active && scoreCountAudioLifecycleProbe.stageCleanup.frame === 0, "starting the next stage should clear any pending score-count cue");
+const stageBonusAudioProbe = context.window.TankDefender8.debugStageBonusAudioProbe();
+assert(stageBonusAudioProbe.durationFrames === 28 && stageBonusAudioProbe.voiceDurations.join(",") === "28", "the result leader bonus should contain one twenty-eight-frame voice");
+assert(stageBonusAudioProbe.waves.join(",") === "square", "the result leader bonus should retain its pulse-two replacement voice");
+assert(stageBonusAudioProbe.frames.filter((frame) => [0, 3, 6, 9, 12, 15, 18].includes(frame.frame)).map((frame) => frame.voices[0].frequency).join(",") === "988,659,659,784,784,988,988", "the result leader bonus should preserve the original seven-note pitch order");
+assert(stageBonusAudioProbe.frames.find((frame) => frame.frame === 27).voices[0].frequency === 988, "the final result bonus note should remain active through frame twenty-seven");
+assert(stageBonusAudioProbe.frames.find((frame) => frame.frame === 28).voices[0] === null, "the result bonus voice should stop on frame twenty-eight");
+const stageBonusAudioLifecycleProbe = context.window.TankDefender8.debugStageBonusAudioLifecycleProbe();
+assert(stageBonusAudioLifecycleProbe.awarded.active && stageBonusAudioLifecycleProbe.awarded.frame === 0 && stageBonusAudioLifecycleProbe.awarded.frequency === 988 && stageBonusAudioLifecycleProbe.awarded.audible, "revealing a strict two-player leader should start the audible result bonus cue at frame zero");
+assert(stageBonusAudioLifecycleProbe.awarded.elapsed === stageBonusAudioLifecycleProbe.bonusRevealFrame && stageBonusAudioLifecycleProbe.awarded.recipients.join(",") === "1", "the result bonus cue should start exactly on the leader bonus reveal frame");
+assert(stageBonusAudioLifecycleProbe.awarded.scoreDelta === 1000 && stageBonusAudioLifecycleProbe.awarded.bonusAwarded, "the cue should accompany the original one-thousand-point leader award");
+assert(stageBonusAudioLifecycleProbe.finalFrame.active && stageBonusAudioLifecycleProbe.finalFrame.frame === 27 && stageBonusAudioLifecycleProbe.finalFrame.frequency === 988 && stageBonusAudioLifecycleProbe.finalFrame.audible, "the result bonus cue should stay audible through its final frame");
+assert(!stageBonusAudioLifecycleProbe.end.active && stageBonusAudioLifecycleProbe.end.frame === 28 && stageBonusAudioLifecycleProbe.end.scoreDelta === 1000, "the result bonus cue should end once without awarding the score twice");
+assert(stageBonusAudioLifecycleProbe.bonusLifePriority.active && !stageBonusAudioLifecycleProbe.bonusLifePriority.audible && stageBonusAudioLifecycleProbe.bonusLifePriority.bonusLifeActive && stageBonusAudioLifecycleProbe.bonusLifePriority.bonusLifeFrame === 0, "a simultaneous higher-priority extra-life cue should mask the result bonus pulse channel");
+assert(stageBonusAudioLifecycleProbe.bonusLifePriority.scoreDelta === 1000 && stageBonusAudioLifecycleProbe.bonusLifePriority.livesDelta === 1, "crossing the 20000-point threshold with the result bonus should still award both points and one reserve life");
+assert(!stageBonusAudioLifecycleProbe.tied.active && stageBonusAudioLifecycleProbe.tied.recipients.length === 0 && stageBonusAudioLifecycleProbe.tied.score === 0, "a tied two-player result should neither award nor play the leader bonus");
+assert(!stageBonusAudioLifecycleProbe.gameOver.active && !stageBonusAudioLifecycleProbe.gameOver.bonusAwarded && stageBonusAudioLifecycleProbe.gameOver.score === 0, "a game-over result should not award or play the leader bonus");
+assert(!stageBonusAudioLifecycleProbe.stageCleanup.active && stageBonusAudioLifecycleProbe.stageCleanup.frame === 0, "starting the next stage should clear any pending result bonus cue");
 const movementAudioProbe = context.window.TankDefender8.debugMovementAudioProbe();
 assert(
   movementAudioProbe.modes.title === "none" &&

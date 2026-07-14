@@ -210,7 +210,19 @@
         }
       ]
     },
-    "stageBonus": { "freq": 820, "duration": 0.12, "gain": 0.03, "wave": "triangle" },
+    "stageBonus": {
+      "durationFrames": 28,
+      "voices": [
+        {
+          "gain": 0.018,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [988, 659, 659, 784, 784, 988], "noteFrames": 3, "repeat": 1 },
+            { "frequencies": [988], "noteFrames": 10, "repeat": 1 }
+          ]
+        }
+      ]
+    },
     "gameOver": {
       "duration": 3,
       "voices": [

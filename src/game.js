@@ -376,7 +376,19 @@
           }
         ]
       },
-      stageBonus: { freq: 820, duration: 0.12, gain: 0.03, wave: "triangle" },
+      stageBonus: {
+        durationFrames: 28,
+        voices: [
+          {
+            gain: 0.018,
+            wave: "square",
+            segments: [
+              { frequencies: [988, 659, 659, 784, 784, 988], noteFrames: 3, repeat: 1 },
+              { frequencies: [988], noteFrames: 10, repeat: 1 }
+            ]
+          }
+        ]
+      },
       gameOver: {
         duration: 3,
         voices: [
@@ -1023,6 +1035,11 @@
     nodes: []
   };
   const scoreCountAudio = {
+    active: false,
+    frame: 0,
+    nodes: []
+  };
+  const stageBonusAudio = {
     active: false,
     frame: 0,
     nodes: []
@@ -2246,6 +2263,7 @@
     stopPlayerShootAudio();
     stopMovementIceAudio();
     stopScoreCountAudio();
+    stopStageBonusAudio();
     game.demoMode = false;
     game.stage = 1;
     game.screen = "title";
@@ -2370,6 +2388,7 @@
     stopPlayerShootAudio();
     stopMovementIceAudio();
     stopScoreCountAudio();
+    stopStageBonusAudio();
     game.screen = "stageIntro";
     game.tick = 0;
     game.transitionTimer = gameSettings().timings.stageIntro;
@@ -2426,6 +2445,7 @@
     stopPlayerShootAudio();
     stopMovementIceAudio();
     stopScoreCountAudio();
+    stopStageBonusAudio();
     initAudio();
     game.screen = "editor";
     game.paused = false;
@@ -2614,6 +2634,7 @@
     stopPlayerShootAudio();
     stopMovementIceAudio();
     stopScoreCountAudio();
+    stopStageBonusAudio();
     stopSound("gameOver");
     stopSound("highScore");
     game.demoMode = false;
@@ -2685,6 +2706,7 @@
     syncMovementIceAudioNodes();
     syncPauseAudioNodes();
     syncScoreCountAudioNodes();
+    syncStageBonusAudioNodes();
     syncMovementAudio();
   }
 
@@ -2955,10 +2977,12 @@
     syncEnemyHitAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
+    syncStageBonusAudioNodes();
   }
 
   function stopBonusLifeAudio() {
     stopFixedFrameAudio(bonusLifeAudio);
+    syncStageBonusAudioNodes();
   }
 
   function updateBonusLifeAudio() {
@@ -2969,6 +2993,7 @@
     syncEnemyHitAudioNodes();
     syncPlayerShootAudioNodes();
     syncMovementIceAudioNodes();
+    syncStageBonusAudioNodes();
   }
 
   function bonusLifePulse1Active() {
@@ -3236,6 +3261,30 @@
     updateFixedFrameAudio(scoreCountAudio, "scoreCount", true);
   }
 
+  function stageBonusAudioPresentation(frame) {
+    return fixedFrameAudioPresentation("stageBonus", frame);
+  }
+
+  function stageBonusAudioAudible() {
+    return !bonusLifePulse2Active();
+  }
+
+  function syncStageBonusAudioNodes() {
+    syncFixedFrameAudioNodes(stageBonusAudio, "stageBonus", stageBonusAudioAudible());
+  }
+
+  function startStageBonusAudio() {
+    startFixedFrameAudio(stageBonusAudio, "stageBonus", stageBonusAudioAudible());
+  }
+
+  function stopStageBonusAudio() {
+    stopFixedFrameAudio(stageBonusAudio);
+  }
+
+  function updateStageBonusAudio() {
+    updateFixedFrameAudio(stageBonusAudio, "stageBonus", stageBonusAudioAudible());
+  }
+
   function movementAudioPresentation(mode, tick) {
     const eventName = mode === "player" ? "movementPlayer" : "movementEnemy";
     const event = FREE_AUDIO_MANIFEST.events[eventName];
@@ -3438,6 +3487,10 @@
     }
     if (name === "scoreCount") {
       startScoreCountAudio();
+      return;
+    }
+    if (name === "stageBonus") {
+      startStageBonusAudio();
       return;
     }
     const opts = options || {};
@@ -3890,6 +3943,7 @@
     updateMovementIceAudio();
     updatePauseAudio();
     updateScoreCountAudio();
+    updateStageBonusAudio();
 
     if (game.screen === "title") {
       updateTitleIdle();
@@ -5270,6 +5324,7 @@
     stopPlayerShootAudio();
     stopMovementIceAudio();
     stopScoreCountAudio();
+    stopStageBonusAudio();
     const resultReason = reason === "gameOver" ? "gameOver" : "clear";
     game.clearPendingTimer = 0;
     game.stageResultReason = resultReason;
@@ -5284,6 +5339,7 @@
 
   function finishStageResult() {
     stopScoreCountAudio();
+    stopStageBonusAudio();
     if (game.stageResultReason === "gameOver") {
       const advance = stageAdvanceResult(game.stage);
       if (!game.customGrid && !advance.stops) game.stage = advance.stage;
@@ -5325,6 +5381,7 @@
     stopPlayerShootAudio();
     stopMovementIceAudio();
     stopScoreCountAudio();
+    stopStageBonusAudio();
     game.screen = "gameOver";
     game.paused = false;
     game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
@@ -5342,6 +5399,7 @@
 
   function startFullGameOverScreen() {
     stopScoreCountAudio();
+    stopStageBonusAudio();
     game.screen = "fullGameOver";
     game.paused = false;
     game.fullGameOverElapsed = 0;
@@ -5395,6 +5453,7 @@
     stopPlayerShootAudio();
     stopMovementIceAudio();
     stopScoreCountAudio();
+    stopStageBonusAudio();
     stopSound("gameOver");
     stopSound("highScore");
     game.screen = "title";
@@ -6628,7 +6687,8 @@
         playerShootAudio,
         movementIceAudio,
         pauseAudio,
-        scoreCountAudio
+        scoreCountAudio,
+        stageBonusAudio
       ];
       const previousAudio = audioStates.map((state) => ({ active: state.active, frame: state.frame }));
       const state = () => {
@@ -6707,6 +6767,169 @@
         syncMovementIceAudioNodes();
         syncPauseAudioNodes();
         syncScoreCountAudioNodes();
+        syncStageBonusAudioNodes();
+        syncMovementAudio();
+      }
+    },
+    debugStageBonusAudioProbe() {
+      const event = FREE_AUDIO_MANIFEST.events.stageBonus;
+      const frames = [0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18, 27, 28];
+      return {
+        durationFrames: event.durationFrames,
+        voiceDurations: event.voices.map((voice) => fixedFrameVoiceDuration(voice)),
+        waves: event.voices.map((voice) => voice.wave),
+        frames: frames.map((frame) => {
+          const presentation = stageBonusAudioPresentation(frame);
+          return {
+            frame,
+            voices: presentation.voices.map((voice) => voice
+              ? { frequency: voice.frequency, gain: voice.gain, wave: voice.wave }
+              : null)
+          };
+        })
+      };
+    },
+    debugStageBonusAudioLifecycleProbe() {
+      const previous = { ...game };
+      const audioStates = [
+        stageStartAudio,
+        bonusLifeAudio,
+        powerUpPickupAudio,
+        powerUpAppearAudio,
+        brickHitAudio,
+        steelHitAudio,
+        enemyHitAudio,
+        playerShootAudio,
+        movementIceAudio,
+        pauseAudio,
+        scoreCountAudio,
+        stageBonusAudio
+      ];
+      const previousAudio = audioStates.map((state) => ({ active: state.active, frame: state.frame }));
+      const makeResultPlayer = (id, kills) => {
+        const player = createPlayer(id);
+        return Object.assign(player, makeStageClearResultProbePlayer(id, kills, 0));
+      };
+      const state = () => {
+        const presentation = stageBonusAudioPresentation(stageBonusAudio.frame);
+        return {
+          active: stageBonusAudio.active,
+          frame: stageBonusAudio.frame,
+          frequency: presentation.voices[0] ? presentation.voices[0].frequency : null,
+          audible: stageBonusAudio.active && Boolean(presentation.voices[0]) && stageBonusAudioAudible()
+        };
+      };
+      try {
+        stopMovementAudio();
+        for (const audioState of audioStates) stopFixedFrameAudio(audioState);
+        game.screen = "stageClear";
+        game.paused = false;
+        game.stageResultReason = "clear";
+        game.stageClearBonusAwarded = false;
+        game.transitionTimer = 999;
+        game.players = [
+          makeResultPlayer(1, [4, 0, 0, 0]),
+          makeResultPlayer(2, [3, 0, 0, 0])
+        ];
+        game.stageClearBonusPlayerIds = stageClearBonusRecipients(game.players).map((player) => player.id);
+        const bonusRevealFrame = stageClearPresentation(game.players, 0).bonusRevealFrame;
+        game.stageClearElapsed = bonusRevealFrame - 1;
+        const scoreBefore = game.players[0].score;
+
+        update();
+        const awarded = {
+          ...state(),
+          elapsed: game.stageClearElapsed,
+          recipients: game.stageClearBonusPlayerIds.slice(),
+          scoreDelta: game.players[0].score - scoreBefore,
+          bonusAwarded: game.stageClearBonusAwarded
+        };
+        for (let frame = 0; frame < 27; frame += 1) update();
+        const finalFrame = state();
+        update();
+        const end = {
+          ...state(),
+          scoreDelta: game.players[0].score - scoreBefore
+        };
+
+        stopStageBonusAudio();
+        stopBonusLifeAudio();
+        game.players = [
+          makeResultPlayer(1, [4, 0, 0, 0]),
+          makeResultPlayer(2, [3, 0, 0, 0])
+        ];
+        game.players[0].score = 19000;
+        game.stageClearBonusPlayerIds = stageClearBonusRecipients(game.players).map((player) => player.id);
+        game.stageClearBonusAwarded = false;
+        game.stageClearElapsed = stageClearPresentation(game.players, 0).bonusRevealFrame - 1;
+        const thresholdScoreBefore = game.players[0].score;
+        const thresholdLivesBefore = game.players[0].lives;
+        update();
+        const bonusLifePriority = {
+          ...state(),
+          bonusLifeActive: bonusLifeAudio.active,
+          bonusLifeFrame: bonusLifeAudio.frame,
+          scoreDelta: game.players[0].score - thresholdScoreBefore,
+          livesDelta: game.players[0].lives - thresholdLivesBefore
+        };
+
+        stopStageBonusAudio();
+        stopBonusLifeAudio();
+        game.players = [
+          makeResultPlayer(1, [3, 0, 0, 0]),
+          makeResultPlayer(2, [3, 0, 0, 0])
+        ];
+        game.stageClearBonusPlayerIds = stageClearBonusRecipients(game.players).map((player) => player.id);
+        game.stageClearBonusAwarded = false;
+        game.stageClearElapsed = stageClearPresentation(game.players, 0).bonusRevealFrame - 1;
+        update();
+        const tied = {
+          ...state(),
+          recipients: game.stageClearBonusPlayerIds.slice(),
+          score: game.players[0].score + game.players[1].score
+        };
+
+        stopStageBonusAudio();
+        game.players = [
+          makeResultPlayer(1, [4, 0, 0, 0]),
+          makeResultPlayer(2, [3, 0, 0, 0])
+        ];
+        game.stageResultReason = "gameOver";
+        game.stageClearBonusPlayerIds = [];
+        game.stageClearBonusAwarded = false;
+        game.stageClearElapsed = stageClearPresentation(game.players, 0).bonusRevealFrame - 1;
+        update();
+        const gameOver = {
+          ...state(),
+          bonusAwarded: game.stageClearBonusAwarded,
+          score: game.players[0].score + game.players[1].score
+        };
+
+        game.players = [createPlayer(1)];
+        startStageBonusAudio();
+        startStage(game.stage);
+        const stageCleanup = state();
+
+        return { bonusRevealFrame, awarded, finalFrame, end, bonusLifePriority, tied, gameOver, stageCleanup };
+      } finally {
+        for (const audioState of audioStates) stopFixedFrameAudio(audioState);
+        Object.assign(game, previous);
+        audioStates.forEach((audioState, index) => {
+          audioState.active = previousAudio[index].active;
+          audioState.frame = previousAudio[index].frame;
+        });
+        syncStageStartAudioNodes();
+        syncBonusLifeAudioNodes();
+        syncPowerUpPickupAudioNodes();
+        syncPowerUpAppearAudioNodes();
+        syncBrickHitAudioNodes();
+        syncSteelHitAudioNodes();
+        syncEnemyHitAudioNodes();
+        syncPlayerShootAudioNodes();
+        syncMovementIceAudioNodes();
+        syncPauseAudioNodes();
+        syncScoreCountAudioNodes();
+        syncStageBonusAudioNodes();
         syncMovementAudio();
       }
     },
@@ -8962,6 +9185,11 @@
           active: scoreCountAudio.active,
           frame: scoreCountAudio.frame,
           durationFrames: FREE_AUDIO_MANIFEST.events.scoreCount.durationFrames
+        },
+        stageBonusAudio: {
+          active: stageBonusAudio.active,
+          frame: stageBonusAudio.frame,
+          durationFrames: FREE_AUDIO_MANIFEST.events.stageBonus.durationFrames
         },
         maxActiveEnemies: maxActiveEnemies(),
         initialLives: gameSettings().initialLives,
