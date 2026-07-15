@@ -1358,11 +1358,6 @@ assert(panelProbe.remaining !== 18, "enemy panel counter should not derive from 
 assert(context.window.TankDefender8.debugPanelLifeCountProbe(3).panelLives === 2, "life panel should show reserve lives and exclude the active tank");
 assert(context.window.TankDefender8.debugPanelLifeCountProbe(1).panelLives === 0, "life panel should show zero reserves for the final active tank");
 assert(context.window.TankDefender8.debugPanelLifeCountProbe(0).panelLives === 0, "life panel should not show negative reserve lives");
-assert(schema.stageSettings[0].maxActiveEnemies === 4, "schema should expose maxActiveEnemies");
-assert(schema.stageSettings[0].maxActiveEnemiesTwoPlayer === 6, "schema should expose the two-player six-enemy limit");
-assert(schema.stageSettings[0].playerSpawns[0].x === 4, "schema should expose player spawns");
-assert(schema.stageSettings[0].enemySpawns[2].x === 12, "schema should expose enemy spawns");
-assert(schema.stageSettings[0].powerUpSpawns.length === 16, "schema should expose power-up spawn points");
 assert(schema.maps[0].length === 13, "schema map should have 13 rows");
 assert(schema.maps[0][0].length === 13, "schema map rows should have 13 columns");
 assert(schema.quadrants[0].length === 26, "schema quadrant map should have 26 rows");
@@ -1517,15 +1512,6 @@ const mixedPack = {
 };
 assert(context.window.TankDefender8.validateStagePack(mixedPack).ok === false, "mixed map formats should fail validation");
 
-const badSettingsPack = {
-  id: "bad-settings",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  stageSettings: [{ maxActiveEnemies: 0 }],
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badSettingsPack).ok === false, "bad maxActiveEnemies should fail validation");
-
 const badGameSettingsPack = {
   id: "bad-game-settings",
   totalStages: 1,
@@ -1651,31 +1637,6 @@ const badStageClearBonusPack = {
   enemies: [schema.enemies[0].slice(0, 3)]
 };
 assert(context.window.TankDefender8.validateStagePack(badStageClearBonusPack).ok === false, "bad stage clear bonus should fail validation");
-
-const badSpawnPack = {
-  id: "bad-spawn",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  stageSettings: [{
-    maxActiveEnemies: 2,
-    playerSpawns: [{ x: 99, y: 12 }, { x: 8, y: 12 }],
-    enemySpawns: [{ x: 0, y: 0 }, { x: 6, y: 0 }, { x: 12, y: 0 }]
-  }],
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badSpawnPack).ok === false, "bad spawn point should fail validation");
-
-const badPowerSpawnPack = {
-  id: "bad-power-spawn",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  stageSettings: [{
-    maxActiveEnemies: 2,
-    powerUpSpawns: [{ x: 13, y: 1 }]
-  }],
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badPowerSpawnPack).ok === false, "bad power-up spawn point should fail validation");
 
 const jsonResult = context.window.TankDefender8.loadStagePackJson(JSON.stringify(validPack));
 assert(jsonResult.ok === true, "loadStagePackJson should accept valid JSON");

@@ -47,6 +47,16 @@
     setTile
   } = requireRuntimeModule("stageGrid");
   const {
+    DEFAULT_ENEMY_SPAWNS,
+    DEFAULT_MAX_ACTIVE_ENEMIES,
+    DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER,
+    DEFAULT_PLAYER_SPAWNS,
+    DEFAULT_POWERUP_SPAWNS,
+    normalizeStageSettings,
+    pixelToTilePoint,
+    powerUpPixelToTilePoint
+  } = requireRuntimeModule("stageSettings");
+  const {
     BONUS_ENEMY_INDICES,
     DEFAULT_ENEMY_TOTAL,
     DEFAULT_ORIGINAL_STAGE_COUNT,
@@ -73,8 +83,6 @@
   const SPAWN_ANIMATION_CYCLE = 14;
   const SPAWN_PHASE_SIZES = [6, 8, 11, 14];
   const DEFAULT_HIGH_SCORE = 20000;
-  const DEFAULT_MAX_ACTIVE_ENEMIES = 4;
-  const DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER = 6;
   const TITLE_DEMO_IDLE_FRAMES = 0x0a * 0x40;
   const DEMO_DISPLAY_STAGE = 30;
   const DEMO_MAX_ACTIVE_ENEMIES = 4;
@@ -945,33 +953,6 @@
   };
   const EDITOR_STORAGE_KEY = "tank-defender-8-editor-stage";
   const HIGH_SCORE_STORAGE_KEY = "tank-defender-8-high-score";
-  const DEFAULT_PLAYER_SPAWNS = [
-    { x: 4 * TILE + 1, y: 12 * TILE + 1 },
-    { x: 8 * TILE + 1, y: 12 * TILE + 1 }
-  ];
-  const DEFAULT_ENEMY_SPAWNS = [
-    { x: 0 * TILE + 1, y: 0 * TILE + 1 },
-    { x: 6 * TILE + 1, y: 0 * TILE + 1 },
-    { x: 12 * TILE + 1, y: 0 * TILE + 1 }
-  ];
-  const DEFAULT_POWERUP_SPAWNS = [
-    { x: 1 * TILE + 2, y: 1 * TILE + 2 },
-    { x: 6 * TILE + 2, y: 1 * TILE + 2 },
-    { x: 11 * TILE + 2, y: 1 * TILE + 2 },
-    { x: 3 * TILE + 2, y: 2 * TILE + 2 },
-    { x: 9 * TILE + 2, y: 2 * TILE + 2 },
-    { x: 1 * TILE + 2, y: 5 * TILE + 2 },
-    { x: 5 * TILE + 2, y: 4 * TILE + 2 },
-    { x: 7 * TILE + 2, y: 4 * TILE + 2 },
-    { x: 11 * TILE + 2, y: 5 * TILE + 2 },
-    { x: 3 * TILE + 2, y: 7 * TILE + 2 },
-    { x: 9 * TILE + 2, y: 7 * TILE + 2 },
-    { x: 1 * TILE + 2, y: 10 * TILE + 2 },
-    { x: 5 * TILE + 2, y: 9 * TILE + 2 },
-    { x: 7 * TILE + 2, y: 9 * TILE + 2 },
-    { x: 11 * TILE + 2, y: 10 * TILE + 2 },
-    { x: 6 * TILE + 2, y: 11 * TILE + 2 }
-  ];
   const POWERUP_SIZE = 12;
 
   const EDITOR_TILE_TYPES = [EMPTY, BRICK, STEEL, WATER, FOREST, ICE];
@@ -1352,80 +1333,6 @@
 
   function cloneSpriteManifest() {
     return JSON.parse(JSON.stringify(FREE_SPRITE_MANIFEST));
-  }
-
-  function normalizeStageSettings(settings, totalStages) {
-    const source = Array.isArray(settings) ? settings : [];
-    if (source.length > totalStages) {
-      throw new Error(`stageSettings must not contain more than ${totalStages} stages`);
-    }
-    return Array.from({ length: totalStages }, (_, index) => {
-      const entry = source[index] || {};
-      if (!entry || typeof entry !== "object") {
-        throw new Error(`stageSettings[${index}] must be an object`);
-      }
-      const maxActiveEnemies = entry.maxActiveEnemies === undefined
-        ? DEFAULT_MAX_ACTIVE_ENEMIES
-        : Number(entry.maxActiveEnemies);
-      if (!Number.isInteger(maxActiveEnemies) || maxActiveEnemies < 1 || maxActiveEnemies > 8) {
-        throw new Error(`stageSettings[${index}].maxActiveEnemies must be an integer from 1 to 8`);
-      }
-      const maxActiveEnemiesTwoPlayer = entry.maxActiveEnemiesTwoPlayer === undefined
-        ? (entry.maxActiveEnemies === undefined ? DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER : maxActiveEnemies)
-        : Number(entry.maxActiveEnemiesTwoPlayer);
-      if (!Number.isInteger(maxActiveEnemiesTwoPlayer) || maxActiveEnemiesTwoPlayer < 1 || maxActiveEnemiesTwoPlayer > 8) {
-        throw new Error(`stageSettings[${index}].maxActiveEnemiesTwoPlayer must be an integer from 1 to 8`);
-      }
-      return {
-        maxActiveEnemies,
-        maxActiveEnemiesTwoPlayer,
-        playerSpawns: normalizeSpawnList(entry.playerSpawns, 2, DEFAULT_PLAYER_SPAWNS, `stageSettings[${index}].playerSpawns`),
-        enemySpawns: normalizeSpawnList(entry.enemySpawns, 3, DEFAULT_ENEMY_SPAWNS, `stageSettings[${index}].enemySpawns`),
-        powerUpSpawns: normalizePowerUpSpawnList(entry.powerUpSpawns, `stageSettings[${index}].powerUpSpawns`)
-      };
-    });
-  }
-
-  function normalizeSpawnList(spawns, minLength, defaults, label) {
-    if (spawns === undefined) return defaults.map((point) => ({ x: point.x, y: point.y }));
-    if (!Array.isArray(spawns) || spawns.length < minLength) {
-      throw new Error(`${label} must contain at least ${minLength} spawn points`);
-    }
-    return spawns.map((spawn, index) => normalizeSpawnPoint(spawn, `${label}[${index}]`));
-  }
-
-  function normalizeSpawnPoint(spawn, label) {
-    if (!spawn || typeof spawn !== "object") throw new Error(`${label} must be an object`);
-    const tileX = Number(spawn.x);
-    const tileY = Number(spawn.y);
-    if (!Number.isInteger(tileX) || tileX < 0 || tileX >= GRID) {
-      throw new Error(`${label}.x must be an integer from 0 to ${GRID - 1}`);
-    }
-    if (!Number.isInteger(tileY) || tileY < 0 || tileY >= GRID) {
-      throw new Error(`${label}.y must be an integer from 0 to ${GRID - 1}`);
-    }
-    return { x: tileX * TILE + 1, y: tileY * TILE + 1 };
-  }
-
-  function normalizePowerUpSpawnList(spawns, label) {
-    if (spawns === undefined) return DEFAULT_POWERUP_SPAWNS.map((point) => ({ x: point.x, y: point.y }));
-    if (!Array.isArray(spawns) || spawns.length < 1) {
-      throw new Error(`${label} must contain at least one spawn point`);
-    }
-    return spawns.map((spawn, index) => normalizePowerUpSpawnPoint(spawn, `${label}[${index}]`));
-  }
-
-  function normalizePowerUpSpawnPoint(spawn, label) {
-    if (!spawn || typeof spawn !== "object") throw new Error(`${label} must be an object`);
-    const tileX = Number(spawn.x);
-    const tileY = Number(spawn.y);
-    if (!Number.isInteger(tileX) || tileX < 0 || tileX >= GRID) {
-      throw new Error(`${label}.x must be an integer from 0 to ${GRID - 1}`);
-    }
-    if (!Number.isInteger(tileY) || tileY < 0 || tileY >= GRID) {
-      throw new Error(`${label}.y must be an integer from 0 to ${GRID - 1}`);
-    }
-    return { x: tileX * TILE + 2, y: tileY * TILE + 2 };
   }
 
   function normalizeGameSettings(settings) {
@@ -1884,20 +1791,6 @@
   function currentPowerUpSpawns() {
     const settings = stageSettings();
     return (settings ? settings.powerUpSpawns : DEFAULT_POWERUP_SPAWNS).map(powerUpPixelToTilePoint);
-  }
-
-  function pixelToTilePoint(point) {
-    return {
-      x: Math.floor((point.x - 1) / TILE),
-      y: Math.floor((point.y - 1) / TILE)
-    };
-  }
-
-  function powerUpPixelToTilePoint(point) {
-    return {
-      x: Math.floor((point.x - 2) / TILE),
-      y: Math.floor((point.y - 2) / TILE)
-    };
   }
 
   function createStageGrid(stage) {
