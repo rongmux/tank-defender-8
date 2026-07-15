@@ -9,13 +9,13 @@
   const { advanceBattleRandom } = requireRuntimeModule("battleRandom");
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
-  const { normalizeNumber } = requireRuntimeModule("valueNormalization");
   const {
     DEFAULT_FRIENDLY_FIRE,
     DEFAULT_PROJECTILE_RULES,
     normalizeFriendlyFire,
     normalizeProjectileRules
   } = requireRuntimeModule("combatSettings");
+  const { DEFAULT_ENEMY_AI, normalizeEnemyAi } = requireRuntimeModule("enemyAiSettings");
   const {
     DEFAULT_ENEMY_SPAWN_PACING,
     calculateEnemySpawnDelay,
@@ -200,12 +200,6 @@
   const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
   const TANK_DESTRUCTION_EXPLOSION_RULES = new Set(["enemyDestroy", "playerDestroy"]);
   const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
-  const DEFAULT_ENEMY_AI = {
-    intersectionTurnChance: 1 / 16,
-    blockedRetryChance: 3 / 4,
-    blockedRetryTicks: 2,
-    horizontalFirstChance: 1 / 2
-  };
   const DEFAULT_TIMER_FREEZES_ENEMY_TIME = true;
   const TITLE_MENU_ITEMS = [
     { label: "1 PLAYER", action: "one", x: 88, y: 136, color: "#f3f0d4" },
@@ -1339,31 +1333,6 @@
     if (value === undefined) return fallback;
     if (typeof value !== "boolean") throw new Error(`${label} must be a boolean`);
     return value;
-  }
-
-  function normalizeEnemyAi(enemyAi) {
-    const source = enemyAi || {};
-    if (typeof source !== "object") throw new Error("gameSettings.enemyAi must be an object");
-    return {
-      intersectionTurnChance: normalizeNumber(
-        source.intersectionTurnChance,
-        source.randomTurnChance === undefined ? DEFAULT_ENEMY_AI.intersectionTurnChance : source.randomTurnChance,
-        0,
-        1,
-        false,
-        "gameSettings.enemyAi.intersectionTurnChance"
-      ),
-      blockedRetryChance: normalizeNumber(source.blockedRetryChance, DEFAULT_ENEMY_AI.blockedRetryChance, 0, 1, false, "gameSettings.enemyAi.blockedRetryChance"),
-      blockedRetryTicks: normalizeNumber(source.blockedRetryTicks, DEFAULT_ENEMY_AI.blockedRetryTicks, 0, 60, true, "gameSettings.enemyAi.blockedRetryTicks"),
-      horizontalFirstChance: normalizeNumber(
-        source.horizontalFirstChance,
-        source.targetAxisBias === undefined ? DEFAULT_ENEMY_AI.horizontalFirstChance : source.targetAxisBias,
-        0,
-        1,
-        false,
-        "gameSettings.enemyAi.horizontalFirstChance"
-      )
-    };
   }
 
   function normalizeStagePack(pack) {

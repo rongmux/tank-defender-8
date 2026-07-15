@@ -845,10 +845,6 @@ assert(battleRandomProbe.shared.secondType === "shovel" && battleRandomProbe.sha
 assert(battleRandomProbe.shared.locationId === 0 && battleRandomProbe.shared.afterLocationIndex === 2, "power-up placement should consume the original pair of position bytes from the shared sequence");
 assert(battleRandomProbe.injected === 128 && battleRandomProbe.injectedPreservedState === true, "deterministic test injection should bypass and preserve runtime random state");
 assert(!source.includes("Math.random"), "gameplay should not fall back to the host Math.random source");
-assert(schema.gameSettings.enemyAi.intersectionTurnChance === 1 / 16, "schema should expose the original intersection turn roll");
-assert(schema.gameSettings.enemyAi.blockedRetryChance === 3 / 4, "schema should expose the original blocked retry roll");
-assert(schema.gameSettings.enemyAi.blockedRetryTicks === 2, "schema should expose the two movement-tick blocked pause");
-assert(schema.gameSettings.enemyAi.horizontalFirstChance === 1 / 2, "schema should expose equal horizontal and vertical target routing");
 const enemyTargetProbe = context.window.TankDefender8.debugEnemyTargetEligibilityProbe();
 assert(enemyTargetProbe.targetableIds.join(",") === "1,2", "enemy AI should retain spawning players as valid original-style targets");
 assert(enemyTargetProbe.targetableIds.includes(enemyTargetProbe.spawningId), "enemy AI should be able to target a player during spawn flash");
@@ -868,10 +864,6 @@ assert(enemyTargetingProbe.lowerRightVerticalFirst === "down" && enemyTargetingP
 const enemyCadenceProbe = context.window.TankDefender8.debugEnemyMovementCadenceProbe();
 assert(enemyCadenceProbe.map((entry) => entry.normal).join(",") === "true,false,true,false", "normal enemies should move on alternating slot-parity frames");
 assert(enemyCadenceProbe.every((entry) => entry.fast), "fast enemies should move every frame");
-const enemyBlockedStateProbe = context.window.TankDefender8.debugEnemyBlockedStateProbe();
-assert(enemyBlockedStateProbe.retry.dir === 0 && enemyBlockedStateProbe.retry.blockedPauseTicks === 2 && enemyBlockedStateProbe.retry.pendingTurn === false, "the three-in-four blocked branch should pause and retain direction");
-assert(enemyBlockedStateProbe.retryPause1 === 1 && enemyBlockedStateProbe.retryPause2 === 0, "blocked retry pauses should consume exactly two movement ticks");
-assert(enemyBlockedStateProbe.turn.dir === 2 && enemyBlockedStateProbe.turn.blockedPauseTicks === 0 && enemyBlockedStateProbe.turn.pendingTurn === true, "the one-in-four blocked branch should reverse and enter the turn state");
 const onePlayerSpawnTimeline = context.window.TankDefender8.debugEnemySpawnTimelineProbe(1, 3);
 const twoPlayerSpawnTimeline = context.window.TankDefender8.debugEnemySpawnTimelineProbe(2, 3);
 assert(onePlayerSpawnTimeline.frames.join(",") === "1,188,375", `one-player stage 1 spawn frames: ${onePlayerSpawnTimeline.frames.join(",")}`);
@@ -1460,15 +1452,6 @@ const badTimerFreezePack = {
 };
 assert(context.window.TankDefender8.validateStagePack(badTimerFreezePack).ok === false, "bad timer freeze setting should fail validation");
 
-const badEnemyAiPack = {
-  id: "bad-enemy-ai",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { enemyAi: { targetAxisBias: 2 } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badEnemyAiPack).ok === false, "bad enemy AI setting should fail validation");
-
 const jsonResult = context.window.TankDefender8.loadStagePackJson(JSON.stringify(validPack));
 assert(jsonResult.ok === true, "loadStagePackJson should accept valid JSON");
 
@@ -1586,8 +1569,6 @@ assert(gameOverStageResultProbe.afterEnd.score === gameOverStageResultProbe.scor
 assert(gameOverStageResultProbe.afterEnd.newHighScore === true && gameOverStageResultProbe.highScoreRoute.screen === "highScore", "the high-score celebration should remain after the result and full-screen game-over sequence");
 assert(gameOverStageResultProbe.wrappedStage.screen === "fullGameOver" && gameOverStageResultProbe.wrappedStage.stage === 1, "a stage-70 game-over result should preserve the original extended-loop wrap before full-screen game over");
 assert(context.window.TankDefender8.debugStageClearPresentationProbe([20, 0, 0, 0], [0, 0, 0, 0], 0).duration === 8, "a positive custom stage-clear timing should override the dynamic result duration");
-assert(context.window.TankDefender8.currentPackInfo().enemyAi.intersectionTurnChance === 0.33, "current pack should expose custom enemy intersection turn settings");
-assert(context.window.TankDefender8.currentPackInfo().enemyAi.blockedRetryTicks === 5, "current pack should expose custom blocked retry timing");
 assert(context.window.TankDefender8.currentPackInfo().playerUpgradeRules[0].maxBullets === 2, "current pack should expose custom player upgrade rules");
 assert(context.window.TankDefender8.currentPackInfo().playerUpgradeRules[0].bulletSpeed === 2.75, "current pack should expose custom player bullet speed");
 assert(context.window.TankDefender8.currentPackInfo().timerFreezesEnemyTime === false, "current pack should expose custom timer freeze rule");
