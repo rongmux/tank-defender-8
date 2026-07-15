@@ -16,6 +16,7 @@
     normalizePowerUpDurations,
     normalizePowerUpRules
   } = requireRuntimeModule("powerUpSettings");
+  const { DEFAULT_TIMINGS, SPAWN_ANIMATION_FRAMES, normalizeTimings } = requireRuntimeModule("timingSettings");
   const {
     DEFAULT_ENEMY_TYPES: defaultEnemyTypes,
     ENEMY_FIRE_CHANCE,
@@ -85,7 +86,6 @@
   const FIELD_H = GRID * TILE;
   const PANEL_X = FIELD_X + FIELD_W;
   const STEP_MS = 1000 / 60;
-  const SPAWN_ANIMATION_FRAMES = 28;
   const SPAWN_ANIMATION_CYCLE = 14;
   const SPAWN_PHASE_SIZES = [6, 8, 11, 14];
   const DEFAULT_HIGH_SCORE = 20000;
@@ -120,11 +120,6 @@
   const STAGE_CURTAIN_OPEN_FRAMES = 16;
   const STAGE_PREPARE_FRAMES = 2;
   const STAGE_START_AUDIO_FRAMES = 264;
-  const ORIGINAL_STAGE_INTRO_FRAMES =
-    STAGE_MAP_DRAW_FRAMES +
-    STAGE_ATTRIBUTE_COPY_FRAMES +
-    STAGE_CURTAIN_OPEN_FRAMES +
-    STAGE_PREPARE_FRAMES;
   const STAGE_RESULT_TIMING = {
     initialWait: 30,
     rowSetup: 1,
@@ -147,20 +142,6 @@
   const DEFAULT_INITIAL_LIVES = 3;
   const DEFAULT_BONUS_LIFE_SCORES = [20000];
   const DEFAULT_DEATH_POWER_LEVEL = 0;
-  const DEFAULT_TIMINGS = {
-    stageIntro: ORIGINAL_STAGE_INTRO_FRAMES,
-    stageClearDelay: 128,
-    stageClear: 0,
-    gameOverSlide: 127,
-    gameOverHold: 129,
-    playerRespawn: 24,
-    playerSpawnFlash: SPAWN_ANIMATION_FRAMES,
-    playerInvulnerability: 3,
-    enemySpawnFlash: SPAWN_ANIMATION_FRAMES,
-    enemyInitialReload: 0,
-    enemySpawnRetry: 25,
-    powerUpTtl: 0
-  };
   const DEFAULT_ENEMY_SPAWN_PACING = {
     firstDelay: 0,
     baseDelay: 190,
@@ -1378,18 +1359,6 @@
     if (value === undefined) return fallback;
     if (typeof value !== "boolean") throw new Error(`${label} must be a boolean`);
     return value;
-  }
-
-  function normalizeTimings(timings) {
-    const source = timings || {};
-    if (typeof source !== "object") throw new Error("gameSettings.timings must be an object");
-    return Object.fromEntries(Object.entries(DEFAULT_TIMINGS).map(([key, defaultValue]) => {
-      const value = source[key] === undefined ? defaultValue : Number(source[key]);
-      if (!Number.isInteger(value) || value < 0 || value > 3600) {
-        throw new Error(`gameSettings.timings.${key} must be an integer from 0 to 3600`);
-      }
-      return [key, value];
-    }));
   }
 
   function normalizeEnemySpawnPacing(pacing) {

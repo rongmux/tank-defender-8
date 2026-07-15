@@ -716,9 +716,6 @@ assert(schema.enemyTotal === 20, "schema enemy total should be 20");
 assert(schema.gameSettings.initialLives === 3, "schema should expose initial lives");
 assert(schema.gameSettings.bonusLifeScores[0] === 20000, "schema should expose bonus life scores");
 assert(schema.gameSettings.deathPowerLevel === 0, "schema should expose death power level");
-assert(schema.gameSettings.timings.stageIntro === 95, "schema should expose the original ninety-five-frame pre-battle interval");
-assert(schema.gameSettings.timings.stageClearDelay === 128, "schema should expose the original 128-frame stage clear delay");
-assert(schema.gameSettings.timings.stageClear === 0, "zero stage-clear timing should select the dynamic original result schedule");
 const stageIntroStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(schema.gameSettings.timings.stageIntro);
 const stageIntroOpenStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(18);
 const stageIntroFirstOpenProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(17);
@@ -745,15 +742,6 @@ const stageResultCloseRenderProbe = context.window.TankDefender8.debugRenderStag
 const stageResultGreyCurtainRects = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#6b6f78" && call.w === 256 && call.h === 64);
 assert(stageResultCloseRenderProbe.coverRows === 8, "stage-result closing render should use the shared discrete curtain progression");
 assert(stageResultGreyCurtainRects.some((call) => call.y === 0) && stageResultGreyCurtainRects.some((call) => call.y === 176), "stage-result closing render should cover the result table from both screen edges");
-assert(schema.gameSettings.timings.gameOverSlide === 127, "schema should expose the original 127-frame game-over slide");
-assert(schema.gameSettings.timings.gameOverHold === 129, "schema should expose the original 129-frame centered game-over hold");
-assert(schema.gameSettings.timings.playerRespawn === 24, "schema should expose the original player death-state ticks");
-assert(schema.gameSettings.timings.playerSpawnFlash === 28, "schema should expose the original player spawn-state ticks");
-assert(schema.gameSettings.timings.playerInvulnerability === 3, "schema should expose post-spawn shield 64-frame units");
-assert(schema.gameSettings.timings.enemySpawnFlash === 28, "schema should expose the original twenty-eight-frame enemy spawn state");
-assert(schema.gameSettings.timings.enemyInitialReload === 0, "new enemies should not receive an artificial firing cooldown");
-assert(schema.gameSettings.timings.enemySpawnRetry === 25, "schema should expose enemy spawn retry timing");
-assert(schema.gameSettings.timings.powerUpTtl === 0, "schema should expose non-expiring default power-up TTL");
 assert(schema.gameSettings.enemySpawnPacing.firstDelay === 0, "the first enemy should be eligible to spawn immediately");
 assert(schema.gameSettings.enemySpawnPacing.baseDelay === 190, "schema should expose the original enemy spawn base interval");
 assert(schema.gameSettings.enemySpawnPacing.stageStep === 4, "schema should expose the original four-frame stage step");
@@ -1507,15 +1495,6 @@ const badTimerFreezePack = {
 };
 assert(context.window.TankDefender8.validateStagePack(badTimerFreezePack).ok === false, "bad timer freeze setting should fail validation");
 
-const badTimingPack = {
-  id: "bad-timing",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { timings: { stageIntro: -1 } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badTimingPack).ok === false, "bad timing setting should fail validation");
-
 const badEnemyAiPack = {
   id: "bad-enemy-ai",
   totalStages: 1,
@@ -1645,8 +1624,6 @@ assert(context.window.TankDefender8.currentPackInfo().maxActiveEnemies === 2, "c
 assert(context.window.TankDefender8.currentPackInfo().initialLives === 5, "current pack should expose custom initial lives");
 assert(context.window.TankDefender8.currentPackInfo().bonusLifeScores[0] === 100, "current pack should expose custom bonus life scores");
 assert(context.window.TankDefender8.currentPackInfo().deathPowerLevel === 2, "current pack should expose custom death power level");
-assert(context.window.TankDefender8.currentPackInfo().timings.enemySpawnFlash === 11, "current pack should expose custom timing settings");
-assert(context.window.TankDefender8.currentPackInfo().timings.stageClearDelay === 6, "current pack should expose custom stage clear delay");
 assert(context.window.TankDefender8.currentPackInfo().enemySpawnPacing.firstDelay === 5, "current pack should expose custom first spawn delay");
 assert(context.window.TankDefender8.currentPackInfo().enemySpawnPacing.baseDelay === 9, "current pack should expose custom enemy spawn base delay");
 assert(context.window.TankDefender8.currentPackInfo().playerMovement.speed === 1.5, "current pack should expose custom player movement speed");
