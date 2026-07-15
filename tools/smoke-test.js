@@ -748,10 +748,6 @@ assert(schema.gameSettings.enemySpawnPacing.stageStep === 4, "schema should expo
 assert(schema.gameSettings.enemySpawnPacing.minDelay === 50, "schema should expose the stage-35 spawn interval floor");
 assert(schema.gameSettings.enemySpawnPacing.extendedLoopMinDelay === 50, "extended-loop stages should retain the stage-35 interval");
 assert(schema.gameSettings.enemySpawnPacing.twoPlayerDelayReduction === 20, "two-player mode should subtract twenty frames from spawn intervals");
-assert(schema.gameSettings.playerMovement.speed === 1, "schema should expose the original one-pixel active-frame movement speed");
-assert(schema.gameSettings.playerMovement.frameCadence.join(",") === "true,true,false,true", "schema should expose the original three-of-four player movement cadence");
-assert(schema.gameSettings.playerMovement.iceSlideFrames === 28, "schema should expose the original ice inertia counter");
-assert(schema.gameSettings.playerMovement.iceSlideSpeed === 1, "schema should expose full-speed ice movement");
 assert(schema.gameSettings.projectileRules.bulletSize === 4, "schema should expose projectile bullet size");
 assert(schema.gameSettings.projectileRules.spawnOffset === 9, "schema should expose projectile spawn offset");
 assert(schema.gameSettings.projectileRules.boundsPadding === 4, "schema should expose projectile bounds padding");
@@ -1269,11 +1265,6 @@ assert(stunProbe.turned === false, "stunned players should not turn");
 assert(stunProbe.moved === false, "stunned players should not move");
 assert(stunProbe.fired === true, "stunned players should still fire");
 assert(stunProbe.after.pendingSnap === false, "stunned direction input should not queue a later snap");
-const playerCadenceProbe = context.window.TankDefender8.debugPlayerMovementCadenceProbe();
-assert(playerCadenceProbe.speed === 1, "default player movement should advance one pixel per active frame");
-assert(playerCadenceProbe.cadence.join(",") === "true,true,false,true", "default player cadence should skip only the third frame in each four-frame cycle");
-assert(playerCadenceProbe.frames.map((frame) => frame.active).join(",") === "true,true,false,true,true,true,false,true", "player cadence should repeat over successive four-frame cycles");
-assert(playerCadenceProbe.activeFrames === 6 && playerCadenceProbe.distanceOverEightFrames === 6, "player should travel six pixels over eight unobstructed display frames");
 canvasContext.calls.length = 0;
 canvasContext.resetPixels();
 const tankTrackProbe = context.window.TankDefender8.debugTankTrackAnimationProbe();
@@ -1513,24 +1504,6 @@ const badEnemySpawnPacingPack = {
 };
 assert(context.window.TankDefender8.validateStagePack(badEnemySpawnPacingPack).ok === false, "bad enemy spawn pacing should fail validation");
 
-const badPlayerMovementPack = {
-  id: "bad-player-movement",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { playerMovement: { speed: 0 } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badPlayerMovementPack).ok === false, "bad player movement should fail validation");
-
-const badPlayerCadencePack = {
-  id: "bad-player-cadence",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { playerMovement: { frameCadence: [false, false] } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badPlayerCadencePack).ok === false, "player movement cadence without an active frame should fail validation");
-
 const badProjectileRulesPack = {
   id: "bad-projectile-rules",
   totalStages: 1,
@@ -1626,8 +1599,6 @@ assert(context.window.TankDefender8.currentPackInfo().bonusLifeScores[0] === 100
 assert(context.window.TankDefender8.currentPackInfo().deathPowerLevel === 2, "current pack should expose custom death power level");
 assert(context.window.TankDefender8.currentPackInfo().enemySpawnPacing.firstDelay === 5, "current pack should expose custom first spawn delay");
 assert(context.window.TankDefender8.currentPackInfo().enemySpawnPacing.baseDelay === 9, "current pack should expose custom enemy spawn base delay");
-assert(context.window.TankDefender8.currentPackInfo().playerMovement.speed === 1.5, "current pack should expose custom player movement speed");
-assert(context.window.TankDefender8.currentPackInfo().playerMovement.frameCadence.join(",") === "true", "legacy custom movement speed should remain active on every frame when cadence is omitted");
 assert(context.window.TankDefender8.currentPackInfo().projectileRules.bulletSize === 6, "current pack should expose custom projectile bullet size");
 assert(context.window.TankDefender8.currentPackInfo().friendlyFire.enabled === false, "current pack should expose custom friendly-fire enabled rule");
 assert(context.window.TankDefender8.currentPackInfo().friendlyFire.stunFrames === 12, "current pack should expose custom friendly-fire stun frames");

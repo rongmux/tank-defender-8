@@ -11,6 +11,11 @@
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
   const { normalizeHexColor, normalizeNumber } = requireRuntimeModule("valueNormalization");
   const {
+    DEFAULT_PLAYER_MOVEMENT,
+    clonePlayerMovementSettings,
+    normalizePlayerMovement
+  } = requireRuntimeModule("playerMovementSettings");
+  const {
     DEFAULT_POWERUP_DURATIONS,
     DEFAULT_POWERUP_RULES,
     normalizePowerUpDurations,
@@ -149,12 +154,6 @@
     minDelay: 50,
     extendedLoopMinDelay: 50,
     twoPlayerDelayReduction: 20
-  };
-  const DEFAULT_PLAYER_MOVEMENT = {
-    speed: 1,
-    frameCadence: [true, true, false, true],
-    iceSlideFrames: 28,
-    iceSlideSpeed: 1
   };
   const DEFAULT_PROJECTILE_RULES = {
     bulletSize: 4,
@@ -1027,7 +1026,7 @@
       powerUpRules: { ...DEFAULT_POWERUP_RULES },
       timings: { ...DEFAULT_TIMINGS },
       enemySpawnPacing: { ...DEFAULT_ENEMY_SPAWN_PACING },
-      playerMovement: { ...DEFAULT_PLAYER_MOVEMENT },
+      playerMovement: clonePlayerMovementSettings(DEFAULT_PLAYER_MOVEMENT),
       projectileRules: { ...DEFAULT_PROJECTILE_RULES },
       friendlyFire: { ...DEFAULT_FRIENDLY_FIRE },
       explosionRules: cloneExplosionRules(DEFAULT_EXPLOSION_RULES),
@@ -1400,29 +1399,6 @@
     return normalized;
   }
 
-  function normalizePlayerMovement(movement) {
-    const source = movement || {};
-    if (typeof source !== "object") throw new Error("gameSettings.playerMovement must be an object");
-    const defaultCadence = source.speed === undefined ? DEFAULT_PLAYER_MOVEMENT.frameCadence : [true];
-    return {
-      speed: normalizeNumber(source.speed, DEFAULT_PLAYER_MOVEMENT.speed, 0.1, 6, false, "gameSettings.playerMovement.speed"),
-      frameCadence: normalizePlayerFrameCadence(source.frameCadence, defaultCadence),
-      iceSlideFrames: normalizeNumber(source.iceSlideFrames, DEFAULT_PLAYER_MOVEMENT.iceSlideFrames, 0, 3600, true, "gameSettings.playerMovement.iceSlideFrames"),
-      iceSlideSpeed: normalizeNumber(source.iceSlideSpeed, DEFAULT_PLAYER_MOVEMENT.iceSlideSpeed, 0, 6, false, "gameSettings.playerMovement.iceSlideSpeed")
-    };
-  }
-
-  function normalizePlayerFrameCadence(cadence, fallback) {
-    const source = cadence === undefined ? fallback : cadence;
-    if (!Array.isArray(source) || source.length < 1 || source.length > 16 || source.every((active) => active !== true)) {
-      throw new Error("gameSettings.playerMovement.frameCadence must contain 1 to 16 booleans with at least one true value");
-    }
-    if (source.some((active) => typeof active !== "boolean")) {
-      throw new Error("gameSettings.playerMovement.frameCadence must contain only booleans");
-    }
-    return source.slice();
-  }
-
   function normalizeProjectileRules(rules) {
     const source = rules || {};
     if (typeof source !== "object") throw new Error("gameSettings.projectileRules must be an object");
@@ -1603,7 +1579,7 @@
         powerUpRules: { ...DEFAULT_POWERUP_RULES },
         timings: { ...DEFAULT_TIMINGS },
         enemySpawnPacing: { ...DEFAULT_ENEMY_SPAWN_PACING },
-        playerMovement: { ...DEFAULT_PLAYER_MOVEMENT },
+        playerMovement: clonePlayerMovementSettings(DEFAULT_PLAYER_MOVEMENT),
         projectileRules: { ...DEFAULT_PROJECTILE_RULES },
         friendlyFire: { ...DEFAULT_FRIENDLY_FIRE },
         explosionRules: cloneExplosionRules(DEFAULT_EXPLOSION_RULES),
@@ -9526,7 +9502,7 @@
         powerUpRules: { ...gameSettings().powerUpRules },
         timings: { ...gameSettings().timings },
         enemySpawnPacing: { ...gameSettings().enemySpawnPacing },
-        playerMovement: { ...gameSettings().playerMovement },
+        playerMovement: clonePlayerMovementSettings(gameSettings().playerMovement),
         projectileRules: { ...gameSettings().projectileRules },
         friendlyFire: { ...gameSettings().friendlyFire },
         explosionRules: cloneExplosionRules(gameSettings().explosionRules),
@@ -10445,7 +10421,7 @@
         powerUpRules: { ...gameSettings().powerUpRules },
         timings: { ...gameSettings().timings },
         enemySpawnPacing: { ...gameSettings().enemySpawnPacing },
-        playerMovement: { ...gameSettings().playerMovement },
+        playerMovement: clonePlayerMovementSettings(gameSettings().playerMovement),
         projectileRules: { ...gameSettings().projectileRules },
         friendlyFire: { ...gameSettings().friendlyFire },
         explosionRules: cloneExplosionRules(gameSettings().explosionRules),
@@ -15712,7 +15688,7 @@
           powerUpRules: { ...DEFAULT_POWERUP_RULES },
           timings: { ...DEFAULT_TIMINGS },
           enemySpawnPacing: { ...DEFAULT_ENEMY_SPAWN_PACING },
-          playerMovement: { ...DEFAULT_PLAYER_MOVEMENT },
+          playerMovement: clonePlayerMovementSettings(DEFAULT_PLAYER_MOVEMENT),
           projectileRules: { ...DEFAULT_PROJECTILE_RULES },
           friendlyFire: { ...DEFAULT_FRIENDLY_FIRE },
           explosionRules: cloneExplosionRules(DEFAULT_EXPLOSION_RULES),
