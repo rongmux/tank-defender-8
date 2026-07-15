@@ -742,12 +742,6 @@ const stageResultCloseRenderProbe = context.window.TankDefender8.debugRenderStag
 const stageResultGreyCurtainRects = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#6b6f78" && call.w === 256 && call.h === 64);
 assert(stageResultCloseRenderProbe.coverRows === 8, "stage-result closing render should use the shared discrete curtain progression");
 assert(stageResultGreyCurtainRects.some((call) => call.y === 0) && stageResultGreyCurtainRects.some((call) => call.y === 176), "stage-result closing render should cover the result table from both screen edges");
-assert(schema.gameSettings.enemySpawnPacing.firstDelay === 0, "the first enemy should be eligible to spawn immediately");
-assert(schema.gameSettings.enemySpawnPacing.baseDelay === 190, "schema should expose the original enemy spawn base interval");
-assert(schema.gameSettings.enemySpawnPacing.stageStep === 4, "schema should expose the original four-frame stage step");
-assert(schema.gameSettings.enemySpawnPacing.minDelay === 50, "schema should expose the stage-35 spawn interval floor");
-assert(schema.gameSettings.enemySpawnPacing.extendedLoopMinDelay === 50, "extended-loop stages should retain the stage-35 interval");
-assert(schema.gameSettings.enemySpawnPacing.twoPlayerDelayReduction === 20, "two-player mode should subtract twenty frames from spawn intervals");
 assert(schema.gameSettings.explosionRules.bulletCancel.ttl === 10, "schema should expose bullet cancel explosion timing");
 assert(schema.gameSettings.explosionRules.brickHit.ttl === 9, "brick impacts should use the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.steelHit.ttl === 9 && schema.gameSettings.explosionRules.steelBlocked.ttl === 9, "steel impacts and field boundaries should share the original nine-frame bullet explosion");
@@ -1490,15 +1484,6 @@ const badEnemyAiPack = {
 };
 assert(context.window.TankDefender8.validateStagePack(badEnemyAiPack).ok === false, "bad enemy AI setting should fail validation");
 
-const badEnemySpawnPacingPack = {
-  id: "bad-enemy-spawn-pacing",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { enemySpawnPacing: { minDelay: -1 } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badEnemySpawnPacingPack).ok === false, "bad enemy spawn pacing should fail validation");
-
 const badExplosionRulesPack = {
   id: "bad-explosion-rules",
   totalStages: 1,
@@ -1574,8 +1559,6 @@ assert(context.window.TankDefender8.currentPackInfo().maxActiveEnemies === 2, "c
 assert(context.window.TankDefender8.currentPackInfo().initialLives === 5, "current pack should expose custom initial lives");
 assert(context.window.TankDefender8.currentPackInfo().bonusLifeScores[0] === 100, "current pack should expose custom bonus life scores");
 assert(context.window.TankDefender8.currentPackInfo().deathPowerLevel === 2, "current pack should expose custom death power level");
-assert(context.window.TankDefender8.currentPackInfo().enemySpawnPacing.firstDelay === 5, "current pack should expose custom first spawn delay");
-assert(context.window.TankDefender8.currentPackInfo().enemySpawnPacing.baseDelay === 9, "current pack should expose custom enemy spawn base delay");
 assert(context.window.TankDefender8.currentPackInfo().explosionRules.enemyDestroy.ttl === 22, "current pack should expose custom explosion timing");
 assert(context.window.TankDefender8.currentPackInfo().explosionRules.enemyDestroy.color === "#123456", "current pack should expose custom explosion color");
 const explosionProbe = context.window.TankDefender8.debugExplosionRuleProbe("enemyDestroy");

@@ -17,6 +17,12 @@
     normalizeProjectileRules
   } = requireRuntimeModule("combatSettings");
   const {
+    DEFAULT_ENEMY_SPAWN_PACING,
+    calculateEnemySpawnDelay,
+    normalizeEnemySpawnPacing,
+    scaleEnemySpawnDelay
+  } = requireRuntimeModule("enemySpawnSettings");
+  const {
     DEFAULT_PLAYER_MOVEMENT,
     clonePlayerMovementSettings,
     normalizePlayerMovement
@@ -153,14 +159,6 @@
   const DEFAULT_INITIAL_LIVES = 3;
   const DEFAULT_BONUS_LIFE_SCORES = [20000];
   const DEFAULT_DEATH_POWER_LEVEL = 0;
-  const DEFAULT_ENEMY_SPAWN_PACING = {
-    firstDelay: 0,
-    baseDelay: 190,
-    stageStep: 4,
-    minDelay: 50,
-    extendedLoopMinDelay: 50,
-    twoPlayerDelayReduction: 20
-  };
   const CARRIER_FLASH_COLOR = "#dd3d33";
   const DEFAULT_EXPLOSION_CORE_COLOR = "#f7f1c6";
   const BASE_DESTRUCTION_TAIL_FRAMES = 4;
@@ -1355,45 +1353,6 @@
     if (value === undefined) return fallback;
     if (typeof value !== "boolean") throw new Error(`${label} must be a boolean`);
     return value;
-  }
-
-  function normalizeEnemySpawnPacing(pacing) {
-    const source = pacing || {};
-    if (typeof source !== "object") throw new Error("gameSettings.enemySpawnPacing must be an object");
-    const normalized = {
-      firstDelay: normalizeNumber(source.firstDelay, DEFAULT_ENEMY_SPAWN_PACING.firstDelay, 0, 3600, true, "gameSettings.enemySpawnPacing.firstDelay"),
-      baseDelay: normalizeNumber(source.baseDelay, DEFAULT_ENEMY_SPAWN_PACING.baseDelay, 0, 3600, true, "gameSettings.enemySpawnPacing.baseDelay"),
-      stageStep: normalizeNumber(source.stageStep, DEFAULT_ENEMY_SPAWN_PACING.stageStep, 0, 3600, true, "gameSettings.enemySpawnPacing.stageStep"),
-      minDelay: normalizeNumber(source.minDelay, DEFAULT_ENEMY_SPAWN_PACING.minDelay, 0, 3600, true, "gameSettings.enemySpawnPacing.minDelay"),
-      extendedLoopMinDelay: normalizeNumber(
-        source.extendedLoopMinDelay,
-        DEFAULT_ENEMY_SPAWN_PACING.extendedLoopMinDelay,
-        0,
-        3600,
-        true,
-        "gameSettings.enemySpawnPacing.extendedLoopMinDelay"
-      )
-    };
-    if (source.twoPlayerDelayReduction !== undefined || source.twoPlayerDelayMultiplier === undefined) {
-      normalized.twoPlayerDelayReduction = normalizeNumber(
-        source.twoPlayerDelayReduction,
-        DEFAULT_ENEMY_SPAWN_PACING.twoPlayerDelayReduction,
-        0,
-        3600,
-        true,
-        "gameSettings.enemySpawnPacing.twoPlayerDelayReduction"
-      );
-    } else {
-      normalized.twoPlayerDelayMultiplier = normalizeNumber(
-        source.twoPlayerDelayMultiplier,
-        1,
-        0.1,
-        1,
-        false,
-        "gameSettings.enemySpawnPacing.twoPlayerDelayMultiplier"
-      );
-    }
-    return normalized;
   }
 
   function normalizeExplosionRules(rules) {
@@ -5052,20 +5011,13 @@
   function defaultEnemySpawnDelay(stage) {
     const pacing = gameSettings().enemySpawnPacing || DEFAULT_ENEMY_SPAWN_PACING;
     const stageValue = Math.max(1, Math.floor(Number(stage) || game.stage || 1));
-    const minDelay = isExtendedLoopStage(stageValue)
-      ? Math.min(pacing.minDelay, pacing.extendedLoopMinDelay)
-      : pacing.minDelay;
-    return Math.max(minDelay, pacing.baseDelay - Math.min(stageValue, stageCycleLimit()) * pacing.stageStep);
+    return calculateEnemySpawnDelay(pacing, stageValue, stageCycleLimit(), isExtendedLoopStage(stageValue));
   }
 
   function scaleEnemySpawnDelayForPlayers(delay, players) {
     const pacing = gameSettings().enemySpawnPacing || DEFAULT_ENEMY_SPAWN_PACING;
     const playerCount = Math.max(1, Math.floor(Number(players) || game.playerCount || 1));
-    if (playerCount < 2) return delay;
-    if (Number.isFinite(pacing.twoPlayerDelayReduction)) {
-      return Math.max(0, delay - pacing.twoPlayerDelayReduction);
-    }
-    return Math.max(0, Math.round(delay * pacing.twoPlayerDelayMultiplier));
+    return scaleEnemySpawnDelay(delay, playerCount, pacing);
   }
 
   function pickEnemyType(stage, spawned) {

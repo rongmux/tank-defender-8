@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..");
 const testFiles = [
   "tests/unit/value-normalization.test.js",
   "tests/unit/combat-settings.test.js",
+  "tests/unit/enemy-spawn-settings.test.js",
   "tests/unit/player-movement-settings.test.js",
   "tests/unit/power-up-settings.test.js",
   "tests/unit/timing-settings.test.js",
@@ -19,6 +20,7 @@ const testFiles = [
   "tests/unit/browser-entry.test.js",
   "tests/integration/collision.test.js",
   "tests/integration/combat-settings.test.js",
+  "tests/integration/enemy-spawn-settings.test.js",
   "tests/integration/player-movement-settings.test.js",
   "tests/integration/power-up-settings.test.js",
   "tests/integration/timing-settings.test.js",
