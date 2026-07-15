@@ -163,7 +163,25 @@
         }
       ]
     },
-    "playerDestroy": { "freq": 76, "duration": 0.2, "gain": 0.055, "wave": "sawtooth" },
+    "playerDestroy": {
+      "durationFrames": 26,
+      "voices": [
+        {
+          "gain": 0.05,
+          "wave": "noise-long",
+          "segments": [
+            { "frequencies": [1762], "noteFrames": 2, "repeat": 2, "gain": 0.05 },
+            { "frequencies": [1762], "noteFrames": 2, "repeat": 2, "gain": 0.0467 },
+            { "frequencies": [1762], "noteFrames": 2, "repeat": 2, "gain": 0.0433 },
+            { "frequencies": [1762], "noteFrames": 2, "repeat": 2, "gain": 0.04 },
+            { "frequencies": [1762], "noteFrames": 2, "repeat": 2, "gain": 0.0367 },
+            { "frequencies": [1762], "noteFrames": 2, "repeat": 1, "gain": 0.0333 },
+            { "frequencies": [1762], "noteFrames": 2, "repeat": 1, "gain": 0.03 },
+            { "frequencies": [1762], "noteFrames": 2, "repeat": 1, "gain": 0.0267 }
+          ]
+        }
+      ]
+    },
     "powerUp": {
       "durationFrames": 39,
       "voices": [
