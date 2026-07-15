@@ -45,6 +45,11 @@
   const GAME_OVER_TEXT = "GAME OVER";
   const GAME_OVER_TEXT_START_Y = SCREEN_H;
   const GAME_OVER_TEXT_TARGET_Y = 0x71;
+  const PLAYER_GAME_OVER_MESSAGE_TIMER = 0x0d;
+  const PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD = 0x0a;
+  const PLAYER_GAME_OVER_MESSAGE_Y = 0xd8;
+  const PLAYER_GAME_OVER_MESSAGE_HIDDEN_Y = 0xf0;
+  const PLAYER_GAME_OVER_STAGE_END_DELAY = 0x100;
   const HIGH_SCORE_PALETTE_COLORS = ["#111111", "#345fd1", "#6b6f78", "#f3f0d4"];
   const STAGE_CURTAIN_CLOSE_FRAMES = 16;
   const STAGE_MAP_DRAW_FRAMES = 13;
@@ -993,6 +998,15 @@
     ".": ["00000", "00000", "00000", "00000", "00000", "00100", "00100"],
     "?": ["01110", "10001", "00001", "00010", "00100", "00000", "00100"]
   };
+  const COMPACT_GAME_OVER_FONT = {
+    A: ["010", "101", "111", "101", "101"],
+    E: ["111", "100", "110", "100", "111"],
+    G: ["011", "100", "101", "101", "011"],
+    M: ["101", "111", "111", "101", "101"],
+    O: ["010", "101", "101", "101", "010"],
+    R: ["110", "101", "110", "101", "101"],
+    V: ["101", "101", "101", "101", "010"]
+  };
   const TILE_CODE_TO_TYPE = {
     ".": EMPTY,
     B: BRICK,
@@ -1257,6 +1271,7 @@
     clearPendingTimer: 0,
     baseDestroyTimer: 0,
     gameOverTimer: 0,
+    playerGameOverMessage: null,
     fullGameOverElapsed: 0,
     freezeTimer: 0,
     shovelTimer: 0,
@@ -2608,6 +2623,7 @@
     game.clearPendingTimer = 0;
     game.baseDestroyTimer = 0;
     game.gameOverTimer = 0;
+    game.playerGameOverMessage = null;
     game.fullGameOverElapsed = 0;
     game.freezeTimer = 0;
     game.shovelTimer = 0;
@@ -2858,6 +2874,7 @@
     game.clearPendingTimer = 0;
     game.baseDestroyTimer = 0;
     game.gameOverTimer = 0;
+    game.playerGameOverMessage = null;
     game.freezeTimer = 0;
     game.shovelTimer = 0;
     game.stageClearElapsed = 0;
@@ -4477,6 +4494,7 @@
     updateBullets();
     updateScorePopups();
     updatePowerUp();
+    updatePlayerGameOverMessage();
     if (shouldSpawnEnemies()) spawnEnemies();
     if (checkEnding) checkEndState();
     syncMovementAudio();
@@ -4533,11 +4551,11 @@
     }
     const controlsEnabled = inputEnabled !== false;
     const firePresses = controlsEnabled ? new Set(pendingFirePresses) : new Set();
+    const movementFrame = isPlayerMovementFrame(game.tick);
     pendingFirePresses.clear();
     for (const player of game.players) {
       const control = getPlayerControl(player.id);
       const firePressed = controlsEnabled && hasControlKey(control.fire, firePresses);
-      const movementFrame = isPlayerMovementFrame(game.tick);
       if (player.respawn > 0) {
         if (movementFrame) {
           player.respawn -= 1;
@@ -5220,6 +5238,39 @@
     }
     player.destroyTotalTicks = 0;
     player.destroyExplosionTicks = 0;
+    startPlayerGameOverMessage(player);
+  }
+
+  function startPlayerGameOverMessage(player) {
+    if (game.demoMode || game.screen !== "playing") return;
+    if (!game.players.some((candidate) => candidate.id !== player.id && candidate.lives > 0)) return;
+    const isPlayerTwo = player.id === 2;
+    game.playerGameOverMessage = {
+      playerId: player.id,
+      timer: PLAYER_GAME_OVER_MESSAGE_TIMER,
+      x: isPlayerTwo ? 0xc0 : 0x20,
+      y: PLAYER_GAME_OVER_MESSAGE_Y,
+      dx: isPlayerTwo ? -1 : 1
+    };
+    game.tick -= game.tick % 0x100;
+  }
+
+  function playerGameOverMessageActive() {
+    return Boolean(game.playerGameOverMessage && game.playerGameOverMessage.timer > 0);
+  }
+
+  function updatePlayerGameOverMessage() {
+    const message = game.playerGameOverMessage;
+    if (!message || message.timer <= 0 || game.demoMode) return;
+    if ((game.tick & 0x0f) === 0) {
+      message.timer -= 1;
+      if (message.timer <= 0) {
+        message.timer = 0;
+        message.y = PLAYER_GAME_OVER_MESSAGE_HIDDEN_Y;
+        return;
+      }
+    }
+    if (message.timer >= PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD) message.x += message.dx;
   }
 
   function releaseCarrierPowerUp(enemy) {
@@ -5750,7 +5801,11 @@
       game.paused = false;
       game.pauseElapsed = 0;
       if (game.clearPendingTimer <= 0) {
-        game.clearPendingTimer = gameSettings().timings.stageClearDelay;
+        game.clearPendingTimer = Math.max(
+          gameSettings().timings.stageClearDelay,
+          playerGameOverMessageActive() ? PLAYER_GAME_OVER_STAGE_END_DELAY : 0
+        );
+        game.tick = 0;
         if (game.clearPendingTimer > 0) return;
       }
       if (game.clearPendingTimer > 0) {
@@ -5788,6 +5843,7 @@
     stopStageBonusAudio();
     const resultReason = reason === "gameOver" ? "gameOver" : "clear";
     game.clearPendingTimer = 0;
+    game.playerGameOverMessage = null;
     game.stageResultReason = resultReason;
     game.stageClearElapsed = 0;
     game.stageClearBonusPlayerIds = resultReason === "clear"
@@ -5846,7 +5902,9 @@
     stopStageBonusAudio();
     game.screen = "gameOver";
     game.paused = false;
+    game.tick = 0;
     game.baseDestroyTimer = 0;
+    game.playerGameOverMessage = null;
     game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
     game.gameOverTimer = gameOverFieldDuration();
   }
@@ -6331,6 +6389,7 @@
     renderEnemyDestructions();
     renderBaseDestruction();
     renderScorePopups();
+    renderPlayerGameOverMessage();
     renderPanel();
   }
 
@@ -7130,6 +7189,43 @@
     const y = gameOverBannerY(game.gameOverTimer);
     const width = GAME_OVER_TEXT.length * 6 - 1;
     drawText(GAME_OVER_TEXT, Math.round((SCREEN_W - width) / 2), y, 1, "#f05a42");
+  }
+
+  function renderPlayerGameOverMessage() {
+    const presentation = playerGameOverMessagePresentation();
+    if (!presentation || !presentation.visible) return;
+    drawCompactGameOverWord("GAME", presentation.left, presentation.y + 1);
+    drawCompactGameOverWord("OVER", presentation.left + 16, presentation.y + 1);
+  }
+
+  function playerGameOverMessagePresentation() {
+    const message = game.playerGameOverMessage;
+    if (!message || message.timer <= 0) return null;
+    return {
+      playerId: message.playerId,
+      timer: message.timer,
+      x: message.x,
+      y: message.y,
+      left: message.x - 8,
+      width: 32,
+      height: 8,
+      visible: !game.paused && !game.demoMode
+    };
+  }
+
+  function drawCompactGameOverWord(word, x, y) {
+    ctx.fillStyle = "#f05a42";
+    let cursorX = Math.round(x);
+    const top = Math.round(y);
+    for (const char of word) {
+      const glyph = COMPACT_GAME_OVER_FONT[char];
+      for (let row = 0; row < glyph.length; row += 1) {
+        for (let column = 0; column < glyph[row].length; column += 1) {
+          if (glyph[row][column] === "1") ctx.fillRect(cursorX + column, top + row, 1, 1);
+        }
+      }
+      cursorX += 4;
+    }
   }
 
   function gameOverBannerY(timer) {
@@ -10480,6 +10576,9 @@
         stageClearBonusPlayerIds: game.stageClearBonusPlayerIds.slice(),
         stageClearBonusAwarded: game.stageClearBonusAwarded,
         gameOverTimer: game.gameOverTimer,
+        playerGameOverMessage: game.playerGameOverMessage
+          ? { ...game.playerGameOverMessage, active: playerGameOverMessageActive() }
+          : null,
         freezeTimer: game.freezeTimer,
         shovelTimer: game.shovelTimer,
         movementAudioMode: movementAudio.mode,
@@ -12625,6 +12724,171 @@
         playerDestroyAudio.frame = previousPlayerDestroy.frame;
         syncPlayerDestroyAudioNodes();
         syncEnemyDestroyAudioNodes();
+      }
+    },
+    debugPlayerGameOverMessageProbe() {
+      const previous = {
+        screen: game.screen,
+        paused: game.paused,
+        pauseElapsed: game.pauseElapsed,
+        demoMode: game.demoMode,
+        tick: game.tick,
+        playerCount: game.playerCount,
+        players: game.players,
+        enemies: game.enemies,
+        enemySpawned: game.enemySpawned,
+        enemyKilled: game.enemyKilled,
+        base: game.base,
+        clearPendingTimer: game.clearPendingTimer,
+        playerGameOverMessage: game.playerGameOverMessage
+      };
+      const state = () => {
+        const message = game.playerGameOverMessage;
+        return message
+          ? {
+            playerId: message.playerId,
+            timer: message.timer,
+            x: message.x,
+            y: message.y,
+            dx: message.dx,
+            presentation: playerGameOverMessagePresentation()
+          }
+          : null;
+      };
+      const setup = (eliminatedId, partnerLives) => {
+        const p1 = createPlayer(1);
+        const p2 = createPlayer(2);
+        for (const player of [p1, p2]) {
+          player.spawnFlash = 0;
+          player.invuln = 0;
+          player.respawn = 0;
+          player.destroying = false;
+        }
+        const eliminated = eliminatedId === 2 ? p2 : p1;
+        const partner = eliminatedId === 2 ? p1 : p2;
+        eliminated.alive = false;
+        eliminated.destroying = true;
+        eliminated.lives = 1;
+        partner.lives = Math.max(0, Math.floor(Number(partnerLives) || 0));
+        partner.alive = partner.lives > 0;
+        game.screen = "playing";
+        game.paused = false;
+        game.pauseElapsed = 0;
+        game.demoMode = false;
+        game.tick = 0x123;
+        game.playerCount = 2;
+        game.players = [p1, p2];
+        game.enemies = [];
+        game.enemySpawned = 0;
+        game.enemyKilled = 0;
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.clearPendingTimer = 0;
+        game.playerGameOverMessage = null;
+        finishPlayerDeath(eliminated);
+        return { eliminated, partner, baseTick: game.tick };
+      };
+      const run = (playerId) => {
+        const context = setup(playerId, 2);
+        const initial = { ...state(), tickLow: game.tick & 0xff };
+        const frames = [];
+        const sampleFrames = new Set([0, 15, 16, 31, 32, 47, 48, 191, 192]);
+        for (let frame = 0; frame <= 192; frame += 1) {
+          game.tick = context.baseTick + frame;
+          updatePlayerGameOverMessage();
+          if (sampleFrames.has(frame)) frames.push({ frame, ...state() });
+        }
+        return {
+          initial,
+          frames,
+          eliminatedLives: context.eliminated.lives,
+          partnerAlive: context.partner.alive
+        };
+      };
+
+      try {
+        const p1 = run(1);
+        const p2 = run(2);
+
+        setup(1, 2);
+        game.paused = true;
+        const pausedBefore = state();
+        update();
+        const pausedAfter = state();
+
+        setup(1, 2);
+        game.enemySpawned = enemyTotal();
+        checkEndState();
+        const clearDelay = {
+          screen: game.screen,
+          timer: game.clearPendingTimer,
+          tick: game.tick,
+          message: state()
+        };
+
+        setup(1, 0);
+        const noSurvivingPartner = state();
+
+        game.players = [game.players[0]];
+        game.playerGameOverMessage = null;
+        const solo = game.players[0];
+        solo.lives = 1;
+        solo.alive = false;
+        solo.destroying = true;
+        finishPlayerDeath(solo);
+        const onePlayer = state();
+
+        setup(1, 2);
+        enterGameOver();
+        const commonGameOver = {
+          screen: game.screen,
+          message: state()
+        };
+
+        return {
+          initialTimer: PLAYER_GAME_OVER_MESSAGE_TIMER,
+          moveThreshold: PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD,
+          stageEndDelay: PLAYER_GAME_OVER_STAGE_END_DELAY,
+          p1,
+          p2,
+          pausedBefore,
+          pausedAfter,
+          clearDelay,
+          noSurvivingPartner,
+          onePlayer,
+          commonGameOver
+        };
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
+    debugRenderPlayerGameOverMessage(playerId, elapsed) {
+      const previous = {
+        paused: game.paused,
+        demoMode: game.demoMode,
+        tick: game.tick,
+        playerGameOverMessage: game.playerGameOverMessage
+      };
+      const id = playerId === 2 ? 2 : 1;
+      const frame = clamp(Math.floor(Number(elapsed) || 0), 0, 191);
+      try {
+        game.paused = false;
+        game.demoMode = false;
+        game.playerGameOverMessage = {
+          playerId: id,
+          timer: PLAYER_GAME_OVER_MESSAGE_TIMER,
+          x: id === 2 ? 0xc0 : 0x20,
+          y: PLAYER_GAME_OVER_MESSAGE_Y,
+          dx: id === 2 ? -1 : 1
+        };
+        for (let current = 0; current <= frame; current += 1) {
+          game.tick = current;
+          updatePlayerGameOverMessage();
+        }
+        const presentation = playerGameOverMessagePresentation();
+        renderPlayerGameOverMessage();
+        return presentation;
+      } finally {
+        Object.assign(game, previous);
       }
     },
     debugLifeAwardProbe() {
