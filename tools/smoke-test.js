@@ -1165,6 +1165,15 @@ const stageClearPresentationAtTotal = context.window.TankDefender8.debugStageCle
   stageClearPresentationSecondTick.totalsRevealFrame
 );
 assert(stageClearPresentationBeforeTotal.showTotals === false && stageClearPresentationAtTotal.showTotals === true, "stage result should reveal TOTAL only after all four type counts and the original pause");
+const battleRandomProbe = context.window.TankDefender8.debugBattleRandomProbe();
+assert(battleRandomProbe.synthetic.map((entry) => entry.value).join(",") === "169,65,104", "D44D random arithmetic should reproduce the synthetic A9, 41, 68 byte sequence");
+assert(battleRandomProbe.synthetic.map((entry) => entry.index).join(",") === "255,0,1", "D44D random index should wrap as an independent eight-bit value");
+assert(battleRandomProbe.carryState.value === 59 && battleRandomProbe.carryState.index === 33, "D44D random arithmetic should retain the carry from the frame-high addition");
+assert(battleRandomProbe.shared.aiDecision === false && battleRandomProbe.shared.afterAiIndex === 255, "enemy AI should consume the shared NES-style random sequence");
+assert(battleRandomProbe.shared.secondType === "shovel" && battleRandomProbe.shared.afterPowerUpIndex === 0, "power-up selection should consume the next byte from the same shared sequence");
+assert(battleRandomProbe.shared.locationId === 0 && battleRandomProbe.shared.afterLocationIndex === 2, "power-up placement should consume the original pair of position bytes from the shared sequence");
+assert(battleRandomProbe.injected === 128 && battleRandomProbe.injectedPreservedState === true, "deterministic test injection should bypass and preserve runtime random state");
+assert(!source.includes("Math.random"), "gameplay should not fall back to the host Math.random source");
 assert(schema.gameSettings.enemyAi.intersectionTurnChance === 1 / 16, "schema should expose the original intersection turn roll");
 assert(schema.gameSettings.enemyAi.blockedRetryChance === 3 / 4, "schema should expose the original blocked retry roll");
 assert(schema.gameSettings.enemyAi.blockedRetryTicks === 2, "schema should expose the two movement-tick blocked pause");

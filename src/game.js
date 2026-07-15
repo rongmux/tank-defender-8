@@ -1255,6 +1255,8 @@
     tick: 0,
     frameLow: 0,
     frameHigh: 0,
+    randomValue: 0,
+    randomIndex: 0,
     transitionTimer: 0,
     grid: makeGrid(),
     customGrid: null,
@@ -2839,6 +2841,7 @@
     game.stageSelectPlayers = 1;
     game.screen = "title";
     game.paused = false;
+    resetBattleRandom();
     clearTransientBattleState();
   }
 
@@ -4789,7 +4792,7 @@
   }
 
   function updateEnemyMovement(enemy, random) {
-    const nextRandom = random || Math.random;
+    const nextRandom = typeof random === "function" ? random : undefined;
     if (!isEnemyMovementFrame(enemy)) return;
 
     if (recoverEnemyTankOverlap(enemy)) return;
@@ -4871,7 +4874,7 @@
   }
 
   function chooseEnemyDirectionByPhase(enemy, random) {
-    const nextRandom = random || Math.random;
+    const nextRandom = typeof random === "function" ? random : undefined;
     const phase = enemyAiPhase(game.stage, game.frameHigh);
     if (phase === "random") {
       enemy.dir = randomByte(nextRandom) & 3;
@@ -4927,7 +4930,7 @@
 
   function shouldEnemyFire(enemy) {
     if (enemy.fireChance === ENEMY_FIRE_CHANCE) return (randomByte() & 0x1f) === 0;
-    return Math.random() < enemy.fireChance;
+    return randomByte() / 256 < enemy.fireChance;
   }
 
   function aiRoll(chance, random) {
@@ -4939,8 +4942,93 @@
   }
 
   function randomByte(random) {
-    const nextRandom = random || Math.random;
-    return Math.floor(nextRandom() * 256) & 0xff;
+    if (typeof random === "function") return Math.floor(random() * 256) & 0xff;
+    return nextBattleRandomByte();
+  }
+
+  /** Reproduces the arithmetic and carry flow of the original D44D random routine. */
+  function advanceBattleRandom(value, index, frameHigh, zeroPageByte) {
+    const previous = Math.floor(Number(value) || 0) & 0xff;
+    const nextIndex = (Math.floor(Number(index) || 0) + 1) & 0xff;
+    let accumulator = (previous << 3) & 0xff;
+    accumulator = (accumulator - previous) & 0xff;
+
+    let sum = accumulator + (Math.floor(Number(frameHigh) || 0) & 0xff);
+    const carry = sum > 0xff ? 1 : 0;
+    accumulator = sum & 0xff;
+    sum = accumulator + (Math.floor(Number(zeroPageByte) || 0) & 0xff) + carry;
+    return { value: sum & 0xff, index: nextIndex };
+  }
+
+  function nextBattleRandomByte() {
+    const nextIndex = (game.randomIndex + 1) & 0xff;
+    const next = advanceBattleRandom(
+      game.randomValue,
+      game.randomIndex,
+      game.frameHigh,
+      battleRandomZeroPageByte(nextIndex, game.randomValue)
+    );
+    game.randomValue = next.value;
+    game.randomIndex = next.index;
+    return next.value;
+  }
+
+  function resetBattleRandom() {
+    game.randomValue = 0;
+    game.randomIndex = 0;
+  }
+
+  /**
+   * Projects the live browser battle into the zero-page addresses sampled by D44D.
+   * Unmodelled scratch bytes retain the cold-start value used by the original RAM clear.
+   */
+  function battleRandomZeroPageByte(index, previousRandomValue) {
+    const address = Math.floor(Number(index) || 0) & 0xff;
+    if (address === 0x0a) return game.frameHigh;
+    if (address === 0x0b) return game.frameLow;
+    if (address === 0x0f) return previousRandomValue;
+    if (address === 0x10) return address;
+    if (address === 0x6a) return currentEnemySpawnPositionIndex();
+    if (address === 0x7f) return Math.max(0, enemyTotal() - game.enemySpawned);
+    if (address === 0x82) return game.nextSpawn;
+    if (address === 0x84) {
+      return scaleEnemySpawnDelayForPlayers(defaultEnemySpawnDelay(game.stage), game.playerCount);
+    }
+    if (address >= 0x90 && address <= 0x97) {
+      return tankRandomMemoryByte(address - 0x90, "x");
+    }
+    if (address >= 0x98 && address <= 0x9f) {
+      return tankRandomMemoryByte(address - 0x98, "y");
+    }
+    if (address >= 0xa8 && address <= 0xaf) {
+      return tankRandomTypeByte(address - 0xa8);
+    }
+    return 0;
+  }
+
+  function currentEnemySpawnPositionIndex() {
+    if (game.enemySpawned <= 0) return 0;
+    const spec = getEnemySpec(game.stage, game.enemySpawned - 1);
+    return spec.spawnIndex === undefined ? game.enemySpawned % 3 : spec.spawnIndex;
+  }
+
+  function tankForOriginalSlot(slotIndex) {
+    if (slotIndex < 2) return game.players.find((player) => player.id === slotIndex + 1) || null;
+    return game.enemies.find((enemy) => enemy.alive && enemy.slotIndex === slotIndex) || null;
+  }
+
+  function tankRandomMemoryByte(slotIndex, axis) {
+    const tank = tankForOriginalSlot(slotIndex);
+    if (!tank) return 0;
+    const fieldOffset = axis === "x" ? FIELD_X : FIELD_Y;
+    return (Math.round(Number(tank[axis]) || 0) + fieldOffset) & 0xff;
+  }
+
+  function tankRandomTypeByte(slotIndex) {
+    const tank = tankForOriginalSlot(slotIndex);
+    if (!tank) return 0;
+    if (tank.kind === "player") return ((tank.level & 3) << 4) | (tank.dir & 3);
+    return 0x80 | ((tank.typeIndex & 3) << 5) | (tank.carrier ? 0x04 : 0) | (tank.dir & 3);
   }
 
   function updateBullets() {
@@ -5324,12 +5412,12 @@
   }
 
   function spawnPowerUp(forcedType) {
-    const type = forcedType && powerTypes.includes(forcedType)
-      ? forcedType
-      : randomPowerUpType();
     const settings = stageSettings();
     const spot = pickPowerUpSpawnSpot(settings ? settings.powerUpSpawns : DEFAULT_POWERUP_SPAWNS);
     if (!spot) return false;
+    const type = forcedType && powerTypes.includes(forcedType)
+      ? forcedType
+      : randomPowerUpType();
     game.powerUp = { type, x: spot.x, y: spot.y, w: POWERUP_SIZE, h: POWERUP_SIZE, ttl: gameSettings().timings.powerUpTtl };
     playSound("powerUpAppear");
     return true;
@@ -5339,13 +5427,13 @@
     return originalPowerUpRandomTable[randomByte(random) & 7];
   }
 
-  function pickPowerUpSpawnSpot(spots) {
+  function pickPowerUpSpawnSpot(spots, random) {
     const source = powerUpSpawnCandidates(spots);
     if (!source.length) return null;
     const pool = source.length > 1 && game.lastPowerUpSpawn
       ? source.filter((spot) => powerUpSpawnKey(spot) !== game.lastPowerUpSpawn)
       : source;
-    const picked = randomPowerUpSpawnSpot(pool.length ? pool : source);
+    const picked = randomPowerUpSpawnSpot(pool.length ? pool : source, random);
     game.lastPowerUpSpawn = powerUpSpawnKey(picked);
     return picked;
   }
@@ -5355,8 +5443,10 @@
     game.powerUpSpawnBagKey = "";
   }
 
-  function randomPowerUpSpawnSpot(spots) {
-    return spots[Math.floor(Math.random() * spots.length)];
+  function randomPowerUpSpawnSpot(spots, random) {
+    const positionSample = (randomByte(random) << 8) | randomByte(random);
+    const index = Math.floor((positionSample * spots.length) / 0x10000);
+    return spots[index];
   }
 
   function powerUpSpawnCandidates(spots) {
@@ -10792,6 +10882,8 @@
         battleTick: game.tick,
         frameLow: game.frameLow,
         frameHigh: game.frameHigh,
+        randomValue: game.randomValue,
+        randomIndex: game.randomIndex,
         demoMode: game.demoMode,
         constructionUsed: game.constructionUsed,
         constructionVisits: game.constructionVisits,
@@ -11990,6 +12082,44 @@
         starPrimaryParts: starFrame.filter((part) => part.role === "primary").length
       };
     },
+    debugBattleRandomProbe() {
+      const syntheticBytes = [0x11, 0x80, 0x7f];
+      const synthetic = [];
+      let state = { value: 0x5a, index: 0xfe };
+      for (const zeroPageByte of syntheticBytes) {
+        state = advanceBattleRandom(state.value, state.index, 0x22, zeroPageByte);
+        synthetic.push({ ...state, zeroPageByte });
+      }
+      const carryState = advanceBattleRandom(0xfa, 0x20, 0x64, 0);
+
+      const previous = {
+        randomValue: game.randomValue,
+        randomIndex: game.randomIndex,
+        frameHigh: game.frameHigh
+      };
+      try {
+        game.randomValue = 0x5a;
+        game.randomIndex = 0xfe;
+        game.frameHigh = 0x22;
+        const aiDecision = aiRoll(1 / 16);
+        const afterAiIndex = game.randomIndex;
+        const secondType = randomPowerUpType();
+        const afterPowerUpIndex = game.randomIndex;
+        const location = randomPowerUpSpawnSpot([{ id: 0 }, { id: 1 }]);
+        const afterLocationIndex = game.randomIndex;
+        const beforeInjected = { value: game.randomValue, index: game.randomIndex };
+        const injected = randomByte(() => 0.5);
+        return {
+          synthetic,
+          carryState,
+          shared: { aiDecision, afterAiIndex, secondType, afterPowerUpIndex, locationId: location.id, afterLocationIndex },
+          injected,
+          injectedPreservedState: game.randomValue === beforeInjected.value && game.randomIndex === beforeInjected.index
+        };
+      } finally {
+        Object.assign(game, previous);
+      }
+    },
     debugPowerUpFlashCadenceProbe() {
       return Array.from({ length: 32 }, (_, tick) => ({ tick, visible: isPowerUpVisible(tick) }));
     },
@@ -12395,7 +12525,6 @@
         powerUpSpawnBag: game.powerUpSpawnBag.slice(),
         powerUpSpawnBagKey: game.powerUpSpawnBagKey
       };
-      const previousRandom = Math.random;
       const spots = [
         { x: 2 * TILE + 2, y: 2 * TILE + 2 },
         { x: 4 * TILE + 2, y: 2 * TILE + 2 },
@@ -12411,13 +12540,11 @@
         game.powerUp = null;
         game.lastPowerUpSpawn = null;
         resetPowerUpSpawnBag();
-        Math.random = () => 0;
-
         const candidateTiles = powerUpSpawnCandidates(spots).map(powerUpPixelToTilePoint);
         const pickCount = Math.max(1, Math.floor(Number(count) || spots.length * 2));
         const picks = [];
         for (let i = 0; i < pickCount; i += 1) {
-          const picked = pickPowerUpSpawnSpot(spots);
+          const picked = pickPowerUpSpawnSpot(spots, () => 0);
           if (picked) picks.push(powerUpPixelToTilePoint(picked));
         }
 
@@ -12434,7 +12561,6 @@
           )
         };
       } finally {
-        Math.random = previousRandom;
         Object.assign(game, previous);
       }
     },
