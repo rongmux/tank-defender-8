@@ -41,7 +41,7 @@
   const HIDDEN_MESSAGE_DROP_FALL_FRAMES = 218;
   const HIDDEN_MESSAGE_END_FRAME = 887;
   const FULL_GAME_OVER_SCREEN_FRAMES = 108;
-  const HIGH_SCORE_SCREEN_FRAMES = 576;
+  const HIGH_SCORE_SCREEN_FRAMES = 460;
   const GAME_OVER_TEXT = "GAME OVER";
   const GAME_OVER_TEXT_START_Y = SCREEN_H;
   const GAME_OVER_TEXT_TARGET_Y = 0x71;
@@ -467,13 +467,46 @@
         ]
       },
       highScore: {
-        duration: 9.6,
-        gain: 0.022,
-        wave: "square",
-        step: 0.2,
-        noteDuration: 0.14,
-        repeat: 3,
-        notes: [659, 784, 880, 988, 880, 784, 659, 523, 587, 659, 784, 659, 587, 523, 494, 523]
+        durationFrames: 460,
+        voices: [
+          {
+            gain: 0.018,
+            wave: "square",
+            segments: [
+              { frequencies: [924, 782], noteFrames: 5, repeat: 24 },
+              { frequencies: [1243, 1108], noteFrames: 5, repeat: 8 },
+              { frequencies: [98], noteFrames: 80, repeat: 1, gain: 0 },
+              { frequencies: [1554], noteFrames: 60, repeat: 1, gain: 0.012 }
+            ]
+          },
+          {
+            gain: 0.018,
+            wave: "square",
+            segments: [
+              { frequencies: [695, 621], noteFrames: 5, repeat: 24 },
+              { frequencies: [981, 736], noteFrames: 5, repeat: 8 },
+              { frequencies: [78, 98, 116, 147, 155, 196, 233, 293, 311, 391, 464, 586, 621, 782, 924, 1165], noteFrames: 5, repeat: 1, gain: 0.022 },
+              { frequencies: [1165], noteFrames: 60, repeat: 1, gain: 0.012 }
+            ]
+          },
+          {
+            gain: 0.022,
+            wave: "triangle",
+            segments: [
+              { frequencies: [55, 55], noteFrames: 65, repeat: 1, gain: 0 },
+              { frequencies: [232, 232, 232], noteFrames: 10, repeat: 1 },
+              { frequencies: [311], noteFrames: 15, repeat: 1 },
+              { frequencies: [347], noteFrames: 5, repeat: 1 },
+              { frequencies: [391], noteFrames: 30, repeat: 1 },
+              { frequencies: [347, 311, 391], noteFrames: 10, repeat: 1 },
+              { frequencies: [246], noteFrames: 15, repeat: 1 },
+              { frequencies: [278], noteFrames: 5, repeat: 1 },
+              { frequencies: [311], noteFrames: 30, repeat: 1 },
+              { frequencies: [278, 246, 185], noteFrames: 10, repeat: 1 },
+              { frequencies: [155], noteFrames: 60, repeat: 1 }
+            ]
+          }
+        ]
       }
     }
   };
@@ -1111,6 +1144,11 @@
     nodes: []
   };
   const gameOverAudio = {
+    active: false,
+    frame: 0,
+    nodes: []
+  };
+  const highScoreAudio = {
     active: false,
     frame: 0,
     nodes: []
@@ -2722,7 +2760,7 @@
     stopScoreCountAudio();
     stopStageBonusAudio();
     stopGameOverAudio();
-    stopSound("highScore");
+    stopHighScoreAudio();
     game.demoMode = false;
     game.runHighScoreBaseline = game.highScore;
     game.newHighScoreAtGameOver = false;
@@ -2797,6 +2835,7 @@
     syncScoreCountAudioNodes();
     syncStageBonusAudioNodes();
     syncGameOverAudioNodes();
+    syncHighScoreAudioNodes();
     syncMovementAudio();
   }
 
@@ -2851,9 +2890,13 @@
       for (let repeatIndex = 0; repeatIndex < repeat; repeatIndex += 1) {
         for (let noteIndex = 0; noteIndex < frequencies.length; noteIndex += 1) {
           if (targetFrame < cursor + noteFrames) {
+            const frequency = Number(frequencies[noteIndex]);
+            const configuredGain = Number(segment.gain ?? voice.gain);
+            const gain = Number.isFinite(configuredGain) ? Math.max(0, configuredGain) : 0.01;
+            if (!(frequency > 0) || gain === 0) return null;
             return {
-              frequency: frequencies[noteIndex],
-              gain: Number(segment.gain ?? voice.gain) || 0.01,
+              frequency,
+              gain,
               wave: segment.wave || voice.wave || "square",
               segmentIndex,
               repeatIndex,
@@ -3533,6 +3576,26 @@
     updateFixedFrameAudio(gameOverAudio, "gameOver", true);
   }
 
+  function highScoreAudioPresentation(frame) {
+    return fixedFrameAudioPresentation("highScore", frame);
+  }
+
+  function syncHighScoreAudioNodes() {
+    syncFixedFrameAudioNodes(highScoreAudio, "highScore", true);
+  }
+
+  function startHighScoreAudio() {
+    startFixedFrameAudio(highScoreAudio, "highScore", true);
+  }
+
+  function stopHighScoreAudio() {
+    stopFixedFrameAudio(highScoreAudio);
+  }
+
+  function updateHighScoreAudio() {
+    updateFixedFrameAudio(highScoreAudio, "highScore", true);
+  }
+
   function movementAudioPresentation(mode, tick) {
     const eventName = mode === "player" ? "movementPlayer" : "movementEnemy";
     const event = FREE_AUDIO_MANIFEST.events[eventName];
@@ -3756,6 +3819,10 @@
     }
     if (name === "gameOver") {
       startGameOverAudio();
+      return;
+    }
+    if (name === "highScore") {
+      startHighScoreAudio();
       return;
     }
     const opts = options || {};
@@ -4216,6 +4283,7 @@
     updateScoreCountAudio();
     updateStageBonusAudio();
     updateGameOverAudio();
+    updateHighScoreAudio();
 
     if (game.screen === "title") {
       updateTitleIdle();
@@ -5734,7 +5802,7 @@
     stopScoreCountAudio();
     stopStageBonusAudio();
     stopGameOverAudio();
-    stopSound("highScore");
+    stopHighScoreAudio();
     game.screen = "title";
     game.paused = false;
     game.newHighScoreAtGameOver = false;
@@ -9842,6 +9910,14 @@
     },
     debugHighScoreScreenProbe() {
       const previous = { ...game };
+      const previousGameOverAudio = {
+        active: gameOverAudio.active,
+        frame: gameOverAudio.frame
+      };
+      const previousHighScoreAudio = {
+        active: highScoreAudio.active,
+        frame: highScoreAudio.frame
+      };
       try {
         const player = (score) => ({ id: 1, score, alive: false, respawn: 0, lives: 0 });
         game.runHighScoreBaseline = 20000;
@@ -9867,21 +9943,28 @@
         finishFullGameOverScreen();
         const started = {
           screen: game.screen,
-          elapsed: game.highScoreScreenElapsed
+          elapsed: game.highScoreScreenElapsed,
+          audioActive: highScoreAudio.active,
+          audioFrame: highScoreAudio.frame
         };
         const paletteFrames = [0, 1, 2, 3, 4].map((frame) => highScorePresentation(frame, 20100));
         const sevenDigit = highScorePresentation(0, 1234567);
         game.highScoreScreenElapsed = HIGH_SCORE_SCREEN_FRAMES - 2;
+        highScoreAudio.frame = HIGH_SCORE_SCREEN_FRAMES - 2;
+        syncHighScoreAudioNodes();
         update();
         const beforeEnd = {
           screen: game.screen,
-          elapsed: game.highScoreScreenElapsed
+          elapsed: game.highScoreScreenElapsed,
+          audioActive: highScoreAudio.active,
+          audioFrame: highScoreAudio.frame
         };
         update();
         const afterEnd = {
           screen: game.screen,
           elapsed: game.highScoreScreenElapsed,
-          triggered: game.newHighScoreAtGameOver
+          triggered: game.newHighScoreAtGameOver,
+          audioActive: highScoreAudio.active
         };
 
         game.players = [player(19900)];
@@ -9907,14 +9990,40 @@
           belowRecord
         };
       } finally {
+        stopGameOverAudio();
+        stopHighScoreAudio();
         Object.assign(game, previous);
+        gameOverAudio.active = previousGameOverAudio.active;
+        gameOverAudio.frame = previousGameOverAudio.frame;
+        highScoreAudio.active = previousHighScoreAudio.active;
+        highScoreAudio.frame = previousHighScoreAudio.frame;
+        syncGameOverAudioNodes();
+        syncHighScoreAudioNodes();
       }
+    },
+    debugHighScoreAudioProbe() {
+      const event = FREE_AUDIO_MANIFEST.events.highScore;
+      const frames = [
+        0, 4, 5, 9, 10, 129, 130, 159, 160, 174, 175, 179, 180, 209, 210, 239, 240,
+        244, 245, 254, 255, 259, 260, 289, 290, 319, 320, 324, 325, 379, 380, 399,
+        400, 459, 460
+      ];
+      return {
+        durationFrames: event.durationFrames,
+        voiceDurations: event.voices.map(fixedFrameVoiceDuration),
+        waves: event.voices.map((voice) => voice.wave),
+        frames: frames.map((frame) => highScoreAudioPresentation(frame))
+      };
     },
     debugFullGameOverScreenProbe() {
       const previous = { ...game };
       const previousAudio = {
         active: gameOverAudio.active,
         frame: gameOverAudio.frame
+      };
+      const previousHighScoreAudio = {
+        active: highScoreAudio.active,
+        frame: highScoreAudio.frame
       };
       try {
         game.newHighScoreAtGameOver = false;
@@ -9986,11 +10095,14 @@
         };
       } finally {
         stopGameOverAudio();
-        stopSound("highScore");
+        stopHighScoreAudio();
         Object.assign(game, previous);
         gameOverAudio.active = previousAudio.active;
         gameOverAudio.frame = previousAudio.frame;
+        highScoreAudio.active = previousHighScoreAudio.active;
+        highScoreAudio.frame = previousHighScoreAudio.frame;
         syncGameOverAudioNodes();
+        syncHighScoreAudioNodes();
       }
     },
     debugGameOverAudioProbe() {
@@ -10150,6 +10262,11 @@
           active: gameOverAudio.active,
           frame: gameOverAudio.frame,
           durationFrames: FREE_AUDIO_MANIFEST.events.gameOver.durationFrames
+        },
+        highScoreAudio: {
+          active: highScoreAudio.active,
+          frame: highScoreAudio.frame,
+          durationFrames: FREE_AUDIO_MANIFEST.events.highScore.durationFrames
         },
         maxActiveEnemies: maxActiveEnemies(),
         initialLives: gameSettings().initialLives,
@@ -14590,7 +14707,7 @@
           elapsed: game.highScoreScreenElapsed
         };
 
-        stopSound("highScore");
+        stopHighScoreAudio();
         game.stage = gameSettings().stageAdvance.extendedLoopEndStage;
         game.customGrid = null;
         game.newHighScoreAtGameOver = false;
@@ -14617,7 +14734,7 @@
         };
       } finally {
         stopGameOverAudio();
-        stopSound("highScore");
+        stopHighScoreAudio();
         Object.assign(game, previous);
       }
     },

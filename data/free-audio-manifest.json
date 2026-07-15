@@ -301,13 +301,46 @@
       ]
     },
     "highScore": {
-      "duration": 9.6,
-      "gain": 0.022,
-      "wave": "square",
-      "step": 0.2,
-      "noteDuration": 0.14,
-      "repeat": 3,
-      "notes": [659, 784, 880, 988, 880, 784, 659, 523, 587, 659, 784, 659, 587, 523, 494, 523]
+      "durationFrames": 460,
+      "voices": [
+        {
+          "gain": 0.018,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [924, 782], "noteFrames": 5, "repeat": 24 },
+            { "frequencies": [1243, 1108], "noteFrames": 5, "repeat": 8 },
+            { "frequencies": [98], "noteFrames": 80, "repeat": 1, "gain": 0 },
+            { "frequencies": [1554], "noteFrames": 60, "repeat": 1, "gain": 0.012 }
+          ]
+        },
+        {
+          "gain": 0.018,
+          "wave": "square",
+          "segments": [
+            { "frequencies": [695, 621], "noteFrames": 5, "repeat": 24 },
+            { "frequencies": [981, 736], "noteFrames": 5, "repeat": 8 },
+            { "frequencies": [78, 98, 116, 147, 155, 196, 233, 293, 311, 391, 464, 586, 621, 782, 924, 1165], "noteFrames": 5, "repeat": 1, "gain": 0.022 },
+            { "frequencies": [1165], "noteFrames": 60, "repeat": 1, "gain": 0.012 }
+          ]
+        },
+        {
+          "gain": 0.022,
+          "wave": "triangle",
+          "segments": [
+            { "frequencies": [55, 55], "noteFrames": 65, "repeat": 1, "gain": 0 },
+            { "frequencies": [232, 232, 232], "noteFrames": 10, "repeat": 1 },
+            { "frequencies": [311], "noteFrames": 15, "repeat": 1 },
+            { "frequencies": [347], "noteFrames": 5, "repeat": 1 },
+            { "frequencies": [391], "noteFrames": 30, "repeat": 1 },
+            { "frequencies": [347, 311, 391], "noteFrames": 10, "repeat": 1 },
+            { "frequencies": [246], "noteFrames": 15, "repeat": 1 },
+            { "frequencies": [278], "noteFrames": 5, "repeat": 1 },
+            { "frequencies": [311], "noteFrames": 30, "repeat": 1 },
+            { "frequencies": [278, 246, 185], "noteFrames": 10, "repeat": 1 },
+            { "frequencies": [155], "noteFrames": 60, "repeat": 1 }
+          ]
+        }
+      ]
     }
   }
 }
