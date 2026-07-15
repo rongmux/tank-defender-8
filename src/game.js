@@ -149,6 +149,7 @@
     5, 5, 5,
     3, 3, 3
   ]);
+  const ENEMY_DESTRUCTION_SCORE_TICKS = 6;
   const PLAYER_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
     ...ENEMY_DESTRUCTION_REFERENCE_PHASES,
     1, 1, 1, 1, 1, 1
@@ -163,7 +164,7 @@
     steelHit: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     enemyHit: { ttl: 9, color: "#ffffff", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    enemyDestroy: { ttl: 34, color: "#f0b546", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
+    enemyDestroy: { ttl: 18, color: "#f0b546", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     playerStun: { ttl: 9, color: "#f7f1c6", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     playerDestroy: { ttl: 32, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR }
   };
@@ -4620,7 +4621,9 @@
     }
     const slotOrder = player.id === 2 ? [3, 5, 4] : [2, 4, 3];
     for (const slotIndex of slotOrder) {
-      const enemy = game.enemies.find((candidate) => candidate.alive && candidate.spawnFlash <= 0 && candidate.slotIndex === slotIndex);
+      const enemy = game.enemies.find((candidate) =>
+        candidate.alive && !candidate.destroying && candidate.spawnFlash <= 0 && candidate.slotIndex === slotIndex
+      );
       if (enemy) {
         return {
           kind: "enemy",
@@ -4694,6 +4697,10 @@
 
     for (const enemy of game.enemies) {
       if (!enemy.alive) continue;
+      if (enemy.destroying) {
+        updateEnemyDestruction(enemy);
+        continue;
+      }
       if (enemy.spawnFlash > 0) {
         enemy.spawnFlash -= 1;
         continue;
@@ -4707,6 +4714,17 @@
 
   function isEnemyTimeFrozen() {
     return game.freezeTimer > 0 && gameSettings().timerFreezesEnemyTime;
+  }
+
+  /** Advances the original $73 enemy explosion timer on that tank's movement cadence. */
+  function updateEnemyDestruction(enemy) {
+    if (!isEnemyMovementFrame(enemy)) return;
+    enemy.destroyTicks = Math.max(0, Math.floor(Number(enemy.destroyTicks) || 0)) + 1;
+    const explosionTicks = Math.max(1, Math.floor(Number(enemy.destroyExplosionTicks) || explosionRule("enemyDestroy").ttl));
+    if (enemy.destroyTicks < explosionTicks + ENEMY_DESTRUCTION_SCORE_TICKS) return;
+    enemy.alive = false;
+    enemy.destroying = false;
+    game.enemyKilled += 1;
   }
 
   function shouldSpawnEnemies() {
@@ -5070,13 +5088,12 @@
   function hitTank(bullet) {
     if (bullet.ownerKind === "player") {
       for (const enemy of game.enemies) {
-        if (!enemy.alive || enemy.spawnFlash > 0) continue;
+        if (!enemy.alive || enemy.destroying || enemy.spawnFlash > 0) continue;
         if (bulletHitsTankByCenter(bullet, enemy)) {
           const wasCarrier = enemy.carrier;
           enemy.hp -= 1;
           bullet.remove = true;
           addRuleExplosion("enemyHit", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
-          if (enemy.hp <= 0) addRuleExplosion("enemyDestroy", enemy.x + 7, enemy.y + 7);
           playSound(enemy.hp <= 0 ? "enemyDestroy" : "enemyHit");
           if (shouldReleaseCarrierPowerUp(wasCarrier, enemy.hp <= 0)) releaseCarrierPowerUp(enemy);
           if (enemy.hp <= 0) destroyEnemy(enemy, bullet.ownerId);
@@ -5128,18 +5145,19 @@
   }
 
   function destroyEnemy(enemy, ownerId, options) {
-    if (!enemy.alive) return;
+    if (!enemy.alive || enemy.destroying) return;
     const opts = options || {};
     const awardScore = !game.demoMode && opts.awardScore !== false;
     const trackKill = !game.demoMode && opts.trackKill !== false;
-    enemy.alive = false;
-    game.enemyKilled += 1;
+    enemy.destroying = true;
+    enemy.destroyTicks = 0;
+    enemy.destroyExplosionTicks = explosionRule("enemyDestroy").ttl;
+    enemy.destroyShowScore = opts.showScore !== false;
     const player = game.players.find((candidate) => candidate.id === ownerId);
     if (player) {
       if (awardScore) {
         addPlayerScore(player, enemy.score);
         player.stagePoints += enemy.score;
-        addScorePopup(enemy.score, enemy.x + enemy.w / 2, enemy.y + 3);
       }
       if (trackKill) {
         player.stageKills[enemy.typeIndex] = (player.stageKills[enemy.typeIndex] || 0) + 1;
@@ -5339,10 +5357,9 @@
     if (type === "grenade") {
       playSound("enemyDestroy");
       for (const enemy of game.enemies) {
-        if (!enemy.alive || enemy.spawnFlash > 0) continue;
+        if (!enemy.alive || enemy.destroying || enemy.spawnFlash > 0) continue;
         enemy.hp = 0;
-        destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false });
-        addRuleExplosion("enemyDestroy", enemy.x + 7, enemy.y + 7);
+        destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false, showScore: false });
       }
     } else if (type === "helmet") {
       player.invuln = Math.max(player.invuln, gameSettings().powerUpDurations.helmet);
@@ -5408,6 +5425,8 @@
       pendingTurn: false,
       spawnFlash: gameSettings().timings.enemySpawnFlash,
       alive: true,
+      destroying: false,
+      destroyTicks: 0,
       slide: 0,
       trackPhase: 0
     });
@@ -5418,7 +5437,7 @@
   function isEnemySpawnOccupied(point) {
     const spawnRect = { x: point.x, y: point.y, w: 14, h: 14 };
     return game.players.concat(game.enemies).some((tank) =>
-      tank.alive && !(tank.respawn > 0) && rectsOverlap(spawnRect, tank)
+      tank.alive && !tank.destroying && !(tank.respawn > 0) && rectsOverlap(spawnRect, tank)
     );
   }
 
@@ -5468,7 +5487,7 @@
   }
 
   function shoot(tank) {
-    if (!tank.alive || tank.reload > 0 || tank.spawnFlash > 0) return;
+    if (!tank.alive || tank.destroying || tank.reload > 0 || tank.spawnFlash > 0) return;
     const key = `${tank.kind}:${tank.id}`;
     const upgrade = tank.kind === "player" ? playerUpgradeRule(tank.level) : null;
     const maxBullets = upgrade ? upgrade.maxBullets : 1;
@@ -5560,7 +5579,7 @@
 
   function activeTankCollisionPeers(tank) {
     return game.players.concat(game.enemies).filter((other) =>
-      other !== tank && other.alive && !(other.respawn > 0)
+      other !== tank && other.alive && !other.destroying && !(other.respawn > 0)
     );
   }
 
@@ -6284,6 +6303,7 @@
 
     for (const enemy of game.enemies) {
       if (!enemy.alive) continue;
+      if (enemy.destroying) continue;
       if (enemy.spawnFlash > 0) drawSpawn(enemy);
       else drawTank(enemy, enemyColor(enemy), enemy.accent);
     }
@@ -6293,6 +6313,7 @@
     renderTerrain(true, game.grid);
     if (game.powerUp) drawPowerUp(game.powerUp);
     renderExplosions();
+    renderEnemyDestructions();
     renderBaseDestruction();
     renderScorePopups();
     renderPanel();
@@ -6665,6 +6686,52 @@
       core: explosion.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
     });
     return presentation;
+  }
+
+  function renderEnemyDestructions() {
+    const rule = explosionRule("enemyDestroy");
+    for (const enemy of game.enemies) {
+      if (!enemy.alive || !enemy.destroying) continue;
+      const presentation = enemyDestructionPresentation(enemy);
+      if (presentation.kind === "score") {
+        drawText(presentation.text, presentation.x, presentation.y, 1, DEFAULT_EXPLOSION_CORE_COLOR, 5);
+        continue;
+      }
+      drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
+        primary: rule.color,
+        core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
+      });
+    }
+  }
+
+  /** Presents 18 explosion ticks followed by the original six-tick fixed score state. */
+  function enemyDestructionPresentation(enemy) {
+    const explosionTicks = Math.max(1, Math.floor(Number(enemy.destroyExplosionTicks) || explosionRule("enemyDestroy").ttl));
+    const totalTicks = explosionTicks + ENEMY_DESTRUCTION_SCORE_TICKS;
+    const tick = clamp(Math.floor(Number(enemy.destroyTicks) || 0), 0, totalTicks - 1);
+    const centerX = FIELD_X + enemy.x + enemy.w / 2;
+    const centerY = FIELD_Y + enemy.y + enemy.h / 2;
+    if (tick >= explosionTicks && enemy.destroyShowScore !== false) {
+      return {
+        kind: "score",
+        tick,
+        text: String(enemy.score),
+        x: Math.round(centerX - 8),
+        y: Math.round(centerY - 8)
+      };
+    }
+    const explosionTick = tick >= explosionTicks ? 0 : tick;
+    const referenceFrame = Math.min(
+      ENEMY_DESTRUCTION_REFERENCE_PHASES.length - 1,
+      Math.floor((explosionTick * ENEMY_DESTRUCTION_REFERENCE_PHASES.length) / explosionTicks)
+    );
+    const phase = ENEMY_DESTRUCTION_REFERENCE_PHASES[referenceFrame];
+    return {
+      kind: "explosion",
+      tick,
+      referenceFrame,
+      ...destructionExplosionGeometry(phase, centerX, centerY)
+    };
   }
 
   function renderBaseDestruction() {
@@ -8187,6 +8254,7 @@
           hit: lethalHitResult,
           bulletRemoved: lethalBullet.remove,
           enemyAlive: lethalEnemy.alive,
+          enemyDestroying: lethalEnemy.destroying,
           enemyHp: lethalEnemy.hp,
           enemyKilled: game.enemyKilled,
           explosionCount: game.explosions.length
@@ -8418,6 +8486,7 @@
           hit: lethalHitResult,
           bulletRemoved: lethalBullet.remove,
           enemyAlive: game.enemies[0].alive,
+          enemyDestroying: game.enemies[0].destroying,
           enemyKilled: game.enemyKilled,
           explosionCount: game.explosions.length
         };
@@ -8454,7 +8523,8 @@
         applyPowerUp(game.players[0], "grenade");
         const grenade = {
           ...state(),
-          activeEnemies: grenadeTargets.filter((enemy) => enemy.alive && enemy.spawnFlash <= 0).length,
+          activeEnemies: grenadeTargets.filter((enemy) => enemy.alive && !enemy.destroying && enemy.spawnFlash <= 0).length,
+          destroyingEnemies: grenadeTargets.filter((enemy) => enemy.destroying).length,
           spawningAlive: grenadeTargets[2].alive,
           enemyKilled: game.enemyKilled,
           explosionCount: game.explosions.length
@@ -11995,12 +12065,21 @@
 
       try {
         applyPowerUp(player, "grenade");
+        const beforeRelease = {
+          enemyKilled: game.enemyKilled,
+          aliveEnemies: game.enemies.filter((enemy) => enemy.alive).length,
+          destroyingEnemies: game.enemies.filter((enemy) => enemy.destroying).length
+        };
+        for (let tick = 0; tick < explosionRule("enemyDestroy").ttl + ENEMY_DESTRUCTION_SCORE_TICKS; tick += 1) {
+          updateEnemies();
+        }
         return {
           scoreGain: player.score - 1000,
           pickupScore: gameSettings().powerUpRules.pickupScore,
           stagePoints: player.stagePoints,
           stageKills: player.stageKills.slice(),
           totalKills: player.totalKills.slice(),
+          beforeRelease,
           enemyKilled: game.enemyKilled,
           aliveEnemies: game.enemies.filter((enemy) => enemy.alive).length
         };
@@ -12063,13 +12142,28 @@
         game.explosions = [];
         game.scorePopups = [];
         applyPowerUp(player, "grenade");
-        return {
+        const beforeRelease = {
           activeAlive: active.alive,
+          activeDestroying: active.destroying,
           spawningAlive: spawning.alive,
           spawningHp: spawning.hp,
           spawningFlash: spawning.spawnFlash,
           enemyKilled: game.enemyKilled,
+          explosionCount: game.explosions.length
+        };
+        for (let tick = 0; tick < explosionRule("enemyDestroy").ttl + ENEMY_DESTRUCTION_SCORE_TICKS; tick += 1) {
+          updateEnemies();
+        }
+        return {
+          activeAlive: active.alive,
+          activeDestroying: active.destroying,
+          spawningAlive: beforeRelease.spawningAlive,
+          spawningHp: beforeRelease.spawningHp,
+          spawningFlash: beforeRelease.spawningFlash,
+          spawningFlashAfterLifecycle: spawning.spawnFlash,
+          enemyKilled: game.enemyKilled,
           explosionCount: game.explosions.length,
+          beforeRelease,
           stageKills: player.stageKills.slice(),
           totalKills: player.totalKills.slice()
         };
@@ -12127,6 +12221,13 @@
         game.explosions = [];
         game.scorePopups = [];
         destroyEnemy(enemy, player.id);
+        const enemyScoreAward = {
+          score: player.score,
+          stagePoints: player.stagePoints,
+          stageKills: player.stageKills.slice()
+        };
+        enemy.destroyTicks = enemy.destroyExplosionTicks;
+        const enemyPresentation = enemyDestructionPresentation(enemy);
         const enemyPopup = game.scorePopups[0] ? { ...game.scorePopups[0] } : null;
 
         game.scorePopups = [];
@@ -12152,6 +12253,8 @@
 
         return {
           enemyPopup,
+          enemyScoreAward,
+          enemyPresentation,
           pickupPopup,
           grenadePopups,
           afterUpdate,
@@ -12741,6 +12844,7 @@
         return {
           bulletRemoved: bullet.remove,
           enemyAlive: enemy.alive,
+          enemyDestroying: Boolean(enemy.destroying),
           enemyHp: enemy.hp,
           enemyKilled: game.enemyKilled,
           explosions: explosionDetails.length,
@@ -14361,6 +14465,209 @@
         };
       } finally {
         game.explosions = previousExplosions;
+      }
+    },
+    debugEnemyDestructionLifecycleProbe() {
+      const previous = { ...game };
+      const type = enemyTypeDefinitions()[0];
+      const player = createPlayer(1);
+      player.spawnFlash = 0;
+      player.invuln = 0;
+      const makeEnemy = (id, slotIndex, alternateMovement, x) => ({
+        kind: "enemy",
+        id,
+        slotIndex,
+        x: x === undefined ? 64 : x,
+        y: 64,
+        w: 14,
+        h: 14,
+        dir: DOWN,
+        speed: type.speed,
+        hp: 1,
+        maxHp: 1,
+        bulletSpeed: type.bullet,
+        bulletPower: type.wallPower,
+        reloadBase: type.reload,
+        reload: 0,
+        score: type.score,
+        color: type.color,
+        accent: "#2b2a28",
+        typeIndex: 0,
+        carrier: false,
+        fireChance: 0,
+        alternateMovement,
+        blockedPauseTicks: 0,
+        pendingTurn: false,
+        spawnFlash: 0,
+        alive: true,
+        destroying: false,
+        destroyTicks: 0,
+        slide: 0,
+        trackPhase: 0
+      });
+      const runLifecycle = (enemy) => {
+        game.tick = 0;
+        game.enemies = [enemy];
+        game.enemyKilled = 0;
+        destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false });
+        const frames = [];
+        while (enemy.alive && frames.length < 200) {
+          const presentation = enemyDestructionPresentation(enemy);
+          frames.push({
+            destroyTicks: enemy.destroyTicks,
+            kind: presentation.kind,
+            phase: presentation.phase || null,
+            text: presentation.text || null
+          });
+          game.tick += 1;
+          updateEnemyDestruction(enemy);
+        }
+        return {
+          displayFrames: frames.length,
+          explosionFrames: frames.filter((frame) => frame.kind === "explosion").length,
+          scoreFrames: frames.filter((frame) => frame.kind === "score").length,
+          phases: frames
+            .map((frame) => frame.phase)
+            .filter((phase, index, phases) => phase && (index === 0 || phase !== phases[index - 1])),
+          scoreText: frames.find((frame) => frame.kind === "score")?.text || null,
+          released: !enemy.alive,
+          enemyKilled: game.enemyKilled
+        };
+      };
+
+      try {
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = false;
+        game.playerCount = 1;
+        game.stage = 1;
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.players = [player];
+        game.bullets = [];
+        game.explosions = [];
+        game.scorePopups = [];
+        game.powerUp = null;
+
+        const fast = runLifecycle(makeEnemy(100, 2, false));
+        const normal = runLifecycle(makeEnemy(101, 2, true));
+
+        const frozenEnemy = makeEnemy(102, 2, false);
+        game.enemies = [frozenEnemy];
+        game.enemyKilled = 0;
+        game.freezeTimer = 999;
+        destroyEnemy(frozenEnemy, player.id, { awardScore: false, trackKill: false });
+        for (let tick = 0; tick < frozenEnemy.destroyExplosionTicks + ENEMY_DESTRUCTION_SCORE_TICKS; tick += 1) {
+          updateEnemies();
+        }
+        const timerFrozen = {
+          released: !frozenEnemy.alive,
+          enemyKilled: game.enemyKilled,
+          freezeTimer: game.freezeTimer
+        };
+        game.freezeTimer = 0;
+
+        const collisionEnemy = makeEnemy(103, 2, false, 40);
+        const collisionPlayer = createPlayer(1);
+        collisionPlayer.x = 26;
+        collisionPlayer.y = 64;
+        collisionPlayer.spawnFlash = 0;
+        collisionPlayer.invuln = 0;
+        game.players = [collisionPlayer];
+        game.enemies = [collisionEnemy];
+        destroyEnemy(collisionEnemy, collisionPlayer.id, { awardScore: false, trackKill: false });
+        const collisionIgnored = canTankOccupy(collisionPlayer, collisionPlayer.x + 1, collisionPlayer.y);
+        const duplicateBullet = {
+          x: collisionEnemy.x + 5,
+          y: collisionEnemy.y + 5,
+          w: 4,
+          h: 4,
+          ownerKind: "player",
+          ownerId: collisionPlayer.id,
+          ownerKey: `player:${collisionPlayer.id}`,
+          remove: false
+        };
+        const duplicateHit = hitTank(duplicateBullet);
+
+        game.players = [player];
+        const capacity = maxActiveEnemies();
+        const capacityEnemies = Array.from({ length: capacity }, (_, index) =>
+          makeEnemy(200 + index, capacity + 1 - index, false, 24 + index * 24)
+        );
+        for (const enemy of capacityEnemies) {
+          destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false });
+        }
+        game.enemies = capacityEnemies;
+        game.enemyKilled = 0;
+        game.enemySpawned = capacity;
+        game.nextSpawn = 0;
+        spawnEnemies();
+        const capacityBeforeRelease = {
+          enemySpawned: game.enemySpawned,
+          aliveSlots: game.enemies.filter((enemy) => enemy.alive).length
+        };
+        const releasedSlot = capacityEnemies[0].slotIndex;
+        for (let tick = 0; tick < capacityEnemies[0].destroyExplosionTicks + ENEMY_DESTRUCTION_SCORE_TICKS; tick += 1) {
+          updateEnemyDestruction(capacityEnemies[0]);
+        }
+        spawnEnemies();
+        const spawnedAfterRelease = game.enemies.find((enemy) => enemy.id === 100 + capacity);
+        const capacityAfterRelease = {
+          enemySpawned: game.enemySpawned,
+          activeSlots: game.enemies.filter((enemy) => enemy.alive).length,
+          reusedSlot: spawnedAfterRelease ? spawnedAfterRelease.slotIndex : null,
+          releasedSlot
+        };
+
+        const grenadeEnemy = makeEnemy(300, 2, false);
+        game.players = [player];
+        game.enemies = [grenadeEnemy];
+        game.scorePopups = [];
+        destroyEnemy(grenadeEnemy, player.id, { awardScore: false, trackKill: false, showScore: false });
+        grenadeEnemy.destroyTicks = grenadeEnemy.destroyExplosionTicks;
+        const grenadeFinalState = enemyDestructionPresentation(grenadeEnemy);
+
+        const lastEnemy = makeEnemy(400, 2, false);
+        game.screen = "playing";
+        game.players = [player];
+        game.enemies = [lastEnemy];
+        game.enemySpawned = enemyTotal();
+        game.enemyKilled = enemyTotal() - 1;
+        game.clearPendingTimer = 0;
+        destroyEnemy(lastEnemy, player.id, { awardScore: false, trackKill: false });
+        checkEndState();
+        const clearOnHit = game.clearPendingTimer;
+        for (let tick = 0; tick < lastEnemy.destroyExplosionTicks + ENEMY_DESTRUCTION_SCORE_TICKS - 1; tick += 1) {
+          updateEnemyDestruction(lastEnemy);
+        }
+        checkEndState();
+        const clearBeforeRelease = game.clearPendingTimer;
+        updateEnemyDestruction(lastEnemy);
+        checkEndState();
+        const clearAfterRelease = {
+          timer: game.clearPendingTimer,
+          screen: game.screen,
+          enemyKilled: game.enemyKilled
+        };
+
+        return {
+          explosionTicks: explosionRule("enemyDestroy").ttl,
+          scoreTicks: ENEMY_DESTRUCTION_SCORE_TICKS,
+          fast,
+          normal,
+          timerFrozen,
+          collisionIgnored,
+          duplicateHit,
+          duplicateBulletRemoved: duplicateBullet.remove,
+          capacityBeforeRelease,
+          capacityAfterRelease,
+          grenadeFinalState,
+          clearOnHit,
+          clearBeforeRelease,
+          clearAfterRelease
+        };
+      } finally {
+        Object.assign(game, previous);
       }
     },
     debugRenderTankDestructionExplosionFrame(ruleName, elapsed) {
