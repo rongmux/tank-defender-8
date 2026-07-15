@@ -934,15 +934,7 @@ assert(spawnAnimationProbe.beforeSkippedCadenceFrame === 28 && spawnAnimationPro
 assert(spawnAnimationProbe.lows.join(",") === "0,1,2,3,4,5,6,7,8,9,10,11,12,13,0,1,2,3,4,5,6,7,8,9,10,11,12,13", "spawn animation should run the original low-nibble sequence twice");
 assert(spawnAnimationProbe.phases.join(",") === "3,3,2,2,1,1,0,0,0,1,1,2,2,3,3,3,2,2,1,1,0,0,0,1,1,2,2,3", "spawn animation should shrink and expand symmetrically in each fourteen-frame state");
 assert(spawnAnimationProbe.sizes.join(",") === "14,14,11,11,8,8,6,6,6,8,8,11,11,14,14,14,11,11,8,8,6,6,6,8,8,11,11,14", "replacement spawn art should hold the matching four discrete footprints");
-assert(schema.gameSettings.playerUpgradeRules[0].maxBullets === 1, "schema game settings should expose player upgrade rules");
-assert(schema.gameSettings.playerUpgradeRules.every((rule) => rule.reload === 1), "player firing should be limited by active bullet slots rather than long cooldowns");
 assert(schema.gameSettings.timerFreezesEnemyTime === true, "schema should expose timer freeze rule");
-assert(schema.playerUpgradeRules[0].maxBullets === 1, "level 0 should allow one bullet");
-assert(schema.playerUpgradeRules[1].bulletSpeed === schema.playerUpgradeRules[2].bulletSpeed, "levels 1 and 2 should use the same fast bullet speed");
-assert(schema.playerUpgradeRules[0].bulletSpeed === 2 && schema.playerUpgradeRules[1].bulletSpeed === 4, "stars should upgrade player bullets from two to four pixels per frame");
-assert(schema.playerUpgradeRules[2].maxBullets === 2, "level 2 should allow two bullets");
-assert(schema.playerUpgradeRules[2].wallPower === 1, "level 2 should not destroy steel");
-assert(schema.playerUpgradeRules[3].wallPower === 3, "level 3 should destroy steel and double-damage brick");
 assert(schema.enemyTypes[2].wallPower === 1, "the built-in Power Tank should gain bullet speed without stronger wall damage");
 assert(schema.wallRules.brickSameSideHits === 4, "normal shots should need four same-side brick hits");
 assert(schema.wallRules.poweredBrickSameSideHits === 2, "powered shots should need two same-side brick hits");
@@ -1155,15 +1147,6 @@ assert(scorePopupProbe.afterUpdate[0].ttl === scorePopupProbe.grenadePopups[0].t
 const pausedScorePopupProbe = context.window.TankDefender8.debugPausedScorePopupProbe();
 assert(pausedScorePopupProbe.afterOneFrame.tick === 27 && pausedScorePopupProbe.afterOneFrame.ttl === 1, "paused gameplay should count down the pickup score without advancing the gameplay tick");
 assert(pausedScorePopupProbe.afterTwoFrames.tick === 27 && pausedScorePopupProbe.afterTwoFrames.popupCount === 0, "pickup score should expire on schedule while gameplay remains paused");
-const starUpgradeProbe = context.window.TankDefender8.debugStarUpgradeProbe();
-assert(starUpgradeProbe.tiers[0].level === 0 && starUpgradeProbe.tiers[0].maxBullets === 1, "base player tank should start with one bullet");
-assert(starUpgradeProbe.tiers[1].level === 1 && starUpgradeProbe.tiers[1].bulletSpeed === starUpgradeProbe.powerTankBulletSpeed, "first star should increase bullet speed");
-assert(starUpgradeProbe.tiers[2].level === 2 && starUpgradeProbe.tiers[2].maxBullets === 2, "second star should allow two bullets");
-assert(starUpgradeProbe.tiers[2].wallPower === 1, "second star should not destroy steel");
-assert(starUpgradeProbe.tiers[3].level === 3 && starUpgradeProbe.tiers[3].wallPower === 3, "third star should enable steel destruction");
-assert(starUpgradeProbe.capped.level === 3, "additional stars should not exceed max player power");
-assert(starUpgradeProbe.afterDeath.level === schema.gameSettings.deathPowerLevel, "player death should reset power to the configured death level");
-assert(starUpgradeProbe.afterDeath.destroying && starUpgradeProbe.afterDeath.lives === 2 && starUpgradeProbe.afterDeath.respawn === schema.gameSettings.timings.playerRespawn, "player hit should enter the retained death state before consuming a life");
 const starVisualLevels = [0, 1, 2, 3].map((level) => {
   canvasContext.calls.length = 0;
   const probe = context.window.TankDefender8.debugPlayerUpgradeVisualProbe(level);
@@ -1175,8 +1158,6 @@ const starVisualLevels = [0, 1, 2, 3].map((level) => {
 assert(starVisualLevels[0].overlayParts === 0, "base player tank should not draw upgrade overlay parts");
 assert(new Set(starVisualLevels.map((probe) => probe.overlaySignature)).size === 4, "each player star level should draw a distinct tank shape");
 assert(starVisualLevels[3].maxPowerParts > 0 && starVisualLevels[3].maxPowerDraws === starVisualLevels[3].maxPowerParts, "max-power player tank should draw its steel-piercing visual overlay");
-const starSurvivabilityProbe = context.window.TankDefender8.debugStarSurvivabilityProbe();
-assert(starSurvivabilityProbe.alive === false && starSurvivabilityProbe.lives === 2, "star upgrades should not add armor and life consumption should wait for the death animation");
 const deathRespawnProbe = context.window.TankDefender8.debugPlayerDeathRespawnProbe();
 assert(deathRespawnProbe.deathTicks === 24 && deathRespawnProbe.spawnTicks === 28, "player death and spawn states should use the original status-tick counts");
 assert(deathRespawnProbe.afterHit.alive === false && deathRespawnProbe.afterHit.destroying && deathRespawnProbe.afterHit.lives === 2 && deathRespawnProbe.afterHit.respawn === 24, "enemy hit should begin the retained death state without immediately consuming a life");
@@ -1670,15 +1651,6 @@ const badStageClearBonusPack = {
   enemies: [schema.enemies[0].slice(0, 3)]
 };
 assert(context.window.TankDefender8.validateStagePack(badStageClearBonusPack).ok === false, "bad stage clear bonus should fail validation");
-
-const badUpgradePack = {
-  id: "bad-upgrade",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { playerUpgradeRules: schema.playerUpgradeRules.map((rule, index) => index === 3 ? { ...rule, wallPower: 4 } : rule) },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badUpgradePack).ok === false, "bad player upgrade rule should fail validation");
 
 const badSpawnPack = {
   id: "bad-spawn",

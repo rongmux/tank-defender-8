@@ -12,7 +12,6 @@
   const { normalizeHexColor, normalizeNumber } = requireRuntimeModule("valueNormalization");
   const {
     DEFAULT_ENEMY_TYPES: defaultEnemyTypes,
-    ENEMY_BULLET_SPEED,
     ENEMY_FIRE_CHANCE,
     ENEMY_MOVE_SPEED,
     POWER_UP_TYPES: powerTypes,
@@ -20,6 +19,11 @@
     normalizeEnemySequence,
     normalizeEnemyTypes
   } = requireRuntimeModule("enemyTypes");
+  const {
+    DEFAULT_PLAYER_UPGRADE_RULES: defaultPlayerUpgradeRules,
+    clonePlayerUpgradeRules,
+    normalizePlayerUpgradeRules
+  } = requireRuntimeModule("playerUpgrades");
   const {
     BRICK_QUARTER_FRAGMENT_MASKS,
     FULL_BRICK_FRAGMENT_MASK,
@@ -1046,13 +1050,6 @@
     R: ["110", "101", "110", "101", "101"],
     V: ["101", "101", "101", "101", "010"]
   };
-  const defaultPlayerUpgradeRules = [
-    { level: 0, maxBullets: 1, bulletSpeed: ENEMY_BULLET_SPEED.normal, wallPower: 1, reload: 1 },
-    { level: 1, maxBullets: 1, bulletSpeed: ENEMY_BULLET_SPEED.fast, wallPower: 1, reload: 1 },
-    { level: 2, maxBullets: 2, bulletSpeed: ENEMY_BULLET_SPEED.fast, wallPower: 1, reload: 1 },
-    { level: 3, maxBullets: 2, bulletSpeed: ENEMY_BULLET_SPEED.fast, wallPower: 3, reload: 1 }
-  ];
-
   const originalPowerUpRandomTable = ["helmet", "timer", "shovel", "star", "grenade", "tank", "grenade", "star"];
   const PLAYER_UPGRADE_OVERLAY_COLORS = {
     level1: "#f7f1c6",
@@ -1345,10 +1342,6 @@
     return grid;
   }
 
-  function clonePlayerUpgradeRules(rules) {
-    return rules.map((rule) => ({ ...rule }));
-  }
-
   function cloneExplosionRules(rules) {
     return Object.fromEntries(Object.entries(rules).map(([key, rule]) => [key, { ...rule }]));
   }
@@ -1359,28 +1352,6 @@
 
   function cloneSpriteManifest() {
     return JSON.parse(JSON.stringify(FREE_SPRITE_MANIFEST));
-  }
-
-  function normalizePlayerUpgradeRules(rules) {
-    if (rules === undefined) return clonePlayerUpgradeRules(defaultPlayerUpgradeRules);
-    if (!Array.isArray(rules) || rules.length !== defaultPlayerUpgradeRules.length) {
-      throw new Error(`gameSettings.playerUpgradeRules must contain exactly ${defaultPlayerUpgradeRules.length} entries`);
-    }
-    return rules.map((rule, index) => normalizePlayerUpgradeRule(rule, index));
-  }
-
-  function normalizePlayerUpgradeRule(rule, index) {
-    if (!rule || typeof rule !== "object") {
-      throw new Error(`gameSettings.playerUpgradeRules[${index}] must be an object`);
-    }
-    const fallback = defaultPlayerUpgradeRules[index];
-    return {
-      level: index,
-      maxBullets: normalizeNumber(rule.maxBullets, fallback.maxBullets, 1, 4, true, `gameSettings.playerUpgradeRules[${index}].maxBullets`),
-      bulletSpeed: normalizeNumber(rule.bulletSpeed, fallback.bulletSpeed, 0.1, 6, false, `gameSettings.playerUpgradeRules[${index}].bulletSpeed`),
-      wallPower: normalizeNumber(rule.wallPower, fallback.wallPower, 1, 3, true, `gameSettings.playerUpgradeRules[${index}].wallPower`),
-      reload: normalizeNumber(rule.reload, fallback.reload, 1, 600, true, `gameSettings.playerUpgradeRules[${index}].reload`)
-    };
   }
 
   function normalizeStageSettings(settings, totalStages) {

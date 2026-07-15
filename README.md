@@ -6,7 +6,7 @@ NES-style tank defense game built as a static Canvas app.
 
 This repository does not include original NES ROM data, original sprites, original audio, or original stage maps. Maps, sprites, and audio use free or custom replacement resources. The built-in enemy composition mirrors the publicly documented 35-stage Battle City enemy group table, and the engine remains data-driven so gameplay rules, enemy sequences, and stage packs can be tuned without changing the core code.
 
-The project is currently in a dedicated architecture-refactor phase. New 1:1 gameplay work is frozen while the single-file runtime and smoke test are split into explicit browser modules, pure rule modules, shared test infrastructure, unit suites, and feature integration suites. Core timing, randomness, and geometry are now modular; the configuration domain owns shared value validation and enemy type/spec normalization; and the stage domain owns map-grid rules plus the original-style enemy group/sequence model. The no-build static launch path remains a hard compatibility requirement throughout the migration.
+The project is currently in a dedicated architecture-refactor phase. New 1:1 gameplay work is frozen while the single-file runtime and smoke test are split into explicit browser modules, pure rule modules, shared test infrastructure, unit suites, and feature integration suites. Core timing, randomness, and geometry are now modular; the configuration domain owns shared value validation, enemy type/spec normalization, and player star-upgrade tiers; and the stage domain owns map-grid rules plus the original-style enemy group/sequence model. The no-build static launch path remains a hard compatibility requirement throughout the migration.
 
 ## Run
 
@@ -26,6 +26,7 @@ node --check src/core/frame-counter.js
 node --check src/core/geometry.js
 node --check src/config/value-normalization.js
 node --check src/config/enemy-types.js
+node --check src/config/player-upgrades.js
 node --check src/stages/enemy-sequences.js
 node --check src/stages/stage-grid.js
 node --check src/game.js
@@ -47,6 +48,7 @@ tank-defender-8/
 |-- src/
 |   |-- config/
 |   |   |-- enemy-types.js
+|   |   |-- player-upgrades.js
 |   |   `-- value-normalization.js
 |   |-- core/
 |   |   |-- battle-random.js
@@ -65,6 +67,7 @@ tank-defender-8/
 |   |   |-- enemy-sequences.test.js
 |   |   |-- enemy-types.test.js
 |   |   |-- frame-counter.test.js
+|   |   |-- player-upgrades.test.js
 |   |   `-- stage-grid.test.js
 |   |-- unit/
 |   |   |-- battle-random.test.js
@@ -73,6 +76,7 @@ tank-defender-8/
 |   |   |-- enemy-types.test.js
 |   |   |-- frame-counter.test.js
 |   |   |-- geometry.test.js
+|   |   |-- player-upgrades.test.js
 |   |   |-- stage-grid.test.js
 |   |   `-- value-normalization.test.js
 |   `-- run-tests.js
@@ -86,7 +90,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/config/` owns data validation shared by stage-pack configuration: `value-normalization.js` validates numeric ranges and colors, while `enemy-types.js` owns the four default enemy definitions, movement/projectile tiers, power-up type names, enemy-type cloning and validation, and per-stage enemy-spec normalization. `src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency; shared battle randomness, independent frame counters, and rectangle geometry live there. `src/stages/` owns the stage domain: `stage-grid.js` provides tile constants, brick-fragment state, grid mutation, validation, and 13x13/26x26 codecs, while `enemy-sequences.js` owns the 35-stage enemy group table, 20-enemy expansion, carrier positions, spawn-point rotation, and sequence summaries. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable Canvas, audio, DOM, storage, input, and script-loading fakes. `tests/unit/` exercises pure modules directly, `tests/integration/` verifies extracted configuration, timing, collision, stage-grid, and enemy-sequence behavior through the real browser API, and `tests/run-tests.js` runs both before the remaining regression suite in `tools/smoke-test.js`.
+`src/config/` owns data validation shared by stage-pack configuration: `value-normalization.js` validates numeric ranges and colors; `enemy-types.js` owns the four default enemy definitions, movement/projectile tiers, power-up type names, enemy-type cloning and validation, and per-stage enemy-spec normalization; and `player-upgrades.js` owns the four star-upgrade levels, independent cloning, and pack override validation. `src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency; shared battle randomness, independent frame counters, and rectangle geometry live there. `src/stages/` owns the stage domain: `stage-grid.js` provides tile constants, brick-fragment state, grid mutation, validation, and 13x13/26x26 codecs, while `enemy-sequences.js` owns the 35-stage enemy group table, 20-enemy expansion, carrier positions, spawn-point rotation, and sequence summaries. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable Canvas, audio, DOM, storage, input, and script-loading fakes. `tests/unit/` exercises pure modules directly, `tests/integration/` verifies extracted configuration, timing, collision, stage-grid, enemy-sequence, and star-upgrade behavior through the real browser API, and `tests/run-tests.js` runs both before the remaining regression suite in `tools/smoke-test.js`.
 
 The migration order is core timing/random/geometry, configuration and stage packs, gameplay entities and rules, input/editor, audio, rendering/screens, debug adapters, and finally the application bootstrap. Every extraction must keep the static no-build launch path, move its matching tests in the same commit, and pass the full regression suite before the next subsystem moves. New 1:1 gameplay work is paused until this refactor and test split are complete.
 
