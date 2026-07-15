@@ -745,7 +745,7 @@ assert(runtimeSpriteManifest.sprites.spawn.frames.box[0].op === "stroke", "runti
 assert(Object.keys(runtimeSpriteManifest.sprites.hiddenDrop.frames).join(",") === "morph0,morph1,morph2,morph3,fall", "hidden-message replacement drop should expose all morph and fall frames");
 assert(runtimeSpriteManifest.sprites.miniTank.frames.up.length === 5, "runtime sprite manifest should expose mini tank frames");
 assert(runtimeSpriteManifest.sprites.explosion.frames.burst.length === 2, "runtime sprite manifest should expose explosion frames");
-assert(Object.keys(runtimeSpriteManifest.sprites.baseExplosion.frames).join(",") === "phase1,phase2,phase3,phase4,phase5", "runtime sprite manifest should expose all five HQ explosion frames");
+assert(Object.keys(runtimeSpriteManifest.sprites.destructionExplosion.frames).join(",") === "phase1,phase2,phase3,phase4,phase5", "runtime sprite manifest should expose all five shared tank/HQ destruction frames");
 assert(runtimeSpriteManifest.sprites.enemyCounter.frames.remaining.length === 1, "runtime sprite manifest should expose enemy counter frames");
 assert(stableJson(runtimeSpriteManifest) === stableJson(spriteManifest), "runtime sprite manifest should match data/free-sprite-manifest.json");
 let snapshot = context.window.TankDefender8.debugSnapshot();
@@ -1041,6 +1041,35 @@ assert(bulletImpactExplosionProbe.beforePause === 9 && bulletImpactExplosionProb
 assert(bulletImpactExplosionProbe.frames.map((frame) => frame.ttl).join(",") === "9,8,7,6,5,4,3,2,1", "bullet impact should remain visible for exactly nine frames");
 assert(bulletImpactExplosionProbe.frames.map((frame) => frame.phase).join(",") === "0,0,0,1,1,1,2,2,2", "bullet impact should show three animation phases for three frames each");
 assert(bulletImpactExplosionProbe.frames.map((frame) => frame.size).join(",") === "8,8,8,12,12,12,16,16,16", "replacement impact art should hold one footprint for each three-frame phase");
+const tankDestructionExplosionProbe = context.window.TankDefender8.debugTankDestructionExplosionProbe();
+const collapseDestructionPhases = (frames) => frames
+  .map((frame) => frame.phase)
+  .filter((phase, index, phases) => index === 0 || phase !== phases[index - 1]);
+assert(tankDestructionExplosionProbe.enemy.length === 34 && tankDestructionExplosionProbe.player.length === 32, "tank destruction replacements should preserve their configured visible lifetimes");
+assert(tankDestructionExplosionProbe.enemy.every((frame) => frame.style === "enemyDestroy") && tankDestructionExplosionProbe.player.every((frame) => frame.style === "playerDestroy"), "live explosion routing should retain the distinct enemy and player destruction styles");
+assert(collapseDestructionPhases(tankDestructionExplosionProbe.enemy).join(",") === "1,2,3,4,5,3", "enemy destruction should follow the original small-small-small-large-large-small picture sequence");
+assert(collapseDestructionPhases(tankDestructionExplosionProbe.player).join(",") === "1,2,3,4,5,3,1", "player destruction should restore the original final small picture after the enemy sequence");
+assert(tankDestructionExplosionProbe.enemy.every((frame) => frame.frameName === `phase${frame.phase}`), "enemy destruction phases should select their matching shared sprite frame");
+assert(tankDestructionExplosionProbe.player.every((frame) => frame.frameName === `phase${frame.phase}`), "player destruction phases should select their matching shared sprite frame");
+assert(tankDestructionExplosionProbe.enemy.every((frame) => frame.phase >= 4 ? frame.width === 32 && frame.height === 32 : frame.width === 16 && frame.height === 8), "enemy destruction should switch between the original 16x8 and 32x32 sprite bounds");
+assert(tankDestructionExplosionProbe.player.every((frame) => frame.phase >= 4 ? frame.width === 32 && frame.height === 32 : frame.width === 16 && frame.height === 8), "player destruction should switch between the original 16x8 and 32x32 sprite bounds");
+const tankDestructionFrameSignatures = [1, 2, 3, 4, 5].map((phase) => {
+  canvasContext.calls.length = 0;
+  const sample = tankDestructionExplosionProbe.enemy.find((frame) => frame.phase === phase);
+  const presentation = context.window.TankDefender8.debugRenderTankDestructionExplosionFrame("enemyDestroy", sample.elapsed);
+  const signature = canvasContext.calls
+    .filter((call) => call.op === "fillRect" && (call.style === "#f0b546" || call.style === "#f7f1c6"))
+    .map((call) => `${call.style}:${call.x},${call.y},${call.w},${call.h}`)
+    .join("|");
+  return { phase: presentation.phase, signature };
+});
+assert(tankDestructionFrameSignatures.map((entry) => entry.phase).join(",") === "1,2,3,4,5", "tank destruction render samples should cover all five shared pictures");
+assert(new Set(tankDestructionFrameSignatures.map((entry) => entry.signature)).size === 5, "all five tank destruction pictures should render distinct replacement art");
+canvasContext.calls.length = 0;
+const smallTankDestruction = context.window.TankDefender8.debugRenderTankDestructionExplosionFrame("enemyDestroy", 0);
+const smallTankDestructionCalls = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#f0b546");
+assert(smallTankDestruction.x === 72 && smallTankDestruction.y === 72 && smallTankDestruction.width === 16 && smallTankDestruction.height === 8, "small tank destruction pictures should expose the original bounds around the tank position");
+assert(Math.min(...smallTankDestructionCalls.map((call) => call.x)) === 72 && Math.min(...smallTankDestructionCalls.map((call) => call.y)) === 72 && Math.max(...smallTankDestructionCalls.map((call) => call.x + call.w)) === 88 && Math.max(...smallTankDestructionCalls.map((call) => call.y + call.h)) === 80, "small tank destruction art should occupy exactly the original two-sprite footprint");
 assert(schema.gameSettings.stageAdvance.loopAfterFinalStage === true, "schema should expose final-stage loop rule");
 assert(schema.gameSettings.stageAdvance.extendedLoopEndStage === 70, "schema should expose original-style extended loop end stage");
 assert(schema.gameSettings.stageAdvance.extendedLoopEnemyStage === 35, "schema should expose extended-loop enemy pattern stage");
@@ -1444,7 +1473,7 @@ const enemyBulletPlayerProbe = context.window.TankDefender8.debugEnemyBulletPlay
 assert(enemyBulletPlayerProbe.protected.bulletRemoved === true && enemyBulletPlayerProbe.protected.alive === true && enemyBulletPlayerProbe.protected.explosions === 0, "player protection should absorb an enemy bullet without a hit explosion");
 assert(enemyBulletPlayerProbe.positiveNine.bulletRemoved && enemyBulletPlayerProbe.negativeNine.bulletRemoved, "enemy bullets should hit within nine pixels of the player center on both axes");
 assert(!enemyBulletPlayerProbe.positiveNine.alive && !enemyBulletPlayerProbe.negativeNine.alive, "unprotected center-range enemy hits should start player death");
-assert(enemyBulletPlayerProbe.positiveNine.explosionDetails.map((explosion) => explosion.style).join(",") === "bulletImpact,default", "an unprotected player hit should show the bullet impact before the tank destruction explosion");
+assert(enemyBulletPlayerProbe.positiveNine.explosionDetails.map((explosion) => explosion.style).join(",") === "bulletImpact,playerDestroy", "an unprotected player hit should show the bullet impact before the player destruction sequence");
 assert(enemyBulletPlayerProbe.positiveNine.explosionDetails.map((explosion) => explosion.ttl).join(",") === "9,32", "player hits should retain the original-sized bullet impact and player destruction durations");
 assert(enemyBulletPlayerProbe.positiveNine.explosionDetails[0].x === 80 && enemyBulletPlayerProbe.positiveNine.explosionDetails[0].y === 80, "the small player-hit explosion should remain at the enemy bullet center");
 assert(enemyBulletPlayerProbe.positiveNine.explosionDetails[1].x === 71 && enemyBulletPlayerProbe.positiveNine.explosionDetails[1].y === 71, "the player destruction explosion should remain centered on the tank");
@@ -1452,7 +1481,7 @@ assert(!enemyBulletPlayerProbe.positiveTen.bulletRemoved && !enemyBulletPlayerPr
 const playerBulletEnemyProbe = context.window.TankDefender8.debugPlayerBulletEnemyCollisionProbe();
 assert(playerBulletEnemyProbe.positiveNine.bulletRemoved && playerBulletEnemyProbe.negativeNine.bulletRemoved, "player bullets should hit within nine pixels of the enemy center on both axes");
 assert(!playerBulletEnemyProbe.positiveNine.enemyAlive && !playerBulletEnemyProbe.negativeNine.enemyAlive, "center-range player hits should destroy one-hit enemies");
-assert(playerBulletEnemyProbe.positiveNine.explosionDetails.map((explosion) => explosion.style).join(",") === "bulletImpact,default", "destroying an enemy should show the bullet impact before the tank explosion");
+assert(playerBulletEnemyProbe.positiveNine.explosionDetails.map((explosion) => explosion.style).join(",") === "bulletImpact,enemyDestroy", "destroying an enemy should show the bullet impact before the enemy destruction sequence");
 assert(playerBulletEnemyProbe.positiveNine.explosionDetails.map((explosion) => explosion.ttl).join(",") === "9,34", "enemy destruction should preserve separate bullet-impact and tank-explosion durations");
 assert(playerBulletEnemyProbe.positiveNine.explosionDetails[0].x === 80 && playerBulletEnemyProbe.positiveNine.explosionDetails[0].y === 80, "the enemy-hit bullet explosion should remain at the bullet center");
 assert(playerBulletEnemyProbe.positiveNine.explosionDetails[1].x === 71 && playerBulletEnemyProbe.positiveNine.explosionDetails[1].y === 71, "the enemy destruction explosion should remain at the tank center");

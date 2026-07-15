@@ -213,7 +213,7 @@
         ]
       }
     },
-    "baseExplosion": {
+    "destructionExplosion": {
       "size": 32,
       "frames": {
         "phase1": [

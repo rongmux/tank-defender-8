@@ -141,7 +141,20 @@
     2, 2, 2, 2,
     1, 1, 1, 1
   ]);
+  const ENEMY_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
+    1, 1, 1,
+    2, 2, 2,
+    3, 3, 3,
+    4, 4, 4,
+    5, 5, 5,
+    3, 3, 3
+  ]);
+  const PLAYER_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
+    ...ENEMY_DESTRUCTION_REFERENCE_PHASES,
+    1, 1, 1, 1, 1, 1
+  ]);
   const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
+  const TANK_DESTRUCTION_EXPLOSION_RULES = new Set(["enemyDestroy", "playerDestroy"]);
   const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
   const DEFAULT_EXPLOSION_RULES = {
     bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
@@ -737,7 +750,7 @@
           ]
         }
       },
-      baseExplosion: {
+      destructionExplosion: {
         size: 32,
         frames: {
           phase1: [
@@ -5620,13 +5633,16 @@
 
   function addRuleExplosion(ruleName, x, y) {
     const rule = explosionRule(ruleName);
+    const style = BULLET_IMPACT_EXPLOSION_RULES.has(ruleName)
+      ? "bulletImpact"
+      : (TANK_DESTRUCTION_EXPLOSION_RULES.has(ruleName) ? ruleName : "default");
     addExplosion(
       x,
       y,
       rule.ttl,
       rule.color,
       rule.coreColor,
-      BULLET_IMPACT_EXPLOSION_RULES.has(ruleName) ? "bulletImpact" : "default"
+      style
     );
   }
 
@@ -6630,6 +6646,10 @@
 
   function renderExplosions() {
     for (const explosion of game.explosions) {
+      if (TANK_DESTRUCTION_EXPLOSION_RULES.has(explosion.style)) {
+        drawTankDestructionExplosion(explosion);
+        continue;
+      }
       const presentation = explosionPresentation(explosion);
       drawScaledManifestSprite("explosion", "burst", presentation.x, presentation.y, presentation.size / 16, {
         primary: explosion.color,
@@ -6638,11 +6658,20 @@
     }
   }
 
+  function drawTankDestructionExplosion(explosion) {
+    const presentation = tankDestructionPresentation(explosion);
+    drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
+      primary: explosion.color,
+      core: explosion.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
+    });
+    return presentation;
+  }
+
   function renderBaseDestruction() {
     const presentation = baseDestructionPresentation(game.baseDestroyTimer);
     if (!presentation) return;
     const rule = explosionRule("baseDestroy");
-    drawManifestSprite("baseExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
+    drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
       primary: rule.color,
       core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
     });
@@ -6660,14 +6689,39 @@
       ? 0
       : Math.round((frame * (BASE_DESTRUCTION_REFERENCE_PHASES.length - 1)) / (visibleFrames - 1));
     const phase = BASE_DESTRUCTION_REFERENCE_PHASES[referenceFrame];
-    const large = phase >= 4;
-    const width = large ? 32 : 16;
-    const height = large ? 32 : 8;
     const centerX = FIELD_X + game.base.x + game.base.w / 2;
     const centerY = FIELD_Y + game.base.y + game.base.h / 2;
     return {
       frame,
       referenceFrame,
+      ...destructionExplosionGeometry(phase, centerX, centerY)
+    };
+  }
+
+  /** Maps enemy/player tank destruction onto the original shared five explosion pictures. */
+  function tankDestructionPresentation(explosion) {
+    const phases = explosion.style === "playerDestroy"
+      ? PLAYER_DESTRUCTION_REFERENCE_PHASES
+      : ENEMY_DESTRUCTION_REFERENCE_PHASES;
+    const visibleFrames = Math.max(1, Math.floor(Number(explosion.max) || 1));
+    const elapsed = clamp(visibleFrames - Math.floor(Number(explosion.ttl) || 0), 0, visibleFrames - 1);
+    const referenceFrame = Math.min(phases.length - 1, Math.floor((elapsed * phases.length) / visibleFrames));
+    return {
+      frame: elapsed,
+      referenceFrame,
+      ...destructionExplosionGeometry(
+        phases[referenceFrame],
+        FIELD_X + explosion.x,
+        FIELD_Y + explosion.y
+      )
+    };
+  }
+
+  function destructionExplosionGeometry(phase, centerX, centerY) {
+    const large = phase >= 4;
+    const width = large ? 32 : 16;
+    const height = large ? 32 : 8;
+    return {
       phase,
       frameName: `phase${phase}`,
       size: width,
@@ -14278,6 +14332,51 @@
     debugExplosionRuleProbe(ruleName) {
       const key = String(ruleName || "enemyDestroy");
       return { key, ...explosionRule(key) };
+    },
+    debugTankDestructionExplosionProbe() {
+      const framesFor = (ruleName) => {
+        addRuleExplosion(ruleName, 64, 64);
+        const explosion = game.explosions.pop();
+        return Array.from({ length: explosion.max }, (_, elapsed) => {
+          explosion.ttl = explosion.max - elapsed;
+          const presentation = tankDestructionPresentation(explosion);
+          return {
+            elapsed,
+            style: explosion.style,
+            phase: presentation.phase,
+            frameName: presentation.frameName,
+            width: presentation.width,
+            height: presentation.height,
+            x: presentation.x,
+            y: presentation.y
+          };
+        });
+      };
+      const previousExplosions = game.explosions;
+      try {
+        game.explosions = [];
+        return {
+          enemy: framesFor("enemyDestroy"),
+          player: framesFor("playerDestroy")
+        };
+      } finally {
+        game.explosions = previousExplosions;
+      }
+    },
+    debugRenderTankDestructionExplosionFrame(ruleName, elapsed) {
+      const key = ruleName === "playerDestroy" ? "playerDestroy" : "enemyDestroy";
+      const rule = explosionRule(key);
+      const frame = clamp(Math.floor(Number(elapsed) || 0), 0, rule.ttl - 1);
+      const explosion = {
+        x: 64,
+        y: 64,
+        ttl: rule.ttl - frame,
+        max: rule.ttl,
+        color: rule.color,
+        coreColor: rule.coreColor,
+        style: key
+      };
+      return drawTankDestructionExplosion(explosion);
     },
     debugBulletImpactExplosionProbe() {
       const previous = { ...game };

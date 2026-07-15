@@ -75,7 +75,7 @@ git diff --check
 
 `data/free-audio-manifest.json` 定义当前免费/自定义程序化音效集。运行时通过 `window.TankDefender8.audioManifest()` 公开相同数据，smoke test 会检查文件与运行时副本是否保持同步。
 
-`data/free-sprite-manifest.json` 定义当前免费/自定义程序化矩形精灵，包括坦克、结算表迷你坦克、子弹、普通爆炸、五帧基地爆炸、面板敌人计数器、出生/护盾轮廓、隐藏消息下落物、道具、地形、墙体子块和基地。运行时通过 `window.TankDefender8.spriteManifest()` 公开相同数据，相关渲染器从该清单绘制内容。
+`data/free-sprite-manifest.json` 定义当前免费/自定义程序化矩形精灵，包括坦克、结算表迷你坦克、子弹、普通爆炸、坦克与基地共用的五帧摧毁爆炸、面板敌人计数器、出生/护盾轮廓、隐藏消息下落物、道具、地形、墙体子块和基地。运行时通过 `window.TankDefender8.spriteManifest()` 公开相同数据，相关渲染器从该清单绘制内容。
 
 重新生成免费/自定义 35 关替代包：
 
@@ -305,7 +305,7 @@ if (result.ok) window.TankDefender8.loadStagePack(pack);
 
 关卡包可以设置 `gameSettings.friendlyFire`。默认情况下，双人模式中的玩家子弹在两个中心坐标差都小于 `10` 像素时可以命中另一名玩家，并加载一个 `200` tick 的眩晕计数器，而不是将其摧毁。命中时还会在子弹中心显示原版风格的九帧子弹爆炸。该计数器只在活动玩家移动帧递减，使用原版节奏时约持续 `267` 个显示帧。眩晕玩家不能移动或转向，但仍可朝当前方向射击；再次被友军命中不会刷新已有眩晕。暂停会冻结眩晕计数器，但坦克按 8 帧显示、8 帧隐藏的节奏继续基于显示时间闪烁。受到头盔或出生后力场保护的队友会吸收友军子弹，不会眩晕，也不会显示命中特效。将 `enabled` 设为 `false` 可禁用该碰撞效果，也可以把 `stunFrames` 调整为 `0` 至 `3600` 个移动 tick。
 
-关卡包可以设置 `gameSettings.explosionRules`，用于碰撞和摧毁反馈。每条规则包含 `ttl`、`color` 和 `coreColor`；`ttl` 是 `1` 至 `3600` 的 60 FPS 帧数，颜色必须采用 `#rrggbb` 格式。规则名称为 `bulletCancel`、`baseDestroy`、`brickHit`、`steelHit`、`steelBlocked`、`enemyHit`、`enemyDestroy`、`playerStun` 和 `playerDestroy`。`baseDestroy` 默认显示 35 帧，并映射到原版九个基地爆炸阶段；阶段 1 至 3 使用三个不同的居中 16x8 替代帧，阶段 4 至 5 使用两个不同的 32x32 替代帧，随后固定保留 4 帧损毁基地。三种墙体/边界撞击规则、`enemyHit` 和 `playerStun` 默认显示 9 帧，并分成三个各持续 3 帧的动画阶段；暂停会冻结这些普通弹着特效。为兼容旧关卡包，仍接受 `bulletCancel`；但原版风格的子弹互撞现在会直接移除双方，不再渲染爆炸。
+关卡包可以设置 `gameSettings.explosionRules`，用于碰撞和摧毁反馈。每条规则包含 `ttl`、`color` 和 `coreColor`；`ttl` 是 `1` 至 `3600` 的 60 FPS 帧数，颜色必须采用 `#rrggbb` 格式。规则名称为 `bulletCancel`、`baseDestroy`、`brickHit`、`steelHit`、`steelBlocked`、`enemyHit`、`enemyDestroy`、`playerStun` 和 `playerDestroy`。`baseDestroy` 默认显示 35 帧，并映射到原版九个基地爆炸阶段；阶段 1 至 3 使用三个不同的居中 16x8 替代帧，阶段 4 至 5 使用两个不同的 32x32 替代帧，随后固定保留 4 帧损毁基地。坦克摧毁会复用这五张图：敌人采用 `1-2-3-4-5-3`，玩家在末尾恢复原版小图，采用 `1-2-3-4-5-3-1`；图 1 至 3 占 16x8，图 4 至 5 占 32x32。三种墙体/边界撞击规则、`enemyHit` 和 `playerStun` 默认显示 9 帧，并分成三个各持续 3 帧的动画阶段；暂停会冻结这些普通弹着特效。为兼容旧关卡包，仍接受 `bulletCancel`；但原版风格的子弹互撞现在会直接移除双方，不再渲染爆炸。
 
 关卡包可以设置 `gameSettings.stageAdvance`。`loopAfterFinalStage` 控制完成循环中的最后一关后是否回到第 1 关。对于原版风格 35 关关卡包，默认循环会持续至第 70 关再返回；第 36 至 70 关复用第 1 至 35 关的地图数据，同时使用第 35 关的敌人模式数据。第 70 关返回第 1 关时，会保留玩家分数、强化等级、生命和累计击杀总数；新关卡会重置单关分数、单关击杀行、活动子弹、活动道具和待处理的道具生成记忆。`extendedLoopEndStage` 默认为 `70`，`extendedLoopEnemyStage` 默认为 `35`。对于在最终结算画面后返回标题画面的有限关卡包，请将 `loopAfterFinalStage` 设为 `false`。
 
@@ -327,7 +327,7 @@ if (result.ok) window.TankDefender8.loadStagePack(pack);
 
 ## 参考说明
 
-内置敌人构成现使用原版风格 35 关敌人分组表。`data/free-35-stage-pack.json` 为全部 35 关提供固定的免费/自定义替代地图，`data/free-audio-manifest.json` 提供当前程序化替代音效事件，`data/free-sprite-manifest.json` 提供当前程序化坦克、子弹、地形、基地、普通/基地爆炸、面板、轮廓和道具精灵。未来的采样音乐/音效或更丰富的精灵图同样应使用免费/自定义替代资源，而非源自原版 ROM 的资源。用于交叉核对规则的公开参考资料包括：
+内置敌人构成现使用原版风格 35 关敌人分组表。`data/free-35-stage-pack.json` 为全部 35 关提供固定的免费/自定义替代地图，`data/free-audio-manifest.json` 提供当前程序化替代音效事件，`data/free-sprite-manifest.json` 提供当前程序化坦克、子弹、地形、基地、普通/摧毁爆炸、面板、轮廓和道具精灵。未来的采样音乐/音效或更丰富的精灵图同样应使用免费/自定义替代资源，而非源自原版 ROM 的资源。用于交叉核对规则的公开参考资料包括：
 
 - [StrategyWiki Battle City 攻略](https://strategywiki.org/wiki/Battle_City/Walkthrough)
 - [StrategyWiki Battle City 玩法](https://strategywiki.org/wiki/Battle_City/Gameplay)
