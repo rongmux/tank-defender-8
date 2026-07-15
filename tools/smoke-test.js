@@ -791,12 +791,6 @@ const smallTankDestruction = context.window.TankDefender8.debugRenderTankDestruc
 const smallTankDestructionCalls = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#f0b546");
 assert(smallTankDestruction.x === 72 && smallTankDestruction.y === 72 && smallTankDestruction.width === 16 && smallTankDestruction.height === 8, "small tank destruction pictures should expose the original bounds around the tank position");
 assert(Math.min(...smallTankDestructionCalls.map((call) => call.x)) === 72 && Math.min(...smallTankDestructionCalls.map((call) => call.y)) === 72 && Math.max(...smallTankDestructionCalls.map((call) => call.x + call.w)) === 88 && Math.max(...smallTankDestructionCalls.map((call) => call.y + call.h)) === 80, "small tank destruction art should occupy exactly the original two-sprite footprint");
-assert(schema.gameSettings.stageAdvance.loopAfterFinalStage === true, "schema should expose final-stage loop rule");
-assert(schema.gameSettings.stageAdvance.extendedLoopEndStage === 70, "schema should expose original-style extended loop end stage");
-assert(schema.gameSettings.stageAdvance.extendedLoopEnemyStage === 35, "schema should expose extended-loop enemy pattern stage");
-assert(schema.gameSettings.stageClearBonus.points === 1000, "schema should expose stage clear bonus points");
-assert(schema.gameSettings.stageClearBonus.twoPlayerOnly === true, "schema should expose stage clear two-player bonus rule");
-assert(schema.gameSettings.stageClearBonus.requireStrictLead === true, "schema should expose strict lead bonus rule");
 const stageClearRowsProbe = context.window.TankDefender8.debugStageClearResultRowsProbe([1, 2, 3, 4], [4, 3, 2, 1], 500, 250);
 const expectedP1EnemyPoints = stageClearRowsProbe.rows.reduce((sum, row) => sum + row.p1Kills * row.score, 0);
 const expectedP2EnemyPoints = stageClearRowsProbe.rows.reduce((sum, row) => sum + row.p2Kills * row.score, 0);
@@ -1475,24 +1469,6 @@ const badEnemyAiPack = {
 };
 assert(context.window.TankDefender8.validateStagePack(badEnemyAiPack).ok === false, "bad enemy AI setting should fail validation");
 
-const badStageAdvancePack = {
-  id: "bad-stage-advance",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { stageAdvance: { loopAfterFinalStage: "yes" } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badStageAdvancePack).ok === false, "bad stage advance rule should fail validation");
-
-const badStageClearBonusPack = {
-  id: "bad-stage-clear-bonus",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { stageClearBonus: { points: -1 } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badStageClearBonusPack).ok === false, "bad stage clear bonus should fail validation");
-
 const jsonResult = context.window.TankDefender8.loadStagePackJson(JSON.stringify(validPack));
 assert(jsonResult.ok === true, "loadStagePackJson should accept valid JSON");
 
@@ -1541,10 +1517,6 @@ assert(context.window.TankDefender8.currentPackInfo().maxActiveEnemies === 2, "c
 assert(context.window.TankDefender8.currentPackInfo().initialLives === 5, "current pack should expose custom initial lives");
 assert(context.window.TankDefender8.currentPackInfo().bonusLifeScores[0] === 100, "current pack should expose custom bonus life scores");
 assert(context.window.TankDefender8.currentPackInfo().deathPowerLevel === 2, "current pack should expose custom death power level");
-assert(context.window.TankDefender8.currentPackInfo().stageAdvance.loopAfterFinalStage === false, "current pack should expose custom stage advance rule");
-assert(context.window.TankDefender8.currentPackInfo().stageClearBonus.points === 777, "current pack should expose custom stage clear bonus");
-const finiteAdvanceProbe = context.window.TankDefender8.debugStageAdvanceProbe();
-assert(finiteAdvanceProbe.stops === true && finiteAdvanceProbe.stage === 1, "finite packs should stop after the final stage when looping is disabled");
 const stageClearDelayStartProbe = context.window.TankDefender8.debugStageClearDelayProbe(0, true);
 assert(
   stageClearDelayStartProbe.screen === "playing" &&
@@ -1613,10 +1585,6 @@ assert(
 assert(gameOverStageResultProbe.afterEnd.score === gameOverStageResultProbe.scoreBeforeFinish && gameOverStageResultProbe.afterEnd.bonusAwarded === false, "game-over result should never award the two-player leader bonus");
 assert(gameOverStageResultProbe.afterEnd.newHighScore === true && gameOverStageResultProbe.highScoreRoute.screen === "highScore", "the high-score celebration should remain after the result and full-screen game-over sequence");
 assert(gameOverStageResultProbe.wrappedStage.screen === "fullGameOver" && gameOverStageResultProbe.wrappedStage.stage === 1, "a stage-70 game-over result should preserve the original extended-loop wrap before full-screen game over");
-const bonusProbe = context.window.TankDefender8.debugStageClearBonusProbe(4, 3);
-assert(bonusProbe.points === 777 && bonusProbe.recipients.join(",") === "1", "stage clear bonus should go to the strict kill leader");
-assert(context.window.TankDefender8.debugStageClearBonusProbe(4, 4).recipients.length === 0, "stage clear bonus should not award ties by default");
-assert(context.window.TankDefender8.debugStageClearBonusProbe(4, 3, 0, 1).recipients.length === 0, "an eliminated kill leader should not pass the result bonus to the runner-up");
 assert(context.window.TankDefender8.debugStageClearPresentationProbe([20, 0, 0, 0], [0, 0, 0, 0], 0).duration === 8, "a positive custom stage-clear timing should override the dynamic result duration");
 assert(context.window.TankDefender8.currentPackInfo().enemyAi.intersectionTurnChance === 0.33, "current pack should expose custom enemy intersection turn settings");
 assert(context.window.TankDefender8.currentPackInfo().enemyAi.blockedRetryTicks === 5, "current pack should expose custom blocked retry timing");

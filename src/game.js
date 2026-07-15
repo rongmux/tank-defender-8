@@ -41,6 +41,12 @@
   } = requireRuntimeModule("powerUpSettings");
   const { DEFAULT_TIMINGS, SPAWN_ANIMATION_FRAMES, normalizeTimings } = requireRuntimeModule("timingSettings");
   const {
+    DEFAULT_STAGE_ADVANCE,
+    DEFAULT_STAGE_CLEAR_BONUS,
+    normalizeStageAdvance,
+    normalizeStageClearBonus
+  } = requireRuntimeModule("stageFlowSettings");
+  const {
     DEFAULT_ENEMY_TYPES: defaultEnemyTypes,
     ENEMY_FIRE_CHANCE,
     ENEMY_MOVE_SPEED,
@@ -194,16 +200,6 @@
   const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
   const TANK_DESTRUCTION_EXPLOSION_RULES = new Set(["enemyDestroy", "playerDestroy"]);
   const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
-  const DEFAULT_STAGE_ADVANCE = {
-    loopAfterFinalStage: true,
-    extendedLoopEndStage: 70,
-    extendedLoopEnemyStage: 35
-  };
-  const DEFAULT_STAGE_CLEAR_BONUS = {
-    points: 1000,
-    twoPlayerOnly: true,
-    requireStrictLead: true
-  };
   const DEFAULT_ENEMY_AI = {
     intersectionTurnChance: 1 / 16,
     blockedRetryChance: 3 / 4,
@@ -1343,52 +1339,6 @@
     if (value === undefined) return fallback;
     if (typeof value !== "boolean") throw new Error(`${label} must be a boolean`);
     return value;
-  }
-
-  function normalizeStageAdvance(advance) {
-    const source = advance || {};
-    if (typeof source !== "object") throw new Error("gameSettings.stageAdvance must be an object");
-    return {
-      loopAfterFinalStage: normalizeBooleanSetting(
-        source.loopAfterFinalStage,
-        DEFAULT_STAGE_ADVANCE.loopAfterFinalStage,
-        "gameSettings.stageAdvance.loopAfterFinalStage"
-      ),
-      extendedLoopEndStage: normalizeNumber(
-        source.extendedLoopEndStage,
-        DEFAULT_STAGE_ADVANCE.extendedLoopEndStage,
-        1,
-        999,
-        true,
-        "gameSettings.stageAdvance.extendedLoopEndStage"
-      ),
-      extendedLoopEnemyStage: normalizeNumber(
-        source.extendedLoopEnemyStage,
-        DEFAULT_STAGE_ADVANCE.extendedLoopEnemyStage,
-        1,
-        999,
-        true,
-        "gameSettings.stageAdvance.extendedLoopEnemyStage"
-      )
-    };
-  }
-
-  function normalizeStageClearBonus(bonus) {
-    const source = bonus || {};
-    if (typeof source !== "object") throw new Error("gameSettings.stageClearBonus must be an object");
-    return {
-      points: normalizeNumber(source.points, DEFAULT_STAGE_CLEAR_BONUS.points, 0, 999999, true, "gameSettings.stageClearBonus.points"),
-      twoPlayerOnly: normalizeBooleanSetting(
-        source.twoPlayerOnly,
-        DEFAULT_STAGE_CLEAR_BONUS.twoPlayerOnly,
-        "gameSettings.stageClearBonus.twoPlayerOnly"
-      ),
-      requireStrictLead: normalizeBooleanSetting(
-        source.requireStrictLead,
-        DEFAULT_STAGE_CLEAR_BONUS.requireStrictLead,
-        "gameSettings.stageClearBonus.requireStrictLead"
-      )
-    };
   }
 
   function normalizeEnemyAi(enemyAi) {
