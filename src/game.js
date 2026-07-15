@@ -166,7 +166,7 @@
     enemyHit: { ttl: 9, color: "#ffffff", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     enemyDestroy: { ttl: 18, color: "#f0b546", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     playerStun: { ttl: 9, color: "#f7f1c6", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    playerDestroy: { ttl: 32, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR }
+    playerDestroy: { ttl: 18, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR }
   };
   const DEFAULT_STAGE_ADVANCE = {
     loopAfterFinalStage: true,
@@ -2368,6 +2368,9 @@
       lives: gameSettings().initialLives,
       nextBonusLifeIndex: 0,
       respawn: 0,
+      destroying: false,
+      destroyTotalTicks: 0,
+      destroyExplosionTicks: 0,
       spawnFlash,
       invuln: spawnFlash > 0 ? 0 : gameSettings().timings.playerInvulnerability,
       stun: 0,
@@ -2391,6 +2394,9 @@
     player.dir = UP;
     player.alive = player.lives > 0;
     player.respawn = 0;
+    player.destroying = false;
+    player.destroyTotalTicks = 0;
+    player.destroyExplosionTicks = 0;
     player.spawnFlash = gameSettings().timings.playerSpawnFlash;
     player.invuln = player.spawnFlash > 0 ? 0 : gameSettings().timings.playerInvulnerability;
     player.stun = 0;
@@ -5189,23 +5195,31 @@
   }
 
   function killPlayer(player) {
-    if (player.invuln > 0) return;
+    if (!player.alive || player.destroying || player.invuln > 0) return;
     player.alive = false;
     player.level = Math.min(player.level, gameSettings().deathPowerLevel);
     player.respawn = gameSettings().timings.playerRespawn;
+    player.destroying = player.respawn > 0;
+    player.destroyTotalTicks = player.respawn;
+    player.destroyExplosionTicks = Math.min(player.respawn, explosionRule("playerDestroy").ttl);
     player.spawnFlash = 0;
     player.invuln = 0;
     player.stun = 0;
     player.reload = 0;
     player.slide = 0;
-    addRuleExplosion("playerDestroy", player.x + 7, player.y + 7);
     playSound("playerDestroy");
     if (player.respawn === 0) finishPlayerDeath(player);
   }
 
   function finishPlayerDeath(player) {
+    player.destroying = false;
     player.lives = Math.max(0, player.lives - 1);
-    if (player.lives > 0) resetPlayerPosition(player);
+    if (player.lives > 0) {
+      resetPlayerPosition(player);
+      return;
+    }
+    player.destroyTotalTicks = 0;
+    player.destroyExplosionTicks = 0;
   }
 
   function releaseCarrierPowerUp(enemy) {
@@ -6313,6 +6327,7 @@
     renderTerrain(true, game.grid);
     if (game.powerUp) drawPowerUp(game.powerUp);
     renderExplosions();
+    renderPlayerDestructions();
     renderEnemyDestructions();
     renderBaseDestruction();
     renderScorePopups();
@@ -6686,6 +6701,46 @@
       core: explosion.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
     });
     return presentation;
+  }
+
+  function renderPlayerDestructions() {
+    const rule = explosionRule("playerDestroy");
+    for (const player of game.players) {
+      if (!player.destroying || player.respawn <= 0) continue;
+      const presentation = playerDestructionPresentation(player);
+      drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
+        primary: rule.color,
+        core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
+      });
+    }
+  }
+
+  /** Maps the player's $73 death state onto 18 explosion ticks and the final phase-1 state. */
+  function playerDestructionPresentation(player) {
+    const totalTicks = Math.max(1, Math.floor(Number(player.destroyTotalTicks) || gameSettings().timings.playerRespawn));
+    const remainingTicks = clamp(Math.floor(Number(player.respawn) || 0), 1, totalTicks);
+    const tick = totalTicks - remainingTicks;
+    const explosionTicks = clamp(
+      Math.floor(Number(player.destroyExplosionTicks) || explosionRule("playerDestroy").ttl),
+      1,
+      totalTicks
+    );
+    const finalState = tick >= explosionTicks;
+    const referenceFrame = finalState
+      ? 0
+      : Math.min(
+        ENEMY_DESTRUCTION_REFERENCE_PHASES.length - 1,
+        Math.floor((tick * ENEMY_DESTRUCTION_REFERENCE_PHASES.length) / explosionTicks)
+      );
+    const phase = finalState ? 1 : ENEMY_DESTRUCTION_REFERENCE_PHASES[referenceFrame];
+    const centerX = FIELD_X + player.x + player.w / 2;
+    const centerY = FIELD_Y + player.y + player.h / 2;
+    return {
+      kind: finalState ? "final" : "explosion",
+      tick,
+      referenceFrame,
+      ...destructionExplosionGeometry(phase, centerX, centerY)
+    };
   }
 
   function renderEnemyDestructions() {
@@ -8295,6 +8350,7 @@
           hit: playerHitResult,
           bulletRemoved: enemyBullet.remove,
           playerAlive: targetPlayer.alive,
+          playerDestroying: targetPlayer.destroying,
           playerRespawn: targetPlayer.respawn,
           explosionCount: game.explosions.length
         };
@@ -8674,6 +8730,8 @@
           hit: lethalHitResult,
           bulletRemoved: lethalBullet.remove,
           playerAlive: player.alive,
+          playerDestroying: player.destroying,
+          playerRespawn: player.respawn,
           playerLevel: player.level,
           explosionCount: game.explosions.length
         };
@@ -12340,6 +12398,7 @@
           },
           afterDeath: {
             alive: player.alive,
+            destroying: player.destroying,
             lives: player.lives,
             level: player.level,
             respawn: player.respawn || 0
@@ -12483,6 +12542,7 @@
         killPlayer(player);
         const afterHit = {
           alive: player.alive,
+          destroying: player.destroying,
           lives: player.lives,
           level: player.level,
           respawn: player.respawn,
@@ -12491,7 +12551,9 @@
         };
 
         let deathDisplayFrames = 0;
+        const deathPresentations = [];
         while (!player.alive && player.respawn > 0 && deathDisplayFrames < 1000) {
+          deathPresentations.push(playerDestructionPresentation(player));
           game.tick += 1;
           deathDisplayFrames += 1;
           updatePlayers();
@@ -12499,6 +12561,7 @@
         const deathResolved = {
           tick: game.tick,
           alive: player.alive,
+          destroying: player.destroying,
           lives: player.lives,
           respawn: player.respawn,
           spawnFlash: player.spawnFlash,
@@ -12536,6 +12599,11 @@
           spawnTicks: gameSettings().timings.playerSpawnFlash,
           afterHit,
           deathDisplayFrames,
+          destructionExplosionFrames: deathPresentations.filter((presentation) => presentation.kind === "explosion").length,
+          destructionFinalFrames: deathPresentations.filter((presentation) => presentation.kind === "final").length,
+          destructionPhases: deathPresentations
+            .map((presentation) => presentation.phase)
+            .filter((phase, index, phases) => index === 0 || phase !== phases[index - 1]),
           deathResolved,
           spawnDisplayFrames,
           totalDisplayFrames: deathDisplayFrames + spawnDisplayFrames,
@@ -12543,6 +12611,7 @@
           lastLife: {
             displayFrames: lastLifeDisplayFrames,
             alive: lastLifePlayer.alive,
+            destroying: lastLifePlayer.destroying,
             lives: lastLifePlayer.lives,
             respawn: lastLifePlayer.respawn
           }
@@ -12769,6 +12838,7 @@
         return {
           bulletRemoved: bullet.remove,
           alive: player.alive,
+          destroying: Boolean(player.destroying),
           respawn: player.respawn,
           explosions: explosionDetails.length,
           explosionDetails
@@ -14438,7 +14508,8 @@
       return { key, ...explosionRule(key) };
     },
     debugTankDestructionExplosionProbe() {
-      const framesFor = (ruleName) => {
+      const enemyFrames = () => {
+        const ruleName = "enemyDestroy";
         addRuleExplosion(ruleName, 64, 64);
         const explosion = game.explosions.pop();
         return Array.from({ length: explosion.max }, (_, elapsed) => {
@@ -14456,12 +14527,40 @@
           };
         });
       };
+      const playerFrames = () => {
+        const rule = explosionRule("playerDestroy");
+        const totalTicks = Math.max(1, gameSettings().timings.playerRespawn);
+        const player = {
+          x: 57,
+          y: 57,
+          w: 14,
+          h: 14,
+          respawn: totalTicks,
+          destroyTotalTicks: totalTicks,
+          destroyExplosionTicks: Math.min(totalTicks, rule.ttl)
+        };
+        return Array.from({ length: totalTicks }, (_, elapsed) => {
+          player.respawn = totalTicks - elapsed;
+          const presentation = playerDestructionPresentation(player);
+          return {
+            elapsed,
+            style: "playerDestroy",
+            kind: presentation.kind,
+            phase: presentation.phase,
+            frameName: presentation.frameName,
+            width: presentation.width,
+            height: presentation.height,
+            x: presentation.x,
+            y: presentation.y
+          };
+        });
+      };
       const previousExplosions = game.explosions;
       try {
         game.explosions = [];
         return {
-          enemy: framesFor("enemyDestroy"),
-          player: framesFor("playerDestroy")
+          enemy: enemyFrames(),
+          player: playerFrames()
         };
       } finally {
         game.explosions = previousExplosions;
@@ -14673,6 +14772,25 @@
     debugRenderTankDestructionExplosionFrame(ruleName, elapsed) {
       const key = ruleName === "playerDestroy" ? "playerDestroy" : "enemyDestroy";
       const rule = explosionRule(key);
+      if (key === "playerDestroy") {
+        const totalTicks = Math.max(1, gameSettings().timings.playerRespawn);
+        const frame = clamp(Math.floor(Number(elapsed) || 0), 0, totalTicks - 1);
+        const player = {
+          x: 57,
+          y: 57,
+          w: 14,
+          h: 14,
+          respawn: totalTicks - frame,
+          destroyTotalTicks: totalTicks,
+          destroyExplosionTicks: Math.min(totalTicks, rule.ttl)
+        };
+        const presentation = playerDestructionPresentation(player);
+        drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
+          primary: rule.color,
+          core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
+        });
+        return presentation;
+      }
       const frame = clamp(Math.floor(Number(elapsed) || 0), 0, rule.ttl - 1);
       const explosion = {
         x: 64,

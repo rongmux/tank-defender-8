@@ -68,7 +68,7 @@
       "enemyHit": { "ttl": 9, "color": "#ffffff", "coreColor": "#f7f1c6" },
       "enemyDestroy": { "ttl": 18, "color": "#f0b546", "coreColor": "#f7f1c6" },
       "playerStun": { "ttl": 9, "color": "#f7f1c6", "coreColor": "#f7f1c6" },
-      "playerDestroy": { "ttl": 32, "color": "#f05a42", "coreColor": "#f7f1c6" }
+      "playerDestroy": { "ttl": 18, "color": "#f05a42", "coreColor": "#f7f1c6" }
     },
     "stageAdvance": {
       "loopAfterFinalStage": true
