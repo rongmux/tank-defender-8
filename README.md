@@ -22,6 +22,7 @@ Then open `http://127.0.0.1:8765/index.html`.
 
 ```powershell
 node --check src/core/battle-random.js
+node --check src/core/frame-counter.js
 node --check src/game.js
 node --check tools/build-free-stage-pack.js
 node tests/run-tests.js
@@ -40,14 +41,19 @@ tank-defender-8/
 |   `-- sample-stage-pack.json
 |-- src/
 |   |-- core/
-|   |   `-- battle-random.js
+|   |   |-- battle-random.js
+|   |   `-- frame-counter.js
 |   `-- game.js
 |-- tests/
 |   |-- helpers/
+|   |   |-- browser-game-harness.js
 |   |   `-- load-browser-scripts.js
+|   |-- integration/
+|   |   `-- frame-counter.test.js
 |   |-- unit/
 |   |   |-- battle-random.test.js
-|   |   `-- browser-entry.test.js
+|   |   |-- browser-entry.test.js
+|   |   `-- frame-counter.test.js
 |   `-- run-tests.js
 |-- tools/
 |   |-- build-free-stage-pack.js
@@ -59,7 +65,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable runtime fakes and script loading, `tests/unit/` exercises pure modules directly, and `tests/run-tests.js` runs unit coverage before the remaining full-browser regression suite in `tools/smoke-test.js`. The latter will move by feature into `tests/integration/` without dropping end-to-end coverage.
+`src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency; shared battle randomness and independent frame counters now live there. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable Canvas, audio, DOM, storage, input, and script-loading fakes. `tests/unit/` exercises pure modules directly, `tests/integration/` verifies each extracted module through the real browser API, and `tests/run-tests.js` runs both before the remaining regression suite in `tools/smoke-test.js`. That suite will continue moving by feature without dropping end-to-end coverage.
 
 The migration order is core timing/random/geometry, configuration and stage packs, gameplay entities and rules, input/editor, audio, rendering/screens, debug adapters, and finally the application bootstrap. Every extraction must keep the static no-build launch path, move its matching tests in the same commit, and pass the full regression suite before the next subsystem moves. New 1:1 gameplay work is paused until this refactor and test split are complete.
 

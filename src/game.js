@@ -1,9 +1,13 @@
 (function () {
   "use strict";
 
-  const battleRandomModule = window.TankDefender8Modules && window.TankDefender8Modules.battleRandom;
-  if (!battleRandomModule) throw new Error("battle-random module must load before game.js");
-  const { advanceBattleRandom } = battleRandomModule;
+  const runtimeModules = window.TankDefender8Modules || {};
+  function requireRuntimeModule(name) {
+    if (!runtimeModules[name]) throw new Error(`${name} module must load before game.js`);
+    return runtimeModules[name];
+  }
+  const { advanceBattleRandom } = requireRuntimeModule("battleRandom");
+  const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
 
   const canvas = document.getElementById("game");
   const packFileInput = document.getElementById("stage-pack-file");
@@ -4497,21 +4501,24 @@
   }
 
   function advanceFrameCounters() {
-    game.frameLow = (game.frameLow + 1) & 0xff;
-    if ((game.frameLow & 0x3f) === 0) game.frameHigh = (game.frameHigh + 1) & 0xff;
+    applyFrameCounter(advanceFrameCounter(game));
   }
 
   function resetFrameCounterLow() {
-    game.frameLow = 0;
+    applyFrameCounter(resetFrameCounter(game, true, false));
   }
 
   function resetFrameCounterHigh() {
-    game.frameHigh = 0;
+    applyFrameCounter(resetFrameCounter(game, false, true));
   }
 
   function resetFrameCounters() {
-    resetFrameCounterLow();
-    resetFrameCounterHigh();
+    applyFrameCounter(resetFrameCounter(game));
+  }
+
+  function applyFrameCounter(counter) {
+    game.frameLow = counter.frameLow;
+    game.frameHigh = counter.frameHigh;
   }
 
   /**

@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { loadBrowserScripts } = require("../tests/helpers/load-browser-scripts");
+const { createBrowserGameHarness } = require("../tests/helpers/browser-game-harness");
 
 const root = path.resolve(__dirname, "..");
 const samplePack = JSON.parse(fs.readFileSync(path.join(root, "data", "sample-stage-pack.json"), "utf8"));
@@ -9,254 +9,19 @@ const freePack = JSON.parse(fs.readFileSync(path.join(root, "data", "free-35-sta
 const audioManifest = JSON.parse(fs.readFileSync(path.join(root, "data", "free-audio-manifest.json"), "utf8"));
 const spriteManifest = JSON.parse(fs.readFileSync(path.join(root, "data", "free-sprite-manifest.json"), "utf8"));
 
-class FakeButton {
-  constructor(action, text) {
-    this.dataset = { action };
-    this.textContent = text;
-    this.listeners = {};
-  }
-
-  addEventListener(type, listener) {
-    this.listeners[type] = listener;
-  }
-
-  click() {
-    if (this.listeners.click) return this.listeners.click({ type: "click" });
-    return undefined;
-  }
-}
-
-class FakeInput {
-  constructor() {
-    this.files = [];
-    this.value = "";
-    this.listeners = {};
-    this.clicked = false;
-  }
-
-  addEventListener(type, listener) {
-    this.listeners[type] = listener;
-  }
-
-  click() {
-    this.clicked = true;
-  }
-}
-
-const CANVAS_W = 256;
-const CANVAS_H = 240;
-
-function makeCanvasContext() {
-  const calls = [];
-  const pixels = Array(CANVAS_W * CANVAS_H).fill(null);
-
-  function clampPixel(value, max) {
-    return Math.max(0, Math.min(max, value));
-  }
-
-  function paintRect(x, y, w, h, style) {
-    const left = clampPixel(Math.floor(x), CANVAS_W);
-    const top = clampPixel(Math.floor(y), CANVAS_H);
-    const right = clampPixel(Math.ceil(x + w), CANVAS_W);
-    const bottom = clampPixel(Math.ceil(y + h), CANVAS_H);
-    for (let py = top; py < bottom; py += 1) {
-      for (let px = left; px < right; px += 1) {
-        pixels[py * CANVAS_W + px] = style;
-      }
-    }
-  }
-
-  function pixelColors(rect) {
-    const counts = {};
-    const left = clampPixel(Math.floor(rect.x), CANVAS_W);
-    const top = clampPixel(Math.floor(rect.y), CANVAS_H);
-    const right = clampPixel(Math.ceil(rect.x + rect.w), CANVAS_W);
-    const bottom = clampPixel(Math.ceil(rect.y + rect.h), CANVAS_H);
-    for (let py = top; py < bottom; py += 1) {
-      for (let px = left; px < right; px += 1) {
-        const color = pixels[py * CANVAS_W + px];
-        counts[color] = (counts[color] || 0) + 1;
-      }
-    }
-    return counts;
-  }
-
-  return {
-    calls,
-    pixels,
-    fillStyle: "#000",
-    strokeStyle: "#000",
-    lineWidth: 1,
-    font: "",
-    textBaseline: "top",
-    imageSmoothingEnabled: false,
-    fillRect(x, y, w, h) {
-      calls.push({ op: "fillRect", style: this.fillStyle, x, y, w, h });
-      paintRect(x, y, w, h, this.fillStyle);
-    },
-    strokeRect(x, y, w, h) {
-      calls.push({ op: "strokeRect", style: this.strokeStyle, x, y, w, h });
-      paintRect(x, y, w, 1, this.strokeStyle);
-      paintRect(x, y + h - 1, w, 1, this.strokeStyle);
-      paintRect(x, y, 1, h, this.strokeStyle);
-      paintRect(x + w - 1, y, 1, h, this.strokeStyle);
-    },
-    pixelColors,
-    resetPixels() {
-      pixels.fill(null);
-    },
-    clearRect(x, y, w, h) {
-      paintRect(x, y, w, h, null);
-    },
-    beginPath() {},
-    moveTo() {},
-    lineTo() {},
-    stroke() {},
-    fillText(text, x, y) {
-      calls.push({ op: "fillText", text, x, y, font: this.font, style: this.fillStyle });
-    }
-  };
-}
-
-function makeAudioContext() {
-  const gainNode = {
-    gain: {
-      setValueAtTime() {},
-      exponentialRampToValueAtTime() {}
-    },
-    connect() {
-      return this;
-    }
-  };
-  return class FakeAudioContext {
-    constructor() {
-      this.currentTime = 0;
-      this.state = "running";
-      this.destination = {};
-      this.sampleRate = 44100;
-    }
-
-    createOscillator() {
-      return {
-        frequency: { value: 0 },
-        type: "square",
-        connect() {
-          return gainNode;
-        },
-        start() {},
-        stop() {}
-      };
-    }
-
-    createGain() {
-      return gainNode;
-    }
-
-    createBuffer(channels, length) {
-      const channelData = Array.from({ length: channels }, () => new Float32Array(length));
-      return {
-        getChannelData(channel) {
-          return channelData[channel];
-        }
-      };
-    }
-
-    createBufferSource() {
-      return {
-        buffer: null,
-        loop: false,
-        connect() {
-          return gainNode;
-        },
-        start() {},
-        stop() {}
-      };
-    }
-
-    resume() {
-      this.state = "running";
-    }
-  };
-}
-
-const actions = ["one", "two", "prev", "next", "edit", "test", "save", "load", "clear", "export", "import", "pause", "reset"];
-const buttons = actions.map((action) => new FakeButton(action, action.toUpperCase()));
-const listeners = {};
-const storage = { "tank-defender-8-high-score": "12345" };
-const clipboard = { text: "" };
-const canvasContext = makeCanvasContext();
-const fileInput = new FakeInput();
-let animationFrameCallback = null;
-
-const canvas = {
-  width: 256,
-  height: 240,
-  listeners: {},
-  getContext(type) {
-    if (type !== "2d") throw new Error(`unexpected canvas context: ${type}`);
-    return canvasContext;
-  },
-  getBoundingClientRect() {
-    return { left: 0, top: 0, width: 256, height: 240 };
-  },
-  addEventListener(type, listener) {
-    this.listeners[type] = listener;
-  }
-};
-
-const document = {
-  getElementById(id) {
-    if (id === "game") return canvas;
-    if (id === "stage-pack-file") return fileInput;
-    return null;
-  },
-  querySelectorAll(selector) {
-    return selector === "[data-action]" ? buttons : [];
-  },
-  querySelector(selector) {
-    return selector === "#game" ? canvas : null;
-  }
-};
-
-const window = {
-  AudioContext: makeAudioContext(),
-  addEventListener(type, listener) {
-    listeners[type] = listener;
-  }
-};
-
-const context = {
-  console,
-  document,
-  window,
-  navigator: {
-    clipboard: {
-      async writeText(text) {
-        clipboard.text = text;
-      }
-    }
-  },
-  localStorage: {
-    getItem(key) {
-      return Object.prototype.hasOwnProperty.call(storage, key) ? storage[key] : null;
-    },
-    setItem(key, value) {
-      storage[key] = String(value);
-    }
-  },
-  performance: { now: () => 0 },
-  requestAnimationFrame(listener) {
-    animationFrameCallback = listener;
-  },
-  setTimeout(listener) {
-    listener();
-  }
-};
-
-context.globalThis = context;
-
-const browserScripts = loadBrowserScripts(root, context);
-const source = browserScripts.sources["src/game.js"];
+const {
+  context,
+  source,
+  actions,
+  buttons,
+  listeners,
+  storage,
+  clipboard,
+  canvas,
+  canvasContext,
+  fileInput,
+  animationFrameCallback
+} = createBrowserGameHarness(root);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -759,18 +524,6 @@ assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style =
 assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#e3c64e" && call.w === 4 && call.h === 10), "title should render the menu tank cursor");
 assert(snapshot.titleMenu === 0 && snapshot.titleMenuAction === "one", "title menu should default to one-player");
 const titleDemoProbe = context.window.TankDefender8.debugTitleDemoLifecycleProbe();
-const frameCounterProbe = context.window.TankDefender8.debugFrameCounterProbe();
-assert(frameCounterProbe.initial.frameLow === 0 && frameCounterProbe.initial.frameHigh === 0, "the original frame counters should support an exact zero reset");
-assert(frameCounterProbe.frame63.frameLow === 0x3f && frameCounterProbe.frame63.frameHigh === 0, "the high frame counter should remain zero through low frame 63");
-assert(frameCounterProbe.frame64.frameLow === 0x40 && frameCounterProbe.frame64.frameHigh === 1, "low frame 64 should advance the independent high frame counter");
-assert(frameCounterProbe.frame128.frameLow === 0x80 && frameCounterProbe.frame128.frameHigh === 2 && frameCounterProbe.frame192.frameLow === 0xc0 && frameCounterProbe.frame192.frameHigh === 3, "the high frame counter should advance at every 64-frame quarter boundary");
-assert(frameCounterProbe.frame256.frameLow === 0 && frameCounterProbe.frame256.frameHigh === 4, "wrapping the eight-bit low counter should advance rather than wrap the independent high counter");
-assert(frameCounterProbe.highReset.frameLow === 0xab && frameCounterProbe.highReset.frameHigh === 0, "resetting only the high frame counter should preserve the full low byte");
-assert(frameCounterProbe.nextQuarterBoundary.frameLow === 0xc0 && frameCounterProbe.nextQuarterBoundary.frameHigh === 1, "a preserved low phase should reach its next high-counter increment after the remaining quarter interval");
-assert(frameCounterProbe.lowReset.frameLow === 0 && frameCounterProbe.lowReset.frameHigh === 5, "resetting only the low frame counter should preserve the high counter");
-assert(frameCounterProbe.extendedStageEndStart.frameLow === 0 && frameCounterProbe.extendedStageEndStart.frameHigh === 0xfe && frameCounterProbe.extendedStageEndFinish.frameLow === 0 && frameCounterProbe.extendedStageEndFinish.frameHigh === 2, "an extended stage ending should wrap the original high counter from FE to 02 over exactly 256 frames");
-assert(frameCounterProbe.paused.frameLow === 0x40 && frameCounterProbe.paused.frameHigh === 8 && frameCounterProbe.paused.tick === 31 && frameCounterProbe.paused.pauseElapsed === 1, "the NMI-style counters should advance during pause while active battle time remains frozen");
-assert(frameCounterProbe.stageActivation.screen === "playing" && frameCounterProbe.stageActivation.frameLow === 0x40 && frameCounterProbe.stageActivation.frameHigh === 0, "activating a stage should reset only the high counter after the global low counter advances");
 assert(titleDemoProbe.timeoutFrames === 640, "title demo should use ten original 64-frame high-counter intervals");
 assert(titleDemoProbe.selectionReset.idleFrames === 0 && titleDemoProbe.selectionReset.frameLow === 0xab && titleDemoProbe.selectionReset.frameHigh === 0, "changing the title selection should clear only the high frame counter and preserve the full low-byte phase");
 assert(titleDemoProbe.beforeTimeout.screen === "title" && titleDemoProbe.beforeTimeout.idleFrames === 639 && titleDemoProbe.beforeTimeout.frameLow === 0x7f && titleDemoProbe.beforeTimeout.frameHigh === 9, "title should remain visible through idle frame 639 with high counter nine");

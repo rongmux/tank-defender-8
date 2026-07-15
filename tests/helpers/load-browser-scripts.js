@@ -3,6 +3,7 @@ const path = require("path");
 const vm = require("vm");
 
 const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
+  "src/core/frame-counter.js",
   "src/core/battle-random.js",
   "src/game.js"
 ]);
