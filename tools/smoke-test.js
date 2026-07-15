@@ -1,9 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const vm = require("vm");
+const { loadBrowserScripts } = require("../tests/helpers/load-browser-scripts");
 
 const root = path.resolve(__dirname, "..");
-const source = fs.readFileSync(path.join(root, "src", "game.js"), "utf8");
 const samplePack = JSON.parse(fs.readFileSync(path.join(root, "data", "sample-stage-pack.json"), "utf8"));
 const quadrantPack = JSON.parse(fs.readFileSync(path.join(root, "data", "sample-quadrant-stage-pack.json"), "utf8"));
 const freePack = JSON.parse(fs.readFileSync(path.join(root, "data", "free-35-stage-pack.json"), "utf8"));
@@ -256,7 +255,8 @@ const context = {
 
 context.globalThis = context;
 
-vm.runInNewContext(source, context, { filename: "src/game.js" });
+const browserScripts = loadBrowserScripts(root, context);
+const source = browserScripts.sources["src/game.js"];
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -1166,9 +1166,6 @@ const stageClearPresentationAtTotal = context.window.TankDefender8.debugStageCle
 );
 assert(stageClearPresentationBeforeTotal.showTotals === false && stageClearPresentationAtTotal.showTotals === true, "stage result should reveal TOTAL only after all four type counts and the original pause");
 const battleRandomProbe = context.window.TankDefender8.debugBattleRandomProbe();
-assert(battleRandomProbe.synthetic.map((entry) => entry.value).join(",") === "169,65,104", "D44D random arithmetic should reproduce the synthetic A9, 41, 68 byte sequence");
-assert(battleRandomProbe.synthetic.map((entry) => entry.index).join(",") === "255,0,1", "D44D random index should wrap as an independent eight-bit value");
-assert(battleRandomProbe.carryState.value === 59 && battleRandomProbe.carryState.index === 33, "D44D random arithmetic should retain the carry from the frame-high addition");
 assert(battleRandomProbe.shared.aiDecision === false && battleRandomProbe.shared.afterAiIndex === 255, "enemy AI should consume the shared NES-style random sequence");
 assert(battleRandomProbe.shared.secondType === "shovel" && battleRandomProbe.shared.afterPowerUpIndex === 0, "power-up selection should consume the next byte from the same shared sequence");
 assert(battleRandomProbe.shared.locationId === 0 && battleRandomProbe.shared.afterLocationIndex === 2, "power-up placement should consume the original pair of position bytes from the shared sequence");

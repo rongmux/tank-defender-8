@@ -6,6 +6,8 @@ NES-style tank defense game built as a static Canvas app.
 
 This repository does not include original NES ROM data, original sprites, original audio, or original stage maps. Maps, sprites, and audio use free or custom replacement resources. The built-in enemy composition mirrors the publicly documented 35-stage Battle City enemy group table, and the engine remains data-driven so gameplay rules, enemy sequences, and stage packs can be tuned without changing the core code.
 
+The project is currently in a dedicated architecture-refactor phase. New 1:1 gameplay work is frozen while the single-file runtime and smoke test are split into explicit browser modules, pure rule modules, shared test infrastructure, unit suites, and feature integration suites. The no-build static launch path remains a hard compatibility requirement throughout the migration.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder locally:
@@ -19,11 +21,47 @@ Then open `http://127.0.0.1:8765/index.html`.
 ## Verify
 
 ```powershell
+node --check src/core/battle-random.js
 node --check src/game.js
 node --check tools/build-free-stage-pack.js
-node tools/smoke-test.js
+node tests/run-tests.js
 git diff --check
 ```
+
+## Project Structure
+
+```text
+tank-defender-8/
+|-- data/
+|   |-- free-35-stage-pack.json
+|   |-- free-audio-manifest.json
+|   |-- free-sprite-manifest.json
+|   |-- sample-quadrant-stage-pack.json
+|   `-- sample-stage-pack.json
+|-- src/
+|   |-- core/
+|   |   `-- battle-random.js
+|   `-- game.js
+|-- tests/
+|   |-- helpers/
+|   |   `-- load-browser-scripts.js
+|   |-- unit/
+|   |   |-- battle-random.test.js
+|   |   `-- browser-entry.test.js
+|   `-- run-tests.js
+|-- tools/
+|   |-- build-free-stage-pack.js
+|   |-- dev-server.js
+|   `-- smoke-test.js
+|-- index.html
+|-- styles.css
+|-- README.md
+`-- README.zh-CN.md
+```
+
+`src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable runtime fakes and script loading, `tests/unit/` exercises pure modules directly, and `tests/run-tests.js` runs unit coverage before the remaining full-browser regression suite in `tools/smoke-test.js`. The latter will move by feature into `tests/integration/` without dropping end-to-end coverage.
+
+The migration order is core timing/random/geometry, configuration and stage packs, gameplay entities and rules, input/editor, audio, rendering/screens, debug adapters, and finally the application bootstrap. Every extraction must keep the static no-build launch path, move its matching tests in the same commit, and pass the full regression suite before the next subsystem moves. New 1:1 gameplay work is paused until this refactor and test split are complete.
 
 ## Controls
 

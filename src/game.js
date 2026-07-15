@@ -1,6 +1,10 @@
 (function () {
   "use strict";
 
+  const battleRandomModule = window.TankDefender8Modules && window.TankDefender8Modules.battleRandom;
+  if (!battleRandomModule) throw new Error("battle-random module must load before game.js");
+  const { advanceBattleRandom } = battleRandomModule;
+
   const canvas = document.getElementById("game");
   const packFileInput = document.getElementById("stage-pack-file");
   const ctx = canvas.getContext("2d");
@@ -4944,20 +4948,6 @@
   function randomByte(random) {
     if (typeof random === "function") return Math.floor(random() * 256) & 0xff;
     return nextBattleRandomByte();
-  }
-
-  /** Reproduces the arithmetic and carry flow of the original D44D random routine. */
-  function advanceBattleRandom(value, index, frameHigh, zeroPageByte) {
-    const previous = Math.floor(Number(value) || 0) & 0xff;
-    const nextIndex = (Math.floor(Number(index) || 0) + 1) & 0xff;
-    let accumulator = (previous << 3) & 0xff;
-    accumulator = (accumulator - previous) & 0xff;
-
-    let sum = accumulator + (Math.floor(Number(frameHigh) || 0) & 0xff);
-    const carry = sum > 0xff ? 1 : 0;
-    accumulator = sum & 0xff;
-    sum = accumulator + (Math.floor(Number(zeroPageByte) || 0) & 0xff) + carry;
-    return { value: sum & 0xff, index: nextIndex };
   }
 
   function nextBattleRandomByte() {
@@ -12083,15 +12073,6 @@
       };
     },
     debugBattleRandomProbe() {
-      const syntheticBytes = [0x11, 0x80, 0x7f];
-      const synthetic = [];
-      let state = { value: 0x5a, index: 0xfe };
-      for (const zeroPageByte of syntheticBytes) {
-        state = advanceBattleRandom(state.value, state.index, 0x22, zeroPageByte);
-        synthetic.push({ ...state, zeroPageByte });
-      }
-      const carryState = advanceBattleRandom(0xfa, 0x20, 0x64, 0);
-
       const previous = {
         randomValue: game.randomValue,
         randomIndex: game.randomIndex,
@@ -12110,8 +12091,6 @@
         const beforeInjected = { value: game.randomValue, index: game.randomIndex };
         const injected = randomByte(() => 0.5);
         return {
-          synthetic,
-          carryState,
           shared: { aiDecision, afterAiIndex, secondType, afterPowerUpIndex, locationId: location.id, afterLocationIndex },
           injected,
           injectedPreservedState: game.randomValue === beforeInjected.value && game.randomIndex === beforeInjected.index

@@ -6,6 +6,8 @@
 
 本仓库不包含 NES 原版 ROM 数据、原版精灵图、原版音频或原版关卡地图。地图、精灵图和音频均使用免费或自定义替代资源。内置敌人构成与公开记录的《Battle City》35 关敌人分组表一致；引擎仍采用数据驱动设计，因此无需修改核心代码即可调整玩法规则、敌人序列和关卡包。
 
+项目当前处于独立的架构重构阶段。在把单文件运行时和 smoke 测试拆分为显式浏览器模块、纯规则模块、共享测试基础设施、单元测试套件和按功能划分的集成套件期间，暂停新增 1:1 游戏机制。整个迁移过程必须继续兼容无需构建的静态启动方式。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -19,11 +21,47 @@ python -m http.server 8765 --bind 127.0.0.1
 ## 验证
 
 ```powershell
+node --check src/core/battle-random.js
 node --check src/game.js
 node --check tools/build-free-stage-pack.js
-node tools/smoke-test.js
+node tests/run-tests.js
 git diff --check
 ```
+
+## 项目结构
+
+```text
+tank-defender-8/
+|-- data/
+|   |-- free-35-stage-pack.json
+|   |-- free-audio-manifest.json
+|   |-- free-sprite-manifest.json
+|   |-- sample-quadrant-stage-pack.json
+|   `-- sample-stage-pack.json
+|-- src/
+|   |-- core/
+|   |   `-- battle-random.js
+|   `-- game.js
+|-- tests/
+|   |-- helpers/
+|   |   `-- load-browser-scripts.js
+|   |-- unit/
+|   |   |-- battle-random.test.js
+|   |   `-- browser-entry.test.js
+|   `-- run-tests.js
+|-- tools/
+|   |-- build-free-stage-pack.js
+|   |-- dev-server.js
+|   `-- smoke-test.js
+|-- index.html
+|-- styles.css
+|-- README.md
+`-- README.zh-CN.md
+```
+
+`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的运行时模拟与脚本加载，`tests/unit/` 直接验证纯模块，`tests/run-tests.js` 会先运行单元覆盖，再运行 `tools/smoke-test.js` 中剩余的完整浏览器回归。后者会按功能逐步迁入 `tests/integration/`，但不会丢失端到端覆盖。
+
+迁移顺序依次为核心计时/随机/几何、配置与关卡包、游戏实体与规则、输入/编辑器、音频、渲染/画面、调试适配器，最后收敛应用启动入口。每次抽离都必须保留无需构建的静态启动方式，在同一提交中迁移对应测试，并在下一子系统开始前通过完整回归。重构和测试拆分全部完成前，暂停新增 1:1 游戏机制。
 
 ## 操作方式
 
