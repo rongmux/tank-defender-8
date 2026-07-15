@@ -129,11 +129,23 @@
   };
   const CARRIER_FLASH_COLOR = "#dd3d33";
   const DEFAULT_EXPLOSION_CORE_COLOR = "#f7f1c6";
-  const BULLET_IMPACT_EXPLOSION_RULES = new Set(["baseDestroy", "brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
+  const BASE_DESTRUCTION_TAIL_FRAMES = 4;
+  const BASE_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
+    1, 1, 1,
+    2, 2, 2, 2,
+    3, 3, 3, 3,
+    4, 4, 4, 4,
+    5, 5, 5, 5,
+    4, 4, 4, 4,
+    3, 3, 3, 3,
+    2, 2, 2, 2,
+    1, 1, 1, 1
+  ]);
+  const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
   const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
   const DEFAULT_EXPLOSION_RULES = {
     bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    baseDestroy: { ttl: 9, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
+    baseDestroy: { ttl: 35, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     brickHit: { ttl: 9, color: "#d08b52", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     steelHit: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
     steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
@@ -1186,6 +1198,7 @@
     enemyKilled: 0,
     nextSpawn: 0,
     clearPendingTimer: 0,
+    baseDestroyTimer: 0,
     gameOverTimer: 0,
     fullGameOverElapsed: 0,
     freezeTimer: 0,
@@ -2530,6 +2543,7 @@
     game.enemyKilled = 0;
     game.nextSpawn = enemySpawnDelay(stage, 0);
     game.clearPendingTimer = 0;
+    game.baseDestroyTimer = 0;
     game.gameOverTimer = 0;
     game.fullGameOverElapsed = 0;
     game.freezeTimer = 0;
@@ -2779,6 +2793,7 @@
     game.enemyKilled = 0;
     game.nextSpawn = 0;
     game.clearPendingTimer = 0;
+    game.baseDestroyTimer = 0;
     game.gameOverTimer = 0;
     game.freezeTimer = 0;
     game.shovelTimer = 0;
@@ -3703,7 +3718,7 @@
       enemyHitAudio.active ||
       pauseAudio.active
     ) return "none";
-    return playerMovementAudioRequested() ? "player" : "enemy";
+    return game.baseDestroyTimer <= 0 && playerMovementAudioRequested() ? "player" : "enemy";
   }
 
   function syncMovementAudio() {
@@ -3880,6 +3895,7 @@
       game.screen !== "playing" ||
       game.demoMode ||
       game.clearPendingTimer > 0 ||
+      game.baseDestroyTimer > 0 ||
       stageEnemiesCleared()
     ) return false;
     game.paused = !game.paused;
@@ -4384,7 +4400,7 @@
    */
   function updateBattle(options) {
     const opts = options || {};
-    const playerInputEnabled = opts.playerInputEnabled !== false;
+    const playerInputEnabled = opts.playerInputEnabled !== false && game.baseDestroyTimer <= 0;
     const checkEnding = opts.checkEnding !== false;
     game.tick += 1;
     updateFreezeTimer();
@@ -4394,6 +4410,7 @@
     updateShovelTimer();
     updatePlayerInvulnerabilityTimers();
     updateExplosions();
+    updateBaseDestructionTimer();
     updateBullets();
     updateScorePopups();
     updatePowerUp();
@@ -4862,11 +4879,10 @@
     if (!game.base.alive) return false;
     if (!rectsOverlap(bulletRect(bullet), game.base)) return false;
     game.base.alive = false;
+    game.baseDestroyTimer = game.demoMode ? 0 : baseDestructionDuration();
     bullet.remove = true;
-    addRuleExplosion("baseDestroy", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
     playSound("baseHit");
     playSound("playerDestroy");
-    if (!game.demoMode) enterGameOver();
     return true;
   }
 
@@ -5576,6 +5592,10 @@
     return rules[ruleName] || DEFAULT_EXPLOSION_RULES[ruleName] || DEFAULT_EXPLOSION_RULES.enemyHit;
   }
 
+  function baseDestructionDuration() {
+    return explosionRule("baseDestroy").ttl + BASE_DESTRUCTION_TAIL_FRAMES;
+  }
+
   function addExplosion(x, y, ttl, color, coreColor, style) {
     game.explosions.push({
       x,
@@ -5591,6 +5611,11 @@
   function updateExplosions() {
     for (const explosion of game.explosions) explosion.ttl -= 1;
     game.explosions = game.explosions.filter((explosion) => explosion.ttl > 0);
+  }
+
+  /** Runs before bullet collision so a newly hit base retains its full loaded $27 counter for the hit frame. */
+  function updateBaseDestructionTimer() {
+    if (game.baseDestroyTimer > 0) game.baseDestroyTimer -= 1;
   }
 
   function addScorePopup(points, x, y, options) {
@@ -5620,6 +5645,7 @@
       return;
     }
     if (!game.base.alive) {
+      if (game.baseDestroyTimer > 0) return;
       enterGameOver();
       return;
     }
@@ -5728,6 +5754,7 @@
     stopStageBonusAudio();
     game.screen = "gameOver";
     game.paused = false;
+    game.baseDestroyTimer = 0;
     game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
     game.gameOverTimer = gameOverFieldDuration();
   }
@@ -6207,6 +6234,7 @@
     renderTerrain(true, game.grid);
     if (game.powerUp) drawPowerUp(game.powerUp);
     renderExplosions();
+    renderBaseDestruction();
     renderScorePopups();
     renderPanel();
   }
@@ -6565,6 +6593,39 @@
         core: explosion.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
       });
     }
+  }
+
+  function renderBaseDestruction() {
+    const presentation = baseDestructionPresentation(game.baseDestroyTimer);
+    if (!presentation) return;
+    const rule = explosionRule("baseDestroy");
+    drawScaledManifestSprite("explosion", "burst", presentation.x, presentation.y, presentation.size / 16, {
+      primary: rule.color,
+      core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
+    });
+  }
+
+  /** Maps the configurable visible lifetime onto the original 35-frame 1-2-3-4-5-4-3-2-1 sequence. */
+  function baseDestructionPresentation(timer) {
+    const visibleFrames = explosionRule("baseDestroy").ttl;
+    const duration = visibleFrames + BASE_DESTRUCTION_TAIL_FRAMES;
+    const remaining = clamp(Math.floor(Number(timer) || 0), 0, duration);
+    const elapsed = duration - remaining;
+    if (elapsed <= 0 || elapsed > visibleFrames) return null;
+    const frame = elapsed - 1;
+    const referenceFrame = visibleFrames <= 1
+      ? 0
+      : Math.round((frame * (BASE_DESTRUCTION_REFERENCE_PHASES.length - 1)) / (visibleFrames - 1));
+    const phase = BASE_DESTRUCTION_REFERENCE_PHASES[referenceFrame];
+    const size = phase >= 4 ? 32 : 16;
+    return {
+      frame,
+      referenceFrame,
+      phase,
+      size,
+      x: Math.round(FIELD_X + game.base.x + game.base.w / 2 - size / 2),
+      y: Math.round(FIELD_Y + game.base.y + game.base.h / 2 - size / 2)
+    };
   }
 
   function explosionPresentation(explosion) {
@@ -8385,6 +8446,7 @@
           enemyDestroyActive: enemyDestroyAudio.active,
           enemyDestroyFrame: enemyDestroyAudio.frame,
           enemyDestroyAudible: enemyDestroyAudio.active && Boolean(enemyVoice) && enemyDestroyAudioAudible() && !game.paused,
+          baseDestroyTimer: game.baseDestroyTimer,
           screen: game.screen
         };
       };
@@ -8420,6 +8482,7 @@
         game.demoMode = false;
         game.paused = false;
         game.clearPendingTimer = 0;
+        game.baseDestroyTimer = 0;
         game.grid = makeGrid();
         game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
         game.enemies = [];
@@ -8606,6 +8669,7 @@
           enemyHitFrame: enemyHitAudio.frame,
           enemyHitAudible: enemyHitAudio.active && enemyHitAudioAudible(),
           movementAudioMode: movementAudio.mode,
+          baseDestroyTimer: game.baseDestroyTimer,
           screen: game.screen
         };
       };
@@ -8635,6 +8699,7 @@
         game.demoMode = false;
         game.paused = false;
         game.clearPendingTimer = 0;
+        game.baseDestroyTimer = 0;
         game.grid = makeGrid();
         game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
         game.players = [makePlayer()];
@@ -10175,6 +10240,7 @@
         panelEnemyCounter: panelEnemyCounterRemaining(),
         nextSpawn: game.nextSpawn,
         clearPendingTimer: game.clearPendingTimer,
+        baseDestroyTimer: game.baseDestroyTimer,
         stageResultReason: game.stageResultReason,
         stageClearElapsed: game.stageClearElapsed,
         stageClearBonusPlayerIds: game.stageClearBonusPlayerIds.slice(),
@@ -13845,6 +13911,7 @@
         players: game.players,
         enemies: game.enemies,
         explosions: game.explosions,
+        baseDestroyTimer: game.baseDestroyTimer,
         gameOverTimer: game.gameOverTimer
       };
       const makeBaseBullet = () => ({
@@ -13867,6 +13934,7 @@
         game.players = [];
         game.enemies = [];
         game.explosions = [];
+        game.baseDestroyTimer = 0;
 
         game.grid = makeGrid();
         setTile(game.grid, 6, 11, BRICK);
@@ -13878,6 +13946,7 @@
           bulletRemoved: shieldedBullet.remove,
           topWallMask: game.grid[11][6].mask,
           screen: game.screen,
+          baseDestroyTimer: game.baseDestroyTimer,
           explosions: game.explosions.map(({ x, y, ttl, style }) => ({ x, y, ttl, style }))
         };
 
@@ -13885,17 +13954,15 @@
         game.grid = makeGrid();
         game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
         game.explosions = [];
+        game.baseDestroyTimer = 0;
         const exposedBullet = makeBaseBullet();
-        const bulletCenter = {
-          x: exposedBullet.x + exposedBullet.w / 2,
-          y: exposedBullet.y + exposedBullet.h / 2
-        };
         resolveBullet(exposedBullet);
         const exposed = {
           baseAlive: game.base.alive,
           bulletRemoved: exposedBullet.remove,
           screen: game.screen,
-          bulletCenter,
+          baseDestroyTimer: game.baseDestroyTimer,
+          presentation: baseDestructionPresentation(game.baseDestroyTimer),
           explosions: game.explosions.map(({ x, y, ttl, style }) => ({ x, y, ttl, style }))
         };
 
@@ -13916,6 +13983,150 @@
         syncPlayerDestroyAudioNodes();
         syncEnemyDestroyAudioNodes();
         syncMovementAudio();
+      }
+    },
+    debugBaseDestructionSequenceProbe() {
+      const previous = { ...game };
+      const previousFirePresses = new Set(pendingFirePresses);
+      const rightWasHeld = keys.has("ArrowRight");
+      const previousBaseHit = { active: baseHitAudio.active, frame: baseHitAudio.frame };
+      const previousPlayerDestroy = { active: playerDestroyAudio.active, frame: playerDestroyAudio.frame };
+      const player = createPlayer(1);
+      const spawningEnemy = { alive: true, spawnFlash: 40 };
+      const fieldBullet = {
+        x: 32,
+        y: 120,
+        w: gameSettings().projectileRules.bulletSize,
+        h: gameSettings().projectileRules.bulletSize,
+        dir: RIGHT,
+        speed: 1,
+        power: 1,
+        ownerKind: "enemy",
+        ownerId: 100,
+        ownerKey: "enemy:100",
+        remove: false
+      };
+      const baseBullet = {
+        x: 6 * TILE + 5,
+        y: 12 * TILE + 5,
+        w: gameSettings().projectileRules.bulletSize,
+        h: gameSettings().projectileRules.bulletSize,
+        dir: DOWN,
+        speed: 0,
+        power: 1,
+        ownerKind: "enemy",
+        ownerId: 101,
+        ownerKey: "enemy:101",
+        remove: false
+      };
+      try {
+        stopMovementAudio();
+        stopBaseHitAudio();
+        stopPlayerDestroyAudio();
+        player.x = 48;
+        player.y = 48;
+        player.spawnFlash = 0;
+        player.invuln = 0;
+        player.reload = 0;
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = false;
+        game.playerCount = 1;
+        game.tick = 0;
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.players = [player];
+        game.enemies = [spawningEnemy];
+        game.bullets = [fieldBullet];
+        game.explosions = [];
+        game.scorePopups = [];
+        game.powerUp = null;
+        game.enemySpawned = enemyTotal();
+        game.enemyKilled = 0;
+        game.nextSpawn = 0;
+        game.clearPendingTimer = 0;
+        game.baseDestroyTimer = 0;
+        game.gameOverTimer = 0;
+        game.freezeTimer = 0;
+        game.shovelTimer = 0;
+
+        const hit = hitBase(baseBullet);
+        const entry = {
+          hit,
+          screen: game.screen,
+          timer: game.baseDestroyTimer,
+          duration: baseDestructionDuration(),
+          baseAlive: game.base.alive,
+          bulletRemoved: baseBullet.remove,
+          explosionCount: game.explosions.length,
+          presentation: baseDestructionPresentation(game.baseDestroyTimer)
+        };
+        const pauseAccepted = togglePause();
+        keys.add("ArrowRight");
+        pendingFirePresses.add("Space");
+        const playerStartX = player.x;
+        const bulletStartX = fieldBullet.x;
+        const enemyStartFlash = spawningEnemy.spawnFlash;
+        const frames = [];
+        for (let frame = 1; frame <= entry.duration; frame += 1) {
+          update();
+          const presentation = baseDestructionPresentation(game.baseDestroyTimer);
+          frames.push({
+            frame,
+            timer: game.baseDestroyTimer,
+            screen: game.screen,
+            phase: presentation ? presentation.phase : 0,
+            size: presentation ? presentation.size : 0,
+            movementAudioMode: movementAudio.mode
+          });
+        }
+        return {
+          entry,
+          pauseAccepted,
+          playerStartX,
+          playerEndX: player.x,
+          bulletStartX,
+          bulletEndX: fieldBullet.x,
+          enemyStartFlash,
+          enemyEndFlash: spawningEnemy.spawnFlash,
+          playerBulletCount: game.bullets.filter((bullet) => bullet.ownerKind === "player").length,
+          gameOverTimer: game.gameOverTimer,
+          frames
+        };
+      } finally {
+        stopBaseHitAudio();
+        stopPlayerDestroyAudio();
+        Object.assign(game, previous);
+        baseHitAudio.active = previousBaseHit.active;
+        baseHitAudio.frame = previousBaseHit.frame;
+        playerDestroyAudio.active = previousPlayerDestroy.active;
+        playerDestroyAudio.frame = previousPlayerDestroy.frame;
+        pendingFirePresses.clear();
+        for (const code of previousFirePresses) pendingFirePresses.add(code);
+        if (!rightWasHeld) keys.delete("ArrowRight");
+        syncBaseHitAudioNodes();
+        syncPlayerDestroyAudioNodes();
+        syncMovementAudio();
+      }
+    },
+    debugRenderBaseDestructionFrame(timer) {
+      const previous = { ...game };
+      try {
+        game.screen = "playing";
+        game.playerCount = 1;
+        game.grid = makeGrid();
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: false };
+        game.players = [];
+        game.enemies = [];
+        game.bullets = [];
+        game.explosions = [];
+        game.scorePopups = [];
+        game.powerUp = null;
+        game.baseDestroyTimer = clamp(Math.floor(Number(timer) || 0), 0, baseDestructionDuration());
+        renderGame();
+        return baseDestructionPresentation(game.baseDestroyTimer);
+      } finally {
+        Object.assign(game, previous);
       }
     },
     debugTankCollisionProbe() {

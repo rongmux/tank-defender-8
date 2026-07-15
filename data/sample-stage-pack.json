@@ -61,7 +61,7 @@
     },
     "explosionRules": {
       "bulletCancel": { "ttl": 10, "color": "#f8e08b", "coreColor": "#f7f1c6" },
-      "baseDestroy": { "ttl": 9, "color": "#f05a42", "coreColor": "#f7f1c6" },
+      "baseDestroy": { "ttl": 35, "color": "#f05a42", "coreColor": "#f7f1c6" },
       "brickHit": { "ttl": 9, "color": "#d08b52", "coreColor": "#f7f1c6" },
       "steelHit": { "ttl": 9, "color": "#dbe0ef", "coreColor": "#f7f1c6" },
       "steelBlocked": { "ttl": 9, "color": "#dbe0ef", "coreColor": "#f7f1c6" },
