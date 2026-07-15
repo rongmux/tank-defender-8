@@ -4,6 +4,7 @@ const { spawnSync } = require("child_process");
 const root = path.resolve(__dirname, "..");
 const testFiles = [
   "tests/unit/value-normalization.test.js",
+  "tests/unit/power-up-settings.test.js",
   "tests/unit/enemy-types.test.js",
   "tests/unit/player-upgrades.test.js",
   "tests/unit/stage-settings.test.js",
@@ -14,6 +15,7 @@ const testFiles = [
   "tests/unit/battle-random.test.js",
   "tests/unit/browser-entry.test.js",
   "tests/integration/collision.test.js",
+  "tests/integration/power-up-settings.test.js",
   "tests/integration/enemy-types.test.js",
   "tests/integration/player-upgrades.test.js",
   "tests/integration/stage-settings.test.js",

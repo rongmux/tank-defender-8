@@ -716,13 +716,6 @@ assert(schema.enemyTotal === 20, "schema enemy total should be 20");
 assert(schema.gameSettings.initialLives === 3, "schema should expose initial lives");
 assert(schema.gameSettings.bonusLifeScores[0] === 20000, "schema should expose bonus life scores");
 assert(schema.gameSettings.deathPowerLevel === 0, "schema should expose death power level");
-assert(schema.gameSettings.powerUpDurations.helmet === 10, "schema should expose helmet 64-frame timer units");
-assert(schema.gameSettings.powerUpDurations.shovel === 20, "schema should expose shovel 64-frame timer units");
-assert(schema.gameSettings.powerUpDurations.shovelFlash === 4, "schema should expose the shovel flash threshold");
-assert(schema.gameSettings.powerUpDurations.timer === 10, "schema should expose timer power-up 64-frame units");
-assert(schema.gameSettings.powerUpRules.carrierRelease === "hit", "schema should expose carrier release rule");
-assert(schema.gameSettings.powerUpRules.clearUncollectedOnCarrierSpawn === true, "schema should expose carrier spawn power-up clearing rule");
-assert(schema.gameSettings.powerUpRules.pickupScore === 500, "schema should expose power-up pickup score");
 assert(schema.gameSettings.timings.stageIntro === 95, "schema should expose the original ninety-five-frame pre-battle interval");
 assert(schema.gameSettings.timings.stageClearDelay === 128, "schema should expose the original 128-frame stage clear delay");
 assert(schema.gameSettings.timings.stageClear === 0, "zero stage-clear timing should select the dynamic original result schedule");
@@ -1245,13 +1238,6 @@ assert(lifeAwardProbe.tank.score === lifeAwardProbe.pickupScore && lifeAwardProb
 assert(lifeAwardProbe.thresholdAudio.active && lifeAwardProbe.thresholdAudio.frame === 0, "crossing the score threshold should trigger the two-voice bonus-life event");
 assert(lifeAwardProbe.tankAudio.active && lifeAwardProbe.tankAudio.frame === 0, "collecting the extra-tank power-up should restart the same bonus-life event");
 assert(lifeAwardProbe.tankPickupAudio.active && lifeAwardProbe.tankPickupAudio.frame === 0 && !lifeAwardProbe.tankPickupAudio.audible, "extra-tank pickup audio should begin silently behind the higher-priority bonus-life pulse voice");
-const helmetProbe = context.window.TankDefender8.debugHelmetProtectionProbe();
-assert(helmetProbe.duration === schema.gameSettings.powerUpDurations.helmet, "helmet should use the configured protection duration");
-assert(helmetProbe.unprotected.alive === false && helmetProbe.unprotected.bulletRemoved === true, "enemy bullets should destroy an unprotected player");
-assert(helmetProbe.protected.alive === true && helmetProbe.protected.lives === 2, "helmet should protect the player from enemy bullets");
-assert(helmetProbe.protected.invuln === helmetProbe.duration, "helmet should set the player invulnerability timer");
-assert(helmetProbe.protected.score === helmetProbe.pickupScore, "helmet should award the power-up pickup score");
-assert(helmetProbe.protected.bulletRemoved === true, "helmet should absorb the incoming enemy bullet");
 const enemyBulletPlayerProbe = context.window.TankDefender8.debugEnemyBulletPlayerCollisionProbe();
 assert(enemyBulletPlayerProbe.protected.bulletRemoved === true && enemyBulletPlayerProbe.protected.alive === true && enemyBulletPlayerProbe.protected.explosions === 0, "player protection should absorb an enemy bullet without a hit explosion");
 assert(enemyBulletPlayerProbe.positiveNine.bulletRemoved && enemyBulletPlayerProbe.negativeNine.bulletRemoved, "enemy bullets should hit within nine pixels of the player center on both axes");
@@ -1512,15 +1498,6 @@ const mixedPack = {
 };
 assert(context.window.TankDefender8.validateStagePack(mixedPack).ok === false, "mixed map formats should fail validation");
 
-const badGameSettingsPack = {
-  id: "bad-game-settings",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { initialLives: 3, bonusLifeScores: [100], deathPowerLevel: 0, powerUpDurations: { helmet: 0 } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badGameSettingsPack).ok === false, "bad gameSettings should fail validation");
-
 const badTimerFreezePack = {
   id: "bad-timer-freeze",
   totalStages: 1,
@@ -1538,24 +1515,6 @@ const badTimingPack = {
   enemies: [schema.enemies[0].slice(0, 3)]
 };
 assert(context.window.TankDefender8.validateStagePack(badTimingPack).ok === false, "bad timing setting should fail validation");
-
-const badPowerUpRulesPack = {
-  id: "bad-power-up-rules",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { powerUpRules: { carrierRelease: "first" } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badPowerUpRulesPack).ok === false, "bad power-up rule should fail validation");
-
-const badPowerUpScorePack = {
-  id: "bad-power-up-score",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { powerUpRules: { pickupScore: -1 } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badPowerUpScorePack).ok === false, "bad power-up score should fail validation");
 
 const badEnemyAiPack = {
   id: "bad-enemy-ai",
@@ -1686,27 +1645,6 @@ assert(context.window.TankDefender8.currentPackInfo().maxActiveEnemies === 2, "c
 assert(context.window.TankDefender8.currentPackInfo().initialLives === 5, "current pack should expose custom initial lives");
 assert(context.window.TankDefender8.currentPackInfo().bonusLifeScores[0] === 100, "current pack should expose custom bonus life scores");
 assert(context.window.TankDefender8.currentPackInfo().deathPowerLevel === 2, "current pack should expose custom death power level");
-assert(context.window.TankDefender8.currentPackInfo().powerUpDurations.timer === 50, "current pack should expose custom power-up durations");
-assert(context.window.TankDefender8.currentPackInfo().powerUpDurations.shovelFlash === 16, "current pack should expose custom shovel flash duration");
-assert(context.window.TankDefender8.currentPackInfo().powerUpRules.carrierRelease === "hit", "current pack should expose custom carrier release rule");
-const customCarrierProbe = context.window.TankDefender8.debugCarrierReleaseProbe(4);
-assert(customCarrierProbe.releaseOnThisHit === true, "hit-based carrier rule should release even before destruction");
-assert(customCarrierProbe.clearUncollectedOnCarrierSpawn === false, "custom carrier spawn clearing rule should be exposed");
-assert(customCarrierProbe.pickupScore === 750, "custom power-up pickup score should be exposed");
-const customCarrierClearProbe = context.window.TankDefender8.debugCarrierSpawnClearsPowerUpProbe(true);
-assert(customCarrierClearProbe.cleared === false && customCarrierClearProbe.hasPowerUp === true, "custom carrier clearing rule should preserve uncollected power-ups when disabled");
-const destructionCarrierPack = {
-  ...shortPack,
-  id: "destruction-carrier",
-  gameSettings: {
-    ...shortPack.gameSettings,
-    powerUpRules: { ...shortPack.gameSettings.powerUpRules, carrierRelease: "destroyed" }
-  }
-};
-assert(context.window.TankDefender8.loadStagePack(destructionCarrierPack) === true, "destruction-only carrier pack should load");
-assert(context.window.TankDefender8.debugCarrierReleaseProbe(4).releaseOnThisHit === false, "destruction-only carriers should not release before destruction");
-assert(context.window.TankDefender8.debugCarrierReleaseProbe(1).releaseOnThisHit === true, "destruction-only carriers should release on the final hit");
-assert(context.window.TankDefender8.loadStagePack(shortPack) === true, "short per-stage enemy list should reload after destruction-only carrier check");
 assert(context.window.TankDefender8.currentPackInfo().timings.enemySpawnFlash === 11, "current pack should expose custom timing settings");
 assert(context.window.TankDefender8.currentPackInfo().timings.stageClearDelay === 6, "current pack should expose custom stage clear delay");
 assert(context.window.TankDefender8.currentPackInfo().enemySpawnPacing.firstDelay === 5, "current pack should expose custom first spawn delay");

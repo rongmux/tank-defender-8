@@ -11,6 +11,12 @@
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
   const { normalizeHexColor, normalizeNumber } = requireRuntimeModule("valueNormalization");
   const {
+    DEFAULT_POWERUP_DURATIONS,
+    DEFAULT_POWERUP_RULES,
+    normalizePowerUpDurations,
+    normalizePowerUpRules
+  } = requireRuntimeModule("powerUpSettings");
+  const {
     DEFAULT_ENEMY_TYPES: defaultEnemyTypes,
     ENEMY_FIRE_CHANCE,
     ENEMY_MOVE_SPEED,
@@ -141,17 +147,6 @@
   const DEFAULT_INITIAL_LIVES = 3;
   const DEFAULT_BONUS_LIFE_SCORES = [20000];
   const DEFAULT_DEATH_POWER_LEVEL = 0;
-  const DEFAULT_POWERUP_DURATIONS = {
-    helmet: 10,
-    shovel: 20,
-    shovelFlash: 4,
-    timer: 10
-  };
-  const DEFAULT_POWERUP_RULES = {
-    carrierRelease: "hit",
-    clearUncollectedOnCarrierSpawn: true,
-    pickupScore: 500
-  };
   const DEFAULT_TIMINGS = {
     stageIntro: ORIGINAL_STAGE_INTRO_FRAMES,
     stageClearDelay: 128,
@@ -1383,36 +1378,6 @@
     if (value === undefined) return fallback;
     if (typeof value !== "boolean") throw new Error(`${label} must be a boolean`);
     return value;
-  }
-
-  function normalizePowerUpDurations(durations) {
-    const source = durations || {};
-    if (typeof source !== "object") throw new Error("gameSettings.powerUpDurations must be an object");
-    return Object.fromEntries(Object.entries(DEFAULT_POWERUP_DURATIONS).map(([key, defaultValue]) => {
-      const value = source[key] === undefined ? defaultValue : Number(source[key]);
-      if (!Number.isInteger(value) || value < 1 || value > 3600) {
-        throw new Error(`gameSettings.powerUpDurations.${key} must be an integer from 1 to 3600`);
-      }
-      return [key, value];
-    }));
-  }
-
-  function normalizePowerUpRules(rules) {
-    const source = rules || {};
-    if (typeof source !== "object") throw new Error("gameSettings.powerUpRules must be an object");
-    const carrierRelease = source.carrierRelease === undefined ? DEFAULT_POWERUP_RULES.carrierRelease : String(source.carrierRelease);
-    if (!["destroyed", "hit"].includes(carrierRelease)) {
-      throw new Error("gameSettings.powerUpRules.carrierRelease must be destroyed or hit");
-    }
-    return {
-      carrierRelease,
-      clearUncollectedOnCarrierSpawn: normalizeBooleanSetting(
-        source.clearUncollectedOnCarrierSpawn,
-        DEFAULT_POWERUP_RULES.clearUncollectedOnCarrierSpawn,
-        "gameSettings.powerUpRules.clearUncollectedOnCarrierSpawn"
-      ),
-      pickupScore: normalizeNumber(source.pickupScore, DEFAULT_POWERUP_RULES.pickupScore, 0, 999999, true, "gameSettings.powerUpRules.pickupScore")
-    };
   }
 
   function normalizeTimings(timings) {
