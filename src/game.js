@@ -9,6 +9,29 @@
   const { advanceBattleRandom } = requireRuntimeModule("battleRandom");
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
+  const {
+    BRICK_QUARTER_FRAGMENT_MASKS,
+    FULL_BRICK_FRAGMENT_MASK,
+    GRID,
+    QUAD_GRID,
+    TILE_TYPES,
+    WALL_FRAGMENT,
+    brickFragmentsFromQuarterMask,
+    clearRect,
+    clearTile,
+    cloneGrid,
+    gridToQuadrants,
+    makeCell,
+    makeGrid,
+    normalizeBrickFragmentMask,
+    normalizeStageQuadrants,
+    normalizeStageRows,
+    parseStageQuadrants,
+    parseStageRows,
+    quarterMaskFromBrickFragments,
+    setTile
+  } = requireRuntimeModule("stageGrid");
+  const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
   const packFileInput = document.getElementById("stage-pack-file");
@@ -18,11 +41,6 @@
   const SCREEN_H = 240;
   const TILE = 16;
   const HALF = 8;
-  const WALL_FRAGMENT = 4;
-  const FULL_BRICK_FRAGMENT_MASK = 0xffff;
-  const BRICK_QUARTER_FRAGMENT_MASKS = [0x0033, 0x00cc, 0x3300, 0xcc00];
-  const GRID = 13;
-  const QUAD_GRID = GRID * 2;
   const FIELD_X = 16;
   const FIELD_Y = 16;
   const FIELD_W = GRID * TILE;
@@ -936,12 +954,6 @@
   ];
   const POWERUP_SIZE = 12;
 
-  const EMPTY = 0;
-  const BRICK = 1;
-  const STEEL = 2;
-  const WATER = 3;
-  const FOREST = 4;
-  const ICE = 5;
   const EDITOR_TILE_TYPES = [EMPTY, BRICK, STEEL, WATER, FOREST, ICE];
   const ORIGINAL_EDITOR_PATTERNS = [
     { type: BRICK, mask: 10 },
@@ -1018,27 +1030,6 @@
     R: ["110", "101", "110", "101", "101"],
     V: ["101", "101", "101", "101", "010"]
   };
-  const TILE_CODE_TO_TYPE = {
-    ".": EMPTY,
-    B: BRICK,
-    "#": BRICK,
-    S: STEEL,
-    W: WATER,
-    "~": WATER,
-    F: FOREST,
-    I: ICE
-  };
-  const NORMALIZED_TILE_CODE = {
-    ".": ".",
-    B: "B",
-    "#": "B",
-    S: "S",
-    W: "W",
-    "~": "W",
-    F: "F",
-    I: "I"
-  };
-
   const ENEMY_MOVE_SPEED = { normal: 0.5, fast: 1.0 };
   const ENEMY_BULLET_SPEED = { normal: 2.0, fast: 4.0 };
   const ENEMY_FIRE_CHANCE = 1 / 32;
@@ -1319,55 +1310,6 @@
     editorMessageTimer: 0
   };
 
-  function makeGrid() {
-    return Array.from({ length: GRID }, () =>
-      Array.from({ length: GRID }, () => makeCell())
-    );
-  }
-
-  function makeCell(type, mask) {
-    const cellType = type || EMPTY;
-    const cellMask = mask || 0;
-    return {
-      type: cellType,
-      mask: cellMask,
-      brickMask: cellType === BRICK ? brickFragmentsFromQuarterMask(cellMask) : 0,
-      steelHits: [0, 0, 0, 0]
-    };
-  }
-
-  function cloneGrid(grid) {
-    return grid.map((row) => row.map((cell) => ({
-      type: cell.type,
-      mask: cell.mask,
-      brickMask: cell.type === BRICK
-        ? normalizeBrickFragmentMask(cell.brickMask, cell.mask)
-        : 0,
-      steelHits: (cell.steelHits || [0, 0, 0, 0]).slice()
-    })));
-  }
-
-  function brickFragmentsFromQuarterMask(mask) {
-    let fragments = 0;
-    for (let q = 0; q < 4; q += 1) {
-      if (mask & (1 << q)) fragments |= BRICK_QUARTER_FRAGMENT_MASKS[q];
-    }
-    return fragments;
-  }
-
-  function normalizeBrickFragmentMask(brickMask, quarterMask) {
-    if (!Number.isInteger(brickMask)) return brickFragmentsFromQuarterMask(quarterMask);
-    return brickMask & FULL_BRICK_FRAGMENT_MASK;
-  }
-
-  function quarterMaskFromBrickFragments(brickMask) {
-    let mask = 0;
-    for (let q = 0; q < 4; q += 1) {
-      if (brickMask & BRICK_QUARTER_FRAGMENT_MASKS[q]) mask |= 1 << q;
-    }
-    return mask;
-  }
-
   function rng(seed) {
     let t = seed >>> 0;
     return function next() {
@@ -1405,27 +1347,6 @@
     }
   }
 
-  function setTile(grid, c, r, type, mask) {
-    if (c < 0 || c >= GRID || r < 0 || r >= GRID) return;
-    const cell = grid[r][c];
-    cell.type = type;
-    cell.mask = type === BRICK || type === STEEL ? mask || 15 : 0;
-    cell.brickMask = type === BRICK ? brickFragmentsFromQuarterMask(cell.mask) : 0;
-    cell.steelHits = [0, 0, 0, 0];
-  }
-
-  function clearTile(grid, c, r) {
-    setTile(grid, c, r, EMPTY, 0);
-  }
-
-  function clearRect(grid, c0, r0, c1, r1) {
-    for (let r = r0; r <= r1; r += 1) {
-      for (let c = c0; c <= c1; c += 1) {
-        clearTile(grid, c, r);
-      }
-    }
-  }
-
   function buildStage(stage) {
     const grid = makeGrid();
     const next = rng(0x8c0ffee ^ Math.imul(stage, 2654435761));
@@ -1454,84 +1375,6 @@
     addStageMotif(grid, stage);
     prepareBattleGrid(grid);
     return grid;
-  }
-
-  function parseStageRows(rows) {
-    const grid = makeGrid();
-    for (let r = 0; r < Math.min(GRID, rows.length); r += 1) {
-      const row = rows[r] || "";
-      for (let c = 0; c < Math.min(GRID, row.length); c += 1) {
-        const ch = row[c];
-        const type = TILE_CODE_TO_TYPE[ch] || EMPTY;
-        setTile(grid, c, r, type, 15);
-      }
-    }
-    return grid;
-  }
-
-  function parseStageQuadrants(rows) {
-    const grid = makeGrid();
-    for (let r = 0; r < QUAD_GRID; r += 1) {
-      const row = rows[r] || "";
-      for (let c = 0; c < QUAD_GRID; c += 1) {
-        const ch = row[c] || ".";
-        const type = TILE_CODE_TO_TYPE[ch] || EMPTY;
-        const tileC = Math.floor(c / 2);
-        const tileR = Math.floor(r / 2);
-        const q = (r % 2) * 2 + (c % 2);
-        const cell = grid[tileR][tileC];
-        if (type === BRICK || type === STEEL) {
-          if (cell.type !== type) {
-            cell.type = type;
-            cell.mask = 0;
-            cell.brickMask = 0;
-            cell.steelHits = [0, 0, 0, 0];
-          }
-          cell.mask |= 1 << q;
-          if (type === BRICK) cell.brickMask |= BRICK_QUARTER_FRAGMENT_MASKS[q];
-        } else if (type !== EMPTY) {
-          cell.type = type;
-          cell.mask = 0;
-          cell.brickMask = 0;
-          cell.steelHits = [0, 0, 0, 0];
-        }
-      }
-    }
-    return grid;
-  }
-
-  function normalizeStageRows(rows, label) {
-    if (!Array.isArray(rows) || rows.length !== GRID) {
-      throw new Error(`${label} must contain ${GRID} rows`);
-    }
-    return rows.map((row, r) => {
-      if (typeof row !== "string" || row.length !== GRID) {
-        throw new Error(`${label} row ${r + 1} must contain ${GRID} characters`);
-      }
-      return Array.from(row, (ch, c) => {
-        if (!Object.prototype.hasOwnProperty.call(NORMALIZED_TILE_CODE, ch)) {
-          throw new Error(`${label} row ${r + 1}, column ${c + 1} has unknown tile '${ch}'`);
-        }
-        return NORMALIZED_TILE_CODE[ch];
-      }).join("");
-    });
-  }
-
-  function normalizeStageQuadrants(rows, label) {
-    if (!Array.isArray(rows) || rows.length !== QUAD_GRID) {
-      throw new Error(`${label} must contain ${QUAD_GRID} rows`);
-    }
-    return rows.map((row, r) => {
-      if (typeof row !== "string" || row.length !== QUAD_GRID) {
-        throw new Error(`${label} row ${r + 1} must contain ${QUAD_GRID} characters`);
-      }
-      return Array.from(row, (ch, c) => {
-        if (!Object.prototype.hasOwnProperty.call(NORMALIZED_TILE_CODE, ch)) {
-          throw new Error(`${label} row ${r + 1}, column ${c + 1} has unknown tile '${ch}'`);
-        }
-        return NORMALIZED_TILE_CODE[ch];
-      }).join("");
-    });
   }
 
   function normalizeEnemyTypes(types) {
@@ -2094,34 +1937,6 @@
       throw new Error(`built-in stage ${stage} enemy sequence must contain ${DEFAULT_ENEMY_TOTAL} enemies`);
     }
     return sequence;
-  }
-
-  function gridToRows(grid) {
-    return grid.map((row) =>
-      row.map((cell) => {
-        if (cell.type === BRICK && cell.mask) return "B";
-        if (cell.type === STEEL && cell.mask) return "S";
-        if (cell.type === WATER) return "W";
-        if (cell.type === FOREST) return "F";
-        if (cell.type === ICE) return "I";
-        return ".";
-      }).join("")
-    );
-  }
-
-  function gridToQuadrants(grid) {
-    return Array.from({ length: QUAD_GRID }, (_, r) =>
-      Array.from({ length: QUAD_GRID }, (_, c) => {
-        const cell = grid[Math.floor(r / 2)][Math.floor(c / 2)];
-        const q = (r % 2) * 2 + (c % 2);
-        if (cell.type === BRICK && cell.mask & (1 << q)) return "B";
-        if (cell.type === STEEL && cell.mask & (1 << q)) return "S";
-        if (cell.type === WATER) return "W";
-        if (cell.type === FOREST) return "F";
-        if (cell.type === ICE) return "I";
-        return ".";
-      }).join("")
-    );
   }
 
   function makeSingleStagePack(rows) {

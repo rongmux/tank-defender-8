@@ -6,6 +6,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/core/geometry.js",
   "src/core/frame-counter.js",
   "src/core/battle-random.js",
+  "src/stages/stage-grid.js",
   "src/game.js"
 ]);
 

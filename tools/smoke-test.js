@@ -3,7 +3,6 @@ const path = require("path");
 const { createBrowserGameHarness } = require("../tests/helpers/browser-game-harness");
 
 const root = path.resolve(__dirname, "..");
-const samplePack = JSON.parse(fs.readFileSync(path.join(root, "data", "sample-stage-pack.json"), "utf8"));
 const quadrantPack = JSON.parse(fs.readFileSync(path.join(root, "data", "sample-quadrant-stage-pack.json"), "utf8"));
 const freePack = JSON.parse(fs.readFileSync(path.join(root, "data", "free-35-stage-pack.json"), "utf8"));
 const audioManifest = JSON.parse(fs.readFileSync(path.join(root, "data", "free-audio-manifest.json"), "utf8"));
@@ -2033,10 +2032,6 @@ assert(snapshot.stageAdvance.loopAfterFinalStage === false, "debug snapshot shou
 assert(snapshot.stageClearBonus.points === 777, "debug snapshot should expose custom stage clear bonus");
 assert(snapshot.players[0].speed === 1.5, "custom player movement speed should apply to new players");
 
-assert(context.window.TankDefender8.validateStagePack(samplePack).ok === true, "sample stage pack should validate");
-assert(context.window.TankDefender8.loadStagePack(samplePack) === true, "sample stage pack should load");
-assert(context.window.TankDefender8.validateStagePack(quadrantPack).ok === true, "quadrant stage pack should validate");
-assert(context.window.TankDefender8.loadStagePack(quadrantPack) === true, "quadrant stage pack should load");
 assert(freePack.totalStages === 35, "free replacement pack should contain 35 stages");
 assert(freePack.maps.length === 35, "free replacement pack should contain 35 maps");
 assert(freePack.enemies.length === 35, "free replacement pack should contain 35 enemy sequences");

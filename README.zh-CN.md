@@ -24,6 +24,7 @@ python -m http.server 8765 --bind 127.0.0.1
 node --check src/core/battle-random.js
 node --check src/core/frame-counter.js
 node --check src/core/geometry.js
+node --check src/stages/stage-grid.js
 node --check src/game.js
 node --check tools/build-free-stage-pack.js
 node tests/run-tests.js
@@ -45,6 +46,8 @@ tank-defender-8/
 |   |   |-- battle-random.js
 |   |   |-- frame-counter.js
 |   |   `-- geometry.js
+|   |-- stages/
+|   |   `-- stage-grid.js
 |   `-- game.js
 |-- tests/
 |   |-- helpers/
@@ -52,12 +55,14 @@ tank-defender-8/
 |   |   `-- load-browser-scripts.js
 |   |-- integration/
 |   |   |-- collision.test.js
-|   |   `-- frame-counter.test.js
+|   |   |-- frame-counter.test.js
+|   |   `-- stage-grid.test.js
 |   |-- unit/
 |   |   |-- battle-random.test.js
 |   |   |-- browser-entry.test.js
 |   |   |-- frame-counter.test.js
-|   |   `-- geometry.test.js
+|   |   |-- geometry.test.js
+|   |   `-- stage-grid.test.js
 |   `-- run-tests.js
 |-- tools/
 |   |-- build-free-stage-pack.js
@@ -69,7 +74,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则；共享战斗随机数、独立帧计数器和矩形几何现已迁入该目录。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的 Canvas、音频、DOM、存储、输入和脚本加载模拟。`tests/unit/` 直接验证纯模块，`tests/integration/` 通过真实浏览器 API 验证已抽离的计时和碰撞行为，`tests/run-tests.js` 会先运行这两层测试，再运行 `tools/smoke-test.js` 中剩余的回归套件。后者会继续按功能迁移，但不会丢失端到端覆盖。
+`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则；共享战斗随机数、独立帧计数器和矩形几何现已迁入该目录。`src/stages/` 负责关卡域，首个 `stage-grid.js` 已接管图块常量、砖块碎片状态、网格修改与校验，以及 13x13/26x26 编解码。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的 Canvas、音频、DOM、存储、输入和脚本加载模拟。`tests/unit/` 直接验证纯模块，`tests/integration/` 通过真实浏览器 API 验证已抽离的计时、碰撞和关卡网格行为，`tests/run-tests.js` 会先运行这两层测试，再运行 `tools/smoke-test.js` 中剩余的回归套件。
 
 迁移顺序依次为核心计时/随机/几何、配置与关卡包、游戏实体与规则、输入/编辑器、音频、渲染/画面、调试适配器，最后收敛应用启动入口。每次抽离都必须保留无需构建的静态启动方式，在同一提交中迁移对应测试，并在下一子系统开始前通过完整回归。重构和测试拆分全部完成前，暂停新增 1:1 游戏机制。
 

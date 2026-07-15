@@ -24,6 +24,7 @@ Then open `http://127.0.0.1:8765/index.html`.
 node --check src/core/battle-random.js
 node --check src/core/frame-counter.js
 node --check src/core/geometry.js
+node --check src/stages/stage-grid.js
 node --check src/game.js
 node --check tools/build-free-stage-pack.js
 node tests/run-tests.js
@@ -45,6 +46,8 @@ tank-defender-8/
 |   |   |-- battle-random.js
 |   |   |-- frame-counter.js
 |   |   `-- geometry.js
+|   |-- stages/
+|   |   `-- stage-grid.js
 |   `-- game.js
 |-- tests/
 |   |-- helpers/
@@ -52,12 +55,14 @@ tank-defender-8/
 |   |   `-- load-browser-scripts.js
 |   |-- integration/
 |   |   |-- collision.test.js
-|   |   `-- frame-counter.test.js
+|   |   |-- frame-counter.test.js
+|   |   `-- stage-grid.test.js
 |   |-- unit/
 |   |   |-- battle-random.test.js
 |   |   |-- browser-entry.test.js
 |   |   |-- frame-counter.test.js
-|   |   `-- geometry.test.js
+|   |   |-- geometry.test.js
+|   |   `-- stage-grid.test.js
 |   `-- run-tests.js
 |-- tools/
 |   |-- build-free-stage-pack.js
@@ -69,7 +74,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency; shared battle randomness, independent frame counters, and rectangle geometry now live there. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable Canvas, audio, DOM, storage, input, and script-loading fakes. `tests/unit/` exercises pure modules directly, `tests/integration/` verifies extracted timing and collision behavior through the real browser API, and `tests/run-tests.js` runs both before the remaining regression suite in `tools/smoke-test.js`. That suite will continue moving by feature without dropping end-to-end coverage.
+`src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency; shared battle randomness, independent frame counters, and rectangle geometry now live there. `src/stages/` owns the stage domain, beginning with tile constants, brick-fragment state, grid mutation, validation, and 13x13/26x26 codecs in `stage-grid.js`. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable Canvas, audio, DOM, storage, input, and script-loading fakes. `tests/unit/` exercises pure modules directly, `tests/integration/` verifies extracted timing, collision, and stage-grid behavior through the real browser API, and `tests/run-tests.js` runs both before the remaining regression suite in `tools/smoke-test.js`.
 
 The migration order is core timing/random/geometry, configuration and stage packs, gameplay entities and rules, input/editor, audio, rendering/screens, debug adapters, and finally the application bootstrap. Every extraction must keep the static no-build launch path, move its matching tests in the same commit, and pass the full regression suite before the next subsystem moves. New 1:1 gameplay work is paused until this refactor and test split are complete.
 
