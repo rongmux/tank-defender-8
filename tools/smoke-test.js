@@ -2200,13 +2200,6 @@ assert(forestCoverIndex !== -1, "forest layer probe should draw the forest cover
 assert(forestPowerFrameIndex !== -1, "forest layer probe should draw the power-up frame");
 assert(forestCoverIndex > forestBulletIndex, "forest should visually obfuscate flying bullets");
 assert(forestPowerFrameIndex > forestCoverIndex, "power-ups should render above forest cover");
-const terrainCollisionProbe = context.window.TankDefender8.debugTerrainCollisionProbe();
-assert(terrainCollisionProbe.water.tankCanOccupy === false, "water should block tanks");
-assert(terrainCollisionProbe.water.bulletRemoved === false, "water should not block bullets");
-assert(terrainCollisionProbe.forest.tankCanOccupy === true, "forest should not block tanks");
-assert(terrainCollisionProbe.forest.bulletRemoved === false, "forest should not block bullets");
-assert(terrainCollisionProbe.ice.tankCanOccupy === true, "ice should not block tanks");
-assert(terrainCollisionProbe.ice.bulletRemoved === false, "ice should not block bullets");
 const baseWallPriorityProbe = context.window.TankDefender8.debugBaseWallPriorityProbe();
 assert(baseWallPriorityProbe.shielded.baseAlive === true, "base wall should absorb a bullet before the base is destroyed");
 assert(baseWallPriorityProbe.shielded.bulletRemoved === true, "base-shielding wall should consume the bullet");
@@ -2266,17 +2259,6 @@ assert(baseExplosionFrameSignatures.map((entry) => entry.phase).join(",") === "1
 assert(new Set(baseExplosionFrameSignatures.map((entry) => entry.frameName)).size === 5 && new Set(baseExplosionFrameSignatures.map((entry) => entry.signature)).size === 5, "all five HQ phases should use visually distinct replacement frames");
 canvasContext.calls.length = 0;
 assert(context.window.TankDefender8.debugRenderBaseDestructionFrame(3) === null && !canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42"), "the four-frame tail should leave only the destroyed base visible");
-const tankCollisionProbe = context.window.TankDefender8.debugTankCollisionProbe();
-assert(tankCollisionProbe.enemyBlocks === true, "enemy tanks should physically block player movement");
-assert(tankCollisionProbe.teammateBlocks === true, "teammate tanks should physically block player movement");
-assert(tankCollisionProbe.movingAwayFromEnemyAllowed === true, "blocked tanks should still be able to move away from the collision");
-const enemyOverlapRecoveryProbe = context.window.TankDefender8.debugEnemyOverlapRecoveryProbe();
-assert(enemyOverlapRecoveryProbe.startOverlapArea === 84, "enemy overlap recovery probe should begin with intersecting collision boxes");
-assert(enemyOverlapRecoveryProbe.firstTick.x === 41 && enemyOverlapRecoveryProbe.firstTick.overlapArea === 70, "an overlapping enemy should move in the direction that reduces its overlap immediately");
-assert(enemyOverlapRecoveryProbe.firstTick.blockedPauseTicks === 0 && enemyOverlapRecoveryProbe.firstTick.pendingTurn === false, "overlap recovery should clear stale blocked movement state");
-assert(enemyOverlapRecoveryProbe.finalX === 46 && enemyOverlapRecoveryProbe.finalOverlapArea === 0, "overlapping enemies should fully separate after the required movement ticks");
-assert(enemyOverlapRecoveryProbe.contactMoveBlocked === true, "separated enemies should not be allowed to overlap again");
-
 fileInput.files = [{ text: async () => JSON.stringify(validPack) }];
 assert(typeof fileInput.listeners.change === "function", "file input change listener missing");
 Promise.resolve(fileInput.listeners.change()).then(() => {

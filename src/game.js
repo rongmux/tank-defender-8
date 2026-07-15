@@ -8,6 +8,7 @@
   }
   const { advanceBattleRandom } = requireRuntimeModule("battleRandom");
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
+  const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
 
   const canvas = document.getElementById("game");
   const packFileInput = document.getElementById("stage-pack-file");
@@ -5772,12 +5773,6 @@
     return activeTankCollisionPeers(tank).reduce((total, other) => total + rectOverlapArea(rect, other), 0);
   }
 
-  function rectOverlapArea(a, b) {
-    const width = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
-    const height = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
-    return Math.max(0, width) * Math.max(0, height);
-  }
-
   function rectHitsSolidTerrain(rect) {
     return solidTerrainOverlapArea(rect) > 0;
   }
@@ -6292,14 +6287,6 @@
       stageKills,
       stagePoints: enemyPoints + Math.max(0, Math.floor(Number(bonusPoints) || 0))
     };
-  }
-
-  function rectsOverlap(a, b) {
-    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-  }
-
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
   }
 
   function render() {
