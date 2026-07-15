@@ -745,6 +745,7 @@ assert(runtimeSpriteManifest.sprites.spawn.frames.box[0].op === "stroke", "runti
 assert(Object.keys(runtimeSpriteManifest.sprites.hiddenDrop.frames).join(",") === "morph0,morph1,morph2,morph3,fall", "hidden-message replacement drop should expose all morph and fall frames");
 assert(runtimeSpriteManifest.sprites.miniTank.frames.up.length === 5, "runtime sprite manifest should expose mini tank frames");
 assert(runtimeSpriteManifest.sprites.explosion.frames.burst.length === 2, "runtime sprite manifest should expose explosion frames");
+assert(Object.keys(runtimeSpriteManifest.sprites.baseExplosion.frames).join(",") === "phase1,phase2,phase3,phase4,phase5", "runtime sprite manifest should expose all five HQ explosion frames");
 assert(runtimeSpriteManifest.sprites.enemyCounter.frames.remaining.length === 1, "runtime sprite manifest should expose enemy counter frames");
 assert(stableJson(runtimeSpriteManifest) === stableJson(spriteManifest), "runtime sprite manifest should match data/free-sprite-manifest.json");
 let snapshot = context.window.TankDefender8.debugSnapshot();
@@ -2363,8 +2364,9 @@ assert(baseDestructionProbe.pauseAccepted === false, "pause input should be reje
 assert(baseDestructionProbe.playerEndX === baseDestructionProbe.playerStartX && baseDestructionProbe.playerBulletCount === 0, "base destruction should clear player movement and fire input");
 assert(baseDestructionProbe.bulletEndX > baseDestructionProbe.bulletStartX && baseDestructionProbe.enemyEndFlash === baseDestructionProbe.enemyStartFlash - 39, "battle bullets and enemy spawn animation should continue during base destruction");
 assert(baseDestructionProbe.frames.slice(0, 35).map((frame) => frame.phase).join(",") === "1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,4,4,4,4,3,3,3,3,2,2,2,2,1,1,1,1", "base explosion phases should match the original 1-2-3-4-5-4-3-2-1 handler sequence");
-assert(baseDestructionProbe.frames.slice(0, 35).map((frame) => frame.size).join(",") === "16,16,16,16,16,16,16,16,16,16,16,32,32,32,32,32,32,32,32,32,32,32,32,16,16,16,16,16,16,16,16,16,16,16,16", "base explosion phases should switch between the original small and large footprints");
-assert(baseDestructionProbe.frames.slice(35).every((frame) => frame.phase === 0 && frame.size === 0), "the final four countdown frames should show only the destroyed base");
+assert(baseDestructionProbe.frames.slice(0, 35).map((frame) => `${frame.width}x${frame.height}`).join(",") === "16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8", "base explosion phases should switch between the original 16x8 and 32x32 footprints");
+assert(baseDestructionProbe.frames.slice(0, 35).every((frame) => frame.frameName === `phase${frame.phase}`), "each HQ phase should select its own replacement sprite frame");
+assert(baseDestructionProbe.frames.slice(35).every((frame) => frame.phase === 0 && frame.width === 0 && frame.height === 0 && frame.frameName === null), "the final four countdown frames should show only the destroyed base");
 assert(baseDestructionProbe.frames[26].movementAudioMode === "enemy" && !baseDestructionProbe.frames.some((frame) => frame.movementAudioMode === "player"), "cleared player controls should let only the enemy engine loop resume after the HQ pulse ends");
 assert(baseDestructionProbe.frames.slice(0, 38).every((frame) => frame.screen === "playing") && baseDestructionProbe.frames[38].screen === "gameOver", "the game-over battlefield timer should begin only after all thirty-nine base-destruction updates");
 assert(baseDestructionProbe.gameOverTimer === 256, "the normal 256-frame in-field GAME OVER sequence should start after base destruction");
@@ -2372,10 +2374,37 @@ canvasContext.calls.length = 0;
 assert(context.window.TankDefender8.debugRenderBaseDestructionFrame(39) === null && !canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42"), "the base hit frame should not draw the first explosion phase prematurely");
 canvasContext.calls.length = 0;
 const smallBaseExplosion = context.window.TankDefender8.debugRenderBaseDestructionFrame(38);
-assert(smallBaseExplosion.phase === 1 && smallBaseExplosion.x === 112 && smallBaseExplosion.y === 208 && canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42" && call.x === 112 && call.y === 208 && call.w === 16 && call.h === 16), "small HQ explosion phases should render a centered 16x16 replacement sprite");
+const smallBaseExplosionCalls = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#f05a42");
+const smallBaseExplosionBounds = {
+  x: Math.min(...smallBaseExplosionCalls.map((call) => call.x)),
+  y: Math.min(...smallBaseExplosionCalls.map((call) => call.y)),
+  right: Math.max(...smallBaseExplosionCalls.map((call) => call.x + call.w)),
+  bottom: Math.max(...smallBaseExplosionCalls.map((call) => call.y + call.h))
+};
+assert(smallBaseExplosion.phase === 1 && smallBaseExplosion.frameName === "phase1" && smallBaseExplosion.x === 112 && smallBaseExplosion.y === 208 && smallBaseExplosion.width === 16 && smallBaseExplosion.height === 8, "small HQ phases should expose the original 16x8 footprint at the original coordinates");
+assert(smallBaseExplosionBounds.x === 112 && smallBaseExplosionBounds.y === 208 && smallBaseExplosionBounds.right === 128 && smallBaseExplosionBounds.bottom === 216, "small HQ replacement art should occupy exactly the original two-sprite bounds");
 canvasContext.calls.length = 0;
 const largeBaseExplosion = context.window.TankDefender8.debugRenderBaseDestructionFrame(27);
-assert(largeBaseExplosion.phase === 4 && largeBaseExplosion.x === 104 && largeBaseExplosion.y === 200 && canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42" && call.x === 104 && call.y === 200 && call.w === 32 && call.h === 32), "large HQ explosion phases should render a centered 32x32 replacement sprite");
+const largeBaseExplosionCalls = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#f05a42");
+const largeBaseExplosionBounds = {
+  x: Math.min(...largeBaseExplosionCalls.map((call) => call.x)),
+  y: Math.min(...largeBaseExplosionCalls.map((call) => call.y)),
+  right: Math.max(...largeBaseExplosionCalls.map((call) => call.x + call.w)),
+  bottom: Math.max(...largeBaseExplosionCalls.map((call) => call.y + call.h))
+};
+assert(largeBaseExplosion.phase === 4 && largeBaseExplosion.frameName === "phase4" && largeBaseExplosion.x === 104 && largeBaseExplosion.y === 200 && largeBaseExplosion.width === 32 && largeBaseExplosion.height === 32, "large HQ phases should expose the original 32x32 footprint at the original coordinates");
+assert(largeBaseExplosionBounds.x === 104 && largeBaseExplosionBounds.y === 200 && largeBaseExplosionBounds.right === 136 && largeBaseExplosionBounds.bottom === 232, "large HQ replacement art should occupy exactly the original eight-sprite bounds");
+const baseExplosionFrameSignatures = [38, 35, 31, 27, 23].map((timer) => {
+  canvasContext.calls.length = 0;
+  const presentation = context.window.TankDefender8.debugRenderBaseDestructionFrame(timer);
+  const signature = canvasContext.calls
+    .filter((call) => call.op === "fillRect" && (call.style === "#f05a42" || call.style === "#f7f1c6"))
+    .map((call) => `${call.style}:${call.x},${call.y},${call.w},${call.h}`)
+    .join("|");
+  return { phase: presentation.phase, frameName: presentation.frameName, signature };
+});
+assert(baseExplosionFrameSignatures.map((entry) => entry.phase).join(",") === "1,2,3,4,5", "HQ render samples should cover all five original phases");
+assert(new Set(baseExplosionFrameSignatures.map((entry) => entry.frameName)).size === 5 && new Set(baseExplosionFrameSignatures.map((entry) => entry.signature)).size === 5, "all five HQ phases should use visually distinct replacement frames");
 canvasContext.calls.length = 0;
 assert(context.window.TankDefender8.debugRenderBaseDestructionFrame(3) === null && !canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42"), "the four-frame tail should leave only the destroyed base visible");
 const tankCollisionProbe = context.window.TankDefender8.debugTankCollisionProbe();

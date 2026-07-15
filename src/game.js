@@ -737,6 +737,49 @@
           ]
         }
       },
+      baseExplosion: {
+        size: 32,
+        frames: {
+          phase1: [
+            { role: "primary", rect: [8, 11, 16, 2] },
+            { role: "primary", rect: [15, 8, 2, 8] },
+            { role: "core", rect: [13, 10, 6, 4] }
+          ],
+          phase2: [
+            { role: "primary", rect: [8, 10, 16, 4] },
+            { role: "primary", rect: [11, 8, 2, 2] },
+            { role: "primary", rect: [19, 8, 2, 2] },
+            { role: "primary", rect: [11, 14, 2, 2] },
+            { role: "primary", rect: [19, 14, 2, 2] },
+            { role: "core", rect: [13, 9, 6, 6] }
+          ],
+          phase3: [
+            { role: "primary", rect: [8, 9, 16, 6] },
+            { role: "primary", rect: [10, 8, 4, 8] },
+            { role: "primary", rect: [18, 8, 4, 8] },
+            { role: "core", rect: [13, 10, 6, 4] }
+          ],
+          phase4: [
+            { role: "primary", rect: [0, 14, 32, 4] },
+            { role: "primary", rect: [14, 0, 4, 32] },
+            { role: "primary", rect: [4, 4, 6, 4] },
+            { role: "primary", rect: [22, 4, 6, 4] },
+            { role: "primary", rect: [4, 24, 6, 4] },
+            { role: "primary", rect: [22, 24, 6, 4] },
+            { role: "primary", rect: [8, 10, 16, 12] },
+            { role: "core", rect: [12, 12, 8, 8] }
+          ],
+          phase5: [
+            { role: "primary", rect: [0, 12, 32, 8] },
+            { role: "primary", rect: [12, 0, 8, 32] },
+            { role: "primary", rect: [2, 2, 8, 8] },
+            { role: "primary", rect: [22, 2, 8, 8] },
+            { role: "primary", rect: [2, 22, 8, 8] },
+            { role: "primary", rect: [22, 22, 8, 8] },
+            { role: "core", rect: [10, 10, 12, 12] }
+          ]
+        }
+      },
       enemyCounter: {
         size: 7,
         frames: {
@@ -6599,7 +6642,7 @@
     const presentation = baseDestructionPresentation(game.baseDestroyTimer);
     if (!presentation) return;
     const rule = explosionRule("baseDestroy");
-    drawScaledManifestSprite("explosion", "burst", presentation.x, presentation.y, presentation.size / 16, {
+    drawManifestSprite("baseExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
       primary: rule.color,
       core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
     });
@@ -6617,14 +6660,23 @@
       ? 0
       : Math.round((frame * (BASE_DESTRUCTION_REFERENCE_PHASES.length - 1)) / (visibleFrames - 1));
     const phase = BASE_DESTRUCTION_REFERENCE_PHASES[referenceFrame];
-    const size = phase >= 4 ? 32 : 16;
+    const large = phase >= 4;
+    const width = large ? 32 : 16;
+    const height = large ? 32 : 8;
+    const centerX = FIELD_X + game.base.x + game.base.w / 2;
+    const centerY = FIELD_Y + game.base.y + game.base.h / 2;
     return {
       frame,
       referenceFrame,
       phase,
-      size,
-      x: Math.round(FIELD_X + game.base.x + game.base.w / 2 - size / 2),
-      y: Math.round(FIELD_Y + game.base.y + game.base.h / 2 - size / 2)
+      frameName: `phase${phase}`,
+      size: width,
+      width,
+      height,
+      x: Math.round(centerX - width / 2),
+      y: Math.round(centerY - (large ? height / 2 : 8)),
+      spriteX: Math.round(centerX - 16),
+      spriteY: Math.round(centerY - 16)
     };
   }
 
@@ -14077,6 +14129,9 @@
             screen: game.screen,
             phase: presentation ? presentation.phase : 0,
             size: presentation ? presentation.size : 0,
+            width: presentation ? presentation.width : 0,
+            height: presentation ? presentation.height : 0,
+            frameName: presentation ? presentation.frameName : null,
             movementAudioMode: movementAudio.mode
           });
         }
