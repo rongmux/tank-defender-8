@@ -6,7 +6,7 @@
 
 本仓库不包含 NES 原版 ROM 数据、原版精灵图、原版音频或原版关卡地图。地图、精灵图和音频均使用免费或自定义替代资源。内置敌人构成与公开记录的《Battle City》35 关敌人分组表一致；引擎仍采用数据驱动设计，因此无需修改核心代码即可调整玩法规则、敌人序列和关卡包。
 
-项目当前处于独立的架构重构阶段。在把单文件运行时和 smoke 测试拆分为显式浏览器模块、纯规则模块、共享测试基础设施、单元测试套件和按功能划分的集成套件期间，暂停新增 1:1 游戏机制。核心计时、随机数和几何规则现已模块化；配置域接管共享值校验、敌人类型/规格规范化、玩家移动/cadence、玩家星星升级档位、道具持续时间/规则、固定逻辑时序以及各关活动敌人上限/出生点配置；关卡域则接管地图网格规则及原版风格敌人编组/序列模型。整个迁移过程必须继续兼容无需构建的静态启动方式。
+项目当前处于独立的架构重构阶段。在把单文件运行时和 smoke 测试拆分为显式浏览器模块、纯规则模块、共享测试基础设施、单元测试套件和按功能划分的集成套件期间，暂停新增 1:1 游戏机制。核心计时、随机数和几何规则现已模块化；配置域接管共享值校验、弹丸/友军伤害规则、敌人类型/规格规范化、玩家移动/cadence、玩家星星升级档位、道具持续时间/规则、固定逻辑时序以及各关活动敌人上限/出生点配置；关卡域则接管地图网格规则及原版风格敌人编组/序列模型。整个迁移过程必须继续兼容无需构建的静态启动方式。
 
 ## 运行
 
@@ -25,6 +25,7 @@ node --check src/core/battle-random.js
 node --check src/core/frame-counter.js
 node --check src/core/geometry.js
 node --check src/config/value-normalization.js
+node --check src/config/combat-settings.js
 node --check src/config/player-movement-settings.js
 node --check src/config/power-up-settings.js
 node --check src/config/timing-settings.js
@@ -51,6 +52,7 @@ tank-defender-8/
 |   `-- sample-stage-pack.json
 |-- src/
 |   |-- config/
+|   |   |-- combat-settings.js
 |   |   |-- enemy-types.js
 |   |   |-- player-movement-settings.js
 |   |   |-- player-upgrades.js
@@ -72,6 +74,7 @@ tank-defender-8/
 |   |   `-- load-browser-scripts.js
 |   |-- integration/
 |   |   |-- collision.test.js
+|   |   |-- combat-settings.test.js
 |   |   |-- enemy-sequences.test.js
 |   |   |-- enemy-types.test.js
 |   |   |-- frame-counter.test.js
@@ -84,6 +87,7 @@ tank-defender-8/
 |   |-- unit/
 |   |   |-- battle-random.test.js
 |   |   |-- browser-entry.test.js
+|   |   |-- combat-settings.test.js
 |   |   |-- enemy-sequences.test.js
 |   |   |-- enemy-types.test.js
 |   |   |-- frame-counter.test.js
@@ -106,7 +110,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/config/` 负责关卡包配置共享的数据校验：`value-normalization.js` 校验数值范围和颜色；`enemy-types.js` 接管四类默认敌人定义、移动/子弹速度档位、道具类型名称、敌人类型克隆与校验，以及单关敌人规格规范化；`player-movement-settings.js` 接管固定逻辑循环中的移动速度、原版四帧三次移动 cadence、旧版仅覆盖速度时的兼容行为、冰面惯性和独立配置克隆；`player-upgrades.js` 接管四个星星升级等级、独立克隆和关卡包覆盖校验；`power-up-settings.js` 接管头盔/铲子/定时器持续时间、携带者释放和清理规则、拾取分数及其校验；`timing-settings.js` 接管固定逻辑循环中的关卡、出生、重生、重试、无敌和道具寿命时序；`stage-settings.js` 接管活动敌人上限、默认玩家/敌人/道具出生布局、严格的 13x13 坐标校验以及图块到像素的转换。`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则；共享战斗随机数、独立帧计数器和矩形几何已迁入该目录。`src/stages/` 负责关卡域：`stage-grid.js` 提供图块常量、砖块碎片状态、网格修改与校验以及 13x13/26x26 编解码；`enemy-sequences.js` 接管 35 关敌人编组表、每关 20 辆敌人的展开、携带者位置、出生点轮转和序列摘要。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的 Canvas、音频、DOM、存储、输入和脚本加载模拟。`tests/unit/` 直接验证纯模块，`tests/integration/` 通过真实浏览器 API 验证已抽离的配置、固定逻辑时序、碰撞、玩家移动/cadence、道具设置、关卡设置、关卡网格、敌人序列和星星升级行为，`tests/run-tests.js` 会先运行这两层测试，再运行 `tools/smoke-test.js` 中剩余的回归套件。
+`src/config/` 负责关卡包配置共享的数据校验：`value-normalization.js` 校验数值范围和颜色；`combat-settings.js` 接管弹丸尺寸/出生/边界几何以及双人友军伤害开关和眩晕时序；`enemy-types.js` 接管四类默认敌人定义、移动/子弹速度档位、道具类型名称、敌人类型克隆与校验，以及单关敌人规格规范化；`player-movement-settings.js` 接管固定逻辑循环中的移动速度、原版四帧三次移动 cadence、旧版仅覆盖速度时的兼容行为、冰面惯性和独立配置克隆；`player-upgrades.js` 接管四个星星升级等级、独立克隆和关卡包覆盖校验；`power-up-settings.js` 接管头盔/铲子/定时器持续时间、携带者释放和清理规则、拾取分数及其校验；`timing-settings.js` 接管固定逻辑循环中的关卡、出生、重生、重试、无敌和道具寿命时序；`stage-settings.js` 接管活动敌人上限、默认玩家/敌人/道具出生布局、严格的 13x13 坐标校验以及图块到像素的转换。`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则；共享战斗随机数、独立帧计数器和矩形几何已迁入该目录。`src/stages/` 负责关卡域：`stage-grid.js` 提供图块常量、砖块碎片状态、网格修改与校验以及 13x13/26x26 编解码；`enemy-sequences.js` 接管 35 关敌人编组表、每关 20 辆敌人的展开、携带者位置、出生点轮转和序列摘要。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的 Canvas、音频、DOM、存储、输入和脚本加载模拟。`tests/unit/` 直接验证纯模块，`tests/integration/` 通过真实浏览器 API 验证已抽离的配置、固定逻辑时序、碰撞、弹丸/友军伤害规则、玩家移动/cadence、道具设置、关卡设置、关卡网格、敌人序列和星星升级行为，`tests/run-tests.js` 会先运行这两层测试，再运行 `tools/smoke-test.js` 中剩余的回归套件。
 
 迁移顺序依次为核心计时/随机/几何、配置与关卡包、游戏实体与规则、输入/编辑器、音频、渲染/画面、调试适配器，最后收敛应用启动入口。每次抽离都必须保留无需构建的静态启动方式，在同一提交中迁移对应测试，并在下一子系统开始前通过完整回归。重构和测试拆分全部完成前，暂停新增 1:1 游戏机制。
 

@@ -748,11 +748,6 @@ assert(schema.gameSettings.enemySpawnPacing.stageStep === 4, "schema should expo
 assert(schema.gameSettings.enemySpawnPacing.minDelay === 50, "schema should expose the stage-35 spawn interval floor");
 assert(schema.gameSettings.enemySpawnPacing.extendedLoopMinDelay === 50, "extended-loop stages should retain the stage-35 interval");
 assert(schema.gameSettings.enemySpawnPacing.twoPlayerDelayReduction === 20, "two-player mode should subtract twenty frames from spawn intervals");
-assert(schema.gameSettings.projectileRules.bulletSize === 4, "schema should expose projectile bullet size");
-assert(schema.gameSettings.projectileRules.spawnOffset === 9, "schema should expose projectile spawn offset");
-assert(schema.gameSettings.projectileRules.boundsPadding === 4, "schema should expose projectile bounds padding");
-assert(schema.gameSettings.friendlyFire.enabled === true, "schema should expose friendly-fire enabled rule");
-assert(schema.gameSettings.friendlyFire.stunFrames === 200, "schema should expose the original friendly-fire stun ticks");
 assert(schema.gameSettings.explosionRules.bulletCancel.ttl === 10, "schema should expose bullet cancel explosion timing");
 assert(schema.gameSettings.explosionRules.brickHit.ttl === 9, "brick impacts should use the original nine-frame bullet explosion");
 assert(schema.gameSettings.explosionRules.steelHit.ttl === 9 && schema.gameSettings.explosionRules.steelBlocked.ttl === 9, "steel impacts and field boundaries should share the original nine-frame bullet explosion");
@@ -1504,24 +1499,6 @@ const badEnemySpawnPacingPack = {
 };
 assert(context.window.TankDefender8.validateStagePack(badEnemySpawnPacingPack).ok === false, "bad enemy spawn pacing should fail validation");
 
-const badProjectileRulesPack = {
-  id: "bad-projectile-rules",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { projectileRules: { bulletSize: 0 } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badProjectileRulesPack).ok === false, "bad projectile rules should fail validation");
-
-const badFriendlyFirePack = {
-  id: "bad-friendly-fire",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { friendlyFire: { stunFrames: -1 } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badFriendlyFirePack).ok === false, "bad friendly-fire rules should fail validation");
-
 const badExplosionRulesPack = {
   id: "bad-explosion-rules",
   totalStages: 1,
@@ -1599,21 +1576,12 @@ assert(context.window.TankDefender8.currentPackInfo().bonusLifeScores[0] === 100
 assert(context.window.TankDefender8.currentPackInfo().deathPowerLevel === 2, "current pack should expose custom death power level");
 assert(context.window.TankDefender8.currentPackInfo().enemySpawnPacing.firstDelay === 5, "current pack should expose custom first spawn delay");
 assert(context.window.TankDefender8.currentPackInfo().enemySpawnPacing.baseDelay === 9, "current pack should expose custom enemy spawn base delay");
-assert(context.window.TankDefender8.currentPackInfo().projectileRules.bulletSize === 6, "current pack should expose custom projectile bullet size");
-assert(context.window.TankDefender8.currentPackInfo().friendlyFire.enabled === false, "current pack should expose custom friendly-fire enabled rule");
-assert(context.window.TankDefender8.currentPackInfo().friendlyFire.stunFrames === 12, "current pack should expose custom friendly-fire stun frames");
 assert(context.window.TankDefender8.currentPackInfo().explosionRules.enemyDestroy.ttl === 22, "current pack should expose custom explosion timing");
 assert(context.window.TankDefender8.currentPackInfo().explosionRules.enemyDestroy.color === "#123456", "current pack should expose custom explosion color");
 const explosionProbe = context.window.TankDefender8.debugExplosionRuleProbe("enemyDestroy");
 assert(explosionProbe.ttl === 22 && explosionProbe.coreColor === "#abcdef", "custom explosion rules should apply through the runtime probe");
 assert(context.window.TankDefender8.currentPackInfo().stageAdvance.loopAfterFinalStage === false, "current pack should expose custom stage advance rule");
 assert(context.window.TankDefender8.currentPackInfo().stageClearBonus.points === 777, "current pack should expose custom stage clear bonus");
-const projectileProbe = context.window.TankDefender8.debugProjectileRuleProbe();
-assert(projectileProbe.w === 6 && projectileProbe.h === 6, "custom projectile rules should control bullet size");
-assert(projectileProbe.x === 31 && projectileProbe.y === 20, "custom projectile rules should control bullet spawn offset");
-assert(projectileProbe.boundsPadding === 2, "custom projectile rules should expose bounds padding");
-const friendlyFireProbe = context.window.TankDefender8.debugFriendlyFireProbe();
-assert(friendlyFireProbe.enabled === false && friendlyFireProbe.stunFrames === 0, "disabled friendly-fire should report no stun frames");
 const finiteAdvanceProbe = context.window.TankDefender8.debugStageAdvanceProbe();
 assert(finiteAdvanceProbe.stops === true && finiteAdvanceProbe.stage === 1, "finite packs should stop after the final stage when looping is disabled");
 const stageClearDelayStartProbe = context.window.TankDefender8.debugStageClearDelayProbe(0, true);

@@ -11,6 +11,12 @@
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
   const { normalizeHexColor, normalizeNumber } = requireRuntimeModule("valueNormalization");
   const {
+    DEFAULT_FRIENDLY_FIRE,
+    DEFAULT_PROJECTILE_RULES,
+    normalizeFriendlyFire,
+    normalizeProjectileRules
+  } = requireRuntimeModule("combatSettings");
+  const {
     DEFAULT_PLAYER_MOVEMENT,
     clonePlayerMovementSettings,
     normalizePlayerMovement
@@ -154,15 +160,6 @@
     minDelay: 50,
     extendedLoopMinDelay: 50,
     twoPlayerDelayReduction: 20
-  };
-  const DEFAULT_PROJECTILE_RULES = {
-    bulletSize: 4,
-    spawnOffset: 9,
-    boundsPadding: 4
-  };
-  const DEFAULT_FRIENDLY_FIRE = {
-    enabled: true,
-    stunFrames: 200
   };
   const CARRIER_FLASH_COLOR = "#dd3d33";
   const DEFAULT_EXPLOSION_CORE_COLOR = "#f7f1c6";
@@ -1397,25 +1394,6 @@
       );
     }
     return normalized;
-  }
-
-  function normalizeProjectileRules(rules) {
-    const source = rules || {};
-    if (typeof source !== "object") throw new Error("gameSettings.projectileRules must be an object");
-    return {
-      bulletSize: normalizeNumber(source.bulletSize, DEFAULT_PROJECTILE_RULES.bulletSize, 1, 16, true, "gameSettings.projectileRules.bulletSize"),
-      spawnOffset: normalizeNumber(source.spawnOffset, DEFAULT_PROJECTILE_RULES.spawnOffset, 0, 32, false, "gameSettings.projectileRules.spawnOffset"),
-      boundsPadding: normalizeNumber(source.boundsPadding, DEFAULT_PROJECTILE_RULES.boundsPadding, 0, 32, false, "gameSettings.projectileRules.boundsPadding")
-    };
-  }
-
-  function normalizeFriendlyFire(friendlyFire) {
-    const source = friendlyFire || {};
-    if (typeof source !== "object") throw new Error("gameSettings.friendlyFire must be an object");
-    return {
-      enabled: normalizeBooleanSetting(source.enabled, DEFAULT_FRIENDLY_FIRE.enabled, "gameSettings.friendlyFire.enabled"),
-      stunFrames: normalizeNumber(source.stunFrames, DEFAULT_FRIENDLY_FIRE.stunFrames, 0, 3600, true, "gameSettings.friendlyFire.stunFrames")
-    };
   }
 
   function normalizeExplosionRules(rules) {
