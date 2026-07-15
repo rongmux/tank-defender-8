@@ -9,6 +9,17 @@
   const { advanceBattleRandom } = requireRuntimeModule("battleRandom");
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
+  const { normalizeHexColor, normalizeNumber } = requireRuntimeModule("valueNormalization");
+  const {
+    DEFAULT_ENEMY_TYPES: defaultEnemyTypes,
+    ENEMY_BULLET_SPEED,
+    ENEMY_FIRE_CHANCE,
+    ENEMY_MOVE_SPEED,
+    POWER_UP_TYPES: powerTypes,
+    cloneEnemyTypes,
+    normalizeEnemySequence,
+    normalizeEnemyTypes
+  } = requireRuntimeModule("enemyTypes");
   const {
     BRICK_QUARTER_FRAGMENT_MASKS,
     FULL_BRICK_FRAGMENT_MASK,
@@ -1035,15 +1046,6 @@
     R: ["110", "101", "110", "101", "101"],
     V: ["101", "101", "101", "101", "010"]
   };
-  const ENEMY_MOVE_SPEED = { normal: 0.5, fast: 1.0 };
-  const ENEMY_BULLET_SPEED = { normal: 2.0, fast: 4.0 };
-  const ENEMY_FIRE_CHANCE = 1 / 32;
-  const defaultEnemyTypes = [
-    { name: "basic", hp: 1, speed: ENEMY_MOVE_SPEED.normal, bullet: ENEMY_BULLET_SPEED.normal, wallPower: 1, reload: 1, fireChance: ENEMY_FIRE_CHANCE, score: 100, color: "#a9a176" },
-    { name: "fast", hp: 1, speed: ENEMY_MOVE_SPEED.fast, bullet: ENEMY_BULLET_SPEED.normal, wallPower: 1, reload: 1, fireChance: ENEMY_FIRE_CHANCE, score: 200, color: "#b87854" },
-    { name: "power", hp: 1, speed: ENEMY_MOVE_SPEED.normal, bullet: ENEMY_BULLET_SPEED.fast, wallPower: 1, reload: 1, fireChance: ENEMY_FIRE_CHANCE, score: 300, color: "#7fba72" },
-    { name: "armor", hp: 4, speed: ENEMY_MOVE_SPEED.normal, bullet: ENEMY_BULLET_SPEED.normal, wallPower: 1, reload: 1, fireChance: ENEMY_FIRE_CHANCE, score: 400, color: "#7fba72", hitColors: ["#b0b5c3", "#9aa2ad", "#79a95e", "#7fba72"] }
-  ];
   const defaultPlayerUpgradeRules = [
     { level: 0, maxBullets: 1, bulletSpeed: ENEMY_BULLET_SPEED.normal, wallPower: 1, reload: 1 },
     { level: 1, maxBullets: 1, bulletSpeed: ENEMY_BULLET_SPEED.fast, wallPower: 1, reload: 1 },
@@ -1051,7 +1053,6 @@
     { level: 3, maxBullets: 2, bulletSpeed: ENEMY_BULLET_SPEED.fast, wallPower: 3, reload: 1 }
   ];
 
-  const powerTypes = ["grenade", "helmet", "shovel", "star", "timer", "tank"];
   const originalPowerUpRandomTable = ["helmet", "timer", "shovel", "star", "grenade", "tank", "grenade", "star"];
   const PLAYER_UPGRADE_OVERLAY_COLORS = {
     level1: "#f7f1c6",
@@ -1344,62 +1345,6 @@
     return grid;
   }
 
-  function normalizeEnemyTypes(types) {
-    if (types === undefined) return cloneEnemyTypes(defaultEnemyTypes);
-    if (!Array.isArray(types) || types.length !== defaultEnemyTypes.length) {
-      throw new Error(`enemyTypes must contain exactly ${defaultEnemyTypes.length} entries`);
-    }
-    return types.map((enemyType, index) => normalizeEnemyType(enemyType, index));
-  }
-
-  function normalizeEnemyType(enemyType, index) {
-    if (!enemyType || typeof enemyType !== "object") {
-      throw new Error(`enemyTypes[${index}] must be an object`);
-    }
-    const fallback = defaultEnemyTypes[index];
-    const name = enemyType.name === undefined ? fallback.name : String(enemyType.name);
-    if (!name || name.length > 24) throw new Error(`enemyTypes[${index}].name must be 1 to 24 characters`);
-    const hp = normalizeNumber(enemyType.hp, fallback.hp, 1, 9, true, `enemyTypes[${index}].hp`);
-    const speed = normalizeNumber(enemyType.speed, fallback.speed, 0.1, 3, false, `enemyTypes[${index}].speed`);
-    const bullet = normalizeNumber(enemyType.bullet, fallback.bullet, 0.1, 6, false, `enemyTypes[${index}].bullet`);
-    const wallPower = normalizeNumber(enemyType.wallPower, fallback.wallPower, 1, 3, true, `enemyTypes[${index}].wallPower`);
-    const reload = normalizeNumber(enemyType.reload, fallback.reload, 1, 600, true, `enemyTypes[${index}].reload`);
-    const fireChance = normalizeNumber(enemyType.fireChance, fallback.fireChance, 0, 1, false, `enemyTypes[${index}].fireChance`);
-    const score = normalizeNumber(enemyType.score, fallback.score, 0, 9999, true, `enemyTypes[${index}].score`);
-    const color = enemyType.color === undefined ? fallback.color : String(enemyType.color);
-    if (!/^#[0-9a-f]{6}$/i.test(color)) throw new Error(`enemyTypes[${index}].color must be a #rrggbb color`);
-    const hitColors = normalizeHitColors(enemyType.hitColors, fallback.hitColors, `enemyTypes[${index}].hitColors`);
-    return { name, hp, speed, bullet, wallPower, reload, fireChance, score, color, hitColors };
-  }
-
-  function normalizeHitColors(colors, fallback, label) {
-    const source = colors === undefined ? fallback : colors;
-    if (source === undefined || source === null) return null;
-    if (!Array.isArray(source) || source.length < 1 || source.length > 9) {
-      throw new Error(`${label} must contain 1 to 9 #rrggbb colors`);
-    }
-    return source.map((color, index) => {
-      const value = String(color);
-      if (!/^#[0-9a-f]{6}$/i.test(value)) throw new Error(`${label}[${index}] must be a #rrggbb color`);
-      return value;
-    });
-  }
-
-  function normalizeNumber(value, fallback, min, max, integer, label) {
-    const normalized = value === undefined ? fallback : Number(value);
-    if (!Number.isFinite(normalized) || normalized < min || normalized > max || (integer && !Number.isInteger(normalized))) {
-      throw new Error(`${label} must be ${integer ? "an integer" : "a number"} from ${min} to ${max}`);
-    }
-    return normalized;
-  }
-
-  function cloneEnemyTypes(types) {
-    return types.map((enemyType) => ({
-      ...enemyType,
-      hitColors: enemyType.hitColors ? enemyType.hitColors.slice() : null
-    }));
-  }
-
   function clonePlayerUpgradeRules(rules) {
     return rules.map((rule) => ({ ...rule }));
   }
@@ -1435,48 +1380,6 @@
       bulletSpeed: normalizeNumber(rule.bulletSpeed, fallback.bulletSpeed, 0.1, 6, false, `gameSettings.playerUpgradeRules[${index}].bulletSpeed`),
       wallPower: normalizeNumber(rule.wallPower, fallback.wallPower, 1, 3, true, `gameSettings.playerUpgradeRules[${index}].wallPower`),
       reload: normalizeNumber(rule.reload, fallback.reload, 1, 600, true, `gameSettings.playerUpgradeRules[${index}].reload`)
-    };
-  }
-
-  function normalizeEnemySequence(sequence, label, enemyTypeCount) {
-    if (!Array.isArray(sequence) || sequence.length < 1) {
-      throw new Error(`${label} must contain at least one enemy`);
-    }
-    return sequence.map((enemy, index) => normalizeEnemySpec(enemy, index, label, enemyTypeCount));
-  }
-
-  function normalizeEnemySpec(enemy, index, label, enemyTypeCount) {
-    if (!enemy || typeof enemy !== "object") {
-      throw new Error(`${label} enemy ${index + 1} must be an object`);
-    }
-    const typeIndex = Number(enemy.typeIndex);
-    if (!Number.isInteger(typeIndex) || typeIndex < 0 || typeIndex >= enemyTypeCount) {
-      throw new Error(`${label} enemy ${index + 1} has invalid typeIndex`);
-    }
-    const spawnIndex = enemy.spawnIndex === undefined ? (index + 1) % 3 : Number(enemy.spawnIndex);
-    if (!Number.isInteger(spawnIndex) || spawnIndex < 0 || spawnIndex > 7) {
-      throw new Error(`${label} enemy ${index + 1} has invalid spawnIndex`);
-    }
-    let powerUpType = null;
-    if (enemy.powerUpType !== undefined && enemy.powerUpType !== null && enemy.powerUpType !== "") {
-      if (!powerTypes.includes(enemy.powerUpType)) {
-        throw new Error(`${label} enemy ${index + 1} has invalid powerUpType`);
-      }
-      powerUpType = enemy.powerUpType;
-    }
-    let spawnDelay = null;
-    if (enemy.spawnDelay !== undefined && enemy.spawnDelay !== null && enemy.spawnDelay !== "") {
-      spawnDelay = Number(enemy.spawnDelay);
-      if (!Number.isInteger(spawnDelay) || spawnDelay < 0 || spawnDelay > 3600) {
-        throw new Error(`${label} enemy ${index + 1} has invalid spawnDelay`);
-      }
-    }
-    return {
-      typeIndex,
-      carrier: Boolean(enemy.carrier),
-      spawnIndex,
-      powerUpType,
-      spawnDelay
     };
   }
 
@@ -1739,12 +1642,6 @@
         coreColor: normalizeHexColor(rule.coreColor, defaults.coreColor, `gameSettings.explosionRules.${key}.coreColor`)
       }];
     }));
-  }
-
-  function normalizeHexColor(value, fallback, label) {
-    const color = value === undefined ? fallback : String(value);
-    if (!/^#[0-9a-f]{6}$/i.test(color)) throw new Error(`${label} must be a #rrggbb color`);
-    return color;
   }
 
   function normalizeStageAdvance(advance) {

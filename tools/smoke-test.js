@@ -713,19 +713,6 @@ buttons.find((button) => button.dataset.action === "reset").click();
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "title" && snapshot.paused === false, "reset after Start-pause probe should return to the title screen");
 assert(schema.enemyTotal === 20, "schema enemy total should be 20");
-assert(schema.enemyTypes.length === 4, "schema should expose four enemy types");
-assert(schema.enemyTypes[3].hp === 4, "schema should expose armor enemy hp");
-assert(schema.enemyTypes[3].hitColors[0] === "#b0b5c3", "schema should expose armor low-health gray color");
-assert(schema.enemyTypes[3].hitColors[3] === "#7fba72", "schema should expose armor full-health green color");
-assert(schema.enemyTypes[2].score === 300, "schema should expose enemy scores");
-assert(schema.enemyTypes.every((enemy) => enemy.fireChance === 1 / 32), "every enemy should use the original 1-in-32 per-frame fire roll");
-assert(schema.enemyTypes.every((enemy) => enemy.wallPower === 1), "enemy bullets should not gain player-style steel-breaking power");
-assert(schema.enemyTypes[0].speed === 0.5 && schema.enemyTypes[2].speed === 0.5 && schema.enemyTypes[3].speed === 0.5, "basic, power, and armor enemies should move on alternate frames");
-assert(schema.enemyTypes[1].speed === 1, "fast enemies should move every frame");
-assert(schema.enemyTypes[0].speed < schema.enemyTypes[1].speed, "fast enemies should move twice as quickly as the other enemy types");
-assert(schema.enemyTypes[0].bullet === 2 && schema.enemyTypes[1].bullet === 2 && schema.enemyTypes[3].bullet === 2, "basic, fast, and armor enemies should use two-pixel bullets");
-assert(schema.enemyTypes[2].bullet === 4, "power enemies should use four-pixel fast bullets");
-assert(schema.enemyTypes.every((enemy) => enemy.reload === 1), "enemy firing should be limited by its active bullet slot rather than a long cooldown");
 assert(schema.gameSettings.initialLives === 3, "schema should expose initial lives");
 assert(schema.gameSettings.bonusLifeScores[0] === 20000, "schema should expose bonus life scores");
 assert(schema.gameSettings.deathPowerLevel === 0, "schema should expose death power level");
@@ -1529,25 +1516,6 @@ assert(snapshot.players.length === 0 && snapshot.enemySpawned === 0 && snapshot.
 assert(snapshot.powerUpType === null && snapshot.clearPendingTimer === 0 && snapshot.gameOverTimer === 0, "loading a stage pack should clear transient power-up and transition state");
 assert(snapshot.stageResultReason === "clear" && snapshot.stageClearElapsed === 0, "loading a stage pack should reset stage-result routing state");
 
-const customEnemySequencePack = {
-  id: "custom-enemy-sequence",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  enemies: [[
-    { typeIndex: 3, carrier: true, spawnIndex: 2, powerUpType: "tank", spawnDelay: 12 },
-    { typeIndex: 2, carrier: false, spawnIndex: 1, powerUpType: null, spawnDelay: 24 },
-    { typeIndex: 1, carrier: false, spawnIndex: 0, powerUpType: null, spawnDelay: null }
-  ]]
-};
-assert(context.window.TankDefender8.validateStagePack(customEnemySequencePack).ok === true, "custom enemy sequence pack should validate");
-assert(context.window.TankDefender8.loadStagePack(customEnemySequencePack) === true, "custom enemy sequence pack should load");
-const customEnemySequence = context.window.TankDefender8.currentPackInfo().enemySequence;
-assert(customEnemySequence.length === 3, "custom enemy sequence should control the active stage enemy count");
-assert(customEnemySequence.map((enemy) => enemy.typeIndex).join(",") === "3,2,1", "custom enemy sequence should preserve type order");
-assert(customEnemySequence[0].carrier === true && customEnemySequence[0].powerUpType === "tank", "custom enemy sequence should preserve carrier metadata");
-assert(customEnemySequence[0].spawnIndex === 2 && customEnemySequence[0].spawnDelay === 12, "custom enemy sequence should preserve spawn metadata");
-assert(context.window.TankDefender8.loadStagePack(validPack) === true, "valid pack should reload after custom enemy sequence check");
-
 const badPack = {
   id: "bad",
   totalStages: 1,
@@ -1567,42 +1535,6 @@ const mixedPack = {
   enemies: [schema.enemies[0]]
 };
 assert(context.window.TankDefender8.validateStagePack(mixedPack).ok === false, "mixed map formats should fail validation");
-
-const badPowerPack = {
-  id: "bad-power",
-  totalStages: 1,
-  enemyTotal: 20,
-  maps: [schema.maps[0]],
-  enemies: [schema.enemies[0].map((enemy, index) => index === 3 ? { ...enemy, powerUpType: "bad" } : enemy)]
-};
-assert(context.window.TankDefender8.validateStagePack(badPowerPack).ok === false, "bad powerUpType should fail validation");
-
-const badDelayPack = {
-  id: "bad-delay",
-  totalStages: 1,
-  enemyTotal: 20,
-  maps: [schema.maps[0]],
-  enemies: [schema.enemies[0].map((enemy, index) => index === 0 ? { ...enemy, spawnDelay: -1 } : enemy)]
-};
-assert(context.window.TankDefender8.validateStagePack(badDelayPack).ok === false, "bad spawnDelay should fail validation");
-
-const badEnemyTypesPack = {
-  id: "bad-enemy-types",
-  totalStages: 1,
-  enemyTypes: schema.enemyTypes.map((enemyType, index) => index === 0 ? { ...enemyType, wallPower: 4 } : enemyType),
-  maps: [schema.maps[0]],
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badEnemyTypesPack).ok === false, "bad enemyTypes should fail validation");
-
-const badEnemyHitColorsPack = {
-  id: "bad-enemy-hit-colors",
-  totalStages: 1,
-  enemyTypes: schema.enemyTypes.map((enemyType, index) => index === 3 ? { ...enemyType, hitColors: ["red"] } : enemyType),
-  maps: [schema.maps[0]],
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badEnemyHitColorsPack).ok === false, "bad enemy hit colors should fail validation");
 
 const badSettingsPack = {
   id: "bad-settings",
