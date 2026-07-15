@@ -9,7 +9,7 @@
   const { advanceBattleRandom } = requireRuntimeModule("battleRandom");
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
-  const { normalizeHexColor, normalizeNumber } = requireRuntimeModule("valueNormalization");
+  const { normalizeNumber } = requireRuntimeModule("valueNormalization");
   const {
     DEFAULT_FRIENDLY_FIRE,
     DEFAULT_PROJECTILE_RULES,
@@ -22,6 +22,12 @@
     normalizeEnemySpawnPacing,
     scaleEnemySpawnDelay
   } = requireRuntimeModule("enemySpawnSettings");
+  const {
+    DEFAULT_EXPLOSION_CORE_COLOR,
+    DEFAULT_EXPLOSION_RULES,
+    cloneExplosionRules,
+    normalizeExplosionRules
+  } = requireRuntimeModule("explosionSettings");
   const {
     DEFAULT_PLAYER_MOVEMENT,
     clonePlayerMovementSettings,
@@ -160,7 +166,6 @@
   const DEFAULT_BONUS_LIFE_SCORES = [20000];
   const DEFAULT_DEATH_POWER_LEVEL = 0;
   const CARRIER_FLASH_COLOR = "#dd3d33";
-  const DEFAULT_EXPLOSION_CORE_COLOR = "#f7f1c6";
   const BASE_DESTRUCTION_TAIL_FRAMES = 4;
   const BASE_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
     1, 1, 1,
@@ -189,17 +194,6 @@
   const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
   const TANK_DESTRUCTION_EXPLOSION_RULES = new Set(["enemyDestroy", "playerDestroy"]);
   const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
-  const DEFAULT_EXPLOSION_RULES = {
-    bulletCancel: { ttl: 10, color: "#f8e08b", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    baseDestroy: { ttl: 35, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    brickHit: { ttl: 9, color: "#d08b52", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    steelHit: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    steelBlocked: { ttl: 9, color: "#dbe0ef", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    enemyHit: { ttl: 9, color: "#ffffff", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    enemyDestroy: { ttl: 18, color: "#f0b546", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    playerStun: { ttl: 9, color: "#f7f1c6", coreColor: DEFAULT_EXPLOSION_CORE_COLOR },
-    playerDestroy: { ttl: 18, color: "#f05a42", coreColor: DEFAULT_EXPLOSION_CORE_COLOR }
-  };
   const DEFAULT_STAGE_ADVANCE = {
     loopAfterFinalStage: true,
     extendedLoopEndStage: 70,
@@ -1293,10 +1287,6 @@
     return grid;
   }
 
-  function cloneExplosionRules(rules) {
-    return Object.fromEntries(Object.entries(rules).map(([key, rule]) => [key, { ...rule }]));
-  }
-
   function cloneAudioManifest() {
     return JSON.parse(JSON.stringify(FREE_AUDIO_MANIFEST));
   }
@@ -1353,20 +1343,6 @@
     if (value === undefined) return fallback;
     if (typeof value !== "boolean") throw new Error(`${label} must be a boolean`);
     return value;
-  }
-
-  function normalizeExplosionRules(rules) {
-    const source = rules || {};
-    if (!source || typeof source !== "object" || Array.isArray(source)) throw new Error("gameSettings.explosionRules must be an object");
-    return Object.fromEntries(Object.entries(DEFAULT_EXPLOSION_RULES).map(([key, defaults]) => {
-      const rule = source[key] === undefined ? {} : source[key];
-      if (!rule || typeof rule !== "object" || Array.isArray(rule)) throw new Error(`gameSettings.explosionRules.${key} must be an object`);
-      return [key, {
-        ttl: normalizeNumber(rule.ttl, defaults.ttl, 1, 3600, true, `gameSettings.explosionRules.${key}.ttl`),
-        color: normalizeHexColor(rule.color, defaults.color, `gameSettings.explosionRules.${key}.color`),
-        coreColor: normalizeHexColor(rule.coreColor, defaults.coreColor, `gameSettings.explosionRules.${key}.coreColor`)
-      }];
-    }));
   }
 
   function normalizeStageAdvance(advance) {

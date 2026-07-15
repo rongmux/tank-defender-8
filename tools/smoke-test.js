@@ -742,15 +742,6 @@ const stageResultCloseRenderProbe = context.window.TankDefender8.debugRenderStag
 const stageResultGreyCurtainRects = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#6b6f78" && call.w === 256 && call.h === 64);
 assert(stageResultCloseRenderProbe.coverRows === 8, "stage-result closing render should use the shared discrete curtain progression");
 assert(stageResultGreyCurtainRects.some((call) => call.y === 0) && stageResultGreyCurtainRects.some((call) => call.y === 176), "stage-result closing render should cover the result table from both screen edges");
-assert(schema.gameSettings.explosionRules.bulletCancel.ttl === 10, "schema should expose bullet cancel explosion timing");
-assert(schema.gameSettings.explosionRules.brickHit.ttl === 9, "brick impacts should use the original nine-frame bullet explosion");
-assert(schema.gameSettings.explosionRules.steelHit.ttl === 9 && schema.gameSettings.explosionRules.steelBlocked.ttl === 9, "steel impacts and field boundaries should share the original nine-frame bullet explosion");
-assert(schema.gameSettings.explosionRules.enemyHit.ttl === 9, "enemy tank hits should use the original nine-frame bullet explosion");
-assert(schema.gameSettings.explosionRules.playerStun.ttl === 9, "friendly-player hits should use the original nine-frame bullet explosion");
-assert(schema.gameSettings.explosionRules.baseDestroy.ttl === 35, "base destruction should expose the original thirty-five visible explosion frames");
-assert(schema.gameSettings.explosionRules.baseDestroy.color === "#f05a42", "schema should expose base destruction explosion color");
-assert(schema.gameSettings.explosionRules.enemyDestroy.coreColor === "#f7f1c6", "schema should expose explosion core color");
-assert(schema.gameSettings.explosionRules.playerDestroy.ttl === 18, "player destruction should expose the original eighteen explosion-state ticks");
 const bulletImpactExplosionProbe = context.window.TankDefender8.debugBulletImpactExplosionProbe();
 assert(Object.values(bulletImpactExplosionProbe.ruleTtls).every((ttl) => ttl === 9), "all wall and boundary bullet impacts should share a nine-frame default");
 assert(bulletImpactExplosionProbe.beforePause === 9 && bulletImpactExplosionProbe.afterPause === 9, "pausing should freeze a bullet impact on its current frame");
@@ -1484,15 +1475,6 @@ const badEnemyAiPack = {
 };
 assert(context.window.TankDefender8.validateStagePack(badEnemyAiPack).ok === false, "bad enemy AI setting should fail validation");
 
-const badExplosionRulesPack = {
-  id: "bad-explosion-rules",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { explosionRules: { enemyDestroy: { color: "orange" } } },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badExplosionRulesPack).ok === false, "bad explosion rules should fail validation");
-
 const badStageAdvancePack = {
   id: "bad-stage-advance",
   totalStages: 1,
@@ -1559,10 +1541,6 @@ assert(context.window.TankDefender8.currentPackInfo().maxActiveEnemies === 2, "c
 assert(context.window.TankDefender8.currentPackInfo().initialLives === 5, "current pack should expose custom initial lives");
 assert(context.window.TankDefender8.currentPackInfo().bonusLifeScores[0] === 100, "current pack should expose custom bonus life scores");
 assert(context.window.TankDefender8.currentPackInfo().deathPowerLevel === 2, "current pack should expose custom death power level");
-assert(context.window.TankDefender8.currentPackInfo().explosionRules.enemyDestroy.ttl === 22, "current pack should expose custom explosion timing");
-assert(context.window.TankDefender8.currentPackInfo().explosionRules.enemyDestroy.color === "#123456", "current pack should expose custom explosion color");
-const explosionProbe = context.window.TankDefender8.debugExplosionRuleProbe("enemyDestroy");
-assert(explosionProbe.ttl === 22 && explosionProbe.coreColor === "#abcdef", "custom explosion rules should apply through the runtime probe");
 assert(context.window.TankDefender8.currentPackInfo().stageAdvance.loopAfterFinalStage === false, "current pack should expose custom stage advance rule");
 assert(context.window.TankDefender8.currentPackInfo().stageClearBonus.points === 777, "current pack should expose custom stage clear bonus");
 const finiteAdvanceProbe = context.window.TankDefender8.debugStageAdvanceProbe();
