@@ -40,7 +40,7 @@
   const HIDDEN_MESSAGE_DROP_MORPH_FRAMES = 28;
   const HIDDEN_MESSAGE_DROP_FALL_FRAMES = 218;
   const HIDDEN_MESSAGE_END_FRAME = 887;
-  const FULL_GAME_OVER_SCREEN_FRAMES = 180;
+  const FULL_GAME_OVER_SCREEN_FRAMES = 108;
   const HIGH_SCORE_SCREEN_FRAMES = 576;
   const GAME_OVER_TEXT = "GAME OVER";
   const GAME_OVER_TEXT_START_Y = SCREEN_H;
@@ -432,28 +432,37 @@
         ]
       },
       gameOver: {
-        duration: 3,
+        durationFrames: 108,
         voices: [
           {
             gain: 0.018,
             wave: "square",
-            step: 0.2,
-            noteDuration: 0.17,
-            notes: [784, 659, 587, 523, 440, 392, 349, 330, 294, 262, 220, 196, 175, 147, 131]
+            segments: [
+              { frequencies: [523, 464], noteFrames: 6, repeat: 1 },
+              { frequencies: [523], noteFrames: 24, repeat: 1 },
+              { frequencies: [391, 348, 311, 261, 261, 261], noteFrames: 8, repeat: 1 },
+              { frequencies: [261], noteFrames: 24, repeat: 1 }
+            ]
           },
           {
             gain: 0.014,
             wave: "square",
-            step: 0.2,
-            noteDuration: 0.17,
-            notes: [523, 494, 440, 392, 349, 330, 294, 262, 247, 220, 196, 175, 147, 131, 110]
+            segments: [
+              { frequencies: [391, 391], noteFrames: 6, repeat: 1 },
+              { frequencies: [391], noteFrames: 24, repeat: 1 },
+              { frequencies: [311, 293, 246, 261, 261, 261], noteFrames: 8, repeat: 1 },
+              { frequencies: [261], noteFrames: 24, repeat: 1 }
+            ]
           },
           {
             gain: 0.022,
             wave: "triangle",
-            step: 0.2,
-            noteDuration: 0.18,
-            notes: [196, 196, 175, 175, 147, 147, 131, 131, 110, 110, 98, 98, 82, 73, 65]
+            segments: [
+              { frequencies: [329, 311], noteFrames: 6, repeat: 1 },
+              { frequencies: [329], noteFrames: 24, repeat: 1 },
+              { frequencies: [261, 232, 196, 196, 196, 196], noteFrames: 8, repeat: 1 },
+              { frequencies: [196], noteFrames: 24, repeat: 1 }
+            ]
           }
         ]
       },
@@ -1097,6 +1106,11 @@
     nodes: []
   };
   const stageBonusAudio = {
+    active: false,
+    frame: 0,
+    nodes: []
+  };
+  const gameOverAudio = {
     active: false,
     frame: 0,
     nodes: []
@@ -2707,7 +2721,7 @@
     stopMovementIceAudio();
     stopScoreCountAudio();
     stopStageBonusAudio();
-    stopSound("gameOver");
+    stopGameOverAudio();
     stopSound("highScore");
     game.demoMode = false;
     game.runHighScoreBaseline = game.highScore;
@@ -2782,6 +2796,7 @@
     syncPauseAudioNodes();
     syncScoreCountAudioNodes();
     syncStageBonusAudioNodes();
+    syncGameOverAudioNodes();
     syncMovementAudio();
   }
 
@@ -3498,6 +3513,26 @@
     updateFixedFrameAudio(stageBonusAudio, "stageBonus", stageBonusAudioAudible());
   }
 
+  function gameOverAudioPresentation(frame) {
+    return fixedFrameAudioPresentation("gameOver", frame);
+  }
+
+  function syncGameOverAudioNodes() {
+    syncFixedFrameAudioNodes(gameOverAudio, "gameOver", true);
+  }
+
+  function startGameOverAudio() {
+    startFixedFrameAudio(gameOverAudio, "gameOver", true);
+  }
+
+  function stopGameOverAudio() {
+    stopFixedFrameAudio(gameOverAudio);
+  }
+
+  function updateGameOverAudio() {
+    updateFixedFrameAudio(gameOverAudio, "gameOver", true);
+  }
+
   function movementAudioPresentation(mode, tick) {
     const eventName = mode === "player" ? "movementPlayer" : "movementEnemy";
     const event = FREE_AUDIO_MANIFEST.events[eventName];
@@ -3717,6 +3752,10 @@
     }
     if (name === "stageBonus") {
       startStageBonusAudio();
+      return;
+    }
+    if (name === "gameOver") {
+      startGameOverAudio();
       return;
     }
     const opts = options || {};
@@ -4176,6 +4215,7 @@
     updatePauseAudio();
     updateScoreCountAudio();
     updateStageBonusAudio();
+    updateGameOverAudio();
 
     if (game.screen === "title") {
       updateTitleIdle();
@@ -5655,7 +5695,7 @@
   }
 
   function finishFullGameOverScreen() {
-    stopSound("gameOver");
+    stopGameOverAudio();
     if (game.newHighScoreAtGameOver) {
       startHighScoreScreen();
       return;
@@ -5693,7 +5733,7 @@
     stopMovementIceAudio();
     stopScoreCountAudio();
     stopStageBonusAudio();
-    stopSound("gameOver");
+    stopGameOverAudio();
     stopSound("highScore");
     game.screen = "title";
     game.paused = false;
@@ -9872,25 +9912,37 @@
     },
     debugFullGameOverScreenProbe() {
       const previous = { ...game };
+      const previousAudio = {
+        active: gameOverAudio.active,
+        frame: gameOverAudio.frame
+      };
       try {
         game.newHighScoreAtGameOver = false;
         startFullGameOverScreen();
         const entry = {
           screen: game.screen,
           elapsed: game.fullGameOverElapsed,
-          paused: game.paused
+          paused: game.paused,
+          audioActive: gameOverAudio.active,
+          audioFrame: gameOverAudio.frame
         };
         const presentation = fullGameOverPresentation(game.fullGameOverElapsed);
         game.fullGameOverElapsed = FULL_GAME_OVER_SCREEN_FRAMES - 2;
+        gameOverAudio.frame = FULL_GAME_OVER_SCREEN_FRAMES - 2;
+        syncGameOverAudioNodes();
         update();
         const beforeEnd = {
           screen: game.screen,
-          elapsed: game.fullGameOverElapsed
+          elapsed: game.fullGameOverElapsed,
+          audioActive: gameOverAudio.active,
+          audioFrame: gameOverAudio.frame
         };
         update();
         const afterEnd = {
           screen: game.screen,
-          elapsed: game.fullGameOverElapsed
+          elapsed: game.fullGameOverElapsed,
+          audioActive: gameOverAudio.active,
+          audioFrame: gameOverAudio.frame
         };
 
         game.newHighScoreAtGameOver = false;
@@ -9901,14 +9953,16 @@
         };
         const startSkip = {
           handled: handleFullGameOverInput("Enter"),
-          screen: game.screen
+          screen: game.screen,
+          audioActive: gameOverAudio.active
         };
 
         game.newHighScoreAtGameOver = false;
         startFullGameOverScreen();
         const selectSkip = {
           handled: handleFullGameOverInput("Escape"),
-          screen: game.screen
+          screen: game.screen,
+          audioActive: gameOverAudio.active
         };
 
         game.newHighScoreAtGameOver = true;
@@ -9916,7 +9970,8 @@
         finishFullGameOverScreen();
         const highScoreRoute = {
           screen: game.screen,
-          elapsed: game.highScoreScreenElapsed
+          elapsed: game.highScoreScreenElapsed,
+          audioActive: gameOverAudio.active
         };
         return {
           duration: FULL_GAME_OVER_SCREEN_FRAMES,
@@ -9930,10 +9985,23 @@
           highScoreRoute
         };
       } finally {
-        stopSound("gameOver");
+        stopGameOverAudio();
         stopSound("highScore");
         Object.assign(game, previous);
+        gameOverAudio.active = previousAudio.active;
+        gameOverAudio.frame = previousAudio.frame;
+        syncGameOverAudioNodes();
       }
+    },
+    debugGameOverAudioProbe() {
+      const event = FREE_AUDIO_MANIFEST.events.gameOver;
+      const frames = [0, 5, 6, 11, 12, 35, 36, 43, 44, 51, 52, 59, 60, 67, 68, 75, 76, 83, 84, 107, 108];
+      return {
+        durationFrames: event.durationFrames,
+        voiceDurations: event.voices.map(fixedFrameVoiceDuration),
+        waves: event.voices.map((voice) => voice.wave),
+        frames: frames.map((frame) => gameOverAudioPresentation(frame))
+      };
     },
     debugRenderFullGameOverFrame(frame) {
       const previous = {
@@ -10077,6 +10145,11 @@
           active: stageBonusAudio.active,
           frame: stageBonusAudio.frame,
           durationFrames: FREE_AUDIO_MANIFEST.events.stageBonus.durationFrames
+        },
+        gameOverAudio: {
+          active: gameOverAudio.active,
+          frame: gameOverAudio.frame,
+          durationFrames: FREE_AUDIO_MANIFEST.events.gameOver.durationFrames
         },
         maxActiveEnemies: maxActiveEnemies(),
         initialLives: gameSettings().initialLives,
@@ -14449,7 +14522,7 @@
         };
         return { finalFrame, afterFinalFrame };
       } finally {
-        stopSound("gameOver");
+        stopGameOverAudio();
         Object.assign(game, previous);
       }
     },
@@ -14543,7 +14616,7 @@
           wrappedStage
         };
       } finally {
-        stopSound("gameOver");
+        stopGameOverAudio();
         stopSound("highScore");
         Object.assign(game, previous);
       }

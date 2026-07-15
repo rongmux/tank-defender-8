@@ -266,28 +266,37 @@
       ]
     },
     "gameOver": {
-      "duration": 3,
+      "durationFrames": 108,
       "voices": [
         {
           "gain": 0.018,
           "wave": "square",
-          "step": 0.2,
-          "noteDuration": 0.17,
-          "notes": [784, 659, 587, 523, 440, 392, 349, 330, 294, 262, 220, 196, 175, 147, 131]
+          "segments": [
+            { "frequencies": [523, 464], "noteFrames": 6, "repeat": 1 },
+            { "frequencies": [523], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [391, 348, 311, 261, 261, 261], "noteFrames": 8, "repeat": 1 },
+            { "frequencies": [261], "noteFrames": 24, "repeat": 1 }
+          ]
         },
         {
           "gain": 0.014,
           "wave": "square",
-          "step": 0.2,
-          "noteDuration": 0.17,
-          "notes": [523, 494, 440, 392, 349, 330, 294, 262, 247, 220, 196, 175, 147, 131, 110]
+          "segments": [
+            { "frequencies": [391, 391], "noteFrames": 6, "repeat": 1 },
+            { "frequencies": [391], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [311, 293, 246, 261, 261, 261], "noteFrames": 8, "repeat": 1 },
+            { "frequencies": [261], "noteFrames": 24, "repeat": 1 }
+          ]
         },
         {
           "gain": 0.022,
           "wave": "triangle",
-          "step": 0.2,
-          "noteDuration": 0.18,
-          "notes": [196, 196, 175, 175, 147, 147, 131, 131, 110, 110, 98, 98, 82, 73, 65]
+          "segments": [
+            { "frequencies": [329, 311], "noteFrames": 6, "repeat": 1 },
+            { "frequencies": [329], "noteFrames": 24, "repeat": 1 },
+            { "frequencies": [261, 232, 196, 196, 196, 196], "noteFrames": 8, "repeat": 1 },
+            { "frequencies": [196], "noteFrames": 24, "repeat": 1 }
+          ]
         }
       ]
     },

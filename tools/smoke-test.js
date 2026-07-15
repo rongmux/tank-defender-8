@@ -363,9 +363,9 @@ assert(runtimeAudioManifest.events.scoreCount.voices.length === 2, "result-table
 assert(runtimeAudioManifest.events.scoreCount.voices.map((voice) => voice.wave).join(",") === "square,noise-short", "result-table count audio should pair pulse two with short-period noise");
 assert(runtimeAudioManifest.events.stageBonus.durationFrames === 28, "result-table leader bonus should preserve the original twenty-eight-frame lifetime");
 assert(runtimeAudioManifest.events.stageBonus.voices.length === 1 && runtimeAudioManifest.events.stageBonus.voices[0].wave === "square", "result-table leader bonus should use one pulse-two replacement voice");
-assert(runtimeAudioManifest.events.gameOver.duration === 3, "full-screen game-over replacement fanfare should last three seconds");
+assert(runtimeAudioManifest.events.gameOver.durationFrames === 108, "full-screen game-over replacement fanfare should preserve the original 108-frame lifetime");
 assert(runtimeAudioManifest.events.gameOver.voices.length === 3, "game-over replacement fanfare should preserve a three-voice arrangement");
-assert(runtimeAudioManifest.events.gameOver.voices.every((voice) => voice.notes.length === 15), "each game-over voice should cover the full 180-frame interstitial");
+assert(runtimeAudioManifest.events.gameOver.voices.map((voice) => voice.wave).join(",") === "square,square,triangle", "game-over replacement fanfare should retain pulse-one, pulse-two, and triangle voices");
 assert(runtimeAudioManifest.events.highScore.duration === 9.6 && runtimeAudioManifest.events.highScore.repeat === 3, "high-score replacement fanfare should span the original-style celebration window");
 assert(runtimeAudioManifest.events.highScore.notes.length === 16, "high-score replacement fanfare should expose its complete procedural phrase");
 assert(stableJson(runtimeAudioManifest) === stableJson(audioManifest), "runtime audio manifest should match data/free-audio-manifest.json");
@@ -792,9 +792,10 @@ assert(hiddenMessageProbe.afterCutscene.inputCount === 0, "finishing the hidden 
 assert(hiddenMessageProbe.wrappedVisits === 0, "Construction visit tracking should preserve the original eight-bit wraparound");
 assert(hiddenMessageProbe.alternateSelection.screen === "stageSelectClosing" && hiddenMessageProbe.alternateSelection.players === 1, "the hidden cutscene should continue through the selected title handler and its curtain close");
 const fullGameOverProbe = context.window.TankDefender8.debugFullGameOverScreenProbe();
-assert(fullGameOverProbe.duration === 180, "full-screen game over should match its three-second replacement fanfare at 60 Hz");
+assert(fullGameOverProbe.duration === 108, "full-screen game over should wait for the original 108-frame first voice");
 assert(fullGameOverProbe.entry.screen === "fullGameOver" && fullGameOverProbe.entry.elapsed === 0, "game-over interstitial should start on its own screen at frame zero");
 assert(fullGameOverProbe.entry.paused === false, "game-over interstitial should not retain a paused game state");
+assert(fullGameOverProbe.entry.audioActive && fullGameOverProbe.entry.audioFrame === 0, "game-over interstitial should start all fixed-frame voices at frame zero");
 assert(
   fullGameOverProbe.presentation.x === 0x3c &&
     fullGameOverProbe.presentation.gameY === 0x46 &&
@@ -802,12 +803,21 @@ assert(
     fullGameOverProbe.presentation.letterAdvance === 0x20,
   "full-screen game-over lettering should retain the original coordinates and 32-pixel advance"
 );
-assert(fullGameOverProbe.beforeEnd.screen === "fullGameOver" && fullGameOverProbe.beforeEnd.elapsed === 179, "full-screen game over should remain visible through frame 179");
-assert(fullGameOverProbe.afterEnd.screen === "title" && fullGameOverProbe.afterEnd.elapsed === 0, "frame 180 should return a non-record run to the title");
+assert(fullGameOverProbe.beforeEnd.screen === "fullGameOver" && fullGameOverProbe.beforeEnd.elapsed === 107 && fullGameOverProbe.beforeEnd.audioActive && fullGameOverProbe.beforeEnd.audioFrame === 107, "full-screen game over and its fanfare should remain active through frame 107");
+assert(fullGameOverProbe.afterEnd.screen === "title" && fullGameOverProbe.afterEnd.elapsed === 0 && !fullGameOverProbe.afterEnd.audioActive, "frame 108 should stop the fanfare and return a non-record run to the title");
 assert(fullGameOverProbe.ignoredInput.handled === false && fullGameOverProbe.ignoredInput.screen === "fullGameOver", "ordinary controls should not dismiss full-screen game over");
-assert(fullGameOverProbe.startSkip.handled === true && fullGameOverProbe.startSkip.screen === "title", "keyboard Start should skip full-screen game over");
-assert(fullGameOverProbe.selectSkip.handled === true && fullGameOverProbe.selectSkip.screen === "title", "keyboard Select should skip full-screen game over");
-assert(fullGameOverProbe.highScoreRoute.screen === "highScore" && fullGameOverProbe.highScoreRoute.elapsed === 0, "a new record should follow full-screen game over with the high-score celebration");
+assert(fullGameOverProbe.startSkip.handled === true && fullGameOverProbe.startSkip.screen === "title" && !fullGameOverProbe.startSkip.audioActive, "keyboard Start should skip full-screen game over and stop its fanfare");
+assert(fullGameOverProbe.selectSkip.handled === true && fullGameOverProbe.selectSkip.screen === "title" && !fullGameOverProbe.selectSkip.audioActive, "keyboard Select should skip full-screen game over and stop its fanfare");
+assert(fullGameOverProbe.highScoreRoute.screen === "highScore" && fullGameOverProbe.highScoreRoute.elapsed === 0 && !fullGameOverProbe.highScoreRoute.audioActive, "a new record should stop GAME OVER audio before the high-score celebration");
+const gameOverAudioProbe = context.window.TankDefender8.debugGameOverAudioProbe();
+assert(gameOverAudioProbe.durationFrames === 108 && gameOverAudioProbe.voiceDurations.join(",") === "108,108,108", "all three game-over voices should cover the complete 108-frame interstitial");
+assert(gameOverAudioProbe.waves.join(",") === "square,square,triangle", "game-over audio should expose its two pulse replacements and triangle voice");
+const gameOverBoundaryFrames = gameOverAudioProbe.frames.filter((_frame, index) => index % 2 === 0 && index < 20);
+assert(gameOverBoundaryFrames.map((frame) => frame.voices[0].frequency).join(",") === "523,464,523,391,348,311,261,261,261,261", "game-over pulse one should preserve the original note order at each segment boundary");
+assert(gameOverBoundaryFrames.map((frame) => frame.voices[1].frequency).join(",") === "391,391,391,311,293,246,261,261,261,261", "game-over pulse two should preserve the original note order at each segment boundary");
+assert(gameOverBoundaryFrames.map((frame) => frame.voices[2].frequency).join(",") === "329,311,329,261,232,196,196,196,196,196", "game-over triangle should preserve the original note order at each segment boundary");
+assert(gameOverAudioProbe.frames[0].voices[0].frequency === gameOverAudioProbe.frames[1].voices[0].frequency && gameOverAudioProbe.frames[4].voices[0].frequency === gameOverAudioProbe.frames[5].voices[0].frequency && gameOverAudioProbe.frames[18].voices[0].frequency === gameOverAudioProbe.frames[19].voices[0].frequency, "game-over notes should remain held through their 6-, 24-, and final 24-frame spans");
+assert(gameOverAudioProbe.frames[20].voices.every((voice) => voice === null), "all game-over voices should stop exactly on frame 108");
 canvasContext.calls.length = 0;
 canvasContext.resetPixels();
 const renderedFullGameOver = context.window.TankDefender8.debugRenderFullGameOverFrame(42);
