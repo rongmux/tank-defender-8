@@ -3,6 +3,7 @@ const { spawnSync } = require("child_process");
 
 const root = path.resolve(__dirname, "..");
 const testFiles = [
+  "tests/unit/enemy-sequences.test.js",
   "tests/unit/stage-grid.test.js",
   "tests/unit/geometry.test.js",
   "tests/unit/frame-counter.test.js",
@@ -10,6 +11,7 @@ const testFiles = [
   "tests/unit/browser-entry.test.js",
   "tests/integration/collision.test.js",
   "tests/integration/frame-counter.test.js",
+  "tests/integration/enemy-sequences.test.js",
   "tests/integration/stage-grid.test.js",
   "tools/smoke-test.js"
 ];

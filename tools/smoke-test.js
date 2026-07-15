@@ -37,22 +37,6 @@ function carrierNumbers(sequence) {
   return sequence.map((enemy, index) => enemy.carrier ? index + 1 : null).filter(Boolean).join(",");
 }
 
-function enemyGroupCounts(groups) {
-  return groups.reduce((counts, group) => {
-    counts[group[1]] += group[0];
-    return counts;
-  }, [0, 0, 0, 0]);
-}
-
-function namedEnemyGroups(groups) {
-  const names = ["basic", "fast", "power", "armor"];
-  return groups.map((group) => ({
-    count: group[0],
-    typeIndex: group[1],
-    type: names[group[1]]
-  }));
-}
-
 function stableJson(value) {
   if (!value || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
@@ -1448,58 +1432,6 @@ assert(snapshot.enemyDataStage === 35, "built-in stage 70 should reuse stage 35 
 assert(counts.join(",") === "0,6,4,10", "built-in stage 70 should use stage 35 enemy groups");
 assert(carrierNumbers(snapshot.enemySequence) === "4,11,18", "built-in stage 70 carriers should match stage 35");
 byAction.next.click();
-
-// Mirrors StrategyWiki's Battle City Walkthrough "Tank Groups" table.
-const expectedOriginalEnemyGroups = [
-  [[18, 0], [2, 1]],
-  [[2, 3], [4, 1], [14, 0]],
-  [[14, 0], [4, 1], [2, 3]],
-  [[10, 2], [5, 1], [2, 0], [3, 3]],
-  [[5, 2], [2, 3], [8, 0], [5, 1]],
-  [[7, 2], [2, 1], [9, 0], [2, 3]],
-  [[3, 0], [4, 1], [6, 2], [7, 0]],
-  [[7, 2], [2, 3], [4, 1], [7, 0]],
-  [[6, 0], [4, 1], [7, 2], [3, 3]],
-  [[12, 0], [2, 1], [4, 2], [2, 3]],
-  [[5, 1], [6, 3], [4, 2], [5, 1]],
-  [[8, 2], [6, 1], [6, 3]],
-  [[8, 2], [8, 1], [4, 3]],
-  [[10, 2], [4, 1], [6, 3]],
-  [[2, 0], [10, 1], [8, 3]],
-  [[16, 0], [2, 1], [2, 3]],
-  [[2, 3], [2, 1], [8, 3], [8, 0]],
-  [[4, 3], [2, 0], [6, 2], [8, 1]],
-  [[4, 1], [8, 3], [4, 0], [4, 2]],
-  [[8, 1], [2, 0], [2, 2], [8, 3]],
-  [[8, 2], [2, 1], [6, 0], [4, 3]],
-  [[8, 1], [6, 0], [2, 2], [4, 3]],
-  [[6, 3], [4, 2], [10, 1]],
-  [[4, 2], [2, 3], [4, 1], [10, 0]],
-  [[2, 2], [8, 1], [10, 3]],
-  [[6, 1], [6, 3], [4, 0], [4, 2]],
-  [[2, 2], [8, 3], [8, 1], [2, 0]],
-  [[2, 1], [1, 3], [15, 0], [2, 2]],
-  [[10, 2], [4, 1], [6, 3]],
-  [[4, 0], [8, 1], [4, 2], [4, 3]],
-  [[3, 2], [8, 1], [6, 3], [3, 2]],
-  [[8, 3], [6, 0], [2, 2], [4, 1]],
-  [[4, 1], [8, 3], [4, 2], [4, 1]],
-  [[4, 2], [10, 1], [6, 3]],
-  [[4, 2], [6, 1], [10, 3]]
-];
-const originalEnemyGroupsProbe = context.window.TankDefender8.debugOriginalEnemyGroupsProbe();
-assert(originalEnemyGroupsProbe.length === 35, "built-in original enemy group probe should cover all 35 stages");
-for (let stageIndex = 0; stageIndex < expectedOriginalEnemyGroups.length; stageIndex += 1) {
-  const stage = stageIndex + 1;
-  const expectedGroups = expectedOriginalEnemyGroups[stageIndex];
-  const expectedCounts = enemyGroupCounts(expectedGroups);
-  const actual = originalEnemyGroupsProbe[stageIndex];
-  assert(actual.stage === stage, `original enemy group stage ${stage} should keep its stage number`);
-  assert(actual.total === 20, `original enemy group stage ${stage} should contain 20 enemies`);
-  assert(stableJson(actual.groups) === stableJson(namedEnemyGroups(expectedGroups)), `original enemy group stage ${stage} should match the source group order`);
-  assert(actual.counts.join(",") === expectedCounts.join(","), `original enemy group stage ${stage} should match source enemy type counts`);
-  assert(actual.carriers.join(",") === "4,11,18", `original enemy group stage ${stage} should keep carriers at enemies 4, 11, and 18`);
-}
 
 byAction.edit.click();
 byAction.clear.click();
