@@ -1145,6 +1145,7 @@
   };
   const keys = new Set();
   const pendingFirePresses = new Set();
+  const pendingStageSelectPresses = new Set();
   let audioCtx = null;
   const activeSequencedSounds = new Map();
   const movementAudio = {
@@ -1292,7 +1293,6 @@
     hiddenInputCount: 0,
     hiddenMessageElapsed: 0,
     stageSelectPlayers: 1,
-    stageSelectHoldTimer: 0,
     stageResultReason: "clear",
     stageClearElapsed: 0,
     stageClearBonusPlayerIds: [],
@@ -2571,10 +2571,11 @@
     game.screen = "stageSelectClosing";
     game.paused = false;
     game.transitionTimer = STAGE_CURTAIN_CLOSE_FRAMES;
-    game.stageSelectHoldTimer = 0;
+    pendingStageSelectPresses.clear();
   }
 
   function startSelectedGame() {
+    pendingStageSelectPresses.clear();
     startGame(game.stageSelectPlayers, { stage: game.stage });
   }
 
@@ -2584,9 +2585,8 @@
 
   function changeStageSelection(delta) {
     const limit = stageSelectLimit();
-    game.stage += delta;
-    if (game.stage < 1) game.stage = limit;
-    if (game.stage > limit) game.stage = 1;
+    resetFrameCounterLow();
+    game.stage = clamp(game.stage + delta, 1, limit);
   }
 
   function startStage(stage) {
@@ -2837,7 +2837,6 @@
     game.editorTick = 0;
     game.editorBrush = BRICK;
     game.stageSelectPlayers = 1;
-    game.stageSelectHoldTimer = 0;
     game.screen = "title";
     game.paused = false;
     clearTransientBattleState();
@@ -2888,6 +2887,7 @@
     game.stageClearElapsed = 0;
     game.stageClearBonusPlayerIds = [];
     game.stageClearBonusAwarded = false;
+    pendingStageSelectPresses.clear();
   }
 
   function restoreBuiltInStagePack() {
@@ -2902,6 +2902,7 @@
   function nextStage(delta) {
     if (game.screen === "stageSelectClosing" || game.screen === "stageClearClosing") return;
     if (game.screen === "stageSelect") {
+      pendingStageSelectPresses.clear();
       changeStageSelection(delta);
       return;
     }
@@ -4095,12 +4096,11 @@
     } else if (game.screen === "stageSelect") {
       if (event.code === "Enter") startSelectedGame();
       else if (event.code === "Space" || event.code === "KeyZ") {
-        game.stageSelectHoldTimer = 0;
-        changeStageSelection(1);
+        pendingStageSelectPresses.add(event.code);
       } else if (event.code === "KeyF" || event.code === "KeyX") {
-        game.stageSelectHoldTimer = 0;
-        changeStageSelection(-1);
+        pendingStageSelectPresses.add(event.code);
       } else if (event.code === "Escape") {
+        pendingStageSelectPresses.clear();
         game.screen = "title";
         game.stage = 1;
       }
@@ -4355,18 +4355,24 @@
     if (originalEditorButtonHeld()) pasteOriginalEditorPattern();
   }
 
+  function stageSelectAHeld(input) {
+    return input.has("Space") || input.has("KeyZ");
+  }
+
+  function stageSelectBHeld(input) {
+    return input.has("KeyF") || input.has("KeyX");
+  }
+
   function updateStageSelectControls() {
-    let delta = 0;
-    if (keys.has("Space") || keys.has("KeyZ")) delta = 1;
-    else if (keys.has("KeyF") || keys.has("KeyX")) delta = -1;
-    if (!delta) {
-      game.stageSelectHoldTimer = 0;
+    const aPressed = stageSelectAHeld(pendingStageSelectPresses);
+    const bPressed = stageSelectBHeld(pendingStageSelectPresses);
+    pendingStageSelectPresses.clear();
+    const repeatFrame = (game.frameLow & 0x07) === 0;
+    if (aPressed || (repeatFrame && stageSelectAHeld(keys))) {
+      changeStageSelection(1);
       return;
     }
-    game.stageSelectHoldTimer += 1;
-    if (game.stageSelectHoldTimer < 8) return;
-    game.stageSelectHoldTimer = 0;
-    changeStageSelection(delta);
+    if (bPressed || (repeatFrame && stageSelectBHeld(keys))) changeStageSelection(-1);
   }
 
   function update() {
@@ -10241,6 +10247,101 @@
         syncMovementAudio();
       }
     },
+    debugStageSelectInputCadenceProbe() {
+      const previous = { ...game };
+      const previousKeys = Array.from(keys);
+      const previousPresses = Array.from(pendingStageSelectPresses);
+      const snapshot = () => ({ stage: game.stage, frameLow: game.frameLow, frameHigh: game.frameHigh });
+      const step = () => {
+        advanceFrameCounters();
+        updateStageSelectControls();
+      };
+      try {
+        keys.clear();
+        pendingStageSelectPresses.clear();
+        game.screen = "stageSelect";
+        game.stage = 10;
+        game.frameLow = 5;
+        game.frameHigh = 0x22;
+
+        keys.add("Space");
+        pendingStageSelectPresses.add("Space");
+        step();
+        const initialPress = snapshot();
+        for (let frame = 0; frame < 7; frame += 1) step();
+        const beforeHeldRepeat = snapshot();
+        step();
+        const heldRepeat = snapshot();
+
+        keys.clear();
+        game.stage = stageSelectLimit();
+        game.frameLow = 3;
+        game.frameHigh = 0x22;
+        pendingStageSelectPresses.add("Space");
+        step();
+        const upperBoundary = snapshot();
+
+        game.stage = 1;
+        game.frameLow = 3;
+        game.frameHigh = 0x22;
+        pendingStageSelectPresses.add("KeyF");
+        step();
+        const lowerBoundary = snapshot();
+
+        game.stage = 20;
+        game.frameLow = 6;
+        game.frameHigh = 0x22;
+        keys.add("Space");
+        step();
+        const heldBeforeBoundary = snapshot();
+        step();
+        const heldAtBoundary = snapshot();
+
+        keys.clear();
+        game.stage = 20;
+        game.frameLow = 4;
+        game.frameHigh = 0x22;
+        pendingStageSelectPresses.add("Space");
+        pendingStageSelectPresses.add("KeyF");
+        step();
+        const simultaneousPress = snapshot();
+
+        keys.clear();
+        keys.add("Space");
+        game.stage = 20;
+        game.frameLow = 7;
+        game.frameHigh = 0x22;
+        pendingStageSelectPresses.add("KeyF");
+        step();
+        const heldAPriority = snapshot();
+
+        game.stage = 20;
+        game.frameLow = 6;
+        game.frameHigh = 0x22;
+        pendingStageSelectPresses.add("KeyF");
+        step();
+        const freshBOutsideARepeat = snapshot();
+
+        return {
+          initialPress,
+          beforeHeldRepeat,
+          heldRepeat,
+          upperBoundary,
+          lowerBoundary,
+          heldBeforeBoundary,
+          heldAtBoundary,
+          simultaneousPress,
+          heldAPriority,
+          freshBOutsideARepeat
+        };
+      } finally {
+        Object.assign(game, previous);
+        keys.clear();
+        for (const code of previousKeys) keys.add(code);
+        pendingStageSelectPresses.clear();
+        for (const code of previousPresses) pendingStageSelectPresses.add(code);
+      }
+    },
     debugTitleDemoLifecycleProbe() {
       const previous = { ...game };
       try {
@@ -15346,6 +15447,19 @@
         transitionTimer: game.transitionTimer,
         stage: game.stage,
         players: game.players.length
+      };
+    },
+    debugAdvanceStageSelect(frames) {
+      const count = Math.max(0, Math.floor(Number(frames) || 0));
+      for (let index = 0; index < count; index += 1) {
+        if (game.screen !== "stageSelect") break;
+        update();
+      }
+      return {
+        screen: game.screen,
+        stage: game.stage,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh
       };
     },
     debugAdvanceStageStartAudio(frames) {
