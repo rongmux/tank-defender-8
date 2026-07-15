@@ -28,7 +28,7 @@
   const DEFAULT_HIGH_SCORE = 20000;
   const DEFAULT_MAX_ACTIVE_ENEMIES = 4;
   const DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER = 6;
-  const TITLE_DEMO_IDLE_FRAMES = 0x0a * 0x100;
+  const TITLE_DEMO_IDLE_FRAMES = 0x0a * 0x40;
   const DEMO_DISPLAY_STAGE = 30;
   const DEMO_MAX_ACTIVE_ENEMIES = 4;
   const HIDDEN_MESSAGE_REQUIRED_VISITS = 7;
@@ -50,6 +50,8 @@
   const PLAYER_GAME_OVER_MESSAGE_Y = 0xd8;
   const PLAYER_GAME_OVER_MESSAGE_HIDDEN_Y = 0xf0;
   const PLAYER_GAME_OVER_STAGE_END_DELAY = 0x100;
+  const EXTENDED_STAGE_END_FRAME_HIGH = 0xfe;
+  const DEMO_INITIAL_FRAME_LOW = 0x02;
   const HIGH_SCORE_PALETTE_COLORS = ["#111111", "#345fd1", "#6b6f78", "#f3f0d4"];
   const STAGE_CURTAIN_CLOSE_FRAMES = 16;
   const STAGE_MAP_DRAW_FRAMES = 13;
@@ -1250,6 +1252,8 @@
     stage: 1,
     playerCount: 1,
     tick: 0,
+    frameLow: 0,
+    frameHigh: 0,
     transitionTimer: 0,
     grid: makeGrid(),
     customGrid: null,
@@ -2455,6 +2459,8 @@
     game.screen = "playing";
     game.transitionTimer = 0;
     game.titleIdleFrames = 0;
+    resetFrameCounters();
+    game.frameLow = DEMO_INITIAL_FRAME_LOW;
     syncMovementAudio();
   }
 
@@ -2474,22 +2480,24 @@
     game.stage = 1;
     game.screen = "title";
     game.paused = false;
-    game.titleIdleFrames = 0;
+    resetTitleIdleTimer();
     clearTransientBattleState();
   }
 
   function updateTitleIdle() {
     if (game.constructionUsed || game.demoMode) return;
     game.titleIdleFrames += 1;
-    if (game.titleIdleFrames >= TITLE_DEMO_IDLE_FRAMES) startTitleDemo();
+    if (game.frameHigh === 0x0a) startTitleDemo();
   }
 
   function resetTitleIdleTimer() {
     game.titleIdleFrames = 0;
+    resetFrameCounterHigh();
   }
 
   function resetTitleIdleHighByte() {
-    game.titleIdleFrames &= 0xff;
+    game.titleIdleFrames = 0;
+    resetFrameCounterHigh();
   }
 
   function hiddenMessageTriggerReady() {
@@ -2810,7 +2818,7 @@
     game.stagePack = pack;
     game.stage = 1;
     game.titleMenu = 0;
-    game.titleIdleFrames = 0;
+    resetTitleIdleTimer();
     game.demoMode = false;
     game.constructionUsed = false;
     game.constructionVisits = 0;
@@ -4362,6 +4370,7 @@
   }
 
   function update() {
+    advanceFrameCounters();
     if (game.editorMessageTimer > 0) game.editorMessageTimer -= 1;
     updateStageStartAudio();
     updateBonusLifeAudio();
@@ -4422,6 +4431,7 @@
       game.transitionTimer -= 1;
       if (game.transitionTimer <= 0) {
         game.screen = "playing";
+        resetFrameCounterHigh();
         syncMovementAudio();
       }
       return;
@@ -4473,6 +4483,24 @@
     updateBattle();
   }
 
+  function advanceFrameCounters() {
+    game.frameLow = (game.frameLow + 1) & 0xff;
+    if ((game.frameLow & 0x3f) === 0) game.frameHigh = (game.frameHigh + 1) & 0xff;
+  }
+
+  function resetFrameCounterLow() {
+    game.frameLow = 0;
+  }
+
+  function resetFrameCounterHigh() {
+    game.frameHigh = 0;
+  }
+
+  function resetFrameCounters() {
+    resetFrameCounterLow();
+    resetFrameCounterHigh();
+  }
+
   /**
    * Advances one active battle frame. Post-game field frames use the same
    * simulation with controller input cleared and end detection disabled.
@@ -4505,12 +4533,12 @@
   }
 
   function updateFreezeTimer() {
-    if (game.freezeTimer > 0 && isGlobalTimerTick(game.tick)) game.freezeTimer -= 1;
+    if (game.freezeTimer > 0 && isGlobalTimerTick(game.frameLow)) game.freezeTimer -= 1;
   }
 
   function updateShovelTimer() {
-    if (game.shovelTimer <= 0 || (game.tick & 15) !== 0) return;
-    if (isGlobalTimerTick(game.tick)) {
+    if (game.shovelTimer <= 0 || (game.frameLow & 15) !== 0) return;
+    if (isGlobalTimerTick(game.frameLow)) {
       game.shovelTimer -= 1;
       if (game.shovelTimer <= 0) {
         buildBaseWall(game.grid, BRICK);
@@ -4518,7 +4546,7 @@
       }
     }
     if (game.shovelTimer < gameSettings().powerUpDurations.shovelFlash) {
-      buildBaseWall(game.grid, shovelWallTypeForTimer(game.shovelTimer, game.tick));
+      buildBaseWall(game.grid, shovelWallTypeForTimer(game.shovelTimer, game.frameLow));
     }
   }
 
@@ -4529,7 +4557,7 @@
   }
 
   function updatePlayerInvulnerabilityTimers() {
-    if (!isGlobalTimerTick(game.tick)) return;
+    if (!isGlobalTimerTick(game.frameLow)) return;
     for (const player of game.players) {
       if (player.invuln > 0) player.invuln -= 1;
     }
@@ -4551,7 +4579,7 @@
     }
     const controlsEnabled = inputEnabled !== false;
     const firePresses = controlsEnabled ? new Set(pendingFirePresses) : new Set();
-    const movementFrame = isPlayerMovementFrame(game.tick);
+    const movementFrame = isPlayerMovementFrame(game.frameLow);
     pendingFirePresses.clear();
     for (const player of game.players) {
       const control = getPlayerControl(player.id);
@@ -4592,7 +4620,7 @@
   function updateDemoPlayers() {
     pendingFirePresses.clear();
     for (const player of game.players) {
-      const movementFrame = isPlayerMovementFrame(game.tick);
+      const movementFrame = isPlayerMovementFrame(game.frameLow);
       if (player.respawn > 0) {
         if (movementFrame) {
           player.respawn -= 1;
@@ -4624,8 +4652,7 @@
   function demoControlForPlayer(player) {
     const target = demoTargetForPlayer(player);
     if (!target) return { direction: -1, fire: false, targetKind: "none", targetId: null };
-    const frameHigh = (Math.max(0, Math.floor(game.tick)) >>> 8) & 0xff;
-    const horizontalFirst = ((((player.id - 1) << 1) ^ frameHigh) & 2) !== 0;
+    const horizontalFirst = ((((player.id - 1) << 1) ^ game.frameHigh) & 2) !== 0;
     return {
       direction: directionTowardTarget(player, target, horizontalFirst),
       fire: player.y < FIELD_H - 32,
@@ -4830,7 +4857,7 @@
   function isEnemyMovementFrame(enemy) {
     if (!enemy.alternateMovement) return true;
     const slot = Number.isInteger(enemy.slotIndex) ? enemy.slotIndex : 2;
-    return ((slot ^ game.tick) & 1) === 1;
+    return ((slot ^ game.frameLow) & 1) === 1;
   }
 
   function isEnemyAtTurnIntersection(enemy) {
@@ -4839,7 +4866,7 @@
 
   function chooseEnemyDirectionByPhase(enemy, random) {
     const nextRandom = random || Math.random;
-    const phase = enemyAiPhase(game.stage, game.tick);
+    const phase = enemyAiPhase(game.stage, game.frameHigh);
     if (phase === "random") {
       enemy.dir = randomByte(nextRandom) & 3;
       return phase;
@@ -4855,11 +4882,11 @@
     return phase;
   }
 
-  function enemyAiPhase(stage, tick) {
+  function enemyAiPhase(stage, frameHigh) {
     const interval = scaleEnemySpawnDelayForPlayers(defaultEnemySpawnDelay(stage), game.playerCount);
-    const frameHigh = (Math.max(0, Math.floor(Number(tick) || 0)) >>> 8) & 0xff;
-    if (frameHigh > Math.floor(interval / 4)) return "hq";
-    if (frameHigh > Math.floor(interval / 8)) return "player";
+    const phaseCounter = Math.max(0, Math.floor(Number(frameHigh) || 0)) & 0xff;
+    if (phaseCounter > Math.floor(interval / 4)) return "hq";
+    if (phaseCounter > Math.floor(interval / 8)) return "player";
     return "random";
   }
 
@@ -5252,7 +5279,7 @@
       y: PLAYER_GAME_OVER_MESSAGE_Y,
       dx: isPlayerTwo ? -1 : 1
     };
-    game.tick -= game.tick % 0x100;
+    resetFrameCounterLow();
   }
 
   function playerGameOverMessageActive() {
@@ -5262,7 +5289,7 @@
   function updatePlayerGameOverMessage() {
     const message = game.playerGameOverMessage;
     if (!message || message.timer <= 0 || game.demoMode) return;
-    if ((game.tick & 0x0f) === 0) {
+    if ((game.frameLow & 0x0f) === 0) {
       message.timer -= 1;
       if (message.timer <= 0) {
         message.timer = 0;
@@ -5801,11 +5828,14 @@
       game.paused = false;
       game.pauseElapsed = 0;
       if (game.clearPendingTimer <= 0) {
+        const extendedStageEnd = playerGameOverMessageActive();
         game.clearPendingTimer = Math.max(
           gameSettings().timings.stageClearDelay,
-          playerGameOverMessageActive() ? PLAYER_GAME_OVER_STAGE_END_DELAY : 0
+          extendedStageEnd ? PLAYER_GAME_OVER_STAGE_END_DELAY : 0
         );
         game.tick = 0;
+        resetFrameCounters();
+        if (extendedStageEnd) game.frameHigh = EXTENDED_STAGE_END_FRAME_HIGH;
         if (game.clearPendingTimer > 0) return;
       }
       if (game.clearPendingTimer > 0) {
@@ -5903,6 +5933,8 @@
     game.screen = "gameOver";
     game.paused = false;
     game.tick = 0;
+    resetFrameCounters();
+    game.frameHigh = EXTENDED_STAGE_END_FRAME_HIGH;
     game.baseDestroyTimer = 0;
     game.playerGameOverMessage = null;
     game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
@@ -6454,7 +6486,7 @@
   }
 
   function drawWater(x, y) {
-    const frame = waterFrameName(game.tick);
+    const frame = waterFrameName(game.frameLow);
     drawManifestSprite("terrain", frame, x, y, {
       base: "#173b67",
       wave: frame === "waterA" ? "#56a6d5" : "#2d789e"
@@ -6608,7 +6640,7 @@
     const y = Math.round(FIELD_Y + tank.y - 2);
     ctx.lineWidth = 1;
     drawManifestSprite("shield", "box", x, y, {
-      primary: shieldColorForTick(game.tick)
+      primary: shieldColorForTick(game.frameLow)
     });
   }
 
@@ -6686,7 +6718,7 @@
    * while the battle simulation is paused.
    */
   function battleDisplayFrame() {
-    return game.tick + (game.paused ? game.pauseElapsed : 0);
+    return game.frameLow;
   }
 
   function powerUpVisualRect(power) {
@@ -7367,6 +7399,8 @@
     game.paused = true;
     game.pauseElapsed = 0;
     game.tick = Math.max(0, Math.floor(Number(tick) || 0));
+    game.frameLow = game.tick & 0xff;
+    game.frameHigh = Math.floor(game.tick / 0x40) & 0xff;
     game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
     game.players = [{ alive: true, lives: 1, respawn: 0 }];
     game.enemies = [];
@@ -10106,14 +10140,17 @@
       const previous = {
         paused: game.paused,
         pauseElapsed: game.pauseElapsed,
-        tick: game.tick
+        tick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh
       };
       try {
         game.paused = true;
         game.pauseElapsed = 0;
         game.tick = Math.max(0, Math.floor(Number(frame) || 0));
+        game.frameLow = game.tick & 0xff;
         renderPause();
-        return pausePresentation(game.tick);
+        return pausePresentation(game.frameLow);
       } finally {
         Object.assign(game, previous);
       }
@@ -10121,26 +10158,119 @@
     debugTitleScoreLayoutProbe(menuIndex) {
       return titleScoreLayout(menuIndex).map((item) => ({ ...item }));
     },
+    debugFrameCounterProbe() {
+      const previous = { ...game };
+      const snapshot = () => ({ frameLow: game.frameLow, frameHigh: game.frameHigh });
+      const advance = (frames) => {
+        for (let frame = 0; frame < frames; frame += 1) advanceFrameCounters();
+        return snapshot();
+      };
+      try {
+        resetFrameCounters();
+        const initial = snapshot();
+        const frame63 = advance(63);
+        const frame64 = advance(1);
+        const frame128 = advance(64);
+        const frame192 = advance(64);
+        const frame256 = advance(64);
+
+        game.frameLow = 0xab;
+        game.frameHigh = 0x05;
+        resetFrameCounterHigh();
+        const highReset = snapshot();
+        const nextQuarterBoundary = advance(0x15);
+
+        game.frameLow = 0xab;
+        game.frameHigh = 0x05;
+        resetFrameCounterLow();
+        const lowReset = snapshot();
+
+        game.frameLow = 0;
+        game.frameHigh = EXTENDED_STAGE_END_FRAME_HIGH;
+        const extendedStageEndStart = snapshot();
+        const extendedStageEndFinish = advance(PLAYER_GAME_OVER_STAGE_END_DELAY);
+
+        game.screen = "playing";
+        game.demoMode = false;
+        game.paused = true;
+        game.pauseElapsed = 0;
+        game.tick = 31;
+        game.frameLow = 0x3f;
+        game.frameHigh = 0x07;
+        game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
+        game.players = [{ alive: true, lives: 1, respawn: 0 }];
+        game.enemies = [];
+        game.enemySpawned = 0;
+        game.clearPendingTimer = 0;
+        game.scorePopups = [];
+        update();
+        const paused = {
+          ...snapshot(),
+          tick: game.tick,
+          pauseElapsed: game.pauseElapsed
+        };
+
+        game.screen = "stageIntro";
+        game.transitionTimer = 1;
+        game.paused = false;
+        game.frameLow = 0x3f;
+        game.frameHigh = 0x09;
+        update();
+        const stageActivation = {
+          ...snapshot(),
+          screen: game.screen
+        };
+
+        return {
+          initial,
+          frame63,
+          frame64,
+          frame128,
+          frame192,
+          frame256,
+          highReset,
+          nextQuarterBoundary,
+          lowReset,
+          extendedStageEndStart,
+          extendedStageEndFinish,
+          paused,
+          stageActivation
+        };
+      } finally {
+        Object.assign(game, previous);
+        syncMovementAudio();
+      }
+    },
     debugTitleDemoLifecycleProbe() {
       const previous = { ...game };
       try {
         game.screen = "title";
         game.stage = 1;
         game.titleIdleFrames = 0;
+        resetFrameCounters();
         game.demoMode = false;
         game.constructionUsed = false;
         clearTransientBattleState();
         game.screen = "title";
 
+        game.frameLow = 0xab;
+        game.frameHigh = 0x05;
         game.titleIdleFrames = 0x05ab;
         resetTitleIdleHighByte();
-        const selectionResetFrames = game.titleIdleFrames;
+        const selectionReset = {
+          idleFrames: game.titleIdleFrames,
+          frameLow: game.frameLow,
+          frameHigh: game.frameHigh
+        };
+        resetFrameCounters();
         game.titleIdleFrames = 0;
 
         for (let frame = 0; frame < TITLE_DEMO_IDLE_FRAMES - 1; frame += 1) update();
         const beforeTimeout = {
           screen: game.screen,
           idleFrames: game.titleIdleFrames,
+          frameLow: game.frameLow,
+          frameHigh: game.frameHigh,
           demoMode: game.demoMode
         };
         update();
@@ -10151,6 +10281,8 @@
           playerIds: game.players.map((player) => player.id),
           maxActiveEnemies: maxActiveEnemies(),
           transitionTimer: game.transitionTimer,
+          frameLow: game.frameLow,
+          frameHigh: game.frameHigh,
           demoMode: game.demoMode
         };
 
@@ -10169,6 +10301,8 @@
         ];
         game.powerUp = null;
         const enemyTargets = [demoControlForPlayer(player1), demoControlForPlayer(player2)];
+        game.frameHigh = 2;
+        const axisPhaseTwoTargets = [demoControlForPlayer(player1), demoControlForPlayer(player2)];
         game.powerUp = { type: "star", x: 64, y: 64, w: POWERUP_SIZE, h: POWERUP_SIZE, ttl: 0 };
         const powerUpTarget = demoControlForPlayer(player1);
 
@@ -10207,20 +10341,25 @@
         };
 
         game.constructionUsed = true;
+        game.frameLow = 0x3f;
+        game.frameHigh = 0x09;
         game.titleIdleFrames = TITLE_DEMO_IDLE_FRAMES - 1;
         update();
         const afterConstruction = {
           screen: game.screen,
           idleFrames: game.titleIdleFrames,
+          frameLow: game.frameLow,
+          frameHigh: game.frameHigh,
           demoMode: game.demoMode
         };
         return {
           timeoutFrames: TITLE_DEMO_IDLE_FRAMES,
           displayStage: DEMO_DISPLAY_STAGE,
-          selectionResetFrames,
+          selectionReset,
           beforeTimeout,
           afterTimeout,
           enemyTargets,
+          axisPhaseTwoTargets,
           powerUpTarget,
           scoreIsolation,
           afterExit,
@@ -10549,6 +10688,9 @@
         titleMenuAction: (TITLE_MENU_ITEMS[game.titleMenu] || TITLE_MENU_ITEMS[0]).action,
         titleIdleFrames: game.titleIdleFrames,
         titleDemoIdleFrames: TITLE_DEMO_IDLE_FRAMES,
+        battleTick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh,
         demoMode: game.demoMode,
         constructionUsed: game.constructionUsed,
         constructionVisits: game.constructionVisits,
@@ -11019,9 +11161,9 @@
           randomEnd,
           playerEnd,
           phases: [
-            { frameHigh: randomEnd, phase: enemyAiPhase(stageValue, randomEnd * 256) },
-            { frameHigh: randomEnd + 1, phase: enemyAiPhase(stageValue, (randomEnd + 1) * 256) },
-            { frameHigh: playerEnd + 1, phase: enemyAiPhase(stageValue, (playerEnd + 1) * 256) }
+            { frameHigh: randomEnd, displayFrames: randomEnd * 64, phase: enemyAiPhase(stageValue, randomEnd) },
+            { frameHigh: randomEnd + 1, displayFrames: (randomEnd + 1) * 64, phase: enemyAiPhase(stageValue, randomEnd + 1) },
+            { frameHigh: playerEnd + 1, displayFrames: (playerEnd + 1) * 64, phase: enemyAiPhase(stageValue, playerEnd + 1) }
           ]
         };
       } finally {
@@ -11058,18 +11200,19 @@
       }
     },
     debugEnemyMovementCadenceProbe() {
-      const previousTick = game.tick;
+      const previous = { tick: game.tick, frameLow: game.frameLow };
       const normal = { slotIndex: 5, alternateMovement: true };
       const fast = { slotIndex: 5, alternateMovement: false };
       try {
         const frames = [];
         for (let tick = 0; tick < 4; tick += 1) {
           game.tick = tick;
+          game.frameLow = tick;
           frames.push({ tick, normal: isEnemyMovementFrame(normal), fast: isEnemyMovementFrame(fast) });
         }
         return frames;
       } finally {
-        game.tick = previousTick;
+        Object.assign(game, previous);
       }
     },
     debugEnemyBlockedStateProbe() {
@@ -11179,6 +11322,8 @@
         enemies: game.enemies,
         grid: game.grid,
         tick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh,
         freezeTimer: game.freezeTimer,
         firePresses: Array.from(pendingFirePresses)
       };
@@ -11197,12 +11342,15 @@
         };
         game.players = [player];
         game.tick = 2;
+        game.frameLow = 2;
+        game.frameHigh = 0;
         const beforeSkippedCadenceFrame = player.spawnFlash;
         updatePlayers();
         const afterSkippedCadenceFrame = player.spawnFlash;
         let playerDisplayFrames = 1;
         while (player.spawnFlash > 0 && playerDisplayFrames < 1000) {
           game.tick += 1;
+          game.frameLow = (game.frameLow + 1) & 0xff;
           updatePlayers();
           playerDisplayFrames += 1;
         }
@@ -11230,6 +11378,8 @@
         game.enemies = previous.enemies;
         game.grid = previous.grid;
         game.tick = previous.tick;
+        game.frameLow = previous.frameLow;
+        game.frameHigh = previous.frameHigh;
         game.freezeTimer = previous.freezeTimer;
         pendingFirePresses.clear();
         for (const code of previous.firePresses) pendingFirePresses.add(code);
@@ -11392,6 +11542,8 @@
         paused: game.paused,
         stage: game.stage,
         tick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh,
         grid: game.grid,
         base: game.base,
         players: game.players,
@@ -11487,6 +11639,8 @@
         game.paused = false;
         game.stage = 1;
         game.tick = 63;
+        game.frameLow = 0x3f;
+        game.frameHigh = 0;
         game.grid = makeGrid();
         game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
         game.players = [player];
@@ -11532,6 +11686,8 @@
         paused: game.paused,
         stage: game.stage,
         tick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh,
         grid: game.grid,
         base: game.base,
         players: game.players,
@@ -11577,6 +11733,8 @@
         game.paused = false;
         game.stage = 1;
         game.tick = 0;
+        game.frameLow = 0;
+        game.frameHigh = 0;
         game.grid = makeGrid();
         game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
         game.players = [player];
@@ -11744,7 +11902,7 @@
           pauseElapsed: game.pauseElapsed,
           displayFrame: battleDisplayFrame(),
           powerUpVisible: isPowerUpVisible(battleDisplayFrame()),
-          waterFrame: waterFrameName(game.tick)
+          waterFrame: waterFrameName(game.frameLow)
         });
         const initial = snapshot();
         update();
@@ -11831,7 +11989,9 @@
         scorePopups: game.scorePopups,
         powerUp: game.powerUp,
         highScore: game.highScore,
-        tick: game.tick
+        tick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh
       };
       const previousPowerUpPickup = {
         active: powerUpPickupAudio.active,
@@ -12000,7 +12160,9 @@
         freezeTimer: game.freezeTimer,
         shovelTimer: game.shovelTimer,
         highScore: game.highScore,
-        tick: game.tick
+        tick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh
       };
       const baseline = makeGrid();
       buildBaseWall(baseline, BRICK);
@@ -12032,6 +12194,8 @@
         game.shovelTimer = 0;
         return powerTypes.map((type) => {
           game.tick = 0;
+          game.frameLow = 0;
+          game.frameHigh = 0;
           const before = cloneGrid(baseline);
           const player = createPlayer(1);
           player.spawnFlash = 0;
@@ -12050,6 +12214,7 @@
             let guard = 0;
             while (game.shovelTimer > 0 && guard < 1000) {
               game.tick += 16;
+              game.frameLow = (game.frameLow + 16) & 0xff;
               guard += 1;
               updateShovelTimer();
             }
@@ -12607,7 +12772,9 @@
         explosions: game.explosions,
         powerUp: game.powerUp,
         playerCount: game.playerCount,
-        tick: game.tick
+        tick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh
       };
       const previousKeys = Array.from(keys);
       const makePlayer = (lives) => {
@@ -12634,6 +12801,8 @@
         game.powerUp = null;
         game.playerCount = 1;
         game.tick = 0;
+        game.frameLow = 0;
+        game.frameHigh = 0;
         keys.clear();
 
         const player = makePlayer(2);
@@ -12654,6 +12823,7 @@
         while (!player.alive && player.respawn > 0 && deathDisplayFrames < 1000) {
           deathPresentations.push(playerDestructionPresentation(player));
           game.tick += 1;
+          game.frameLow = (game.frameLow + 1) & 0xff;
           deathDisplayFrames += 1;
           updatePlayers();
         }
@@ -12670,6 +12840,7 @@
         let spawnDisplayFrames = 0;
         while (player.spawnFlash > 0 && spawnDisplayFrames < 1000) {
           game.tick += 1;
+          game.frameLow = (game.frameLow + 1) & 0xff;
           spawnDisplayFrames += 1;
           updatePlayers();
         }
@@ -12685,10 +12856,13 @@
         const lastLifePlayer = makePlayer(1);
         game.players = [lastLifePlayer];
         game.tick = 0;
+        game.frameLow = 0;
+        game.frameHigh = 0;
         killPlayer(lastLifePlayer);
         let lastLifeDisplayFrames = 0;
         while (lastLifePlayer.respawn > 0 && lastLifeDisplayFrames < 1000) {
           game.tick += 1;
+          game.frameLow = (game.frameLow + 1) & 0xff;
           lastLifeDisplayFrames += 1;
           updatePlayers();
         }
@@ -12733,6 +12907,8 @@
         pauseElapsed: game.pauseElapsed,
         demoMode: game.demoMode,
         tick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh,
         playerCount: game.playerCount,
         players: game.players,
         enemies: game.enemies,
@@ -12776,6 +12952,8 @@
         game.pauseElapsed = 0;
         game.demoMode = false;
         game.tick = 0x123;
+        game.frameLow = 0x23;
+        game.frameHigh = 0x45;
         game.playerCount = 2;
         game.players = [p1, p2];
         game.enemies = [];
@@ -12785,15 +12963,16 @@
         game.clearPendingTimer = 0;
         game.playerGameOverMessage = null;
         finishPlayerDeath(eliminated);
-        return { eliminated, partner, baseTick: game.tick };
+        return { eliminated, partner, baseTick: game.tick, baseFrameHigh: game.frameHigh };
       };
       const run = (playerId) => {
         const context = setup(playerId, 2);
-        const initial = { ...state(), tickLow: game.tick & 0xff };
+        const initial = { ...state(), frameLow: game.frameLow, frameHigh: game.frameHigh };
         const frames = [];
         const sampleFrames = new Set([0, 15, 16, 31, 32, 47, 48, 191, 192]);
         for (let frame = 0; frame <= 192; frame += 1) {
           game.tick = context.baseTick + frame;
+          game.frameLow = frame & 0xff;
           updatePlayerGameOverMessage();
           if (sampleFrames.has(frame)) frames.push({ frame, ...state() });
         }
@@ -12811,9 +12990,9 @@
 
         setup(1, 2);
         game.paused = true;
-        const pausedBefore = state();
+        const pausedBefore = { ...state(), frameLow: game.frameLow, frameHigh: game.frameHigh };
         update();
-        const pausedAfter = state();
+        const pausedAfter = { ...state(), frameLow: game.frameLow, frameHigh: game.frameHigh };
 
         setup(1, 2);
         game.enemySpawned = enemyTotal();
@@ -12822,6 +13001,8 @@
           screen: game.screen,
           timer: game.clearPendingTimer,
           tick: game.tick,
+          frameLow: game.frameLow,
+          frameHigh: game.frameHigh,
           message: state()
         };
 
@@ -12841,6 +13022,8 @@
         enterGameOver();
         const commonGameOver = {
           screen: game.screen,
+          frameLow: game.frameLow,
+          frameHigh: game.frameHigh,
           message: state()
         };
 
@@ -12866,6 +13049,8 @@
         paused: game.paused,
         demoMode: game.demoMode,
         tick: game.tick,
+        frameLow: game.frameLow,
+        frameHigh: game.frameHigh,
         playerGameOverMessage: game.playerGameOverMessage
       };
       const id = playerId === 2 ? 2 : 1;
@@ -12882,6 +13067,7 @@
         };
         for (let current = 0; current <= frame; current += 1) {
           game.tick = current;
+          game.frameLow = current & 0xff;
           updatePlayerGameOverMessage();
         }
         const presentation = playerGameOverMessagePresentation();
@@ -14870,6 +15056,7 @@
       });
       const runLifecycle = (enemy) => {
         game.tick = 0;
+        game.frameLow = 0;
         game.enemies = [enemy];
         game.enemyKilled = 0;
         destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false });
@@ -14883,6 +15070,7 @@
             text: presentation.text || null
           });
           game.tick += 1;
+          game.frameLow = (game.frameLow + 1) & 0xff;
           updateEnemyDestruction(enemy);
         }
         return {
