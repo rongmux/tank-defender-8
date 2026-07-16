@@ -100,6 +100,11 @@
   const { createPlayerState, resetPlayerState } = requireRuntimeModule("playerState");
   const { createProjectileState } = requireRuntimeModule("projectileState");
   const { resolveBulletCollisions } = requireRuntimeModule("projectileCollisionRules");
+  const {
+    projectileBoundaryImpactPoint,
+    projectileOutsideField,
+    wallHitSoundName
+  } = requireRuntimeModule("projectileImpactRules");
   const { createEnemyState } = requireRuntimeModule("enemyState");
   const { POWER_UP_SIZE: POWERUP_SIZE, createPowerUpState } = requireRuntimeModule("powerUpState");
   const {
@@ -4150,13 +4155,10 @@
 
   function resolveBullet(bullet) {
     const padding = gameSettings().projectileRules.boundsPadding;
-    if (bullet.x < -padding || bullet.x > FIELD_W + padding || bullet.y < -padding || bullet.y > FIELD_H + padding) {
+    if (projectileOutsideField(bullet, FIELD_W, FIELD_H, padding)) {
+      const impact = projectileBoundaryImpactPoint(bullet, FIELD_W, FIELD_H);
       bullet.remove = true;
-      addRuleExplosion(
-        "steelBlocked",
-        clamp(bullet.x + bullet.w / 2, 0, FIELD_W),
-        clamp(bullet.y + bullet.h / 2, 0, FIELD_H)
-      );
+      addRuleExplosion("steelBlocked", impact.x, impact.y);
       const sound = wallHitSoundName(bullet, true, false);
       if (sound) playSound(sound);
       return;
@@ -4165,12 +4167,6 @@
     if (hitTerrain(bullet)) return;
     if (hitBase(bullet)) return;
     hitTank(bullet);
-  }
-
-  function wallHitSoundName(bullet, wasSteel, damaged) {
-    if (bullet.ownerKind !== "player") return null;
-    if (wasSteel && damaged) return "brickHit";
-    return wasSteel ? "steelHit" : "brickHit";
   }
 
   function hitBase(bullet) {
