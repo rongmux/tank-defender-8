@@ -8,7 +8,7 @@ This repository does not include original NES ROM data, original sprites, origin
 
 The project is currently in a dedicated architecture-refactor phase. New 1:1 gameplay work is frozen while the single-file runtime and smoke test are split into explicit browser modules, pure rule modules, shared test infrastructure, unit suites, and feature integration suites. Core timing, randomness, geometry, and direction vectors are now modular; the configuration domain owns shared value validation, base session/life rules, projectile/friendly-fire rules, enemy AI and spawn pacing, enemy type/spec normalization, explosion timings/colors, player movement/cadence, player star-upgrade tiers, power-up durations/rules, stage flow/bonuses, fixed logic timings, and per-stage capacity/spawn settings; the stage domain owns map-grid rules, stage-pack composition/routing, and the original-style enemy group/sequence model; the entity domain owns player lifecycle, enemy/projectile/power-up creation, and transient explosion/score-popup state; and the gameplay-rules domain now owns score/bonus-life progression, stage-result rows/leader/count timing, tank/bullet collision boundaries, opposing-projectile cancellation, projectile boundary/impact selection, fragment-accurate terrain overlap recovery, and directional brick-strip/steel-quarter wall damage. The no-build static launch path remains a hard compatibility requirement throughout the migration.
 
-The presentation domain now owns pure tank, transient-effect, title-score, curtain, full GAME OVER, and HIGH SCORE visual timelines while Canvas sprite submission and pixel drawing remain runtime responsibilities.
+The presentation domain now owns pure tank, transient-effect, battle-HUD, title-score, curtain, full GAME OVER, and HIGH SCORE visual timelines while Canvas sprite submission and pixel drawing remain runtime responsibilities.
 
 ## Run
 
@@ -32,6 +32,7 @@ node --check src/entities/player-state.js
 node --check src/entities/power-up-state.js
 node --check src/entities/projectile-state.js
 node --check src/entities/transient-effect-state.js
+node --check src/presentation/battle-hud-presentation.js
 node --check src/presentation/effect-presentation.js
 node --check src/presentation/screen-presentation.js
 node --check src/presentation/tank-presentation.js
@@ -108,6 +109,7 @@ tank-defender-8/
 |   |   |-- projectile-state.js
 |   |   `-- transient-effect-state.js
 |   |-- presentation/
+|   |   |-- battle-hud-presentation.js
 |   |   |-- effect-presentation.js
 |   |   |-- screen-presentation.js
 |   |   `-- tank-presentation.js
@@ -136,6 +138,7 @@ tank-defender-8/
 |   |   |-- load-browser-scripts.js
 |   |   `-- test-file-discovery.js
 |   |-- integration/
+|   |   |-- battle-hud-presentation.test.js
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
 |   |   |-- effect-presentation.test.js
@@ -175,6 +178,7 @@ tank-defender-8/
 |   |   |-- transient-effect-state.test.js
 |   |   `-- wall-damage-rules.test.js
 |   |-- unit/
+|   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
 |   |   |-- browser-entry.test.js
 |   |   |-- combat-settings.test.js
@@ -236,6 +240,8 @@ tank-defender-8/
 `src/entities/enemy-state.js` now owns both complete enemy-record creation and destruction-state advancement. Eligible ticks normalize the counter, preserve the configured explosion phase, hold the fixed score for six more ticks, and release the enemy slot only at the exact boundary; `src/game.js` supplies slot cadence and the fallback explosion duration, then increments the global defeated-enemy count when release is reported.
 
 `src/entities/player-state.js` now owns complete player-record creation, stage/respawn reset, and the retained death lifecycle. It rejects hits against inactive, already-destroying, or protected players; initializes death power/timers and clears transient combat state; advances respawn ticks only on eligible movement frames; and resolves the final life into either immediate respawn setup or elimination. Runtime code retains audio, spawn-position restoration, protection activation, and the per-player GAME OVER message.
+
+`src/presentation/battle-hud-presentation.js` owns right-panel reserve-enemy/life counts, the 16-frame PAUSE blink selector, the 127-frame in-field GAME OVER slide plus 129-frame hold, and the compact 32x8 two-player elimination-message projection. Thin runtime adapters supply current counters, pause/demo flags, and stage-pack game-over timings before Canvas drawing. Direct unit coverage locks the pure boundaries, while browser integration retains the lifecycle, audio-coupling, and pixel-footprint probes formerly held by the smoke suite.
 
 `src/presentation/effect-presentation.js` owns the reference phase tables, sprite geometry, and timeline projections for player/enemy/HQ destruction, bullet and generic explosions, and fixed or floating score text. Thin runtime adapters inject the current stage-pack TTL values and battlefield layout before Canvas drawing. Direct unit coverage validates every pure projection, while browser integration retains the lifecycle and pixel-bound probes formerly held by the smoke suite.
 

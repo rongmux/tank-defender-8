@@ -93,6 +93,13 @@
     titleScoreLayout: selectTitleScoreLayout
   } = requireRuntimeModule("screenPresentation");
   const {
+    gameOverBannerPresentation: selectGameOverBannerPresentation,
+    panelEnemyCounterRemaining: selectPanelEnemyCounterRemaining,
+    panelLifeCount: selectPanelLifeCount,
+    pausePresentation: selectPausePresentation,
+    playerGameOverMessagePresentation: selectPlayerGameOverMessagePresentation
+  } = requireRuntimeModule("battleHudPresentation");
+  const {
     DEFAULT_STAGE_ADVANCE,
     DEFAULT_STAGE_CLEAR_BONUS
   } = requireRuntimeModule("stageFlowSettings");
@@ -249,8 +256,6 @@
   const HIDDEN_MESSAGE_DROP_FALL_FRAMES = 218;
   const HIDDEN_MESSAGE_END_FRAME = 887;
   const GAME_OVER_TEXT = "GAME OVER";
-  const GAME_OVER_TEXT_START_Y = SCREEN_H;
-  const GAME_OVER_TEXT_TARGET_Y = 0x71;
   const PLAYER_GAME_OVER_MESSAGE_TIMER = 0x0d;
   const PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD = 0x0a;
   const PLAYER_GAME_OVER_MESSAGE_Y = 0xd8;
@@ -5574,12 +5579,11 @@
   function panelEnemyCounterRemaining(total, spawned) {
     const countTotal = total === undefined ? enemyTotal() : Math.max(0, Math.floor(Number(total) || 0));
     const spawnedCount = spawned === undefined ? game.enemySpawned : Math.max(0, Math.floor(Number(spawned) || 0));
-    return clamp(countTotal - spawnedCount, 0, countTotal);
+    return selectPanelEnemyCounterRemaining(countTotal, spawnedCount);
   }
 
   function panelLifeCount(player) {
-    const lives = player ? Math.max(0, Math.floor(Number(player.lives) || 0)) : 0;
-    return Math.max(0, lives - 1);
+    return selectPanelLifeCount(player);
   }
 
   function drawSmallScore(score, x, y, color) {
@@ -5723,18 +5727,10 @@
   }
 
   function playerGameOverMessagePresentation() {
-    const message = game.playerGameOverMessage;
-    if (!message || message.timer <= 0) return null;
-    return {
-      playerId: message.playerId,
-      timer: message.timer,
-      x: message.x,
-      y: message.y,
-      left: message.x - 8,
-      width: 32,
-      height: 8,
-      visible: !game.paused && !game.demoMode
-    };
+    return selectPlayerGameOverMessagePresentation(game.playerGameOverMessage, {
+      paused: game.paused,
+      demoMode: game.demoMode
+    });
   }
 
   function drawCompactGameOverWord(word, x, y) {
@@ -5754,13 +5750,10 @@
 
   function gameOverBannerY(timer) {
     const timings = gameSettings().timings;
-    const slideFrames = Math.max(0, timings.gameOverSlide);
-    if (slideFrames <= 0) return GAME_OVER_TEXT_TARGET_Y;
-    const duration = gameOverFieldDuration();
-    const remaining = clamp(Math.floor(Number(timer) || 0), 0, duration);
-    const elapsed = duration - remaining;
-    const progress = clamp(elapsed / slideFrames, 0, 1);
-    return Math.round(GAME_OVER_TEXT_START_Y + (GAME_OVER_TEXT_TARGET_Y - GAME_OVER_TEXT_START_Y) * progress);
+    return selectGameOverBannerPresentation(timer, {
+      slideFrames: timings.gameOverSlide,
+      holdFrames: timings.gameOverHold
+    }).y;
   }
 
   function renderPause() {
@@ -5770,14 +5763,7 @@
   }
 
   function pausePresentation(frame) {
-    const value = Math.max(0, Math.floor(Number(frame) || 0)) & 0xff;
-    return {
-      frame: value,
-      visible: (value & 0x10) !== 0,
-      text: "PAUSE",
-      x: 100,
-      y: 128
-    };
+    return selectPausePresentation(frame);
   }
 
   function renderEditor() {
