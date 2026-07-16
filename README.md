@@ -39,6 +39,7 @@ node --check src/config/player-upgrades.js
 node --check src/config/stage-settings.js
 node --check src/stages/enemy-sequences.js
 node --check src/stages/stage-grid.js
+node --check src/stages/stage-pack.js
 node --check src/game.js
 node --check tools/build-free-stage-pack.js
 node tests/run-tests.js
@@ -76,7 +77,8 @@ tank-defender-8/
 |   |   `-- geometry.js
 |   |-- stages/
 |   |   |-- enemy-sequences.js
-|   |   `-- stage-grid.js
+|   |   |-- stage-grid.js
+|   |   `-- stage-pack.js
 |   `-- game.js
 |-- tests/
 |   |-- helpers/
@@ -98,6 +100,7 @@ tank-defender-8/
 |   |   |-- stage-flow-settings.test.js
 |   |   |-- stage-settings.test.js
 |   |   |-- stage-grid.test.js
+|   |   |-- stage-pack.test.js
 |   |   `-- timing-settings.test.js
 |   |-- unit/
 |   |   |-- battle-random.test.js
@@ -117,6 +120,7 @@ tank-defender-8/
 |   |   |-- stage-flow-settings.test.js
 |   |   |-- stage-settings.test.js
 |   |   |-- stage-grid.test.js
+|   |   |-- stage-pack.test.js
 |   |   |-- timing-settings.test.js
 |   |   `-- value-normalization.test.js
 |   `-- run-tests.js
@@ -130,7 +134,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/config/` owns data validation shared by stage-pack configuration: `value-normalization.js` validates numeric ranges and colors; `game-session-settings.js` owns initial lives, sorted bonus-life thresholds, death power level, and the timer enemy-freeze switch; `combat-settings.js` owns projectile size/spawn/bounds geometry plus two-player friendly-fire activation and stun timing; `enemy-ai-settings.js` owns intersection routing, blocked retries, target-axis probability, and the legacy AI field aliases; `enemy-spawn-settings.js` owns per-stage spawn curves, stage/extended-loop floors, two-player reduction, legacy multiplier compatibility, and pure delay calculations; `enemy-types.js` owns the four default enemy definitions, movement/projectile tiers, power-up type names, enemy-type cloning and validation, and per-stage enemy-spec normalization; `explosion-settings.js` owns the nine nested explosion TTL/color defaults, deep cloning, and pack override validation; `player-movement-settings.js` owns fixed-loop movement speed, the original three-of-four cadence, legacy speed-only compatibility, ice inertia, and independent configuration cloning; `player-upgrades.js` owns the four star-upgrade levels, independent cloning, and pack override validation; `power-up-settings.js` owns helmet/shovel/timer durations, carrier release and clearing rules, pickup scoring, and their validation; `stage-flow-settings.js` owns final-stage looping, extended-loop map/enemy selection, and two-player stage-clear leader bonuses; `timing-settings.js` owns the fixed-logic-loop stage, spawn, respawn, retry, invulnerability, and power-up lifetime timings; and `stage-settings.js` owns active-enemy capacities, default player/enemy/power-up spawn layouts, strict 13x13 coordinate validation, and tile-to-pixel conversion. `src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency; shared battle randomness, independent frame counters, and rectangle geometry live there. `src/stages/` owns the stage domain: `stage-grid.js` provides tile constants, brick-fragment state, grid mutation, validation, and 13x13/26x26 codecs, while `enemy-sequences.js` owns the 35-stage enemy group table, 20-enemy expansion, carrier positions, spawn-point rotation, and sequence summaries. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable Canvas, audio, DOM, storage, input, and script-loading fakes. `tests/unit/` exercises pure modules directly, `tests/integration/` verifies extracted configuration, base session rules, fixed logic timings, collision, projectile/friendly-fire rules, enemy AI, enemy spawn pacing, explosion settings, player movement/cadence, power-up settings, stage flow, stage settings, stage-grid, enemy-sequence, and star-upgrade behavior through the real browser API, and `tests/run-tests.js` runs both before the remaining regression suite in `tools/smoke-test.js`.
+`src/config/` owns data validation shared by stage-pack configuration: `value-normalization.js` validates numeric ranges and colors; `game-session-settings.js` owns initial lives, sorted bonus-life thresholds, death power level, and the timer enemy-freeze switch; `combat-settings.js` owns projectile size/spawn/bounds geometry plus two-player friendly-fire activation and stun timing; `enemy-ai-settings.js` owns intersection routing, blocked retries, target-axis probability, and the legacy AI field aliases; `enemy-spawn-settings.js` owns per-stage spawn curves, stage/extended-loop floors, two-player reduction, legacy multiplier compatibility, and pure delay calculations; `enemy-types.js` owns the four default enemy definitions, movement/projectile tiers, power-up type names, enemy-type cloning and validation, and per-stage enemy-spec normalization; `explosion-settings.js` owns the nine nested explosion TTL/color defaults, deep cloning, and pack override validation; `player-movement-settings.js` owns fixed-loop movement speed, the original three-of-four cadence, legacy speed-only compatibility, ice inertia, and independent configuration cloning; `player-upgrades.js` owns the four star-upgrade levels, independent cloning, and pack override validation; `power-up-settings.js` owns helmet/shovel/timer durations, carrier release and clearing rules, pickup scoring, and their validation; `stage-flow-settings.js` owns final-stage looping, extended-loop map/enemy selection, and two-player stage-clear leader bonuses; `timing-settings.js` owns the fixed-logic-loop stage, spawn, respawn, retry, invulnerability, and power-up lifetime timings; and `stage-settings.js` owns active-enemy capacities, default player/enemy/power-up spawn layouts, strict 13x13 coordinate validation, and tile-to-pixel conversion. `src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency; shared battle randomness, independent frame counters, and rectangle geometry live there. `src/stages/` owns the stage domain: `stage-grid.js` provides tile constants, brick-fragment state, grid mutation, validation, and 13x13/26x26 codecs; `enemy-sequences.js` owns the 35-stage enemy group table, 20-enemy expansion, carrier positions, spawn-point rotation, and sequence summaries; and `stage-pack.js` composes all configuration validators, enforces complete map/enemy/stage counts, supports both map encodings, and builds runtime grid/enemy lookup helpers. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable Canvas, audio, DOM, storage, input, and script-loading fakes. `tests/unit/` exercises pure modules directly, `tests/integration/` verifies extracted configuration, base session rules, fixed logic timings, collision, projectile/friendly-fire rules, enemy AI, enemy spawn pacing, explosion settings, player movement/cadence, power-up settings, stage flow, stage settings, stage-grid, stage-pack import, enemy-sequence, and star-upgrade behavior through the real browser API, and `tests/run-tests.js` runs both before the remaining regression suite in `tools/smoke-test.js`.
 
 The migration order is core timing/random/geometry, configuration and stage packs, gameplay entities and rules, input/editor, audio, rendering/screens, debug adapters, and finally the application bootstrap. Every extraction must keep the static no-build launch path, move its matching tests in the same commit, and pass the full regression suite before the next subsystem moves. New 1:1 gameplay work is paused until this refactor and test split are complete.
 

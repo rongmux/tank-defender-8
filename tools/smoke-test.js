@@ -1416,29 +1416,6 @@ assert(snapshot.players.length === 0 && snapshot.enemySpawned === 0 && snapshot.
 assert(snapshot.powerUpType === null && snapshot.clearPendingTimer === 0 && snapshot.gameOverTimer === 0, "loading a stage pack should clear transient power-up and transition state");
 assert(snapshot.stageResultReason === "clear" && snapshot.stageClearElapsed === 0, "loading a stage pack should reset stage-result routing state");
 
-const badPack = {
-  id: "bad",
-  totalStages: 1,
-  enemyTotal: 20,
-  maps: [["too short"]],
-  enemies: [schema.enemies[0]]
-};
-assert(context.window.TankDefender8.validateStagePack(badPack).ok === false, "bad pack should fail validation");
-assert(context.window.TankDefender8.loadStagePack(badPack) === false, "bad pack should not load");
-
-const mixedPack = {
-  id: "mixed",
-  totalStages: 1,
-  enemyTotal: 20,
-  maps: [schema.maps[0]],
-  quadrants: [schema.quadrants[0]],
-  enemies: [schema.enemies[0]]
-};
-assert(context.window.TankDefender8.validateStagePack(mixedPack).ok === false, "mixed map formats should fail validation");
-
-const jsonResult = context.window.TankDefender8.loadStagePackJson(JSON.stringify(validPack));
-assert(jsonResult.ok === true, "loadStagePackJson should accept valid JSON");
-
 const shortPack = {
   id: "short",
   totalStages: 1,

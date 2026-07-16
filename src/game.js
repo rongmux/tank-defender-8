@@ -13,59 +13,46 @@
     DEFAULT_BONUS_LIFE_SCORES,
     DEFAULT_DEATH_POWER_LEVEL,
     DEFAULT_INITIAL_LIVES,
-    DEFAULT_TIMER_FREEZES_ENEMY_TIME,
-    normalizeGameSessionSettings
+    DEFAULT_TIMER_FREEZES_ENEMY_TIME
   } = requireRuntimeModule("gameSessionSettings");
   const {
     DEFAULT_FRIENDLY_FIRE,
-    DEFAULT_PROJECTILE_RULES,
-    normalizeFriendlyFire,
-    normalizeProjectileRules
+    DEFAULT_PROJECTILE_RULES
   } = requireRuntimeModule("combatSettings");
-  const { DEFAULT_ENEMY_AI, normalizeEnemyAi } = requireRuntimeModule("enemyAiSettings");
+  const { DEFAULT_ENEMY_AI } = requireRuntimeModule("enemyAiSettings");
   const {
     DEFAULT_ENEMY_SPAWN_PACING,
     calculateEnemySpawnDelay,
-    normalizeEnemySpawnPacing,
     scaleEnemySpawnDelay
   } = requireRuntimeModule("enemySpawnSettings");
   const {
     DEFAULT_EXPLOSION_CORE_COLOR,
     DEFAULT_EXPLOSION_RULES,
-    cloneExplosionRules,
-    normalizeExplosionRules
+    cloneExplosionRules
   } = requireRuntimeModule("explosionSettings");
   const {
     DEFAULT_PLAYER_MOVEMENT,
-    clonePlayerMovementSettings,
-    normalizePlayerMovement
+    clonePlayerMovementSettings
   } = requireRuntimeModule("playerMovementSettings");
   const {
     DEFAULT_POWERUP_DURATIONS,
-    DEFAULT_POWERUP_RULES,
-    normalizePowerUpDurations,
-    normalizePowerUpRules
+    DEFAULT_POWERUP_RULES
   } = requireRuntimeModule("powerUpSettings");
-  const { DEFAULT_TIMINGS, SPAWN_ANIMATION_FRAMES, normalizeTimings } = requireRuntimeModule("timingSettings");
+  const { DEFAULT_TIMINGS, SPAWN_ANIMATION_FRAMES } = requireRuntimeModule("timingSettings");
   const {
     DEFAULT_STAGE_ADVANCE,
-    DEFAULT_STAGE_CLEAR_BONUS,
-    normalizeStageAdvance,
-    normalizeStageClearBonus
+    DEFAULT_STAGE_CLEAR_BONUS
   } = requireRuntimeModule("stageFlowSettings");
   const {
     DEFAULT_ENEMY_TYPES: defaultEnemyTypes,
     ENEMY_FIRE_CHANCE,
     ENEMY_MOVE_SPEED,
     POWER_UP_TYPES: powerTypes,
-    cloneEnemyTypes,
-    normalizeEnemySequence,
-    normalizeEnemyTypes
+    cloneEnemyTypes
   } = requireRuntimeModule("enemyTypes");
   const {
     DEFAULT_PLAYER_UPGRADE_RULES: defaultPlayerUpgradeRules,
-    clonePlayerUpgradeRules,
-    normalizePlayerUpgradeRules
+    clonePlayerUpgradeRules
   } = requireRuntimeModule("playerUpgrades");
   const {
     BRICK_QUARTER_FRAGMENT_MASKS,
@@ -82,8 +69,6 @@
     makeCell,
     makeGrid,
     normalizeBrickFragmentMask,
-    normalizeStageQuadrants,
-    normalizeStageRows,
     parseStageQuadrants,
     parseStageRows,
     quarterMaskFromBrickFragments,
@@ -95,10 +80,10 @@
     DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER,
     DEFAULT_PLAYER_SPAWNS,
     DEFAULT_POWERUP_SPAWNS,
-    normalizeStageSettings,
     pixelToTilePoint,
     powerUpPixelToTilePoint
   } = requireRuntimeModule("stageSettings");
+  const { tryNormalizeStagePack } = requireRuntimeModule("stagePack");
   const {
     BONUS_ENEMY_INDICES,
     DEFAULT_ENEMY_TOTAL,
@@ -1286,91 +1271,6 @@
 
   function cloneSpriteManifest() {
     return JSON.parse(JSON.stringify(FREE_SPRITE_MANIFEST));
-  }
-
-  function normalizeGameSettings(settings) {
-    const source = settings || {};
-    const sessionSettings = normalizeGameSessionSettings(settings);
-    return {
-      initialLives: sessionSettings.initialLives,
-      bonusLifeScores: sessionSettings.bonusLifeScores,
-      deathPowerLevel: sessionSettings.deathPowerLevel,
-      powerUpDurations: normalizePowerUpDurations(source.powerUpDurations),
-      powerUpRules: normalizePowerUpRules(source.powerUpRules),
-      timings: normalizeTimings(source.timings),
-      enemySpawnPacing: normalizeEnemySpawnPacing(source.enemySpawnPacing),
-      playerMovement: normalizePlayerMovement(source.playerMovement),
-      projectileRules: normalizeProjectileRules(source.projectileRules),
-      friendlyFire: normalizeFriendlyFire(source.friendlyFire),
-      explosionRules: normalizeExplosionRules(source.explosionRules),
-      stageAdvance: normalizeStageAdvance(source.stageAdvance),
-      stageClearBonus: normalizeStageClearBonus(source.stageClearBonus),
-      enemyAi: normalizeEnemyAi(source.enemyAi),
-      playerUpgradeRules: normalizePlayerUpgradeRules(source.playerUpgradeRules),
-      timerFreezesEnemyTime: sessionSettings.timerFreezesEnemyTime
-    };
-  }
-
-  function normalizeStagePack(pack) {
-    if (!pack || typeof pack !== "object") throw new Error("stage pack must be an object");
-    const totalStages = Number(pack.totalStages);
-    const enemyTotalValue = pack.enemyTotal === undefined ? null : Number(pack.enemyTotal);
-    if (!Number.isInteger(totalStages) || totalStages < 1) {
-      throw new Error("totalStages must be a positive integer");
-    }
-    if (enemyTotalValue !== null && (!Number.isInteger(enemyTotalValue) || enemyTotalValue < 1)) {
-      throw new Error("enemyTotal must be a positive integer");
-    }
-    const hasMaps = Array.isArray(pack.maps);
-    const hasQuadrants = Array.isArray(pack.quadrants);
-    if (hasMaps === hasQuadrants) {
-      throw new Error("stage pack must contain exactly one of maps or quadrants");
-    }
-    if (hasMaps && pack.maps.length !== totalStages) {
-      throw new Error(`maps must contain exactly ${totalStages} stages`);
-    }
-    if (hasQuadrants && pack.quadrants.length !== totalStages) {
-      throw new Error(`quadrants must contain exactly ${totalStages} stages`);
-    }
-    if (!Array.isArray(pack.enemies) || pack.enemies.length !== totalStages) {
-      throw new Error(`enemies must contain exactly ${totalStages} stages`);
-    }
-
-    const enemyTypes = normalizeEnemyTypes(pack.enemyTypes);
-    const maps = hasMaps ? pack.maps.map((rows, index) => normalizeStageRows(rows, `maps[${index}]`)) : null;
-    const quadrants = hasQuadrants
-      ? pack.quadrants.map((rows, index) => normalizeStageQuadrants(rows, `quadrants[${index}]`))
-      : null;
-    const enemies = pack.enemies.map((sequence, index) => normalizeEnemySequence(sequence, `enemies[${index}]`, enemyTypes.length));
-    const stageSettings = normalizeStageSettings(pack.stageSettings, totalStages);
-    const gameSettings = normalizeGameSettings(pack.gameSettings);
-
-    return {
-      id: String(pack.id || "stage-pack"),
-      totalStages,
-      enemyTotal: enemyTotalValue || Math.max(...enemies.map((sequence) => sequence.length)),
-      enemyTotals: enemies.map((sequence) => sequence.length),
-      enemyTypes,
-      gameSettings,
-      maps,
-      quadrants,
-      enemies,
-      stageSettings,
-      createGrid(stage) {
-        return this.quadrants ? parseStageQuadrants(this.quadrants[stage - 1]) : parseStageRows(this.maps[stage - 1]);
-      },
-      enemyAt(stage, index) {
-        return this.enemies[stage - 1][index];
-      }
-    };
-  }
-
-  function tryNormalizeStagePack(pack) {
-    try {
-      return { ok: true, pack: normalizeStagePack(pack), error: "" };
-    } catch (error) {
-      return { ok: false, pack: null, error: error.message || String(error) };
-    }
   }
 
   function makeSingleStagePack(rows) {
