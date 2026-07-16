@@ -110,6 +110,13 @@
   const { createEnemyState } = requireRuntimeModule("enemyState");
   const { POWER_UP_SIZE: POWERUP_SIZE, createPowerUpState } = requireRuntimeModule("powerUpState");
   const {
+    ORIGINAL_POWER_UP_RANDOM_TABLE: originalPowerUpRandomTable,
+    dedupePowerUpSpots,
+    powerUpSpawnKey,
+    powerUpTypeForRandomByte,
+    selectPowerUpSpawnSpot
+  } = requireRuntimeModule("powerUpSpawnRules");
+  const {
     advanceTimedStates,
     createExplosionState,
     createScorePopupState
@@ -1002,7 +1009,6 @@
     R: ["110", "101", "110", "101", "101"],
     V: ["101", "101", "101", "101", "010"]
   };
-  const originalPowerUpRandomTable = ["helmet", "timer", "shovel", "star", "grenade", "tank", "grenade", "star"];
   const PLAYER_UPGRADE_OVERLAY_COLORS = {
     level1: "#f7f1c6",
     level2: "#f8e08b",
@@ -4390,16 +4396,14 @@
   }
 
   function randomPowerUpType(random) {
-    return originalPowerUpRandomTable[randomByte(random) & 7];
+    return powerUpTypeForRandomByte(randomByte(random));
   }
 
   function pickPowerUpSpawnSpot(spots, random) {
     const source = powerUpSpawnCandidates(spots);
     if (!source.length) return null;
-    const pool = source.length > 1 && game.lastPowerUpSpawn
-      ? source.filter((spot) => powerUpSpawnKey(spot) !== game.lastPowerUpSpawn)
-      : source;
-    const picked = randomPowerUpSpawnSpot(pool.length ? pool : source, random);
+    const positionSample = (randomByte(random) << 8) | randomByte(random);
+    const picked = selectPowerUpSpawnSpot(source, positionSample, game.lastPowerUpSpawn);
     game.lastPowerUpSpawn = powerUpSpawnKey(picked);
     return picked;
   }
@@ -4407,12 +4411,6 @@
   function resetPowerUpSpawnBag() {
     game.powerUpSpawnBag = [];
     game.powerUpSpawnBagKey = "";
-  }
-
-  function randomPowerUpSpawnSpot(spots, random) {
-    const positionSample = (randomByte(random) << 8) | randomByte(random);
-    const index = Math.floor((positionSample * spots.length) / 0x10000);
-    return spots[index];
   }
 
   function powerUpSpawnCandidates(spots) {
@@ -4430,22 +4428,6 @@
       }
     }
     return spots;
-  }
-
-  function dedupePowerUpSpots(spots) {
-    const seen = new Set();
-    const result = [];
-    for (const spot of spots) {
-      const key = powerUpSpawnKey(spot);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      result.push(spot);
-    }
-    return result;
-  }
-
-  function powerUpSpawnKey(point) {
-    return `${point.x},${point.y}`;
   }
 
   function canPowerUpSpawnAt(point) {
@@ -10871,7 +10853,11 @@
         const afterAiIndex = game.randomIndex;
         const secondType = randomPowerUpType();
         const afterPowerUpIndex = game.randomIndex;
-        const location = randomPowerUpSpawnSpot([{ id: 0 }, { id: 1 }]);
+        const location = selectPowerUpSpawnSpot(
+          [{ id: 0 }, { id: 1 }],
+          (randomByte() << 8) | randomByte(),
+          null
+        );
         const afterLocationIndex = game.randomIndex;
         const beforeInjected = { value: game.randomValue, index: game.randomIndex };
         const injected = randomByte(() => 0.5);
