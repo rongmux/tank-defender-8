@@ -10,6 +10,39 @@ const schema = JSON.parse(JSON.stringify(api.stagePackSchema()));
 
 assert(modules.enemyState, "enemy state module should register before game.js");
 assert.equal(Object.isFrozen(modules.enemyState), true);
+assert.equal(modules.enemyState.ENEMY_DESTRUCTION_SCORE_TICKS, 6);
+
+const destruction = JSON.parse(JSON.stringify(api.debugEnemyDestructionLifecycleProbe()));
+assert.equal(destruction.explosionTicks, 18);
+assert.equal(destruction.scoreTicks, 6);
+assert.equal(destruction.fast.displayFrames, 24);
+assert.equal(destruction.fast.explosionFrames, 18);
+assert.equal(destruction.fast.scoreFrames, 6);
+assert.equal(destruction.normal.displayFrames, 47);
+assert.equal(destruction.normal.explosionFrames, 35);
+assert.equal(destruction.normal.scoreFrames, 12);
+assert.deepEqual(destruction.fast.phases, [1, 2, 3, 4, 5, 3]);
+assert.deepEqual(destruction.normal.phases, [1, 2, 3, 4, 5, 3]);
+assert.equal(destruction.fast.scoreText, "100");
+assert.equal(destruction.fast.released, true);
+assert.equal(destruction.fast.enemyKilled, 1);
+assert.equal(destruction.timerFrozen.released, true);
+assert.equal(destruction.timerFrozen.enemyKilled, 1);
+assert.equal(destruction.timerFrozen.freezeTimer, 999);
+assert.equal(destruction.collisionIgnored, true);
+assert.equal(destruction.duplicateHit, false);
+assert.equal(destruction.duplicateBulletRemoved, false);
+assert.deepEqual(destruction.capacityBeforeRelease, { enemySpawned: 4, aliveSlots: 4 });
+assert.equal(destruction.capacityAfterRelease.enemySpawned, 5);
+assert.equal(destruction.capacityAfterRelease.activeSlots, 4);
+assert.equal(destruction.capacityAfterRelease.reusedSlot, destruction.capacityAfterRelease.releasedSlot);
+assert.equal(destruction.grenadeFinalState.kind, "explosion");
+assert.equal(destruction.grenadeFinalState.phase, 1);
+assert.equal(destruction.clearOnHit, 0);
+assert.equal(destruction.clearBeforeRelease, 0);
+assert.equal(destruction.clearAfterRelease.timer, schema.gameSettings.timings.stageClearDelay);
+assert.equal(destruction.clearAfterRelease.screen, "playing");
+assert.equal(destruction.clearAfterRelease.enemyKilled, 20);
 
 const enemyTypes = schema.enemyTypes.map((enemyType, index) => index === 0
   ? {

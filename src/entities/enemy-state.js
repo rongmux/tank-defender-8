@@ -14,6 +14,7 @@
 
   const ENEMY_SIZE = 14;
   const ENEMY_ACCENT = "#2b2a28";
+  const ENEMY_DESTRUCTION_SCORE_TICKS = 6;
 
   /** Creates the complete mutable state record for one successfully placed enemy. */
   function createEnemyState(options) {
@@ -60,9 +61,25 @@
     };
   }
 
+  /** Advances one eligible enemy destruction tick and reports when its slot is released. */
+  function advanceEnemyDestructionState(enemy, movementFrame, defaultExplosionTicks) {
+    if (!movementFrame) return false;
+    enemy.destroyTicks = Math.max(0, Math.floor(Number(enemy.destroyTicks) || 0)) + 1;
+    const explosionTicks = Math.max(
+      1,
+      Math.floor(Number(enemy.destroyExplosionTicks) || defaultExplosionTicks)
+    );
+    if (enemy.destroyTicks < explosionTicks + ENEMY_DESTRUCTION_SCORE_TICKS) return false;
+    enemy.alive = false;
+    enemy.destroying = false;
+    return true;
+  }
+
   return Object.freeze({
     ENEMY_ACCENT,
+    ENEMY_DESTRUCTION_SCORE_TICKS,
     ENEMY_SIZE,
+    advanceEnemyDestructionState,
     createEnemyState
   });
 });

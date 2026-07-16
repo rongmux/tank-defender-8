@@ -218,6 +218,8 @@ tank-defender-8/
 
 `src/config/power-up-settings.js` now owns the pure carrier transitions behind its validated settings: whether a hit releases a carried power-up and whether a newly spawning carrier clears the current uncollected power-up. Runtime code retains only the actual spawn and clear side effects.
 
+`src/entities/enemy-state.js` now owns both complete enemy-record creation and destruction-state advancement. Eligible ticks normalize the counter, preserve the configured explosion phase, hold the fixed score for six more ticks, and release the enemy slot only at the exact boundary; `src/game.js` supplies slot cadence and the fallback explosion duration, then increments the global defeated-enemy count when release is reported.
+
 `src/rules/enemy-ai-rules.js` owns alternating slot cadence, 8px turn intersections, interval-derived random/player/HQ phases, alive-player target selection, axis-first directions, byte-exact AI probability rolls, and default/custom fire checks. `src/game.js` still draws bytes from the shared NES-style random sequence and executes movement, collision recovery, turns, and shooting, so extraction does not change random consumption order.
 
 `src/rules/enemy-spawn-rules.js` owns alive-enemy capacity counting, descending reusable-slot selection, 14px player/enemy spawn-point occupancy, and explicit-or-cyclic spawn-index selection. Destroying enemies continue to retain capacity until released, while destroying, dead, or respawning tanks do not block a spawn point; runtime code retains retry countdowns, carrier clearing, and enemy construction.

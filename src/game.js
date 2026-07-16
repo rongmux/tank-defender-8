@@ -123,7 +123,11 @@
     projectileOutsideField,
     wallHitSoundName
   } = requireRuntimeModule("projectileImpactRules");
-  const { createEnemyState } = requireRuntimeModule("enemyState");
+  const {
+    ENEMY_DESTRUCTION_SCORE_TICKS,
+    advanceEnemyDestructionState,
+    createEnemyState
+  } = requireRuntimeModule("enemyState");
   const {
     POWER_UP_SIZE: POWERUP_SIZE,
     advancePowerUpState,
@@ -249,7 +253,6 @@
     5, 5, 5,
     3, 3, 3
   ]);
-  const ENEMY_DESTRUCTION_SCORE_TICKS = 6;
   const PLAYER_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
     ...ENEMY_DESTRUCTION_REFERENCE_PHASES,
     1, 1, 1, 1, 1, 1
@@ -3930,13 +3933,12 @@
 
   /** Advances the original $73 enemy explosion timer on that tank's movement cadence. */
   function updateEnemyDestruction(enemy) {
-    if (!isEnemyMovementFrame(enemy, game.frameLow)) return;
-    enemy.destroyTicks = Math.max(0, Math.floor(Number(enemy.destroyTicks) || 0)) + 1;
-    const explosionTicks = Math.max(1, Math.floor(Number(enemy.destroyExplosionTicks) || explosionRule("enemyDestroy").ttl));
-    if (enemy.destroyTicks < explosionTicks + ENEMY_DESTRUCTION_SCORE_TICKS) return;
-    enemy.alive = false;
-    enemy.destroying = false;
-    game.enemyKilled += 1;
+    const released = advanceEnemyDestructionState(
+      enemy,
+      isEnemyMovementFrame(enemy, game.frameLow),
+      explosionRule("enemyDestroy").ttl
+    );
+    if (released) game.enemyKilled += 1;
   }
 
   function shouldSpawnEnemies() {

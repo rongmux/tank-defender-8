@@ -1,7 +1,9 @@
 const assert = require("assert").strict;
 const {
   ENEMY_ACCENT,
+  ENEMY_DESTRUCTION_SCORE_TICKS,
   ENEMY_SIZE,
+  advanceEnemyDestructionState,
   createEnemyState
 } = require("../../src/entities/enemy-state");
 
@@ -30,6 +32,7 @@ const settings = {
 
 assert.equal(ENEMY_SIZE, 14);
 assert.equal(ENEMY_ACCENT, "#2b2a28");
+assert.equal(ENEMY_DESTRUCTION_SCORE_TICKS, 6);
 
 const enemy = createEnemyState({
   id: 100,
@@ -109,5 +112,35 @@ const typeOneAtNormalSpeed = createEnemyState({
   normalMoveSpeed: 0.5
 });
 assert.equal(typeOneAtNormalSpeed.alternateMovement, false);
+
+const destruction = {
+  alive: true,
+  destroying: true,
+  destroyTicks: 0,
+  destroyExplosionTicks: 18
+};
+assert.equal(advanceEnemyDestructionState(destruction, false, 9), false);
+assert.equal(destruction.destroyTicks, 0);
+for (let tick = 0; tick < 23; tick += 1) {
+  assert.equal(advanceEnemyDestructionState(destruction, true, 9), false);
+}
+assert.equal(destruction.destroyTicks, 23);
+assert.equal(destruction.alive, true);
+assert.equal(destruction.destroying, true);
+assert.equal(advanceEnemyDestructionState(destruction, true, 9), true);
+assert.equal(destruction.destroyTicks, 24);
+assert.equal(destruction.alive, false);
+assert.equal(destruction.destroying, false);
+
+const fallbackDestruction = {
+  alive: true,
+  destroying: true,
+  destroyTicks: Number.NaN,
+  destroyExplosionTicks: 0
+};
+assert.equal(advanceEnemyDestructionState(fallbackDestruction, true, 3), false);
+assert.equal(fallbackDestruction.destroyTicks, 1);
+for (let tick = 0; tick < 7; tick += 1) advanceEnemyDestructionState(fallbackDestruction, true, 3);
+assert.equal(advanceEnemyDestructionState(fallbackDestruction, true, 3), true);
 
 console.log("enemy-state unit test passed");
