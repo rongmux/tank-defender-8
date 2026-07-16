@@ -99,6 +99,7 @@
   } = requireRuntimeModule("enemySequences");
   const { createPlayerState, resetPlayerState } = requireRuntimeModule("playerState");
   const { createProjectileState } = requireRuntimeModule("projectileState");
+  const { resolveBulletCollisions } = requireRuntimeModule("projectileCollisionRules");
   const { createEnemyState } = requireRuntimeModule("enemyState");
   const { POWER_UP_SIZE: POWERUP_SIZE, createPowerUpState } = requireRuntimeModule("powerUpState");
   const {
@@ -4143,29 +4144,8 @@
       }
     }
 
-    resolveBulletCollisions();
+    resolveBulletCollisions(game.bullets);
     game.bullets = game.bullets.filter((bullet) => !bullet.remove);
-  }
-
-  function resolveBulletCollisions() {
-    for (let i = 0; i < game.bullets.length; i += 1) {
-      const a = game.bullets[i];
-      if (a.remove) continue;
-      for (let j = i + 1; j < game.bullets.length; j += 1) {
-        const b = game.bullets[j];
-        if (b.remove) continue;
-        if (a.ownerKey !== b.ownerKey && bulletCentersWithin(a, b, 6)) {
-          a.remove = true;
-          b.remove = true;
-          break;
-        }
-      }
-    }
-  }
-
-  function bulletCentersWithin(a, b, threshold) {
-    return Math.abs((a.x + a.w / 2) - (b.x + b.w / 2)) < threshold &&
-      Math.abs((a.y + a.h / 2) - (b.y + b.h / 2)) < threshold;
   }
 
   function resolveBullet(bullet) {
@@ -12840,13 +12820,13 @@
           }
         ];
         game.bullets = makeStaticPair(5, false);
-        resolveBulletCollisions();
+        resolveBulletCollisions(game.bullets);
         const thresholdFiveCanceled = game.bullets.every((bullet) => bullet.remove);
         game.bullets = makeStaticPair(6, false);
-        resolveBulletCollisions();
+        resolveBulletCollisions(game.bullets);
         const thresholdSixCanceled = game.bullets.some((bullet) => bullet.remove);
         game.bullets = makeStaticPair(0, true);
-        resolveBulletCollisions();
+        resolveBulletCollisions(game.bullets);
         const sameOwnerCanceled = game.bullets.some((bullet) => bullet.remove);
         return {
           remainingBullets: crossingRemaining,

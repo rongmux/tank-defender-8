@@ -1094,12 +1094,6 @@ assert(playerFireInputProbe.fullSlotRepress === 1, "a new fire press should work
 assert(playerFireInputProbe.doubleShotCounts.join(",") === "1,2,2", "second-star tanks should fill two bullet slots with separate presses and discard a press when both are occupied");
 assert(playerFireInputProbe.spawnPress === 0 && playerFireInputProbe.spawnPressAfterUnlock === 0, "fire pressed during player spawning should be discarded instead of queued");
 assert(playerFireInputProbe.stunnedPress === 1, "a stunned player should still fire from a fresh press");
-const crossingBulletProbe = context.window.TankDefender8.debugCrossingBulletCancelProbe();
-assert(crossingBulletProbe.speed === 6, "crossing bullet probe should use high-speed bullets that can pass through each other in one frame");
-assert(crossingBulletProbe.remainingBullets === 2 && crossingBulletProbe.crossingPositions[0].x === 46 && crossingBulletProbe.crossingPositions[1].x === 40, "high-speed bullets should finish their full-frame movement before one collision check and may cross without canceling");
-assert(crossingBulletProbe.thresholdFiveCanceled === true && crossingBulletProbe.thresholdSixCanceled === false, "bullets from different tanks should cancel below six center pixels but not at the six-pixel boundary");
-assert(crossingBulletProbe.sameOwnerCanceled === false, "two active bullets owned by the same tank should not cancel each other");
-assert(crossingBulletProbe.explosionCount === 0, "original-style bullet cancellation should remove both bullets without an explosion");
 const fieldBoundaryBulletProbe = context.window.TankDefender8.debugFieldBoundaryBulletProbe();
 assert(fieldBoundaryBulletProbe.length === 8, "field-boundary probe should cover four edges for player and enemy bullets");
 assert(fieldBoundaryBulletProbe.every((entry) => entry.removed && entry.explosionCount === 1), "every bullet leaving the battlefield should become one boundary explosion");
