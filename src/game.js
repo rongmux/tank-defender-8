@@ -101,6 +101,11 @@
   const { createProjectileState } = requireRuntimeModule("projectileState");
   const { createEnemyState } = requireRuntimeModule("enemyState");
   const { POWER_UP_SIZE: POWERUP_SIZE, createPowerUpState } = requireRuntimeModule("powerUpState");
+  const {
+    advanceTimedStates,
+    createExplosionState,
+    createScorePopupState
+  } = requireRuntimeModule("transientEffectState");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -4902,20 +4907,19 @@
   }
 
   function addExplosion(x, y, ttl, color, coreColor, style) {
-    game.explosions.push({
+    game.explosions.push(createExplosionState({
       x,
       y,
       ttl,
-      max: ttl,
       color,
-      coreColor: coreColor || DEFAULT_EXPLOSION_CORE_COLOR,
-      style: style || "default"
-    });
+      coreColor,
+      defaultCoreColor: DEFAULT_EXPLOSION_CORE_COLOR,
+      style
+    }));
   }
 
   function updateExplosions() {
-    for (const explosion of game.explosions) explosion.ttl -= 1;
-    game.explosions = game.explosions.filter((explosion) => explosion.ttl > 0);
+    game.explosions = advanceTimedStates(game.explosions);
   }
 
   /** Runs before bullet collision so a newly hit base retains its full loaded $27 counter for the hit frame. */
@@ -4924,18 +4928,16 @@
   }
 
   function addScorePopup(points, x, y, options) {
-    const value = Math.max(0, Math.floor(Number(points) || 0));
-    if (!value) return;
-    const opts = options || {};
-    const px = Number.isFinite(Number(x)) ? Number(x) : FIELD_W / 2;
-    const py = Number.isFinite(Number(y)) ? Number(y) : FIELD_H / 2;
-    const ttl = Math.max(1, Math.floor(Number(opts.ttl) || 54));
-    game.scorePopups.push({ value, x: px, y: py, ttl, max: ttl, style: opts.style || "float" });
+    const popup = createScorePopupState(points, x, y, {
+      ...(options || {}),
+      defaultX: FIELD_W / 2,
+      defaultY: FIELD_H / 2
+    });
+    if (popup) game.scorePopups.push(popup);
   }
 
   function updateScorePopups() {
-    for (const popup of game.scorePopups) popup.ttl -= 1;
-    game.scorePopups = game.scorePopups.filter((popup) => popup.ttl > 0);
+    game.scorePopups = advanceTimedStates(game.scorePopups);
   }
 
   function stageEnemiesCleared() {
