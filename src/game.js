@@ -115,7 +115,13 @@
     buildOriginalStyleEnemySequences,
     summarizeEnemySequences
   } = requireRuntimeModule("enemySequences");
-  const { createPlayerState, resetPlayerState } = requireRuntimeModule("playerState");
+  const {
+    advancePlayerDestructionState,
+    beginPlayerDestructionState,
+    createPlayerState,
+    resetPlayerState,
+    resolvePlayerDeathState
+  } = requireRuntimeModule("playerState");
   const { createProjectileState } = requireRuntimeModule("projectileState");
   const { resolveBulletCollisions } = requireRuntimeModule("projectileCollisionRules");
   const {
@@ -3749,10 +3755,7 @@
       const control = getPlayerControl(player.id);
       const firePressed = controlsEnabled && hasControlKey(control.fire, firePresses);
       if (player.respawn > 0) {
-        if (movementFrame) {
-          player.respawn -= 1;
-          if (player.respawn === 0) finishPlayerDeath(player);
-        }
+        if (advancePlayerDestructionState(player, movementFrame)) finishPlayerDeath(player);
         continue;
       }
       if (!player.alive) continue;
@@ -3786,10 +3789,7 @@
     for (const player of game.players) {
       const movementFrame = isPlayerMovementFrame(game.frameLow);
       if (player.respawn > 0) {
-        if (movementFrame) {
-          player.respawn -= 1;
-          if (player.respawn === 0) finishPlayerDeath(player);
-        }
+        if (advancePlayerDestructionState(player, movementFrame)) finishPlayerDeath(player);
         continue;
       }
       if (!player.alive) continue;
@@ -4285,31 +4285,22 @@
   }
 
   function killPlayer(player) {
-    if (!player.alive || player.destroying || player.invuln > 0) return;
-    player.alive = false;
-    player.level = Math.min(player.level, gameSettings().deathPowerLevel);
-    player.respawn = gameSettings().timings.playerRespawn;
-    player.destroying = player.respawn > 0;
-    player.destroyTotalTicks = player.respawn;
-    player.destroyExplosionTicks = Math.min(player.respawn, explosionRule("playerDestroy").ttl);
-    player.spawnFlash = 0;
-    player.invuln = 0;
-    player.stun = 0;
-    player.reload = 0;
-    player.slide = 0;
+    const started = beginPlayerDestructionState(player, {
+      deathPowerLevel: gameSettings().deathPowerLevel,
+      explosionTicks: explosionRule("playerDestroy").ttl,
+      respawnTicks: gameSettings().timings.playerRespawn
+    });
+    if (!started) return;
     playSound("playerDestroy");
     if (player.respawn === 0) finishPlayerDeath(player);
   }
 
   function finishPlayerDeath(player) {
-    player.destroying = false;
-    player.lives = Math.max(0, player.lives - 1);
-    if (player.lives > 0) {
+    const outcome = resolvePlayerDeathState(player);
+    if (!outcome.eliminated) {
       resetPlayerPosition(player);
       return;
     }
-    player.destroyTotalTicks = 0;
-    player.destroyExplosionTicks = 0;
     startPlayerGameOverMessage(player);
   }
 

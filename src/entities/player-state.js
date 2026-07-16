@@ -97,10 +97,49 @@
     return player;
   }
 
+  /** Starts a retained player destruction state when the player can take damage. */
+  function beginPlayerDestructionState(player, options) {
+    if (!player.alive || player.destroying || player.invuln > 0) return false;
+    const source = options || {};
+    player.alive = false;
+    player.level = Math.min(player.level, source.deathPowerLevel);
+    player.respawn = source.respawnTicks;
+    player.destroying = player.respawn > 0;
+    player.destroyTotalTicks = player.respawn;
+    player.destroyExplosionTicks = Math.min(player.respawn, source.explosionTicks);
+    player.spawnFlash = 0;
+    player.invuln = 0;
+    player.stun = 0;
+    player.reload = 0;
+    player.slide = 0;
+    return true;
+  }
+
+  function advancePlayerDestructionState(player, movementFrame) {
+    if (!movementFrame || player.respawn <= 0) return false;
+    player.respawn -= 1;
+    return player.respawn === 0;
+  }
+
+  /** Consumes one life after destruction and reports whether the player was eliminated. */
+  function resolvePlayerDeathState(player) {
+    player.destroying = false;
+    player.lives = Math.max(0, player.lives - 1);
+    const eliminated = player.lives <= 0;
+    if (eliminated) {
+      player.destroyTotalTicks = 0;
+      player.destroyExplosionTicks = 0;
+    }
+    return { eliminated, lives: player.lives };
+  }
+
   return Object.freeze({
     PLAYER_PALETTES,
     PLAYER_SIZE,
+    advancePlayerDestructionState,
+    beginPlayerDestructionState,
     createPlayerState,
-    resetPlayerState
+    resetPlayerState,
+    resolvePlayerDeathState
   });
 });

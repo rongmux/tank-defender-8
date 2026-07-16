@@ -2,8 +2,11 @@ const assert = require("assert").strict;
 const {
   PLAYER_PALETTES,
   PLAYER_SIZE,
+  advancePlayerDestructionState,
+  beginPlayerDestructionState,
   createPlayerState,
-  resetPlayerState
+  resetPlayerState,
+  resolvePlayerDeathState
 } = require("../../src/entities/player-state");
 
 function makeSettings(overrides = {}) {
@@ -136,5 +139,69 @@ resetPlayerState(playerOne, {
 assert.equal(playerOne.alive, false);
 assert.equal(playerOne.spawnFlash, 0);
 assert.equal(playerOne.invuln, 45);
+
+const deathPlayer = {
+  alive: true,
+  destroying: false,
+  invuln: 0,
+  level: 3,
+  lives: 2,
+  respawn: 0,
+  destroyTotalTicks: 0,
+  destroyExplosionTicks: 0,
+  spawnFlash: 28,
+  stun: 4,
+  reload: 3,
+  slide: 2
+};
+assert.equal(beginPlayerDestructionState(deathPlayer, {
+  deathPowerLevel: 0,
+  explosionTicks: 18,
+  respawnTicks: 24
+}), true);
+assert.deepEqual(deathPlayer, {
+  alive: false,
+  destroying: true,
+  invuln: 0,
+  level: 0,
+  lives: 2,
+  respawn: 24,
+  destroyTotalTicks: 24,
+  destroyExplosionTicks: 18,
+  spawnFlash: 0,
+  stun: 0,
+  reload: 0,
+  slide: 0
+});
+assert.equal(advancePlayerDestructionState(deathPlayer, false), false);
+assert.equal(deathPlayer.respawn, 24);
+for (let tick = 0; tick < 23; tick += 1) {
+  assert.equal(advancePlayerDestructionState(deathPlayer, true), false);
+}
+assert.equal(deathPlayer.respawn, 1);
+assert.equal(advancePlayerDestructionState(deathPlayer, true), true);
+assert.equal(deathPlayer.respawn, 0);
+assert.deepEqual(resolvePlayerDeathState(deathPlayer), { eliminated: false, lives: 1 });
+assert.equal(deathPlayer.destroying, false);
+
+const protectedPlayer = { ...deathPlayer, alive: true, invuln: 1 };
+assert.equal(beginPlayerDestructionState(protectedPlayer, {
+  deathPowerLevel: 0,
+  explosionTicks: 18,
+  respawnTicks: 24
+}), false);
+assert.equal(protectedPlayer.alive, true);
+
+const lastLifePlayer = {
+  ...deathPlayer,
+  alive: false,
+  destroying: true,
+  lives: 1,
+  destroyTotalTicks: 24,
+  destroyExplosionTicks: 18
+};
+assert.deepEqual(resolvePlayerDeathState(lastLifePlayer), { eliminated: true, lives: 0 });
+assert.equal(lastLifePlayer.destroyTotalTicks, 0);
+assert.equal(lastLifePlayer.destroyExplosionTicks, 0);
 
 console.log("player-state unit test passed");

@@ -945,18 +945,6 @@ const starVisualLevels = [0, 1, 2, 3].map((level) => {
 assert(starVisualLevels[0].overlayParts === 0, "base player tank should not draw upgrade overlay parts");
 assert(new Set(starVisualLevels.map((probe) => probe.overlaySignature)).size === 4, "each player star level should draw a distinct tank shape");
 assert(starVisualLevels[3].maxPowerParts > 0 && starVisualLevels[3].maxPowerDraws === starVisualLevels[3].maxPowerParts, "max-power player tank should draw its steel-piercing visual overlay");
-const deathRespawnProbe = context.window.TankDefender8.debugPlayerDeathRespawnProbe();
-assert(deathRespawnProbe.deathTicks === 24 && deathRespawnProbe.spawnTicks === 28, "player death and spawn states should use the original status-tick counts");
-assert(deathRespawnProbe.afterHit.alive === false && deathRespawnProbe.afterHit.destroying && deathRespawnProbe.afterHit.lives === 2 && deathRespawnProbe.afterHit.respawn === 24, "enemy hit should begin the retained death state without immediately consuming a life");
-assert(deathRespawnProbe.afterHit.level === schema.gameSettings.deathPowerLevel && deathRespawnProbe.afterHit.invuln === 0, "death should reset tank power and clear protection immediately");
-assert(deathRespawnProbe.deathDisplayFrames === 32, "24 death-state ticks should resolve after 32 display frames from tick zero");
-assert(deathRespawnProbe.destructionExplosionFrames === 24 && deathRespawnProbe.destructionFinalFrames === 8, "the player cadence should display eighteen explosion ticks for twenty-four frames and six final-picture ticks for eight frames");
-assert(deathRespawnProbe.destructionPhases.join(",") === "1,2,3,4,5,3,1", "the displayed player death should preserve the complete original picture sequence");
-assert(deathRespawnProbe.deathResolved.alive === true && !deathRespawnProbe.deathResolved.destroying && deathRespawnProbe.deathResolved.lives === 1 && deathRespawnProbe.deathResolved.spawnFlash === 28, "death completion should consume one life, clear destruction, and immediately begin spawning");
-assert(deathRespawnProbe.deathResolved.invuln === 0, "spawn animation should begin before the post-spawn shield timer");
-assert(deathRespawnProbe.spawnDisplayFrames === 28 && deathRespawnProbe.totalDisplayFrames === 60, "the twenty-eight-frame spawn state should complete sixty display frames after the hit");
-assert(deathRespawnProbe.activated.spawnFlash === 0 && deathRespawnProbe.activated.invuln === schema.gameSettings.timings.playerInvulnerability, "post-spawn protection should start when the spawn animation completes");
-assert(deathRespawnProbe.lastLife.displayFrames === 32 && deathRespawnProbe.lastLife.alive === false && !deathRespawnProbe.lastLife.destroying && deathRespawnProbe.lastLife.lives === 0 && deathRespawnProbe.lastLife.respawn === 0, "the final life should be consumed and its destruction state cleared only after the death animation completes");
 const playerGameOverMessageProbe = context.window.TankDefender8.debugPlayerGameOverMessageProbe();
 const playerGameOverFrame = (run, frame) => run.frames.find((entry) => entry.frame === frame);
 assert(playerGameOverMessageProbe.initialTimer === 13 && playerGameOverMessageProbe.moveThreshold === 10, "an individually eliminated player should use the original thirteen-step message counter and three moving steps");

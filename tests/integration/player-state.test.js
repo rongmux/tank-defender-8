@@ -24,6 +24,39 @@ function startFromToolbar(action) {
 assert(modules.playerState, "player state module should register before game.js");
 assert.equal(Object.isFrozen(modules.playerState), true);
 
+const defaultRespawn = JSON.parse(JSON.stringify(api.debugPlayerDeathRespawnProbe()));
+assert.equal(defaultRespawn.deathTicks, 24);
+assert.equal(defaultRespawn.spawnTicks, 28);
+assert.deepEqual(defaultRespawn.afterHit, {
+  alive: false,
+  destroying: true,
+  lives: 2,
+  level: schema.gameSettings.deathPowerLevel,
+  respawn: 24,
+  spawnFlash: 0,
+  invuln: 0
+});
+assert.equal(defaultRespawn.deathDisplayFrames, 32);
+assert.equal(defaultRespawn.destructionExplosionFrames, 24);
+assert.equal(defaultRespawn.destructionFinalFrames, 8);
+assert.deepEqual(defaultRespawn.destructionPhases, [1, 2, 3, 4, 5, 3, 1]);
+assert.equal(defaultRespawn.deathResolved.alive, true);
+assert.equal(defaultRespawn.deathResolved.destroying, false);
+assert.equal(defaultRespawn.deathResolved.lives, 1);
+assert.equal(defaultRespawn.deathResolved.spawnFlash, 28);
+assert.equal(defaultRespawn.deathResolved.invuln, 0);
+assert.equal(defaultRespawn.spawnDisplayFrames, 28);
+assert.equal(defaultRespawn.totalDisplayFrames, 60);
+assert.equal(defaultRespawn.activated.spawnFlash, 0);
+assert.equal(defaultRespawn.activated.invuln, schema.gameSettings.timings.playerInvulnerability);
+assert.deepEqual(defaultRespawn.lastLife, {
+  displayFrames: 32,
+  alive: false,
+  destroying: false,
+  lives: 0,
+  respawn: 0
+});
+
 const customPack = {
   id: "player-state-integration",
   totalStages: 1,
