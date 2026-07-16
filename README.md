@@ -12,6 +12,8 @@ The presentation domain now owns the deeply frozen free replacement sprite manif
 
 The audio domain now owns the deeply frozen free replacement manifest, pure fixed-frame sound-state lifecycles, voice duration/note projection, per-voice audibility selection, cross-event channel-priority resolution, and player/enemy movement-loop phase/mode projection. Web Audio node creation, pause/resume side effects, and playback remain runtime responsibilities.
 
+The editor domain now owns the original-style Construction tile palette and block-pattern sequence, D-pad/WASD direction aliases, full-cell cursor movement, panel hit testing, terrain cycling, and exact 8px brick/steel quadrant mutation. Storage, import/export, messages, sound effects, and input listeners remain runtime responsibilities.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder locally:
@@ -33,6 +35,7 @@ node --check src/core/battle-random.js
 node --check src/core/directions.js
 node --check src/core/frame-counter.js
 node --check src/core/geometry.js
+node --check src/editor/editor-rules.js
 node --check src/entities/enemy-state.js
 node --check src/entities/player-state.js
 node --check src/entities/power-up-state.js
@@ -115,6 +118,8 @@ tank-defender-8/
 |   |   |-- directions.js
 |   |   |-- frame-counter.js
 |   |   `-- geometry.js
+|   |-- editor/
+|   |   `-- editor-rules.js
 |   |-- entities/
 |   |   |-- enemy-state.js
 |   |   |-- player-state.js
@@ -158,6 +163,7 @@ tank-defender-8/
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
+|   |   |-- editor-rules.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-ai-rules.test.js
 |   |   |-- enemy-ai-settings.test.js
@@ -206,6 +212,7 @@ tank-defender-8/
 |   |   |-- browser-entry.test.js
 |   |   |-- combat-settings.test.js
 |   |   |-- directions.test.js
+|   |   |-- editor-rules.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-ai-rules.test.js
 |   |   |-- enemy-ai-settings.test.js
@@ -275,6 +282,8 @@ tank-defender-8/
 `src/audio/fixed-frame-audio-state.js` owns creation, begin/reset transitions, pause-hold selection, fixed-frame advancement, and exact end-frame clamping for all retained sound events. Runtime-owned Web Audio node handles remain opaque entries on each state and are stopped or recreated only by `src/game.js`. Direct unit coverage locks independent state records, retained node ownership, pause modes, invalid-duration fallback, and completion boundaries; browser integration centralizes one-frame, paused, pause-running, retrigger, cleanup, and final-frame lifecycle probes formerly held by the smoke suite.
 
 `src/audio/free-audio-manifest.js` owns the deeply frozen browser module copy of `data/free-audio-manifest.json` and the independent deep-clone API consumed by the runtime. Unit coverage compares every event against the JSON source, locks all retained durations/channel layouts and intentional silent enemy shooting, and proves nested clone isolation. Browser integration verifies module registration and confirms each public runtime clone remains equal to the JSON source without exposing the frozen internal object.
+
+`src/editor/editor-rules.js` owns the six-terrain browser palette, the 14-step original Construction block sequence, Arrow/WASD direction mapping and hold priority, full-cell cursor clamping, panel swatch hit testing, tile cycling, cursor-to-cell conversion, and exact brick-fragment/steel-quarter edits. `src/game.js` retains editor screen state, local storage, JSON import/export, messages, sounds, and event side effects. Unit coverage locks every pattern, wrap boundary, alias, swatch coordinate, terrain transition, and quadrant mutation; browser integration preserves the real A/B pattern cadence, D-pad/WASD movement, and digit-brush workflow formerly asserted in smoke.
 
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 

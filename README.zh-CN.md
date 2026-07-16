@@ -12,6 +12,8 @@
 
 音频域现已接管深冻结的免费替代音频清单、纯固定帧音效状态生命周期、声部时长/音符投影、逐声部可听性选择、跨事件声道优先级解析，以及玩家/敌人移动循环相位/模式投影。Web Audio 节点创建、暂停/恢复副作用和播放仍由运行时负责。
 
+编辑器域现已接管原版风格 Construction 图块调色板和块图案序列、D-pad/WASD 方向别名、整格光标移动、面板命中测试、地形循环，以及精确到 8px 的砖/钢象限修改。存储、导入/导出、消息、音效和输入监听仍由运行时负责。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -33,6 +35,7 @@ node --check src/core/battle-random.js
 node --check src/core/directions.js
 node --check src/core/frame-counter.js
 node --check src/core/geometry.js
+node --check src/editor/editor-rules.js
 node --check src/entities/enemy-state.js
 node --check src/entities/player-state.js
 node --check src/entities/power-up-state.js
@@ -115,6 +118,8 @@ tank-defender-8/
 |   |   |-- directions.js
 |   |   |-- frame-counter.js
 |   |   `-- geometry.js
+|   |-- editor/
+|   |   `-- editor-rules.js
 |   |-- entities/
 |   |   |-- enemy-state.js
 |   |   |-- player-state.js
@@ -158,6 +163,7 @@ tank-defender-8/
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
+|   |   |-- editor-rules.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-ai-rules.test.js
 |   |   |-- enemy-ai-settings.test.js
@@ -206,6 +212,7 @@ tank-defender-8/
 |   |   |-- browser-entry.test.js
 |   |   |-- combat-settings.test.js
 |   |   |-- directions.test.js
+|   |   |-- editor-rules.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-ai-rules.test.js
 |   |   |-- enemy-ai-settings.test.js
@@ -275,6 +282,8 @@ tank-defender-8/
 `src/audio/fixed-frame-audio-state.js` 接管所有保留音效的创建、开始/复位转换、暂停保持选择、固定帧推进和精确结束帧钳位。运行时拥有的 Web Audio 节点句柄仍作为各状态中的不透明条目，只由 `src/game.js` 停止或重建。直接单元测试锁定独立状态记录、节点所有权保留、暂停模式、非法时长回退和完成边界；浏览器集成测试集中接管原先位于 smoke 套件中的一帧、暂停、暂停中继续运行、重新触发、清理和最终帧生命周期探针。
 
 `src/audio/free-audio-manifest.js` 接管 `data/free-audio-manifest.json` 的深冻结浏览器模块副本，以及运行时使用的独立深克隆 API。单元测试逐事件对照 JSON 数据源，锁定全部保留时长/声道布局、敌方射击保持静音，以及嵌套克隆隔离；浏览器集成测试验证模块注册，并确认每次公开运行时克隆都与 JSON 数据源一致，同时不会暴露内部冻结对象。
+
+`src/editor/editor-rules.js` 接管六种地形的浏览器调色板、14 步原版 Construction 块序列、方向键/WASD 映射与按住优先级、整格光标钳位、面板色块命中测试、图块循环、光标到单元格转换，以及精确的砖块碎片/钢墙象限编辑。`src/game.js` 保留编辑器屏幕状态、本地存储、JSON 导入/导出、消息、音效和事件副作用。单元测试锁定全部图案、循环边界、按键别名、色块坐标、地形转换和象限修改；浏览器集成测试保留原先在 smoke 中断言的真实 A/B 图案 cadence、D-pad/WASD 移动和数字选刷流程。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 

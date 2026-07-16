@@ -167,6 +167,22 @@
     setTile
   } = requireRuntimeModule("stageGrid");
   const {
+    EDITOR_TILE_TYPES,
+    ORIGINAL_EDITOR_PATTERNS,
+    editorBrushAt,
+    editorCellForCursor,
+    editorDirectionForCode,
+    editorPatternAt,
+    heldEditorDirection,
+    isEditorDirectionCode,
+    moveEditorCursor: selectEditorCursorMove,
+    nextEditorPatternIndex,
+    nextEditorTileType,
+    originalEditorButtonHeld,
+    quadrantType,
+    setEditorQuadrant
+  } = requireRuntimeModule("editorRules");
+  const {
     DEFAULT_ENEMY_SPAWNS,
     DEFAULT_MAX_ACTIVE_ENEMIES,
     DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER,
@@ -314,24 +330,6 @@
   ];
   const EDITOR_STORAGE_KEY = "tank-defender-8-editor-stage";
   const HIGH_SCORE_STORAGE_KEY = "tank-defender-8-high-score";
-
-  const EDITOR_TILE_TYPES = [EMPTY, BRICK, STEEL, WATER, FOREST, ICE];
-  const ORIGINAL_EDITOR_PATTERNS = [
-    { type: BRICK, mask: 10 },
-    { type: BRICK, mask: 12 },
-    { type: BRICK, mask: 5 },
-    { type: BRICK, mask: 3 },
-    { type: BRICK, mask: 15 },
-    { type: STEEL, mask: 10 },
-    { type: STEEL, mask: 12 },
-    { type: STEEL, mask: 5 },
-    { type: STEEL, mask: 3 },
-    { type: STEEL, mask: 15 },
-    { type: WATER, mask: 0 },
-    { type: FOREST, mask: 0 },
-    { type: ICE, mask: 0 },
-    { type: EMPTY, mask: 0 }
-  ];
 
   const builtInStagePack = {
     id: "original-style",
@@ -2466,69 +2464,38 @@
     };
   }
 
-  function isEditorDirectionCode(code) {
-    return ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD"].includes(code);
-  }
-
-  function editorDirectionForCode(code) {
-    if (code === "ArrowRight" || code === "KeyD") return { dx: 1, dy: 0 };
-    if (code === "ArrowLeft" || code === "KeyA") return { dx: -1, dy: 0 };
-    if (code === "ArrowDown" || code === "KeyS") return { dx: 0, dy: 1 };
-    if (code === "ArrowUp" || code === "KeyW") return { dx: 0, dy: -1 };
-    return null;
-  }
-
-  function heldEditorDirection() {
-    if (keys.has("ArrowRight") || keys.has("KeyD")) return { dx: 1, dy: 0 };
-    if (keys.has("ArrowLeft") || keys.has("KeyA")) return { dx: -1, dy: 0 };
-    if (keys.has("ArrowDown") || keys.has("KeyS")) return { dx: 0, dy: 1 };
-    if (keys.has("ArrowUp") || keys.has("KeyW")) return { dx: 0, dy: -1 };
-    return null;
-  }
-
-  function originalEditorButtonHeld() {
-    return keys.has("Space") || keys.has("KeyZ") || keys.has("KeyF") || keys.has("KeyX");
-  }
-
   function moveEditorFromCode(code) {
     const direction = editorDirectionForCode(code);
     if (!direction) return;
     game.editorMoveHoldTimer = 0;
     moveEditorCursor(direction.dx, direction.dy);
-    if (originalEditorButtonHeld()) pasteOriginalEditorPattern();
+    if (originalEditorButtonHeld(keys)) pasteOriginalEditorPattern();
   }
 
   function moveEditorCursor(dx, dy) {
     if (game.screen !== "editor") return;
-    const c = game.editorCursor.qc < 0 ? 0 : Math.floor(game.editorCursor.qc / 2);
-    const r = game.editorCursor.qr < 0 ? 0 : Math.floor(game.editorCursor.qr / 2);
-    game.editorCursor = {
-      qc: clamp(c + dx, 0, GRID - 1) * 2,
-      qr: clamp(r + dy, 0, GRID - 1) * 2
-    };
+    game.editorCursor = selectEditorCursorMove(game.editorCursor, dx, dy);
     game.editorPatternArmed = false;
   }
 
   function useOriginalEditorButton(delta) {
     if (!game.editorGrid) return;
     if (game.editorPatternArmed) {
-      game.editorPattern = (game.editorPattern + delta + ORIGINAL_EDITOR_PATTERNS.length) % ORIGINAL_EDITOR_PATTERNS.length;
+      game.editorPattern = nextEditorPatternIndex(game.editorPattern, delta);
     } else {
       game.editorPatternArmed = true;
     }
-    const pattern = ORIGINAL_EDITOR_PATTERNS[game.editorPattern];
+    const pattern = editorPatternAt(game.editorPattern);
     game.editorBrush = pattern.type;
     pasteOriginalEditorPattern();
   }
 
   function pasteOriginalEditorPattern() {
     if (!game.editorGrid) return;
-    const cursor = game.editorCursor;
-    if (cursor.qc < 0 || cursor.qr < 0) return;
-    const c = clamp(Math.floor(cursor.qc / 2), 0, GRID - 1);
-    const r = clamp(Math.floor(cursor.qr / 2), 0, GRID - 1);
-    const pattern = ORIGINAL_EDITOR_PATTERNS[game.editorPattern] || ORIGINAL_EDITOR_PATTERNS[0];
-    setTile(game.editorGrid, c, r, pattern.type, pattern.mask);
+    const cell = editorCellForCursor(game.editorCursor);
+    if (!cell) return;
+    const pattern = editorPatternAt(game.editorPattern);
+    setTile(game.editorGrid, cell.c, cell.r, pattern.type, pattern.mask);
     playSound("editorPaint", { brush: pattern.type });
   }
 
@@ -2550,7 +2517,7 @@
 
   function paintEditorQuadrant(qc, qr) {
     if (!game.editorGrid || qc < 0 || qc >= QUAD_GRID || qr < 0 || qr >= QUAD_GRID) return;
-    setQuadrant(game.editorGrid, qc, qr, game.editorBrush);
+    setEditorQuadrant(game.editorGrid, qc, qr, game.editorBrush);
     playSound("editorPaintSubtile", { brush: game.editorBrush });
   }
 
@@ -2566,19 +2533,10 @@
     if (type !== null) selectEditorBrush(type);
   }
 
-  function editorBrushAt(x, y, legendX, legendY) {
-    for (let i = 0; i < EDITOR_TILE_TYPES.length; i += 1) {
-      const px = legendX + (i % 2) * 14;
-      const py = legendY + Math.floor(i / 2) * 18;
-      if (x >= px && x < px + 10 && y >= py && y < py + 10) return EDITOR_TILE_TYPES[i];
-    }
-    return null;
-  }
-
   function cycleEditorCell(c, r) {
     if (!game.editorGrid || c < 0 || c >= GRID || r < 0 || r >= GRID) return;
     const current = game.editorGrid[r][c].type;
-    const nextType = current === ICE ? EMPTY : current + 1;
+    const nextType = nextEditorTileType(current);
     setTile(game.editorGrid, c, r, nextType, 15);
     playSound("editorPaint", { brush: nextType });
   }
@@ -2590,46 +2548,14 @@
     const q = (qr % 2) * 2 + (qc % 2);
     const cell = game.editorGrid[r][c];
     const current = quadrantType(cell, q);
-    const nextType = current === ICE ? EMPTY : current + 1;
-    setQuadrant(game.editorGrid, qc, qr, nextType);
+    const nextType = nextEditorTileType(current);
+    setEditorQuadrant(game.editorGrid, qc, qr, nextType);
     playSound("editorPaintSubtile", { brush: nextType });
-  }
-
-  function quadrantType(cell, q) {
-    if ((cell.type === BRICK || cell.type === STEEL) && !(cell.mask & (1 << q))) return EMPTY;
-    return cell.type;
-  }
-
-  function setQuadrant(grid, qc, qr, type) {
-    const c = Math.floor(qc / 2);
-    const r = Math.floor(qr / 2);
-    const q = (qr % 2) * 2 + (qc % 2);
-    const cell = grid[r][c];
-    if (type === BRICK || type === STEEL) {
-      if (cell.type !== type) {
-        cell.type = type;
-        cell.mask = 0;
-        cell.brickMask = 0;
-        cell.steelHits = [0, 0, 0, 0];
-      }
-      cell.mask |= 1 << q;
-      if (type === BRICK) cell.brickMask |= BRICK_QUARTER_FRAGMENT_MASKS[q];
-    } else if (type === EMPTY && (cell.type === BRICK || cell.type === STEEL)) {
-      cell.mask &= ~(1 << q);
-      if (cell.type === BRICK) cell.brickMask &= ~BRICK_QUARTER_FRAGMENT_MASKS[q];
-      if (!cell.mask) cell.type = EMPTY;
-      cell.steelHits = [0, 0, 0, 0];
-    } else {
-      cell.type = type;
-      cell.mask = 0;
-      cell.brickMask = 0;
-      cell.steelHits = [0, 0, 0, 0];
-    }
   }
 
   function updateEditorControls() {
     game.editorTick += 1;
-    const direction = heldEditorDirection();
+    const direction = heldEditorDirection(keys);
     if (!direction) {
       game.editorMoveHoldTimer = 0;
       return;
@@ -2639,7 +2565,7 @@
     if (game.editorMoveHoldTimer < 20) return;
     game.editorMoveHoldTimer = 15;
     moveEditorCursor(direction.dx, direction.dy);
-    if (originalEditorButtonHeld()) pasteOriginalEditorPattern();
+    if (originalEditorButtonHeld(keys)) pasteOriginalEditorPattern();
   }
 
   function stageSelectAHeld(input) {
