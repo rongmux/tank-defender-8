@@ -55,6 +55,7 @@ node --check src/stages/stage-grid.js
 node --check src/stages/stage-pack.js
 node --check src/stages/stage-routing.js
 node --check src/game.js
+node --check tests/helpers/test-file-discovery.js
 node --check tools/build-free-stage-pack.js
 node tests/run-tests.js
 git diff --check
@@ -113,7 +114,8 @@ tank-defender-8/
 |-- tests/
 |   |-- helpers/
 |   |   |-- browser-game-harness.js
-|   |   `-- load-browser-scripts.js
+|   |   |-- load-browser-scripts.js
+|   |   `-- test-file-discovery.js
 |   |-- integration/
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
@@ -142,6 +144,7 @@ tank-defender-8/
 |   |   |-- stage-routing.test.js
 |   |   |-- tank-collision-rules.test.js
 |   |   |-- terrain-collision-rules.test.js
+|   |   |-- test-file-discovery.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
 |   |   `-- wall-damage-rules.test.js
@@ -192,6 +195,8 @@ tank-defender-8/
 ```
 
 `src/config/` owns data validation shared by stage-pack configuration: `value-normalization.js` validates numeric ranges and colors; `game-session-settings.js` owns initial lives, sorted bonus-life thresholds, death power level, and the timer enemy-freeze switch; `combat-settings.js` owns projectile size/spawn/bounds geometry plus two-player friendly-fire activation and stun timing; `enemy-ai-settings.js` owns intersection routing, blocked retries, target-axis probability, and the legacy AI field aliases; `enemy-spawn-settings.js` owns per-stage spawn curves, stage/extended-loop floors, two-player reduction, legacy multiplier compatibility, and pure delay calculations; `enemy-types.js` owns the four default enemy definitions, movement/projectile tiers, power-up type names, enemy-type cloning and validation, and per-stage enemy-spec normalization; `explosion-settings.js` owns the nine nested explosion TTL/color defaults, deep cloning, and pack override validation; `player-movement-settings.js` owns fixed-loop movement speed, the original three-of-four cadence, legacy speed-only compatibility, ice inertia, and independent configuration cloning; `player-upgrades.js` owns the four star-upgrade levels, independent cloning, and pack override validation; `power-up-settings.js` owns helmet/shovel/timer durations, carrier release and clearing rules, pickup scoring, and their validation; `stage-flow-settings.js` owns final-stage looping, extended-loop map/enemy selection, and two-player stage-clear leader bonuses; `timing-settings.js` owns the fixed-logic-loop stage, spawn, respawn, retry, invulnerability, and power-up lifetime timings; and `stage-settings.js` owns active-enemy capacities, default player/enemy/power-up spawn layouts, strict 13x13 coordinate validation, and tile-to-pixel conversion. `src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency; shared battle randomness, four-direction constants/vectors, independent frame counters, and rectangle geometry live there. `src/entities/` owns mutable gameplay records: `player-state.js` creates complete one/two-player records and resets transient position, destruction, protection, firing, sliding, and track state without discarding persistent score, life, kill, or upgrade state; `enemy-state.js` materializes type/spec data into a placed enemy with independent armor colors, spawn/reload timers, carrier data, movement cadence flags, and clean AI/destruction state; `projectile-state.js` creates the common player/enemy projectile record from tank geometry, direction, upgrade/type combat values, and stage-pack projectile geometry; `power-up-state.js` creates a collectible 12px power-up with its validated field position and configured lifetime after runtime random/terrain filtering; and `transient-effect-state.js` creates explosion and score-popup records and advances their shared TTL lifecycle while preserving surviving identities. `src/rules/score-rules.js` mutates player score and reserve-life progress while returning the values needed by runtime-owned high-score persistence and audio side effects; `stage-result-rules.js` selects bonus recipients, builds per-type result rows/summaries, and computes the original count/reveal timeline; `tank-collision-rules.js` owns entity rectangles, the exact bullet-center hit range, active collision-peer filtering, total overlap, field/base blocking, and strictly decreasing terrain/tank overlap recovery; `terrain-collision-rules.js` owns 16px tile, 8px steel-quarter, and 4px brick-fragment geometry, overlap masks, and exact solid terrain area. `src/stages/` owns the stage domain: `stage-grid.js` provides tile constants, brick-fragment state, grid mutation, validation, and 13x13/26x26 codecs; `enemy-sequences.js` owns the 35-stage enemy group table, 20-enemy expansion, carrier positions, spawn-point rotation, and sequence summaries; `stage-pack.js` composes all configuration validators, enforces complete map/enemy/stage counts, supports both map encodings, and builds runtime grid/enemy lookup helpers; and `stage-routing.js` resolves the displayed 1-70 cycle onto finite map/enemy datasets, enemy totals, and one/two-player capacity limits. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable Canvas, audio, DOM, storage, input, and script-loading fakes. `tests/unit/` exercises pure modules directly, `tests/integration/` verifies extracted configuration, base session rules, score/bonus-life and stage-result progression, fixed logic timings, fragment-accurate terrain/tank/bullet collision and recovery, projectile/friendly-fire rules, projectile, enemy, power-up, and transient visual-effect creation/lifecycle, enemy AI, enemy spawn pacing, explosion settings, player movement/cadence, player state/respawn, power-up settings, stage flow, stage settings, stage-grid, stage-pack import, stage routing, enemy-sequence, and star-upgrade behavior through the real browser API, and `tests/run-tests.js` runs both before the remaining regression suite in `tools/smoke-test.js`.
+
+`tests/helpers/test-file-discovery.js` recursively discovers only `*.test.js` files in stable path order. `tests/run-tests.js` uses it to execute all unit tests, then all integration tests in isolated Node processes, and finally the remaining smoke suite, so new feature tests no longer require a hand-maintained runner entry.
 
 `src/rules/projectile-collision-rules.js` owns center-distance checks and ordered cancellation of projectiles from different owners. Its tests preserve the strict below-6px boundary, same-owner exclusion, removed-projectile skipping, deterministic pair order, high-speed crossing behavior, and cancellation without impact explosions.
 
