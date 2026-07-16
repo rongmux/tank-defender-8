@@ -100,6 +100,7 @@
   const { createPlayerState, resetPlayerState } = requireRuntimeModule("playerState");
   const { createProjectileState } = requireRuntimeModule("projectileState");
   const { createEnemyState } = requireRuntimeModule("enemyState");
+  const { POWER_UP_SIZE: POWERUP_SIZE, createPowerUpState } = requireRuntimeModule("powerUpState");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -904,7 +905,6 @@
   };
   const EDITOR_STORAGE_KEY = "tank-defender-8-editor-stage";
   const HIGH_SCORE_STORAGE_KEY = "tank-defender-8-high-score";
-  const POWERUP_SIZE = 12;
 
   const EDITOR_TILE_TYPES = [EMPTY, BRICK, STEEL, WATER, FOREST, ICE];
   const ORIGINAL_EDITOR_PATTERNS = [
@@ -4499,7 +4499,11 @@
     const type = forcedType && powerTypes.includes(forcedType)
       ? forcedType
       : randomPowerUpType();
-    game.powerUp = { type, x: spot.x, y: spot.y, w: POWERUP_SIZE, h: POWERUP_SIZE, ttl: gameSettings().timings.powerUpTtl };
+    game.powerUp = createPowerUpState({
+      type,
+      position: spot,
+      ttl: gameSettings().timings.powerUpTtl
+    });
     playSound("powerUpAppear");
     return true;
   }
@@ -8703,7 +8707,8 @@
         paused: game.paused,
         audible: powerUpAppearAudioAudible(),
         movementAudioMode: movementAudio.mode,
-        powerUpType: game.powerUp ? game.powerUp.type : null
+        powerUpType: game.powerUp ? game.powerUp.type : null,
+        powerUp: game.powerUp ? { ...game.powerUp } : null
       });
       try {
         stopMovementAudio();
