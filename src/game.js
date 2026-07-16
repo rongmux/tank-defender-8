@@ -113,6 +113,13 @@
     selectStageClearBonusRecipients,
     stageResultVisibleKillCount
   } = requireRuntimeModule("stageResultRules");
+  const {
+    bulletHitsTankByCenter,
+    canTankOccupyRect,
+    entityRect,
+    filterActiveTankCollisionPeers,
+    totalRectOverlapArea
+  } = requireRuntimeModule("tankCollisionRules");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -3934,7 +3941,7 @@
    * handling can keep both tanks trapped inside each other's collision boxes.
    */
   function recoverEnemyTankOverlap(enemy) {
-    const currentRect = tankRect(enemy);
+    const currentRect = entityRect(enemy);
     const currentArea = totalTankOverlapArea(enemy, currentRect);
     if (currentArea <= 0) return false;
 
@@ -4179,7 +4186,7 @@
 
   function hitBase(bullet) {
     if (!game.base.alive) return false;
-    if (!rectsOverlap(bulletRect(bullet), game.base)) return false;
+    if (!rectsOverlap(entityRect(bullet), game.base)) return false;
     game.base.alive = false;
     game.baseDestroyTimer = game.demoMode ? 0 : baseDestructionDuration();
     bullet.remove = true;
@@ -4189,7 +4196,7 @@
   }
 
   function hitTerrain(bullet) {
-    const rect = bulletRect(bullet);
+    const rect = entityRect(bullet);
     const c0 = clamp(Math.floor(rect.x / TILE), 0, GRID - 1);
     const r0 = clamp(Math.floor(rect.y / TILE), 0, GRID - 1);
     const c1 = clamp(Math.floor((rect.x + rect.w - 1) / TILE), 0, GRID - 1);
@@ -4362,14 +4369,6 @@
       }
     }
     return false;
-  }
-
-  function bulletHitsTankByCenter(bullet, tank) {
-    const bulletCenterX = bullet.x + bullet.w / 2;
-    const bulletCenterY = bullet.y + bullet.h / 2;
-    const tankCenterX = tank.x + tank.w / 2;
-    const tankCenterY = tank.y + tank.h / 2;
-    return Math.abs(bulletCenterX - tankCenterX) < 10 && Math.abs(bulletCenterY - tankCenterY) < 10;
   }
 
   function destroyEnemy(enemy, ownerId, options) {
@@ -4756,10 +4755,6 @@
     };
   }
 
-  function bulletRect(bullet) {
-    return { x: bullet.x, y: bullet.y, w: bullet.w, h: bullet.h };
-  }
-
   function moveTank(tank, dx, dy) {
     const nx = tank.x + dx;
     const ny = tank.y + dy;
@@ -4774,37 +4769,22 @@
   }
 
   function canTankOccupy(tank, x, y) {
-    const rect = { x, y, w: tank.w, h: tank.h };
-    if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > FIELD_W || rect.y + rect.h > FIELD_H) return false;
-    if (rectsOverlap(rect, game.base) && game.base.alive) return false;
-    const currentRect = tankRect(tank);
-    const nextTerrainOverlap = solidTerrainOverlapArea(rect);
-    if (nextTerrainOverlap > 0) {
-      const currentTerrainOverlap = solidTerrainOverlapArea(currentRect);
-      if (currentTerrainOverlap <= 0 || nextTerrainOverlap >= currentTerrainOverlap) return false;
-    }
-    for (const other of activeTankCollisionPeers(tank)) {
-      const nextOverlap = rectOverlapArea(rect, other);
-      if (nextOverlap <= 0) continue;
-      const currentOverlap = rectOverlapArea(currentRect, other);
-      if (currentOverlap > 0 && nextOverlap < currentOverlap) continue;
-      return false;
-    }
-    return true;
-  }
-
-  function tankRect(tank) {
-    return { x: tank.x, y: tank.y, w: tank.w, h: tank.h };
+    return canTankOccupyRect(entityRect(tank), entityRect(tank, x, y), {
+      fieldWidth: FIELD_W,
+      fieldHeight: FIELD_H,
+      base: game.base,
+      baseAlive: game.base.alive,
+      terrainOverlapArea: solidTerrainOverlapArea,
+      peers: activeTankCollisionPeers(tank)
+    });
   }
 
   function activeTankCollisionPeers(tank) {
-    return game.players.concat(game.enemies).filter((other) =>
-      other !== tank && other.alive && !other.destroying && !(other.respawn > 0)
-    );
+    return filterActiveTankCollisionPeers(tank, game.players.concat(game.enemies));
   }
 
   function totalTankOverlapArea(tank, rect) {
-    return activeTankCollisionPeers(tank).reduce((total, other) => total + rectOverlapArea(rect, other), 0);
+    return totalRectOverlapArea(rect, activeTankCollisionPeers(tank));
   }
 
   function rectHitsSolidTerrain(rect) {
@@ -13526,24 +13506,24 @@
         const turnBefore = {
           x: turningPlayer.x,
           y: turningPlayer.y,
-          overlap: solidTerrainOverlapArea(tankRect(turningPlayer))
+          overlap: solidTerrainOverlapArea(entityRect(turningPlayer))
         };
         updatePlayerMovement(turningPlayer, DOWN);
         const turnAfter = {
           x: turningPlayer.x,
           y: turningPlayer.y,
           dir: turningPlayer.dir,
-          overlap: solidTerrainOverlapArea(tankRect(turningPlayer))
+          overlap: solidTerrainOverlapArea(entityRect(turningPlayer))
         };
 
         game.grid = makeGrid();
         setTile(game.grid, 5, 11, BRICK, 15);
         const coveredPlayer = makePlayer(90, 177, RIGHT);
         game.players = [coveredPlayer];
-        const overlapHistory = [solidTerrainOverlapArea(tankRect(coveredPlayer))];
+        const overlapHistory = [solidTerrainOverlapArea(entityRect(coveredPlayer))];
         for (let step = 0; step < 6; step += 1) {
           updatePlayerMovement(coveredPlayer, RIGHT);
-          overlapHistory.push(solidTerrainOverlapArea(tankRect(coveredPlayer)));
+          overlapHistory.push(solidTerrainOverlapArea(entityRect(coveredPlayer)));
         }
 
         return {
