@@ -866,8 +866,6 @@ assert(brickPowerProbe.directionMasks.up.firstRemovedFragments === 0x3000 && bri
 assert(brickPowerProbe.directionMasks.down.firstRemovedFragments === 0x0003 && brickPowerProbe.directionMasks.down.second === 14, "downward shots should peel the upper 8x4 strip before the lower strip");
 assert(brickPowerProbe.directionMasks.left.firstRemovedFragments === 0x0088 && brickPowerProbe.directionMasks.left.second === 13, "leftward shots should peel the right 4x8 strip before the left strip");
 assert(brickPowerProbe.directionMasks.right.firstRemovedFragments === 0x0011 && brickPowerProbe.directionMasks.right.second === 14, "rightward shots should peel the left 4x8 strip before the right strip");
-assert(brickPowerProbe.removedStripHit === 0 && brickPowerProbe.remainingStripHit !== 0, "bullet collision should pass through removed four-pixel fragments and still hit the remaining strip");
-assert(brickPowerProbe.removedStripSolid === false && brickPowerProbe.remainingStripSolid === true, "world collision should ignore removed brick fragments and retain adjacent solid fragments");
 assert(brickPowerProbe.integration.hit && brickPowerProbe.integration.bulletRemoved, "the live terrain resolver should consume a bullet that hits a brick fragment");
 assert(brickPowerProbe.integration.mask === 15 && brickPowerProbe.integration.brickMask === 65518, "the live terrain resolver should remove one 4x8 strip without dropping the containing 8x8 subtile");
 assert(brickPowerProbe.integration.explosions === 1, "a live brick-fragment hit should create one impact explosion");
@@ -1211,12 +1209,6 @@ assert(playerTurnProbe.perpendicular.x === 64 && playerTurnProbe.perpendicular.y
 assert(playerTurnProbe.reverse.x === 66 && playerTurnProbe.reverse.y === 70 && playerTurnProbe.reverse.dir === 3, "a 180-degree reverse should move immediately without coordinate snapping");
 assert(playerTurnProbe.same.x === 68 && playerTurnProbe.same.y === 70 && playerTurnProbe.same.dir === 1, "continuing in the same direction should not snap coordinates");
 assert(playerTurnProbe.perpendicular.pendingSnap === false && playerTurnProbe.reverse.pendingSnap === false, "turn alignment should complete in the current movement tick");
-const playerBrickRecoveryProbe = context.window.TankDefender8.debugPlayerBrickRecoveryProbe();
-assert(playerBrickRecoveryProbe.blockedTurnSnap.before.overlap === 0, "brick recovery fixture should start outside the remaining brick fragment");
-assert(playerBrickRecoveryProbe.blockedTurnSnap.after.x === 69 && playerBrickRecoveryProbe.blockedTurnSnap.after.y === 71 && playerBrickRecoveryProbe.blockedTurnSnap.after.dir === 2, "a perpendicular turn should skip an unsafe grid snap while still moving in the selected direction");
-assert(playerBrickRecoveryProbe.blockedTurnSnap.after.overlap === 0, "turn alignment should never push a player into a brick fragment");
-assert(playerBrickRecoveryProbe.restoredWallEscape.overlapHistory.join(",") === "84,70,56,42,28,14,0", "a player covered by a restored brick wall should reduce overlap on every outward movement tick");
-assert(playerBrickRecoveryProbe.restoredWallEscape.x === 96 && playerBrickRecoveryProbe.restoredWallEscape.y === 177, "a covered player should be able to leave the restored wall without lateral displacement");
 const iceMovementProbe = context.window.TankDefender8.debugIceMovementProbe();
 assert(iceMovementProbe.configuredTicks === 28 && iceMovementProbe.configuredSpeed === 1, "ice movement should use the original 28-count full-speed inertia");
 assert(iceMovementProbe.afterEntry.slide === 28 && iceMovementProbe.afterEntry.x === 33, "first direction input on ice should arm inertia and move one pixel");

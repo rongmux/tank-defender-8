@@ -120,6 +120,14 @@
     filterActiveTankCollisionPeers,
     totalRectOverlapArea
   } = requireRuntimeModule("tankCollisionRules");
+  const {
+    brickFragmentRect,
+    overlappedBrickFragments,
+    overlappedQuarters,
+    quarterRect,
+    rectHitsSolidTerrain: gridRectHitsSolidTerrain,
+    solidTerrainOverlapArea: gridSolidTerrainOverlapArea
+  } = requireRuntimeModule("terrainCollisionRules");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -4227,26 +4235,6 @@
     return false;
   }
 
-  function overlappedQuarters(rect, c, r, mask) {
-    let hit = 0;
-    for (let q = 0; q < 4; q += 1) {
-      if (!(mask & (1 << q))) continue;
-      const qRect = quarterRect(c, r, q);
-      if (rectsOverlap(rect, qRect)) hit |= 1 << q;
-    }
-    return hit;
-  }
-
-  function overlappedBrickFragments(rect, c, r, cell) {
-    const fragments = normalizeBrickFragmentMask(cell.brickMask, cell.mask);
-    let hit = 0;
-    for (let fragment = 0; fragment < 16; fragment += 1) {
-      if (!(fragments & (1 << fragment))) continue;
-      if (rectsOverlap(rect, brickFragmentRect(c, r, fragment))) hit |= 1 << fragment;
-    }
-    return hit;
-  }
-
   function damageWall(cell, c, r, bullet, hitMask) {
     if (cell.type === STEEL) return damageSteelWall(cell, bullet, hitMask);
     const fragments = normalizeBrickFragmentMask(cell.brickMask, cell.mask);
@@ -4300,24 +4288,6 @@
     cell.steelHits = [0, 0, 0, 0];
     if (cell.mask === 0) cell.type = EMPTY;
     return true;
-  }
-
-  function quarterRect(c, r, q) {
-    return {
-      x: c * TILE + (q % 2) * HALF,
-      y: r * TILE + (q >= 2 ? HALF : 0),
-      w: HALF,
-      h: HALF
-    };
-  }
-
-  function brickFragmentRect(c, r, fragment) {
-    return {
-      x: c * TILE + (fragment % 4) * WALL_FRAGMENT,
-      y: r * TILE + Math.floor(fragment / 4) * WALL_FRAGMENT,
-      w: WALL_FRAGMENT,
-      h: WALL_FRAGMENT
-    };
   }
 
   function hitTank(bullet) {
@@ -4788,41 +4758,11 @@
   }
 
   function rectHitsSolidTerrain(rect) {
-    return solidTerrainOverlapArea(rect) > 0;
+    return gridRectHitsSolidTerrain(rect, game.grid);
   }
 
   function solidTerrainOverlapArea(rect) {
-    const c0 = clamp(Math.floor(rect.x / TILE), 0, GRID - 1);
-    const r0 = clamp(Math.floor(rect.y / TILE), 0, GRID - 1);
-    const c1 = clamp(Math.floor((rect.x + rect.w - 1) / TILE), 0, GRID - 1);
-    const r1 = clamp(Math.floor((rect.y + rect.h - 1) / TILE), 0, GRID - 1);
-    let total = 0;
-
-    for (let r = r0; r <= r1; r += 1) {
-      for (let c = c0; c <= c1; c += 1) {
-        const cell = game.grid[r][c];
-        if (cell.type === WATER) {
-          const tileRect = { x: c * TILE, y: r * TILE, w: TILE, h: TILE };
-          total += rectOverlapArea(rect, tileRect);
-        }
-        if (cell.type === BRICK && cell.mask) {
-          const fragments = normalizeBrickFragmentMask(cell.brickMask, cell.mask);
-          for (let fragment = 0; fragment < 16; fragment += 1) {
-            if (fragments & (1 << fragment)) {
-              total += rectOverlapArea(rect, brickFragmentRect(c, r, fragment));
-            }
-          }
-        }
-        if (cell.type === STEEL && cell.mask) {
-          for (let q = 0; q < 4; q += 1) {
-            if (cell.mask & (1 << q)) {
-              total += rectOverlapArea(rect, quarterRect(c, r, q));
-            }
-          }
-        }
-      }
-    }
-    return total;
+    return gridSolidTerrainOverlapArea(rect, game.grid);
   }
 
   function isTankOnIce(tank) {
