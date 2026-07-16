@@ -12,7 +12,7 @@
 
 音频域现已接管深冻结的免费替代音频清单、纯固定帧音效状态生命周期、声部时长/音符投影、逐声部可听性选择、跨事件声道优先级解析，以及玩家/敌人移动循环相位/模式投影。Web Audio 节点创建、暂停/恢复副作用和播放仍由运行时负责。
 
-编辑器域现已接管原版风格 Construction 图块调色板和块图案序列、D-pad/WASD 方向别名、整格光标移动、面板命中测试、地形循环，以及精确到 8px 的砖/钢象限修改。存储、导入/导出、消息、音效和输入监听仍由运行时负责。
+编辑器域现已接管原版风格 Construction 图块调色板和块图案序列、D-pad/WASD 方向别名、整格光标移动、面板命中测试、地形循环、精确到 8px 的砖/钢象限修改、带版本的存档文档、旧版 13x13 存档兼容、单关卡包组装及 JSON 编解码。浏览器存储、剪贴板/文件访问、消息、音效和输入监听仍由运行时负责。
 
 ## 运行
 
@@ -36,6 +36,7 @@ node --check src/core/directions.js
 node --check src/core/frame-counter.js
 node --check src/core/geometry.js
 node --check src/editor/editor-rules.js
+node --check src/editor/editor-stage-format.js
 node --check src/entities/enemy-state.js
 node --check src/entities/player-state.js
 node --check src/entities/power-up-state.js
@@ -119,7 +120,8 @@ tank-defender-8/
 |   |   |-- frame-counter.js
 |   |   `-- geometry.js
 |   |-- editor/
-|   |   `-- editor-rules.js
+|   |   |-- editor-rules.js
+|   |   `-- editor-stage-format.js
 |   |-- entities/
 |   |   |-- enemy-state.js
 |   |   |-- player-state.js
@@ -164,6 +166,7 @@ tank-defender-8/
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
 |   |   |-- editor-rules.test.js
+|   |   |-- editor-stage-format.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-ai-rules.test.js
 |   |   |-- enemy-ai-settings.test.js
@@ -213,6 +216,7 @@ tank-defender-8/
 |   |   |-- combat-settings.test.js
 |   |   |-- directions.test.js
 |   |   |-- editor-rules.test.js
+|   |   |-- editor-stage-format.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-ai-rules.test.js
 |   |   |-- enemy-ai-settings.test.js
@@ -267,7 +271,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/config/` 负责关卡包配置共享的数据校验：`value-normalization.js` 校验数值范围和颜色；`game-session-settings.js` 接管初始生命、排序后的奖励生命阈值、死亡星级和定时器冻结敌人开关；`combat-settings.js` 接管弹丸尺寸/出生/边界几何以及双人友军伤害开关和眩晕时序；`enemy-ai-settings.js` 接管交叉点寻路、受阻重试、目标轴概率和旧 AI 字段别名；`enemy-spawn-settings.js` 接管逐关生成曲线、关卡/扩展循环下限、双人减法、旧倍率兼容和纯间隔计算；`enemy-types.js` 接管四类默认敌人定义、移动/子弹速度档位、道具类型名称、敌人类型克隆与校验，以及单关敌人规格规范化；`explosion-settings.js` 接管九类嵌套爆炸 TTL/颜色默认值、深克隆和关卡包覆盖校验；`player-movement-settings.js` 接管固定逻辑循环中的移动速度、原版四帧三次移动 cadence、旧版仅覆盖速度时的兼容行为、冰面惯性和独立配置克隆；`player-upgrades.js` 接管四个星星升级等级、独立克隆和关卡包覆盖校验；`power-up-settings.js` 接管头盔/铲子/定时器持续时间、携带者释放和清理规则、拾取分数及其校验；`stage-flow-settings.js` 接管最终关循环、扩展循环地图/敌人数据选择和双人通关领先奖励；`timing-settings.js` 接管固定逻辑循环中的关卡、出生、重生、重试、无敌和道具寿命时序；`stage-settings.js` 接管活动敌人上限、默认玩家/敌人/道具出生布局、严格的 13x13 坐标校验以及图块到像素的转换。`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则；共享战斗随机数、四方向常量/向量、独立帧计数器和矩形几何已迁入该目录。`src/entities/` 接管可变游戏实体记录：`player-state.js` 创建完整的单双人玩家记录，并在不丢弃持久得分、生命、击杀或升级状态的前提下复位位置、摧毁、保护、射击、滑行和履带等瞬态；`enemy-state.js` 将类型/序列数据实体化为已放置的敌人，包含独立装甲颜色、出生/重载计时、携带道具数据、移动 cadence 标志以及干净的 AI/摧毁状态；`projectile-state.js` 根据坦克几何、方向、升级/类型战斗数值和关卡包弹丸几何，创建玩家/敌人共用的子弹记录；`power-up-state.js` 在运行时完成随机/地形过滤后，根据已校验战场位置和配置寿命创建可拾取的 12px 道具；`transient-effect-state.js` 创建爆炸与分数提示记录，并在保留存活对象标识的同时推进两者共用的 TTL 生命周期。`src/rules/score-rules.js` 修改玩家分数与奖励生命进度，并返回运行时执行最高分持久化和音频副作用所需的结果；`stage-result-rules.js` 选择结算奖励接收者、生成逐类型结算行/汇总，并计算原版计数与揭示时间轴；`tank-collision-rules.js` 接管实体矩形、精确子弹中心命中范围、有效碰撞对象过滤、总重叠面积、战场/基地阻挡，以及严格减小地形/坦克重叠的脱困规则；`terrain-collision-rules.js` 接管 16px 图块、8px 钢墙象限和 4px 砖块碎片几何、重叠掩码与精确固体地形面积。`src/stages/` 负责关卡域：`stage-grid.js` 提供图块常量、砖块碎片状态、网格修改与校验以及 13x13/26x26 编解码；`enemy-sequences.js` 接管 35 关敌人编组表、每关 20 辆敌人的展开、携带者位置、出生点轮转和序列摘要；`stage-pack.js` 组合全部配置校验器、强制校验完整地图/敌人/关卡数量、支持两种地图编码，并构建运行时网格与敌人查询方法；`stage-routing.js` 将显示用的 1-70 关循环映射到有限的地图/敌人数据，并解析敌人总数和单双人容量上限。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的 Canvas、音频、DOM、存储、输入和脚本加载模拟。`tests/unit/` 直接验证纯模块，`tests/integration/` 通过真实浏览器 API 验证已抽离的配置、基础会话规则、得分/奖励生命与结算推进、固定逻辑时序、精确到碎片的地形/坦克/子弹碰撞与脱困、弹丸/友军伤害规则、子弹、敌人、道具和短生命周期视觉效果的创建/推进、敌人 AI、敌人生成节奏、爆炸设置、玩家移动/cadence、玩家状态/重生、道具设置、关卡流程、关卡设置、关卡网格、关卡包导入、关卡路由、敌人序列和星星升级行为，`tests/run-tests.js` 会先运行这两层测试，再运行 `tools/smoke-test.js` 中剩余的回归套件。
+`src/config/` 负责关卡包配置共享的数据校验：`value-normalization.js` 校验数值范围和颜色；`game-session-settings.js` 接管初始生命、排序后的奖励生命阈值、死亡星级和定时器冻结敌人开关；`combat-settings.js` 接管弹丸尺寸/出生/边界几何以及双人友军伤害开关和眩晕时序；`enemy-ai-settings.js` 接管交叉点寻路、受阻重试、目标轴概率和旧 AI 字段别名；`enemy-spawn-settings.js` 接管逐关生成曲线、关卡/扩展循环下限、双人减法、旧倍率兼容和纯间隔计算；`enemy-types.js` 接管四类默认敌人定义、移动/子弹速度档位、道具类型名称、敌人类型克隆与校验，以及单关敌人规格规范化；`explosion-settings.js` 接管九类嵌套爆炸 TTL/颜色默认值、深克隆和关卡包覆盖校验；`player-movement-settings.js` 接管固定逻辑循环中的移动速度、原版四帧三次移动 cadence、旧版仅覆盖速度时的兼容行为、冰面惯性和独立配置克隆；`player-upgrades.js` 接管四个星星升级等级、独立克隆和关卡包覆盖校验；`power-up-settings.js` 接管头盔/铲子/定时器持续时间、携带者释放和清理规则、拾取分数及其校验；`stage-flow-settings.js` 接管最终关循环、扩展循环地图/敌人数据选择和双人通关领先奖励；`timing-settings.js` 接管固定逻辑循环中的关卡、出生、重生、重试、无敌和道具寿命时序；`stage-settings.js` 接管活动敌人上限、默认玩家/敌人/道具出生布局、严格的 13x13 坐标校验以及图块到像素的转换。`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则；共享战斗随机数、四方向常量/向量、独立帧计数器和矩形几何已迁入该目录。`src/editor/` 接管 Construction 输入/地形规则，以及不依赖浏览器存储或文件 API 的带版本存档文档、旧存档解析、单关卡包组装和 JSON 编解码。`src/entities/` 接管可变游戏实体记录：`player-state.js` 创建完整的单双人玩家记录，并在不丢弃持久得分、生命、击杀或升级状态的前提下复位位置、摧毁、保护、射击、滑行和履带等瞬态；`enemy-state.js` 将类型/序列数据实体化为已放置的敌人，包含独立装甲颜色、出生/重载计时、携带道具数据、移动 cadence 标志以及干净的 AI/摧毁状态；`projectile-state.js` 根据坦克几何、方向、升级/类型战斗数值和关卡包弹丸几何，创建玩家/敌人共用的子弹记录；`power-up-state.js` 在运行时完成随机/地形过滤后，根据已校验战场位置和配置寿命创建可拾取的 12px 道具；`transient-effect-state.js` 创建爆炸与分数提示记录，并在保留存活对象标识的同时推进两者共用的 TTL 生命周期。`src/rules/score-rules.js` 修改玩家分数与奖励生命进度，并返回运行时执行最高分持久化和音频副作用所需的结果；`stage-result-rules.js` 选择结算奖励接收者、生成逐类型结算行/汇总，并计算原版计数与揭示时间轴；`tank-collision-rules.js` 接管实体矩形、精确子弹中心命中范围、有效碰撞对象过滤、总重叠面积、战场/基地阻挡，以及严格减小地形/坦克重叠的脱困规则；`terrain-collision-rules.js` 接管 16px 图块、8px 钢墙象限和 4px 砖块碎片几何、重叠掩码与精确固体地形面积。`src/stages/` 负责关卡域：`stage-grid.js` 提供图块常量、砖块碎片状态、网格修改与校验以及 13x13/26x26 编解码；`enemy-sequences.js` 接管 35 关敌人编组表、每关 20 辆敌人的展开、携带者位置、出生点轮转和序列摘要；`stage-pack.js` 组合全部配置校验器、强制校验完整地图/敌人/关卡数量、支持两种地图编码，并构建运行时网格与敌人查询方法；`stage-routing.js` 将显示用的 1-70 关循环映射到有限的地图/敌人数据，并解析敌人总数和单双人容量上限。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的 Canvas、音频、DOM、存储、输入和脚本加载模拟。`tests/unit/` 直接验证纯模块，`tests/integration/` 通过真实浏览器 API 验证已抽离的配置、基础会话规则、得分/奖励生命与结算推进、固定逻辑时序、精确到碎片的地形/坦克/子弹碰撞与脱困、弹丸/友军伤害规则、子弹、敌人、道具和短生命周期视觉效果的创建/推进、编辑器保存/加载/导出/导入/测试关卡流程、敌人 AI、敌人生成节奏、爆炸设置、玩家移动/cadence、玩家状态/重生、道具设置、关卡流程、关卡设置、关卡网格、关卡包导入、关卡路由、敌人序列和星星升级行为，`tests/run-tests.js` 会先运行这两层测试，再运行 `tools/smoke-test.js` 中剩余的回归套件。
 
 `src/config/power-up-settings.js` 现已接管已校验配置背后的纯携带者状态判定：受击时是否释放携带的道具，以及新携带者出生时是否清除当前未拾取道具。运行时代码只保留实际生成和清除副作用。
 
@@ -283,7 +287,7 @@ tank-defender-8/
 
 `src/audio/free-audio-manifest.js` 接管 `data/free-audio-manifest.json` 的深冻结浏览器模块副本，以及运行时使用的独立深克隆 API。单元测试逐事件对照 JSON 数据源，锁定全部保留时长/声道布局、敌方射击保持静音，以及嵌套克隆隔离；浏览器集成测试验证模块注册，并确认每次公开运行时克隆都与 JSON 数据源一致，同时不会暴露内部冻结对象。
 
-`src/editor/editor-rules.js` 接管六种地形的浏览器调色板、14 步原版 Construction 块序列、方向键/WASD 映射与按住优先级、整格光标钳位、面板色块命中测试、图块循环、光标到单元格转换，以及精确的砖块碎片/钢墙象限编辑。`src/game.js` 保留编辑器屏幕状态、本地存储、JSON 导入/导出、消息、音效和事件副作用。单元测试锁定全部图案、循环边界、按键别名、色块坐标、地形转换和象限修改；浏览器集成测试保留原先在 smoke 中断言的真实 A/B 图案 cadence、D-pad/WASD 移动和数字选刷流程。
+`src/editor/editor-rules.js` 接管六种地形的浏览器调色板、14 步原版 Construction 块序列、方向键/WASD 映射与按住优先级、整格光标钳位、面板色块命中测试、图块循环、光标到单元格转换，以及精确的砖块碎片/钢墙象限编辑。`src/editor/editor-stage-format.js` 接管紧凑的版本 2 本地存档序列化、旧版 13x13 `rows` 与当前 26x26 `quadrants` 格式的兼容加载、可复用的 JSON 解析结果、默认单关导出/测试关卡包组装，以及带缩进的导出序列化。`src/game.js` 现在只保留编辑器屏幕状态、本地存储/剪贴板/文件副作用、消息、音效和事件接线。单元测试锁定两种存档编码、JSON 语法错误与存档结构错误的区分、相互独立的默认关卡包记录、出生点、敌人构成和序列化输出；浏览器集成测试接管原先位于 smoke 中的完整保存、清空、加载、导出、文件导入、Construction 关卡安装、即时测试和复位流程。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 

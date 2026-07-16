@@ -183,6 +183,13 @@
     setEditorQuadrant
   } = requireRuntimeModule("editorRules");
   const {
+    createEditorStagePack,
+    parseEditorStageText,
+    parseJsonText,
+    serializeEditorStage,
+    serializeEditorStagePack
+  } = requireRuntimeModule("editorStageFormat");
+  const {
     DEFAULT_ENEMY_SPAWNS,
     DEFAULT_MAX_ACTIVE_ENEMIES,
     DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER,
@@ -547,42 +554,6 @@
     addStageMotif(grid, stage);
     prepareBattleGrid(grid);
     return grid;
-  }
-
-  function makeSingleStagePack(rows) {
-    return {
-      id: "custom-stage",
-      totalStages: 1,
-      enemyTotal: DEFAULT_ENEMY_TOTAL,
-      enemyTypes: cloneEnemyTypes(defaultEnemyTypes),
-      gameSettings: {
-        initialLives: DEFAULT_INITIAL_LIVES,
-        bonusLifeScores: DEFAULT_BONUS_LIFE_SCORES.slice(),
-        deathPowerLevel: DEFAULT_DEATH_POWER_LEVEL,
-        powerUpDurations: { ...DEFAULT_POWERUP_DURATIONS },
-        powerUpRules: { ...DEFAULT_POWERUP_RULES },
-        timings: { ...DEFAULT_TIMINGS },
-        enemySpawnPacing: { ...DEFAULT_ENEMY_SPAWN_PACING },
-        playerMovement: clonePlayerMovementSettings(DEFAULT_PLAYER_MOVEMENT),
-        projectileRules: { ...DEFAULT_PROJECTILE_RULES },
-        friendlyFire: { ...DEFAULT_FRIENDLY_FIRE },
-        explosionRules: cloneExplosionRules(DEFAULT_EXPLOSION_RULES),
-        stageAdvance: { ...DEFAULT_STAGE_ADVANCE },
-        stageClearBonus: { ...DEFAULT_STAGE_CLEAR_BONUS },
-        enemyAi: { ...DEFAULT_ENEMY_AI },
-        playerUpgradeRules: clonePlayerUpgradeRules(defaultPlayerUpgradeRules),
-        timerFreezesEnemyTime: DEFAULT_TIMER_FREEZES_ENEMY_TIME
-      },
-      stageSettings: [{
-        maxActiveEnemies: DEFAULT_MAX_ACTIVE_ENEMIES,
-        maxActiveEnemiesTwoPlayer: DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER,
-        playerSpawns: [{ x: 4, y: 12 }, { x: 8, y: 12 }],
-        enemySpawns: [{ x: 0, y: 0 }, { x: 6, y: 0 }, { x: 12, y: 0 }],
-        powerUpSpawns: DEFAULT_POWERUP_SPAWNS.map(powerUpPixelToTilePoint)
-      }],
-      quadrants: [rows.length === QUAD_GRID ? rows : gridToQuadrants(parseStageRows(rows))],
-      enemies: [builtInStagePack.enemies[0].map((enemy) => ({ ...enemy }))]
-    };
   }
 
   function stageRoute(stage) {
@@ -1082,23 +1053,20 @@
 
   function testEditorStage() {
     if (!game.editorGrid) return;
-    const rows = gridToQuadrants(game.editorGrid);
-    const result = tryNormalizeStagePack(makeSingleStagePack(rows));
+    const pack = createEditorStagePack(game.editorGrid);
+    const result = tryNormalizeStagePack(pack);
     if (!result.ok) {
       showEditorMessage("BAD");
       return;
     }
     game.stagePack = result.pack;
-    startGame(1, { stage: 1, customGrid: parseStageQuadrants(rows) });
+    startGame(1, { stage: 1, customGrid: parseStageQuadrants(pack.quadrants[0]) });
   }
 
   function saveEditorStage() {
     if (!game.editorGrid) return;
     try {
-      localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify({
-        version: 2,
-        quadrants: gridToQuadrants(game.editorGrid)
-      }));
+      localStorage.setItem(EDITOR_STORAGE_KEY, serializeEditorStage(game.editorGrid));
       showEditorMessage("SAVED");
       playSound("editorSave");
     } catch (error) {
@@ -1113,15 +1081,12 @@
         showEditorMessage("EMPTY");
         return;
       }
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed.quadrants) && parsed.quadrants.length === QUAD_GRID) {
-        game.editorGrid = parseStageQuadrants(parsed.quadrants);
-      } else if (Array.isArray(parsed.rows) && parsed.rows.length === GRID) {
-        game.editorGrid = parseStageRows(parsed.rows);
-      } else {
-        showEditorMessage("BAD");
+      const result = parseEditorStageText(raw);
+      if (!result.ok) {
+        showEditorMessage(result.kind === "stage" ? "BAD" : "ERR");
         return;
       }
+      game.editorGrid = result.grid;
       showEditorMessage("LOADED");
       playSound("editorLoad");
     } catch (error) {
@@ -1142,8 +1107,7 @@
 
   async function exportEditorStage() {
     if (!game.editorGrid) return;
-    const pack = makeSingleStagePack(gridToQuadrants(game.editorGrid));
-    const text = JSON.stringify(pack, null, 2);
+    const text = serializeEditorStagePack(game.editorGrid);
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
@@ -1167,11 +1131,10 @@
   }
 
   function loadStagePackJsonText(text) {
-    try {
-      return loadStagePackObject(JSON.parse(text));
-    } catch (error) {
-      return { ok: false, error: error.message || String(error) };
-    }
+    const parsed = parseJsonText(text);
+    return parsed.ok
+      ? loadStagePackObject(parsed.value)
+      : { ok: false, error: parsed.error };
   }
 
   function loadStagePackObject(pack) {

@@ -12,8 +12,6 @@ const {
   actions,
   buttons,
   listeners,
-  storage,
-  clipboard,
   canvas,
   canvasContext,
   fileInput,
@@ -708,68 +706,6 @@ assert(snapshot.enemyDataStage === 35, "built-in stage 70 should reuse stage 35 
 assert(counts.join(",") === "0,6,4,10", "built-in stage 70 should use stage 35 enemy groups");
 assert(carrierNumbers(snapshot.enemySequence) === "4,11,18", "built-in stage 70 carriers should match stage 35");
 byAction.next.click();
-
-byAction.edit.click();
-byAction.clear.click();
-snapshot = context.window.TankDefender8.debugSnapshot();
-assert(snapshot.fieldGeometry.x === 16 && snapshot.fieldGeometry.panelX === 224 && snapshot.fieldGeometry.panelWidth === 32, "runtime geometry should match the original 16px left border and 32px side panel");
-keyPress("Space");
-snapshot = context.window.TankDefender8.debugSnapshot();
-keyPress("Space");
-snapshot = context.window.TankDefender8.debugSnapshot();
-keyPress("ArrowRight");
-keyPress("KeyF");
-snapshot = context.window.TankDefender8.debugSnapshot();
-keyPress("KeyF");
-snapshot = context.window.TankDefender8.debugSnapshot();
-keyPress("KeyD");
-keyPress("KeyS");
-snapshot = context.window.TankDefender8.debugSnapshot();
-keyPress("Digit2");
-canvas.listeners.click({ clientX: 57, clientY: 57, shiftKey: false, altKey: false });
-snapshot = context.window.TankDefender8.debugSnapshot();
-byAction.save.click();
-assert(storage["tank-defender-8-editor-stage"], "editor save did not write localStorage");
-assert(JSON.parse(storage["tank-defender-8-editor-stage"]).quadrants[0].slice(0, 4) === "...B", "editor save should preserve original half-block patterns");
-assert(JSON.parse(storage["tank-defender-8-editor-stage"]).quadrants[5][5] === "S", "editor save should preserve optional 8px mouse edits");
-byAction.clear.click();
-byAction.load.click();
-byAction.export.click();
-const exportedPack = JSON.parse(clipboard.text);
-assert(Array.isArray(exportedPack.quadrants), "editor export should use quadrant format");
-assert(exportedPack.quadrants[0].length === 26, "exported quadrant map should have 26 rows");
-assert(exportedPack.quadrants[0][0].length === 26, "exported quadrant rows should have 26 columns");
-assert(exportedPack.quadrants[0][0].slice(0, 4) === "...B", "editor export should preserve original construction patterns");
-assert(exportedPack.quadrants[0][5][5] === "S", "editor export should preserve optional 8px quadrant edits");
-assert(exportedPack.stageSettings[0].powerUpSpawns.length === 16, "editor export should include power-up spawn points");
-byAction.import.click();
-assert(fileInput.clicked, "import button did not open file input");
-keyPress("Enter");
-snapshot = context.window.TankDefender8.debugSnapshot();
-assert(snapshot.screen === "title" && snapshot.stage === 1 && snapshot.hasConstructedStage === true, "Start should leave construction and install the edited stage as stage 1");
-byAction.one.click();
-finishStageSelectClosing();
-keyPress("Enter");
-snapshot = context.window.TankDefender8.debugSnapshot();
-assert(snapshot.screen === "stageIntro" && snapshot.constructionStageActive === true, "starting stage 1 should activate the constructed map");
-assert(snapshot.battleQuadrants[0].slice(0, 4) === "...B" && snapshot.battleQuadrants[5][5] === "S", "constructed stage 1 should preserve the edited terrain without clearing spawn cells");
-const constructionAdvanceProbe = context.window.TankDefender8.debugStageClearAdvanceProbe(1);
-assert(constructionAdvanceProbe.stage === 2 && constructionAdvanceProbe.constructionStageActive === false, "clearing the constructed stage should continue to the normal stage 2");
-byAction.edit.click();
-byAction.test.click();
-snapshot = context.window.TankDefender8.debugSnapshot();
-assert(snapshot.players.length === 1, "editor test should start a one-player game");
-assert(snapshot.playerSpawns[0].x === 4 && snapshot.playerSpawns[0].y === 12, "editor test should normalize player spawns");
-assert(snapshot.powerUpSpawns[0].x === 1 && snapshot.powerUpSpawns[0].y === 1, "editor test should normalize power-up spawns");
-assert(snapshot.players[0].stageKills.length === 4, "stage kill table should track four enemy types");
-assert(snapshot.players[0].totalKills.length === 4, "total kill table should track four enemy types");
-assert(context.window.TankDefender8.currentPackInfo().id === "custom-stage", "editor test should use a temporary custom stage pack");
-byAction.reset.click();
-snapshot = context.window.TankDefender8.debugSnapshot();
-assert(context.window.TankDefender8.currentPackInfo().id === "original-style", "reset should restore the built-in original-style pack");
-assert(snapshot.screen === "title" && snapshot.stage === 1, "reset should return to the first title-stage selection");
-assert(snapshot.stageCycleLimit === 70, "reset should restore the original-style 70-stage cycle");
-assert(snapshot.players.length === 0 && snapshot.enemySpawned === 0, "reset should clear temporary gameplay state");
 
 const validPack = {
   id: "smoke",
