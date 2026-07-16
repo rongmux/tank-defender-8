@@ -7,6 +7,7 @@
     return runtimeModules[name];
   }
   const { advanceBattleRandom } = requireRuntimeModule("battleRandom");
+  const { DIR_X, DIR_Y, DOWN, LEFT, RIGHT, UP } = requireRuntimeModule("directions");
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
   const {
@@ -97,6 +98,7 @@
     summarizeEnemySequences
   } = requireRuntimeModule("enemySequences");
   const { createPlayerState, resetPlayerState } = requireRuntimeModule("playerState");
+  const { createProjectileState } = requireRuntimeModule("projectileState");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -921,12 +923,6 @@
     { type: EMPTY, mask: 0 }
   ];
 
-  const UP = 0;
-  const RIGHT = 1;
-  const DOWN = 2;
-  const LEFT = 3;
-  const DIR_X = [0, 1, 0, -1];
-  const DIR_Y = [-1, 0, 1, 0];
   const PIXEL_FONT = {
     " ": ["00000", "00000", "00000", "00000", "00000", "00000", "00000"],
     "0": ["01110", "10001", "10011", "10101", "11001", "10001", "01110"],
@@ -4765,22 +4761,12 @@
   }
 
   function createBullet(tank, key, upgrade) {
-    const rules = gameSettings().projectileRules;
-    const cx = tank.x + tank.w / 2;
-    const cy = tank.y + tank.h / 2;
-    return {
-      x: cx - rules.bulletSize / 2 + DIR_X[tank.dir] * rules.spawnOffset,
-      y: cy - rules.bulletSize / 2 + DIR_Y[tank.dir] * rules.spawnOffset,
-      w: rules.bulletSize,
-      h: rules.bulletSize,
-      dir: tank.dir,
-      speed: upgrade ? upgrade.bulletSpeed : tank.bulletSpeed,
-      power: upgrade ? upgrade.wallPower : tank.bulletPower || 1,
-      ownerKind: tank.kind,
-      ownerId: tank.id,
+    return createProjectileState({
+      tank,
       ownerKey: key,
-      remove: false
-    };
+      upgrade,
+      rules: gameSettings().projectileRules
+    });
   }
 
   function playerUpgradeRule(level) {

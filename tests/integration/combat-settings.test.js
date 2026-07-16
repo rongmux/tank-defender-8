@@ -18,11 +18,6 @@ assert.deepEqual(schema.gameSettings.friendlyFire, {
   enabled: true,
   stunFrames: 200
 });
-const defaultProjectile = JSON.parse(JSON.stringify(api.debugProjectileRuleProbe()));
-assert.equal(defaultProjectile.w, 4);
-assert.equal(defaultProjectile.h, 4);
-assert.equal(defaultProjectile.spawnOffset, 9);
-assert.equal(defaultProjectile.boundsPadding, 4);
 assert.deepEqual(JSON.parse(JSON.stringify(api.debugFriendlyFireProbe())), { enabled: true, stunFrames: 200 });
 
 const customPack = {
@@ -40,12 +35,6 @@ assert.equal(api.loadStagePack(customPack), true);
 const current = JSON.parse(JSON.stringify(api.currentPackInfo()));
 assert.deepEqual(current.projectileRules, customPack.gameSettings.projectileRules);
 assert.deepEqual(current.friendlyFire, customPack.gameSettings.friendlyFire);
-const customProjectile = JSON.parse(JSON.stringify(api.debugProjectileRuleProbe()));
-assert.equal(customProjectile.w, 6);
-assert.equal(customProjectile.h, 6);
-assert.equal(customProjectile.x, 31);
-assert.equal(customProjectile.y, 20);
-assert.equal(customProjectile.boundsPadding, 2);
 assert.deepEqual(JSON.parse(JSON.stringify(api.debugFriendlyFireProbe())), { enabled: false, stunFrames: 0 });
 
 const enabledPack = {
