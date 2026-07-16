@@ -8,7 +8,7 @@ This repository does not include original NES ROM data, original sprites, origin
 
 The project is currently in a dedicated architecture-refactor phase. New 1:1 gameplay work is frozen while the single-file runtime and smoke test are split into explicit browser modules, pure rule modules, shared test infrastructure, unit suites, and feature integration suites. Core timing, randomness, geometry, and direction vectors are now modular; the configuration domain owns shared value validation, base session/life rules, projectile/friendly-fire rules, enemy AI and spawn pacing, enemy type/spec normalization, explosion timings/colors, player movement/cadence, player star-upgrade tiers, power-up durations/rules, stage flow/bonuses, fixed logic timings, and per-stage capacity/spawn settings; the stage domain owns map-grid rules, stage-pack composition/routing, and the original-style enemy group/sequence model; the entity domain owns player lifecycle, enemy/projectile/power-up creation, and transient explosion/score-popup state; and the gameplay-rules domain now owns score/bonus-life progression, stage-result rows/leader/count timing, tank/bullet collision boundaries, opposing-projectile cancellation, projectile boundary/impact selection, fragment-accurate terrain overlap recovery, and directional brick-strip/steel-quarter wall damage. The no-build static launch path remains a hard compatibility requirement throughout the migration.
 
-The presentation domain now owns pure tank and transient-effect visual-frame selection while Canvas sprite submission and pixel drawing remain runtime responsibilities.
+The presentation domain now owns pure tank, transient-effect, title-score, curtain, full GAME OVER, and HIGH SCORE visual timelines while Canvas sprite submission and pixel drawing remain runtime responsibilities.
 
 ## Run
 
@@ -33,6 +33,7 @@ node --check src/entities/power-up-state.js
 node --check src/entities/projectile-state.js
 node --check src/entities/transient-effect-state.js
 node --check src/presentation/effect-presentation.js
+node --check src/presentation/screen-presentation.js
 node --check src/presentation/tank-presentation.js
 node --check src/rules/enemy-ai-rules.js
 node --check src/rules/enemy-spawn-rules.js
@@ -108,6 +109,7 @@ tank-defender-8/
 |   |   `-- transient-effect-state.js
 |   |-- presentation/
 |   |   |-- effect-presentation.js
+|   |   |-- screen-presentation.js
 |   |   `-- tank-presentation.js
 |   |-- rules/
 |   |   |-- enemy-ai-rules.js
@@ -159,6 +161,7 @@ tank-defender-8/
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- score-rules.test.js
+|   |   |-- screen-presentation.test.js
 |   |   |-- stage-flow-settings.test.js
 |   |   |-- stage-settings.test.js
 |   |   |-- stage-grid.test.js
@@ -200,6 +203,7 @@ tank-defender-8/
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- score-rules.test.js
+|   |   |-- screen-presentation.test.js
 |   |   |-- stage-flow-settings.test.js
 |   |   |-- stage-settings.test.js
 |   |   |-- stage-grid.test.js
@@ -234,6 +238,8 @@ tank-defender-8/
 `src/entities/player-state.js` now owns complete player-record creation, stage/respawn reset, and the retained death lifecycle. It rejects hits against inactive, already-destroying, or protected players; initializes death power/timers and clears transient combat state; advances respawn ticks only on eligible movement frames; and resolves the final life into either immediate respawn setup or elimination. Runtime code retains audio, spawn-position restoration, protection activation, and the per-player GAME OVER message.
 
 `src/presentation/effect-presentation.js` owns the reference phase tables, sprite geometry, and timeline projections for player/enemy/HQ destruction, bullet and generic explosions, and fixed or floating score text. Thin runtime adapters inject the current stage-pack TTL values and battlefield layout before Canvas drawing. Direct unit coverage validates every pure projection, while browser integration retains the lifecycle and pixel-bound probes formerly held by the smoke suite.
+
+`src/presentation/screen-presentation.js` owns title score-group placement, the 108-frame full GAME OVER layout, the 460-frame HIGH SCORE palette/centering timeline, and the discrete stage-selection/result closing and stage-intro opening curtains. Thin runtime adapters inject current screen dimensions, stage number, transition timer, and configured intro duration before Canvas drawing. Direct unit coverage locks every boundary and reference coordinate, while browser integration retains the lifecycle, input, audio-coupling, and pixel-render probes formerly held by the smoke suite.
 
 `src/presentation/tank-presentation.js` owns direction and tread frame names, star-upgrade overlay geometry/colors, armor colors, carrier and stun flash cadence, shield visibility/colors, and the four-size spawn-animation sequence. `src/game.js` retains Canvas sprite submission and palette drawing. Direct unit coverage validates every pure selector, while browser integration coverage retains the runtime probes and pixel-level tread/upgrade assertions formerly held by the smoke suite.
 

@@ -541,24 +541,6 @@ assert(hiddenMessageProbe.afterCutscene.screen === "editor" && hiddenMessageProb
 assert(hiddenMessageProbe.afterCutscene.inputCount === 0, "finishing the hidden cutscene should clear its input accumulator");
 assert(hiddenMessageProbe.wrappedVisits === 0, "Construction visit tracking should preserve the original eight-bit wraparound");
 assert(hiddenMessageProbe.alternateSelection.screen === "stageSelectClosing" && hiddenMessageProbe.alternateSelection.players === 1, "the hidden cutscene should continue through the selected title handler and its curtain close");
-const fullGameOverProbe = context.window.TankDefender8.debugFullGameOverScreenProbe();
-assert(fullGameOverProbe.duration === 108, "full-screen game over should wait for the original 108-frame first voice");
-assert(fullGameOverProbe.entry.screen === "fullGameOver" && fullGameOverProbe.entry.elapsed === 0, "game-over interstitial should start on its own screen at frame zero");
-assert(fullGameOverProbe.entry.paused === false, "game-over interstitial should not retain a paused game state");
-assert(fullGameOverProbe.entry.audioActive && fullGameOverProbe.entry.audioFrame === 0, "game-over interstitial should start all fixed-frame voices at frame zero");
-assert(
-  fullGameOverProbe.presentation.x === 0x3c &&
-    fullGameOverProbe.presentation.gameY === 0x46 &&
-    fullGameOverProbe.presentation.overY === 0x78 &&
-    fullGameOverProbe.presentation.letterAdvance === 0x20,
-  "full-screen game-over lettering should retain the original coordinates and 32-pixel advance"
-);
-assert(fullGameOverProbe.beforeEnd.screen === "fullGameOver" && fullGameOverProbe.beforeEnd.elapsed === 107 && fullGameOverProbe.beforeEnd.audioActive && fullGameOverProbe.beforeEnd.audioFrame === 107, "full-screen game over and its fanfare should remain active through frame 107");
-assert(fullGameOverProbe.afterEnd.screen === "title" && fullGameOverProbe.afterEnd.elapsed === 0 && !fullGameOverProbe.afterEnd.audioActive, "frame 108 should stop the fanfare and return a non-record run to the title");
-assert(fullGameOverProbe.ignoredInput.handled === false && fullGameOverProbe.ignoredInput.screen === "fullGameOver", "ordinary controls should not dismiss full-screen game over");
-assert(fullGameOverProbe.startSkip.handled === true && fullGameOverProbe.startSkip.screen === "title" && !fullGameOverProbe.startSkip.audioActive, "keyboard Start should skip full-screen game over and stop its fanfare");
-assert(fullGameOverProbe.selectSkip.handled === true && fullGameOverProbe.selectSkip.screen === "title" && !fullGameOverProbe.selectSkip.audioActive, "keyboard Select should skip full-screen game over and stop its fanfare");
-assert(fullGameOverProbe.highScoreRoute.screen === "highScore" && fullGameOverProbe.highScoreRoute.elapsed === 0 && !fullGameOverProbe.highScoreRoute.audioActive, "a new record should stop GAME OVER audio before the high-score celebration");
 const gameOverAudioProbe = context.window.TankDefender8.debugGameOverAudioProbe();
 assert(gameOverAudioProbe.durationFrames === 108 && gameOverAudioProbe.voiceDurations.join(",") === "108,108,108", "all three game-over voices should cover the complete 108-frame interstitial");
 assert(gameOverAudioProbe.waves.join(",") === "square,square,triangle", "game-over audio should expose its two pulse replacements and triangle voice");
@@ -568,28 +550,6 @@ assert(gameOverBoundaryFrames.map((frame) => frame.voices[1].frequency).join(","
 assert(gameOverBoundaryFrames.map((frame) => frame.voices[2].frequency).join(",") === "329,311,329,261,232,196,196,196,196,196", "game-over triangle should preserve the original note order at each segment boundary");
 assert(gameOverAudioProbe.frames[0].voices[0].frequency === gameOverAudioProbe.frames[1].voices[0].frequency && gameOverAudioProbe.frames[4].voices[0].frequency === gameOverAudioProbe.frames[5].voices[0].frequency && gameOverAudioProbe.frames[18].voices[0].frequency === gameOverAudioProbe.frames[19].voices[0].frequency, "game-over notes should remain held through their 6-, 24-, and final 24-frame spans");
 assert(gameOverAudioProbe.frames[20].voices.every((voice) => voice === null), "all game-over voices should stop exactly on frame 108");
-canvasContext.calls.length = 0;
-canvasContext.resetPixels();
-const renderedFullGameOver = context.window.TankDefender8.debugRenderFullGameOverFrame(42);
-assert(renderedFullGameOver.elapsed === 42, "full-screen game-over renderer should preserve the requested logic frame");
-assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#000000" && call.x === 0 && call.y === 0 && call.w === 256 && call.h === 240), "full-screen game over should clear the complete canvas to black");
-assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42"), "full-screen game over should render striped replacement lettering");
-assert(!canvasContext.calls.some((call) => call.op === "fillText"), "full-screen game-over text should remain pixel-rendered without anti-aliasing");
-assert(
-  canvasContext.calls.filter((call) => call.op === "fillRect").every((call) => [call.x, call.y, call.w, call.h].every(Number.isInteger)),
-  "full-screen game-over rectangles should stay on integer pixel boundaries"
-);
-const highScoreScreenProbe = context.window.TankDefender8.debugHighScoreScreenProbe();
-assert(highScoreScreenProbe.duration === 460, "new-high-score celebration should wait for the original 460-frame first voice");
-assert(highScoreScreenProbe.tie.triggered === false, "matching the old high score should not trigger the celebration");
-assert(highScoreScreenProbe.strictBeat.triggered === true && highScoreScreenProbe.strictBeat.screen === "gameOver", "strictly beating the run-start record should arm the celebration after GAME OVER");
-assert(highScoreScreenProbe.started.screen === "highScore" && highScoreScreenProbe.started.elapsed === 0 && highScoreScreenProbe.started.audioActive && highScoreScreenProbe.started.audioFrame === 0, "finishing GAME OVER with a new record should start the high-score screen and fanfare at frame zero");
-assert(new Set(highScoreScreenProbe.paletteFrames.slice(0, 4).map((frame) => frame.color)).size === 4, "high-score lettering should cycle through four palette colors on consecutive frames");
-assert(highScoreScreenProbe.paletteFrames[0].color === highScoreScreenProbe.paletteFrames[4].color, "high-score palette should repeat every four frames");
-assert(highScoreScreenProbe.sevenDigit.scoreText === "1234567" && highScoreScreenProbe.sevenDigit.scoreX === 23, "high-score screen should retain and center all seven score digits");
-assert(highScoreScreenProbe.beforeEnd.screen === "highScore" && highScoreScreenProbe.beforeEnd.elapsed === 459 && highScoreScreenProbe.beforeEnd.audioActive && highScoreScreenProbe.beforeEnd.audioFrame === 459, "high-score celebration and pulse voices should remain active through frame 459");
-assert(highScoreScreenProbe.afterEnd.screen === "title" && highScoreScreenProbe.afterEnd.elapsed === 0 && highScoreScreenProbe.afterEnd.triggered === false && !highScoreScreenProbe.afterEnd.audioActive, "frame 460 should stop the fanfare and return to a clean title state");
-assert(highScoreScreenProbe.belowRecord.screen === "title" && highScoreScreenProbe.belowRecord.triggered === false, "a below-record game should bypass the high-score screen");
 const highScoreAudioProbe = context.window.TankDefender8.debugHighScoreAudioProbe();
 assert(highScoreAudioProbe.durationFrames === 460 && highScoreAudioProbe.voiceDurations.join(",") === "460,460,380", "high-score pulse voices should last 460 frames while triangle ends on frame 380");
 assert(highScoreAudioProbe.waves.join(",") === "square,square,triangle", "high-score audio should expose both pulse replacements and its triangle voice");
@@ -604,13 +564,6 @@ assert(highScoreAudioFrames.get(400).voices[1].frequency === 1165 && highScoreAu
 assert(highScoreAudioFrames.get(0).voices[2] === null && highScoreAudioFrames.get(129).voices[2] === null && highScoreAudioFrames.get(130).voices[2].frequency === 232, "high-score triangle should retain its initial 130-frame disabled interval");
 assert(highScoreAudioFrames.get(160).voices[2].frequency === 311 && highScoreAudioFrames.get(175).voices[2].frequency === 347 && highScoreAudioFrames.get(180).voices[2].frequency === 391, "high-score triangle should preserve its first 15-, 5-, and 30-frame notes");
 assert(highScoreAudioFrames.get(320).voices[2].frequency === 155 && highScoreAudioFrames.get(379).voices[2].frequency === 155 && highScoreAudioFrames.get(380).voices[2] === null, "high-score triangle should hold its final note through frame 379 and stop on frame 380");
-canvasContext.calls.length = 0;
-canvasContext.resetPixels();
-const renderedHighScore = context.window.TankDefender8.debugRenderHighScoreFrame(1, 1234567);
-assert(renderedHighScore.color === "#345fd1", "rendered high-score frame should use its matching palette phase");
-assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#345fd1"), "high-score replacement letters should render the phase color with integer rectangles");
-assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f7f1c6"), "high-score replacement letters should retain bright stripe highlights");
-assert(!canvasContext.calls.some((call) => call.op === "fillText"), "high-score text should remain pixel-rendered without anti-aliasing");
 keyPress("ArrowDown");
 keyPress("ArrowDown");
 for (let visit = 0; visit < 7; visit += 1) {
@@ -636,13 +589,6 @@ assert(snapshot.screen === "title" && snapshot.constructionVisits === 0 && snaps
 keyPress("ArrowDown");
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.titleMenu === 1 && snapshot.titleMenuAction === "two", "title menu down should select two-player");
-const twoPlayerTitleScoreLayout = context.window.TankDefender8.debugTitleScoreLayoutProbe(1).sort((a, b) => a.x - b.x);
-assert(twoPlayerTitleScoreLayout.map((item) => item.id).join(",") === "p1Label,p1Score,highLabel,highScore,p2Label,p2Score", "two-player title should expose all six score groups in display order");
-assert(
-  twoPlayerTitleScoreLayout.every((item, index) => index === 0 || twoPlayerTitleScoreLayout[index - 1].right < item.x),
-  "two-player title score groups must not overlap"
-);
-assert(twoPlayerTitleScoreLayout.find((item) => item.id === "highScore").x === 128, "title high score should start at the original non-overlapping character column");
 keyPress("ArrowDown");
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.titleMenu === 2 && snapshot.titleMenuAction === "construction", "title menu down should select construction");
@@ -713,32 +659,6 @@ buttons.find((button) => button.dataset.action === "reset").click();
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "title" && snapshot.paused === false, "reset after Start-pause probe should return to the title screen");
 assert(schema.enemyTotal === 20, "schema enemy total should be 20");
-const stageIntroStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(schema.gameSettings.timings.stageIntro);
-const stageIntroOpenStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(18);
-const stageIntroFirstOpenProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(17);
-const stageIntroDuplicateOpenProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(16);
-const stageIntroLastOpenProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(3);
-const stageIntroPrepareProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(2);
-const stageIntroEndProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(0);
-assert(stageIntroStartProbe.loadingFrames === 77 && stageIntroStartProbe.openingFrames === 16 && stageIntroStartProbe.prepareFrames === 2, "stage intro should preserve thirteen map frames, sixty-four attribute frames, sixteen opening frames, and two preparation frames");
-assert(stageIntroStartProbe.phase === "loading" && stageIntroStartProbe.coverRows === 15, "stage intro should begin behind a fully closed thirty-row curtain");
-assert(stageIntroStartProbe.top.w === 256 && stageIntroStartProbe.top.h === 120 && stageIntroStartProbe.bottom.y === 120, "stage curtain should cover the full screen from the top and bottom");
-assert(stageIntroOpenStartProbe.phase === "opening" && stageIntroOpenStartProbe.coverRows === 15, "the first opening wait should begin from a fully closed curtain");
-assert(stageIntroFirstOpenProbe.coverRows === 14 && stageIntroDuplicateOpenProbe.coverRows === 14, "the first two opening writes should restore the same center row pair");
-assert(stageIntroLastOpenProbe.coverRows === 1, "the fifteenth opening write should leave only the outer row pair covered");
-assert(stageIntroPrepareProbe.phase === "prepare" && stageIntroPrepareProbe.coverRows === 0, "tank preparation should begin only after the curtain is fully open");
-assert(stageIntroEndProbe.coverRows === 0 && stageIntroEndProbe.top.h === 0 && stageIntroEndProbe.bottom.h === 0, "stage intro curtain should remain fully open at the end");
-const stageSelectCloseStartProbe = context.window.TankDefender8.debugStageSelectCurtainProbe(16);
-const stageSelectCloseMidProbe = context.window.TankDefender8.debugStageSelectCurtainProbe(8);
-const stageSelectCloseEndProbe = context.window.TankDefender8.debugStageSelectCurtainProbe(0);
-assert(stageSelectCloseStartProbe.coverRows === 0, "stage-selection close should begin with the title unobscured");
-assert(stageSelectCloseMidProbe.coverRows === 8 && stageSelectCloseMidProbe.coverHeight === 64, "stage-selection close should advance one paired tile row per frame");
-assert(stageSelectCloseEndProbe.coverRows === 15 && stageSelectCloseEndProbe.top.h + stageSelectCloseEndProbe.bottom.h === 240, "the final close write should leave the screen fully grey");
-canvasContext.calls.length = 0;
-const stageResultCloseRenderProbe = context.window.TankDefender8.debugRenderStageClearClosingFrame(8);
-const stageResultGreyCurtainRects = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#6b6f78" && call.w === 256 && call.h === 64);
-assert(stageResultCloseRenderProbe.coverRows === 8, "stage-result closing render should use the shared discrete curtain progression");
-assert(stageResultGreyCurtainRects.some((call) => call.y === 0) && stageResultGreyCurtainRects.some((call) => call.y === 176), "stage-result closing render should cover the result table from both screen edges");
 const stageClearRowLayoutProbe = context.window.TankDefender8.debugStageClearRowLayoutProbe();
 assert(
   stageClearRowLayoutProbe.leftArrowX === 112 &&

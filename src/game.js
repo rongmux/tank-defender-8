@@ -83,6 +83,16 @@
     tankDestructionPresentation: selectTankDestructionPresentation
   } = requireRuntimeModule("effectPresentation");
   const {
+    FULL_GAME_OVER_SCREEN_FRAMES,
+    HIGH_SCORE_SCREEN_FRAMES,
+    STAGE_CURTAIN_CLOSE_FRAMES,
+    fullGameOverPresentation: selectFullGameOverPresentation,
+    highScorePresentation: selectHighScorePresentation,
+    stageIntroCurtainState: selectStageIntroCurtainState,
+    stageSelectCurtainState: selectStageSelectCurtainState,
+    titleScoreLayout: selectTitleScoreLayout
+  } = requireRuntimeModule("screenPresentation");
+  const {
     DEFAULT_STAGE_ADVANCE,
     DEFAULT_STAGE_CLEAR_BONUS
   } = requireRuntimeModule("stageFlowSettings");
@@ -238,8 +248,6 @@
   const HIDDEN_MESSAGE_DROP_MORPH_FRAMES = 28;
   const HIDDEN_MESSAGE_DROP_FALL_FRAMES = 218;
   const HIDDEN_MESSAGE_END_FRAME = 887;
-  const FULL_GAME_OVER_SCREEN_FRAMES = 108;
-  const HIGH_SCORE_SCREEN_FRAMES = 460;
   const GAME_OVER_TEXT = "GAME OVER";
   const GAME_OVER_TEXT_START_Y = SCREEN_H;
   const GAME_OVER_TEXT_TARGET_Y = 0x71;
@@ -250,12 +258,8 @@
   const PLAYER_GAME_OVER_STAGE_END_DELAY = 0x100;
   const EXTENDED_STAGE_END_FRAME_HIGH = 0xfe;
   const DEMO_INITIAL_FRAME_LOW = 0x02;
-  const HIGH_SCORE_PALETTE_COLORS = ["#111111", "#345fd1", "#6b6f78", "#f3f0d4"];
-  const STAGE_CURTAIN_CLOSE_FRAMES = 16;
   const STAGE_MAP_DRAW_FRAMES = 13;
   const STAGE_ATTRIBUTE_COPY_FRAMES = 64;
-  const STAGE_CURTAIN_OPEN_FRAMES = 16;
-  const STAGE_PREPARE_FRAMES = 2;
   const STAGE_START_AUDIO_FRAMES = 264;
   const STAGE_RESULT_ROW_LAYOUT = Object.freeze({
     p1KillsRightX: 104,
@@ -5077,51 +5081,16 @@
   }
 
   function fullGameOverPresentation(elapsed) {
-    return {
-      elapsed: clamp(Math.floor(Number(elapsed) || 0), 0, FULL_GAME_OVER_SCREEN_FRAMES - 1),
-      duration: FULL_GAME_OVER_SCREEN_FRAMES,
-      gameText: "GAME",
-      overText: "OVER",
-      x: 0x3c,
-      gameY: 0x46,
-      overY: 0x78,
-      letterAdvance: 0x20,
-      scale: 5
-    };
+    return selectFullGameOverPresentation(elapsed);
   }
 
   function highScorePresentation(elapsed, score) {
-    const frame = Math.max(0, Math.floor(Number(elapsed) || 0));
-    const scoreText = String(clamp(Math.floor(Number(score) || 0), 0, 9999999));
-    return {
-      frame,
-      duration: HIGH_SCORE_SCREEN_FRAMES,
-      palettePhase: frame & 3,
-      color: HIGH_SCORE_PALETTE_COLORS[frame & 3],
-      scoreText,
-      scoreX: Math.round((SCREEN_W - scoreText.length * 30) / 2)
-    };
+    return selectHighScorePresentation(elapsed, score, { screenWidth: SCREEN_W });
   }
 
   function titleScoreLayout(menuIndex) {
     const selected = menuIndex === undefined ? game.titleMenu : menuIndex;
-    const items = [
-      { id: "p1Label", text: "I-", x: 16, y: 24 },
-      { id: "p1Score", text: "00", x: 60, y: 24 },
-      { id: "highLabel", text: "HI-", x: 88, y: 24 },
-      { id: "highScore", text: formatScore5(game.highScore), x: 128, y: 24 }
-    ];
-    if (selected === 1) {
-      items.push(
-        { id: "p2Label", text: "II-", x: 168, y: 24 },
-        { id: "p2Score", text: "00", x: 220, y: 24 }
-      );
-    }
-    return items.map((item) => ({
-      ...item,
-      width: item.text.length * 6 - 1,
-      right: item.x + item.text.length * 6 - 2
-    }));
+    return selectTitleScoreLayout(selected, game.highScore);
   }
 
   function drawStripedTitleText(text, x, y, scale, palette) {
@@ -5637,68 +5606,22 @@
     if (curtain.bottom.h > 0) ctx.fillRect(curtain.bottom.x, curtain.bottom.y, curtain.bottom.w, curtain.bottom.h);
   }
 
-  function curtainRects(coverRows) {
-    const rows = clamp(Math.floor(Number(coverRows) || 0), 0, 15);
-    const coverHeight = rows * 8;
-    return {
-      coverRows: rows,
-      coverHeight,
-      top: { x: 0, y: 0, w: SCREEN_W, h: coverHeight },
-      bottom: { x: 0, y: SCREEN_H - coverHeight, w: SCREEN_W, h: coverHeight }
-    };
-  }
-
-  /** Reproduces the original sixteen waits that replace paired top/bottom rows with grey tiles. */
   function stageSelectCurtainState(timer) {
-    const duration = STAGE_CURTAIN_CLOSE_FRAMES;
-    const remaining = clamp(Math.floor(Number(timer === undefined ? game.transitionTimer : timer) || 0), 0, duration);
-    const elapsed = duration - remaining;
-    return {
-      duration,
-      remaining,
-      elapsed,
-      progress: elapsed / duration,
-      ...curtainRects(Math.min(15, elapsed))
-    };
+    const remaining = timer === undefined ? game.transitionTimer : timer;
+    return selectStageSelectCurtainState(remaining, {
+      screenWidth: SCREEN_W,
+      screenHeight: SCREEN_H
+    });
   }
 
-  function openingCurtainRows(completedFrames) {
-    const completed = clamp(Math.floor(Number(completedFrames) || 0), 0, STAGE_CURTAIN_OPEN_FRAMES);
-    if (completed === 0) return 15;
-    return Math.max(0, Math.min(14, STAGE_CURTAIN_OPEN_FRAMES - completed));
-  }
-
-  /** Splits the configurable intro window into load, sixteen-step opening, and tank preparation phases. */
   function stageIntroCurtainState(timer) {
     const duration = Math.max(1, gameSettings().timings.stageIntro);
-    const remaining = clamp(Math.floor(Number(timer === undefined ? game.transitionTimer : timer) || 0), 0, duration);
-    const elapsed = duration - remaining;
-    const prepareFrames = Math.min(STAGE_PREPARE_FRAMES, Math.max(0, duration - 1));
-    const openingFrames = Math.min(STAGE_CURTAIN_OPEN_FRAMES, Math.max(1, duration - prepareFrames));
-    const loadingFrames = Math.max(0, duration - openingFrames - prepareFrames);
-    const openingElapsed = clamp(elapsed - loadingFrames, 0, openingFrames);
-    const openingStep = Math.floor((openingElapsed / openingFrames) * STAGE_CURTAIN_OPEN_FRAMES);
-    const phase = elapsed < loadingFrames
-      ? "loading"
-      : elapsed < loadingFrames + openingFrames
-        ? "opening"
-        : "prepare";
-    return {
+    const remaining = timer === undefined ? game.transitionTimer : timer;
+    return selectStageIntroCurtainState(remaining, game.stage, {
       duration,
-      remaining,
-      elapsed,
-      progress: elapsed / duration,
-      phase,
-      loadingFrames,
-      openingFrames,
-      prepareFrames,
-      openingElapsed,
-      openingStep,
-      ...curtainRects(phase === "loading" ? 15 : openingCurtainRows(openingStep)),
-      label: `STAGE ${game.stage}`,
-      labelX: 96,
-      labelY: 112
-    };
+      screenWidth: SCREEN_W,
+      screenHeight: SCREEN_H
+    });
   }
 
   function renderStageClear() {
