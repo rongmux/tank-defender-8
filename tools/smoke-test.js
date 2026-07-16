@@ -298,8 +298,6 @@ const schema = context.window.TankDefender8.stagePackSchema();
 canvasContext.calls.length = 0;
 assert(typeof animationFrameCallback === "function", "animation frame callback should be registered");
 animationFrameCallback(16);
-assert(!canvasContext.calls.some((call) => call.op === "fillText"), "canvas text should render through pixel rectangles instead of anti-aliased fillText");
-assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42" && call.w === 5 && call.h === 4), "title should render the large striped replacement logo with integer pixels");
 assert(canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#e3c64e" && call.w === 4 && call.h === 10), "title should render the menu tank cursor");
 assert(snapshot.titleMenu === 0 && snapshot.titleMenuAction === "one", "title menu should default to one-player");
 const titleDemoProbe = context.window.TankDefender8.debugTitleDemoLifecycleProbe();

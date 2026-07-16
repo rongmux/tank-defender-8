@@ -36,6 +36,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/config/power-up-settings.js",
   "src/config/timing-settings.js",
   "src/presentation/free-sprite-manifest.js",
+  "src/presentation/pixel-font.js",
   "src/presentation/tank-presentation.js",
   "src/presentation/effect-presentation.js",
   "src/presentation/screen-presentation.js",
