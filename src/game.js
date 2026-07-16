@@ -22,6 +22,14 @@
     resolveMovementAudioMode: selectMovementAudioMode
   } = requireRuntimeModule("audioMixRules");
   const {
+    FIXED_FRAME_AUDIO_UPDATE_MODE,
+    advanceFixedFrameAudioState,
+    beginFixedFrameAudioState,
+    createFixedFrameAudioState,
+    fixedFrameAudioUpdateMode,
+    resetFixedFrameAudioState
+  } = requireRuntimeModule("fixedFrameAudioState");
+  const {
     directionTowardTarget,
     enemyAiChanceMatches,
     enemyAiPhaseForInterval,
@@ -1127,91 +1135,23 @@
     gain: null,
     phase: -1
   };
-  const movementIceAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const playerShootAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const steelHitAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const enemyHitAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const enemyDestroyAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const playerDestroyAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const baseHitAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const brickHitAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const stageStartAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const bonusLifeAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const powerUpPickupAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const powerUpAppearAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const pauseAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const scoreCountAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const stageBonusAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const gameOverAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
-  const highScoreAudio = {
-    active: false,
-    frame: 0,
-    nodes: []
-  };
+  const movementIceAudio = createFixedFrameAudioState();
+  const playerShootAudio = createFixedFrameAudioState();
+  const steelHitAudio = createFixedFrameAudioState();
+  const enemyHitAudio = createFixedFrameAudioState();
+  const enemyDestroyAudio = createFixedFrameAudioState();
+  const playerDestroyAudio = createFixedFrameAudioState();
+  const baseHitAudio = createFixedFrameAudioState();
+  const brickHitAudio = createFixedFrameAudioState();
+  const stageStartAudio = createFixedFrameAudioState();
+  const bonusLifeAudio = createFixedFrameAudioState();
+  const powerUpPickupAudio = createFixedFrameAudioState();
+  const powerUpAppearAudio = createFixedFrameAudioState();
+  const pauseAudio = createFixedFrameAudioState();
+  const scoreCountAudio = createFixedFrameAudioState();
+  const stageBonusAudio = createFixedFrameAudioState();
+  const gameOverAudio = createFixedFrameAudioState();
+  const highScoreAudio = createFixedFrameAudioState();
   let fixedShortNoiseBuffer = null;
   let fixedShortNoiseSampleRate = 0;
   let fixedShortNoiseClockRate = 0;
@@ -2290,29 +2230,25 @@
 
   function startFixedFrameAudio(state, eventName, audible, runsWhilePaused) {
     stopFixedFrameAudioNodes(state);
-    state.active = true;
-    state.frame = 0;
+    beginFixedFrameAudioState(state);
     syncMovementAudio();
     syncFixedFrameAudioNodes(state, eventName, audible, runsWhilePaused);
   }
 
   function stopFixedFrameAudio(state) {
-    state.active = false;
-    state.frame = 0;
+    resetFixedFrameAudioState(state);
     stopFixedFrameAudioNodes(state);
   }
 
   function updateFixedFrameAudio(state, eventName, audible, runsWhilePaused) {
-    if (!state.active) return;
-    if (game.paused && !runsWhilePaused) {
+    const updateMode = fixedFrameAudioUpdateMode(state, game.paused, runsWhilePaused);
+    if (updateMode === FIXED_FRAME_AUDIO_UPDATE_MODE.INACTIVE) return;
+    if (updateMode === FIXED_FRAME_AUDIO_UPDATE_MODE.HELD) {
       syncFixedFrameAudioNodes(state, eventName, audible, runsWhilePaused);
       return;
     }
     const durationFrames = fixedFrameAudioPresentation(eventName, state.frame).durationFrames;
-    state.frame += 1;
-    if (state.frame >= durationFrames) {
-      state.active = false;
-      state.frame = durationFrames;
+    if (advanceFixedFrameAudioState(state, durationFrames)) {
       stopFixedFrameAudioNodes(state);
       syncMovementAudio();
       return;

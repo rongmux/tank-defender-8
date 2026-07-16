@@ -120,10 +120,8 @@ assert(stableJson(runtimeAudioManifest) === stableJson(audioManifest), "runtime 
 const scoreCountAudioLifecycleProbe = context.window.TankDefender8.debugScoreCountAudioLifecycleProbe();
 assert(scoreCountAudioLifecycleProbe.simultaneous.active && scoreCountAudioLifecycleProbe.simultaneous.frame === 0 && scoreCountAudioLifecycleProbe.simultaneous.elapsed === 32, "the first result count should start its paired cue on result frame 32");
 assert(scoreCountAudioLifecycleProbe.simultaneous.visibleKills === 2 && scoreCountAudioLifecycleProbe.simultaneous.voices.filter(Boolean).length === 2, "both players counting on the same frame should produce one simultaneous two-voice event");
-assert(!scoreCountAudioLifecycleProbe.afterOneFrame.active && scoreCountAudioLifecycleProbe.afterOneFrame.frame === 1 && scoreCountAudioLifecycleProbe.afterOneFrame.voices.every((voice) => voice === null), "score-count audio should stop after one fixed logic frame");
 assert(scoreCountAudioLifecycleProbe.nextCadence.active && scoreCountAudioLifecycleProbe.nextCadence.frame === 0 && scoreCountAudioLifecycleProbe.nextCadence.elapsed === 41 && scoreCountAudioLifecycleProbe.nextCadence.visibleKills === 3, "the next visible result count should retrigger once after the original nine-frame cadence");
 assert(!scoreCountAudioLifecycleProbe.zeroKills.active && scoreCountAudioLifecycleProbe.zeroKills.frame === 0, "a zero-kill result should not start count audio");
-assert(!scoreCountAudioLifecycleProbe.stageCleanup.active && scoreCountAudioLifecycleProbe.stageCleanup.frame === 0, "starting the next stage should clear any pending score-count cue");
 const stageBonusAudioProbe = context.window.TankDefender8.debugStageBonusAudioProbe();
 assert(stageBonusAudioProbe.durationFrames === 28 && stageBonusAudioProbe.voiceDurations.join(",") === "28", "the result leader bonus should contain one twenty-eight-frame voice");
 assert(stageBonusAudioProbe.waves.join(",") === "square", "the result leader bonus should retain its pulse-two replacement voice");
@@ -272,13 +270,8 @@ assert(movementIceAudioProbe.frames[4].voices[0] === null, "ice movement audio s
 const movementIceAudioLifecycleProbe = context.window.TankDefender8.debugMovementIceAudioLifecycleProbe();
 assert(movementIceAudioLifecycleProbe.start.active && movementIceAudioLifecycleProbe.start.frame === 0 && movementIceAudioLifecycleProbe.start.audible, "entering ice movement should trigger the cue at frame zero");
 assert(movementIceAudioLifecycleProbe.start.movementAudioMode === "enemy", "the pulse-one ice cue should remain independent from the pulse-two movement loop");
-assert(movementIceAudioLifecycleProbe.beforePause.active && movementIceAudioLifecycleProbe.beforePause.frame === 3, "ice movement audio should remain active through frame three");
-assert(movementIceAudioLifecycleProbe.paused.paused && movementIceAudioLifecycleProbe.paused.frame === 3 && movementIceAudioLifecycleProbe.paused.movementAudioMode === "none", "pause should mute and freeze ice movement audio without discarding its frame");
-assert(!movementIceAudioLifecycleProbe.end.active && movementIceAudioLifecycleProbe.end.frame === 4 && movementIceAudioLifecycleProbe.end.movementAudioMode === "enemy", "resuming should finish the final ice note and restore movement audio");
-assert(movementIceAudioLifecycleProbe.retriggered.active && movementIceAudioLifecycleProbe.retriggered.frame === 0, "a new ice entry should restart the cue from frame zero");
 assert(!movementIceAudioLifecycleProbe.stageStartSuppressedEnd.active && movementIceAudioLifecycleProbe.stageStartSuppressedEnd.frame === 4, "a stage-start-masked ice cue should still consume its four-frame lifetime");
 assert(!movementIceAudioLifecycleProbe.bonusLifeSuppressedEnd.active && movementIceAudioLifecycleProbe.bonusLifeSuppressedEnd.frame === 4, "a bonus-life-masked ice cue should still consume its four-frame lifetime");
-assert(!movementIceAudioLifecycleProbe.stageCleanup.active && movementIceAudioLifecycleProbe.stageCleanup.frame === 0, "starting a stage should clear any pending ice movement cue");
 const bonusLifeAudioProbe = context.window.TankDefender8.debugBonusLifeAudioProbe();
 assert(bonusLifeAudioProbe.durationFrames === 60, "bonus-life audio should use the original sixty-frame event lifetime");
 assert(bonusLifeAudioProbe.voiceDurations.join(",") === "60,54", "bonus-life pulse voices should preserve their distinct sixty- and fifty-four-frame lengths");
@@ -291,12 +284,6 @@ assert(bonusLifeAudioProbe.frames[7].voices.every(Boolean), "both bonus-life voi
 assert(Boolean(bonusLifeAudioProbe.frames[8].voices[0]) && bonusLifeAudioProbe.frames[8].voices[1] === null, "the second bonus-life voice should release the movement pulse channel on frame fifty-four");
 assert(Boolean(bonusLifeAudioProbe.frames[9].voices[0]) && bonusLifeAudioProbe.frames[10].voices.every((voice) => voice === null), "the lead bonus-life voice should hold through frame fifty-nine and stop on frame sixty");
 const bonusLifeAudioLifecycleProbe = context.window.TankDefender8.debugBonusLifeAudioLifecycleProbe();
-assert(bonusLifeAudioLifecycleProbe.start.active && bonusLifeAudioLifecycleProbe.start.frame === 0 && bonusLifeAudioLifecycleProbe.start.movementAudioMode === "none", "starting bonus-life audio should immediately reserve the movement pulse channel");
-assert(bonusLifeAudioLifecycleProbe.beforePulse2End.frame === 53 && bonusLifeAudioLifecycleProbe.beforePulse2End.pulse2Active, "bonus-life pulse two should stay active through frame fifty-three");
-assert(bonusLifeAudioLifecycleProbe.pulse2End.frame === 54 && !bonusLifeAudioLifecycleProbe.pulse2End.pulse2Active && bonusLifeAudioLifecycleProbe.pulse2End.movementAudioMode === "enemy", "movement audio should resume on the exact frame that bonus pulse two ends");
-assert(bonusLifeAudioLifecycleProbe.paused.paused && bonusLifeAudioLifecycleProbe.paused.frame === 54, "pause should mute and freeze the remaining bonus-life voice");
-assert(bonusLifeAudioLifecycleProbe.beforeEnd.active && bonusLifeAudioLifecycleProbe.beforeEnd.frame === 59, "the lead bonus-life voice should remain active through frame fifty-nine after resume");
-assert(!bonusLifeAudioLifecycleProbe.end.active && bonusLifeAudioLifecycleProbe.end.frame === 60, "the bonus-life event should finish on frame sixty");
 const powerUpPickupAudioProbe = context.window.TankDefender8.debugPowerUpPickupAudioProbe();
 assert(powerUpPickupAudioProbe.durationFrames === 39 && powerUpPickupAudioProbe.voiceDurations.join(",") === "39", "power-up pickup audio should contain one thirty-nine-frame voice");
 assert(powerUpPickupAudioProbe.waves.join(",") === "square", "power-up pickup audio should retain its pulse-like replacement voice");
@@ -338,16 +325,6 @@ assert(pauseAudioProbe.frames[4].voices[0].frequency === 784 && pauseAudioProbe.
 assert(pauseAudioProbe.frames[6].voices[0].frequency === 988 && pauseAudioProbe.frames[7].voices[0].frequency === 988, "the pause tail should span frames twenty-four through thirty-five");
 assert(pauseAudioProbe.frames[8].voices[0] === null, "the pause voice should stop on frame thirty-six");
 const pauseAudioLifecycleProbe = context.window.TankDefender8.debugPauseAudioLifecycleProbe();
-assert(pauseAudioLifecycleProbe.entered && pauseAudioLifecycleProbe.entry.paused && pauseAudioLifecycleProbe.entry.active && pauseAudioLifecycleProbe.entry.frame === 0, "entering pause should start its cue at frame zero");
-assert(
-  pauseAudioLifecycleProbe.paused.frame === 10 &&
-    pauseAudioLifecycleProbe.paused.stageStartFrame === 0 &&
-    pauseAudioLifecycleProbe.paused.bonusLifeFrame === 0 &&
-    pauseAudioLifecycleProbe.paused.powerUpPickupFrame === 0 &&
-    pauseAudioLifecycleProbe.paused.powerUpAppearFrame === 0 &&
-    pauseAudioLifecycleProbe.paused.tick === 25,
-  "paused display frames should advance only the pause cue while freezing battle time and other fixed-frame sounds"
-);
 assert(
   pauseAudioLifecycleProbe.exitedEarly &&
     pauseAudioLifecycleProbe.earlyResume.active &&
@@ -358,10 +335,6 @@ assert(
     pauseAudioLifecycleProbe.earlyResume.movementAudioMode === "none",
   "an unfinished pause cue should retain second-pulse priority after an early resume"
 );
-assert(pauseAudioLifecycleProbe.reentered && pauseAudioLifecycleProbe.restart.paused && pauseAudioLifecycleProbe.restart.active && pauseAudioLifecycleProbe.restart.frame === 0, "entering pause again should restart the cue from frame zero");
-assert(pauseAudioLifecycleProbe.finalPausedFrame.paused && pauseAudioLifecycleProbe.finalPausedFrame.active && pauseAudioLifecycleProbe.finalPausedFrame.frame === 35, "the pause cue should stay active through frame thirty-five while paused");
-assert(pauseAudioLifecycleProbe.exitedBeforeEnd && !pauseAudioLifecycleProbe.finalActiveFrame.paused && pauseAudioLifecycleProbe.finalActiveFrame.frame === 35 && pauseAudioLifecycleProbe.finalActiveFrame.movementAudioMode === "none", "resuming on the final cue frame should keep movement audio suppressed");
-assert(!pauseAudioLifecycleProbe.ended.active && pauseAudioLifecycleProbe.ended.frame === 36 && pauseAudioLifecycleProbe.ended.movementAudioMode === "enemy" && pauseAudioLifecycleProbe.ended.tick === 26, "frame thirty-six should end the pause cue and restore active battle movement audio");
 const pausedStageEndProbe = context.window.TankDefender8.debugPausedStageEndProbe();
 assert(pausedStageEndProbe.incomplete.screen === "playing" && pausedStageEndProbe.incomplete.paused === true && pausedStageEndProbe.incomplete.pauseElapsed === 1, "an incomplete stage should remain paused while its display frame advances");
 assert(pausedStageEndProbe.incomplete.tick === 41 && pausedStageEndProbe.detected.tick === 0, "paused stage-end checks should freeze incomplete play and reset both battle frame counters when completion is detected");

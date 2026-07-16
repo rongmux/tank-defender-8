@@ -10,7 +10,7 @@
 
 表现层现已接管纯坦克、瞬态效果、战斗 HUD、标题计分、幕布、全屏 GAME OVER 和 HIGH SCORE 的视觉时间轴；Canvas 精灵提交和像素绘制仍由运行时负责。
 
-音频域现已接管纯固定帧声部时长/音符投影、逐声部可听性选择、跨事件声道优先级解析，以及玩家/敌人移动循环相位/模式投影。Web Audio 节点创建、暂停/恢复行为和播放副作用仍由运行时负责。
+音频域现已接管纯固定帧音效状态生命周期、声部时长/音符投影、逐声部可听性选择、跨事件声道优先级解析，以及玩家/敌人移动循环相位/模式投影。Web Audio 节点创建、暂停/恢复副作用和播放仍由运行时负责。
 
 ## 运行
 
@@ -27,6 +27,7 @@ python -m http.server 8765 --bind 127.0.0.1
 ```powershell
 node --check src/audio/audio-mix-rules.js
 node --check src/audio/audio-presentation.js
+node --check src/audio/fixed-frame-audio-state.js
 node --check src/core/battle-random.js
 node --check src/core/directions.js
 node --check src/core/frame-counter.js
@@ -89,7 +90,8 @@ tank-defender-8/
 |-- src/
 |   |-- audio/
 |   |   |-- audio-mix-rules.js
-|   |   `-- audio-presentation.js
+|   |   |-- audio-presentation.js
+|   |   `-- fixed-frame-audio-state.js
 |   |-- config/
 |   |   |-- combat-settings.js
 |   |   |-- enemy-ai-settings.js
@@ -159,6 +161,7 @@ tank-defender-8/
 |   |   |-- enemy-state.test.js
 |   |   |-- enemy-types.test.js
 |   |   |-- explosion-settings.test.js
+|   |   |-- fixed-frame-audio-state.test.js
 |   |   |-- frame-counter.test.js
 |   |   |-- game-session-settings.test.js
 |   |   |-- player-movement-settings.test.js
@@ -203,6 +206,7 @@ tank-defender-8/
 |   |   |-- enemy-state.test.js
 |   |   |-- enemy-types.test.js
 |   |   |-- explosion-settings.test.js
+|   |   |-- fixed-frame-audio-state.test.js
 |   |   |-- frame-counter.test.js
 |   |   |-- game-session-settings.test.js
 |   |   |-- geometry.test.js
@@ -255,6 +259,8 @@ tank-defender-8/
 `src/audio/audio-presentation.js` 接管固定帧声部时长与音符投影、全局或逐声部可听性选择，以及由清单驱动的玩家/敌人移动循环相位。薄运行时适配器只注入所选清单事件，`src/game.js` 保留 Web Audio 缓冲区/振荡器创建、暂停/恢复行为及全部播放副作用。直接单元测试锁定异常输入、片段/重复边界、静音音符、增益和移动相位；浏览器集成测试保留原先位于 smoke 套件中的代表性计分音、移动相位、冰面提示音和开场音探针。
 
 `src/audio/audio-mix-rules.js` 接管纯脉冲一、脉冲二、三角波和噪声声道优先级矩阵，以及移动循环模式选择。它会区分游戏正处于暂停状态和暂停提示音仍在播放的状态，保留彼此独立的声道，并让玩家移动请求检测保持懒执行，避免已被阻塞的状态改变运行时工作量或演示模式行为。`src/game.js` 提供当前事件标志并执行节点同步。直接单元测试锁定完整优先级矩阵；浏览器集成测试集中接管原先散落在 smoke 套件中的跨声道探针。
+
+`src/audio/fixed-frame-audio-state.js` 接管所有保留音效的创建、开始/复位转换、暂停保持选择、固定帧推进和精确结束帧钳位。运行时拥有的 Web Audio 节点句柄仍作为各状态中的不透明条目，只由 `src/game.js` 停止或重建。直接单元测试锁定独立状态记录、节点所有权保留、暂停模式、非法时长回退和完成边界；浏览器集成测试集中接管原先位于 smoke 套件中的一帧、暂停、暂停中继续运行、重新触发、清理和最终帧生命周期探针。
 
 `src/presentation/battle-hud-presentation.js` 接管右侧栏后备敌人/生命计数、16 帧 PAUSE 闪烁选择、场内 GAME OVER 的 127 帧滑入与 129 帧停留，以及双人模式单玩家淘汰时 32x8 紧凑提示的投影。薄运行时适配器在 Canvas 绘制前注入当前计数、暂停/演示标志和关卡包 GAME OVER 时序。直接单元测试锁定纯规则边界，浏览器集成测试保留原先位于 smoke 套件中的生命周期、音频耦合和像素占位探针。
 

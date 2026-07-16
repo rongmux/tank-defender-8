@@ -9,6 +9,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/core/directions.js",
   "src/audio/audio-presentation.js",
   "src/audio/audio-mix-rules.js",
+  "src/audio/fixed-frame-audio-state.js",
   "src/rules/enemy-ai-rules.js",
   "src/rules/enemy-spawn-rules.js",
   "src/entities/enemy-state.js",
