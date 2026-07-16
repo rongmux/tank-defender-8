@@ -11,6 +11,16 @@
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
   const {
+    directionTowardTarget,
+    enemyAiChanceMatches,
+    enemyAiPhaseForInterval,
+    isEnemyAtTurnIntersection,
+    isEnemyMovementFrame,
+    selectEnemyTargetPlayer,
+    shouldEnemyFireForByte,
+    targetableEnemyPlayers
+  } = requireRuntimeModule("enemyAiRules");
+  const {
     activeEnemyCount,
     findAvailableEnemySlot,
     isEnemySpawnPointOccupied,
@@ -3920,7 +3930,7 @@
 
   /** Advances the original $73 enemy explosion timer on that tank's movement cadence. */
   function updateEnemyDestruction(enemy) {
-    if (!isEnemyMovementFrame(enemy)) return;
+    if (!isEnemyMovementFrame(enemy, game.frameLow)) return;
     enemy.destroyTicks = Math.max(0, Math.floor(Number(enemy.destroyTicks) || 0)) + 1;
     const explosionTicks = Math.max(1, Math.floor(Number(enemy.destroyExplosionTicks) || explosionRule("enemyDestroy").ttl));
     if (enemy.destroyTicks < explosionTicks + ENEMY_DESTRUCTION_SCORE_TICKS) return;
@@ -3935,7 +3945,7 @@
 
   function updateEnemyMovement(enemy, random) {
     const nextRandom = typeof random === "function" ? random : undefined;
-    if (!isEnemyMovementFrame(enemy)) return;
+    if (!isEnemyMovementFrame(enemy, game.frameLow)) return;
 
     if (recoverEnemyTankOverlap(enemy)) return;
 
@@ -4005,16 +4015,6 @@
     return true;
   }
 
-  function isEnemyMovementFrame(enemy) {
-    if (!enemy.alternateMovement) return true;
-    const slot = Number.isInteger(enemy.slotIndex) ? enemy.slotIndex : 2;
-    return ((slot ^ game.frameLow) & 1) === 1;
-  }
-
-  function isEnemyAtTurnIntersection(enemy) {
-    return Math.round(enemy.x + enemy.w / 2) % HALF === 0 && Math.round(enemy.y + enemy.h / 2) % HALF === 0;
-  }
-
   function chooseEnemyDirectionByPhase(enemy, random) {
     const nextRandom = typeof random === "function" ? random : undefined;
     const phase = enemyAiPhase(game.stage, game.frameHigh);
@@ -4025,7 +4025,7 @@
 
     let target = { x: game.base.x + game.base.w / 2, y: game.base.y + game.base.h / 2 };
     if (phase === "player") {
-      const player = enemyTargetPlayer(enemy);
+      const player = selectEnemyTargetPlayer(enemy, game.players);
       if (player) target = { x: player.x + player.w / 2, y: player.y + player.h / 2 };
     }
     const horizontalFirst = aiRoll(gameSettings().enemyAi.horizontalFirstChance, nextRandom);
@@ -4035,52 +4035,15 @@
 
   function enemyAiPhase(stage, frameHigh) {
     const interval = scaleEnemySpawnDelayForPlayers(defaultEnemySpawnDelay(stage), game.playerCount);
-    const phaseCounter = Math.max(0, Math.floor(Number(frameHigh) || 0)) & 0xff;
-    if (phaseCounter > Math.floor(interval / 4)) return "hq";
-    if (phaseCounter > Math.floor(interval / 8)) return "player";
-    return "random";
-  }
-
-  function enemyTargetPlayer(enemy) {
-    const targetable = enemyTargetablePlayers();
-    if (!targetable.length) return null;
-    const slot = Number.isInteger(enemy.slotIndex) ? enemy.slotIndex : 2;
-    const preferredId = slot & 1 ? 2 : 1;
-    return targetable.find((player) => player.id === preferredId) || targetable.find((player) => player.id === 1) || targetable[0];
-  }
-
-  function directionTowardTarget(enemy, target, horizontalFirst) {
-    const dx = target.x - (enemy.x + enemy.w / 2);
-    const dy = target.y - (enemy.y + enemy.h / 2);
-    if (horizontalFirst) {
-      if (dx < 0) return LEFT;
-      if (dx > 0) return RIGHT;
-      if (dy < 0) return UP;
-      if (dy > 0) return DOWN;
-      return UP;
-    }
-    if (dy < 0) return UP;
-    if (dy > 0) return DOWN;
-    if (dx < 0) return LEFT;
-    if (dx > 0) return RIGHT;
-    return UP;
-  }
-
-  function enemyTargetablePlayers() {
-    return game.players.filter((player) => player.alive);
+    return enemyAiPhaseForInterval(interval, frameHigh);
   }
 
   function shouldEnemyFire(enemy) {
-    if (enemy.fireChance === ENEMY_FIRE_CHANCE) return (randomByte() & 0x1f) === 0;
-    return randomByte() / 256 < enemy.fireChance;
+    return shouldEnemyFireForByte(enemy.fireChance, ENEMY_FIRE_CHANCE, randomByte());
   }
 
   function aiRoll(chance, random) {
-    const byte = randomByte(random);
-    if (chance === 1 / 16) return (byte & 0x0f) === 0;
-    if (chance === 3 / 4) return (byte & 0x03) !== 0;
-    if (chance === 1 / 2) return (byte & 0x01) !== 0;
-    return byte / 256 < chance;
+    return enemyAiChanceMatches(chance, randomByte(random));
   }
 
   function randomByte(random) {
@@ -10057,7 +10020,7 @@
           { id: 4, alive: false, spawnFlash: 0, respawn: 0 }
         ];
         return {
-          targetableIds: enemyTargetablePlayers().map((player) => player.id),
+          targetableIds: targetableEnemyPlayers(game.players).map((player) => player.id),
           spawningId: 2,
           respawningId: 3
         };
@@ -10099,12 +10062,12 @@
           { id: 1, alive: true, x: 32, y: 160, w: 14, h: 14 },
           { id: 2, alive: true, x: 128, y: 160, w: 14, h: 14 }
         ];
-        const oddSlotTarget = enemyTargetPlayer(enemy);
+        const oddSlotTarget = selectEnemyTargetPlayer(enemy, game.players);
         enemy.slotIndex = 6;
-        const evenSlotTarget = enemyTargetPlayer(enemy);
+        const evenSlotTarget = selectEnemyTargetPlayer(enemy, game.players);
         game.players[1].alive = false;
         enemy.slotIndex = 7;
-        const fallbackTarget = enemyTargetPlayer(enemy);
+        const fallbackTarget = selectEnemyTargetPlayer(enemy, game.players);
         return {
           oddSlotTargetId: oddSlotTarget ? oddSlotTarget.id : null,
           evenSlotTargetId: evenSlotTarget ? evenSlotTarget.id : null,
@@ -10127,7 +10090,11 @@
         for (let tick = 0; tick < 4; tick += 1) {
           game.tick = tick;
           game.frameLow = tick;
-          frames.push({ tick, normal: isEnemyMovementFrame(normal), fast: isEnemyMovementFrame(fast) });
+          frames.push({
+            tick,
+            normal: isEnemyMovementFrame(normal, game.frameLow),
+            fast: isEnemyMovementFrame(fast, game.frameLow)
+          });
         }
         return frames;
       } finally {
