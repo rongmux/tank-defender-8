@@ -5,7 +5,6 @@ const { createBrowserGameHarness } = require("../tests/helpers/browser-game-harn
 const root = path.resolve(__dirname, "..");
 const quadrantPack = JSON.parse(fs.readFileSync(path.join(root, "data", "sample-quadrant-stage-pack.json"), "utf8"));
 const freePack = JSON.parse(fs.readFileSync(path.join(root, "data", "free-35-stage-pack.json"), "utf8"));
-const audioManifest = JSON.parse(fs.readFileSync(path.join(root, "data", "free-audio-manifest.json"), "utf8"));
 const spriteManifest = JSON.parse(fs.readFileSync(path.join(root, "data", "free-sprite-manifest.json"), "utf8"));
 
 const {
@@ -70,53 +69,6 @@ function finishStageSelectClosing() {
 }
 
 assert(context.window.TankDefender8, "TankDefender8 API was not exposed");
-const runtimeAudioManifest = context.window.TankDefender8.audioManifest();
-assert(runtimeAudioManifest.id === "free-synth-audio", "runtime audio manifest id should match the free replacement manifest");
-assert(Object.keys(runtimeAudioManifest.events).length >= 18, "runtime audio manifest should expose gameplay sound events");
-assert(runtimeAudioManifest.events.powerUp.durationFrames === 39, "power-up pickup replacement audio should preserve the original thirty-nine-frame lifetime");
-assert(runtimeAudioManifest.events.powerUp.voices.length === 1 && runtimeAudioManifest.events.powerUp.voices[0].wave === "square", "power-up pickup replacement audio should use one pulse-like voice");
-assert(runtimeAudioManifest.events.powerUpAppear.durationFrames === 32, "power-up appearance replacement audio should preserve the original thirty-two-frame lifetime");
-assert(runtimeAudioManifest.events.powerUpAppear.voices.length === 1 && runtimeAudioManifest.events.powerUpAppear.voices[0].wave === "square", "power-up appearance replacement audio should use one pulse-like voice");
-assert(runtimeAudioManifest.events.pause.durationFrames === 36, "pause replacement audio should preserve the original thirty-six-frame lifetime");
-assert(runtimeAudioManifest.events.pause.voices.length === 1 && runtimeAudioManifest.events.pause.voices[0].wave === "square", "pause replacement audio should use one pulse-like voice");
-assert(runtimeAudioManifest.events.bonusLife.durationFrames === 60, "bonus-life replacement audio should retain the original one-second lead voice");
-assert(runtimeAudioManifest.events.bonusLife.voices.length === 2, "bonus-life replacement audio should preserve both pulse voices");
-assert(runtimeAudioManifest.events.bonusLife.voices.every((voice) => voice.wave === "square"), "bonus-life replacement audio should keep both voices pulse-like");
-assert(runtimeAudioManifest.events.stageStart.durationFrames === 264, "stage-start replacement audio should preserve the original 264-frame lifetime");
-assert(runtimeAudioManifest.events.stageStart.voices.length === 3, "stage-start replacement audio should preserve three simultaneous voices");
-assert(runtimeAudioManifest.events.stageStart.voices.map((voice) => voice.wave).join(",") === "square,triangle,square", "stage-start replacement audio should use two pulse-like voices and one triangle voice");
-assert(runtimeAudioManifest.events.movementEnemy.frequencies.join(",") === "72,64", "enemy movement should expose a two-step replacement engine loop");
-assert(runtimeAudioManifest.events.movementEnemy.stepFrames === 4, "enemy movement loop should switch pitch every four fixed logic frames");
-assert(runtimeAudioManifest.events.movementPlayer.frequencies.join(",") === "112,96", "player movement should expose its distinct two-step replacement engine loop");
-assert(runtimeAudioManifest.events.movementPlayer.stepFrames === 16, "player movement loop should switch pitch every sixteen fixed logic frames");
-assert(runtimeAudioManifest.events.playerShoot.durationFrames === 15, "player shooting should preserve the original fifteen-frame lifetime");
-assert(runtimeAudioManifest.events.playerShoot.voices.length === 1 && runtimeAudioManifest.events.playerShoot.voices[0].wave === "square", "player shooting should use one pulse-like voice");
-assert(!Object.prototype.hasOwnProperty.call(runtimeAudioManifest.events, "enemyShoot"), "enemy shooting should remain silent like the original");
-assert(runtimeAudioManifest.events.brickHit.durationFrames === 3, "brick and destructible-steel impacts should preserve the original three-frame lifetime");
-assert(runtimeAudioManifest.events.brickHit.voices.length === 1 && runtimeAudioManifest.events.brickHit.voices[0].wave === "triangle", "destructive wall impacts should use one triangle voice");
-assert(runtimeAudioManifest.events.steelHit.durationFrames === 4, "steel and field-boundary impacts should preserve the original four-frame lifetime");
-assert(runtimeAudioManifest.events.steelHit.voices.length === 1 && runtimeAudioManifest.events.steelHit.voices[0].wave === "square", "steel and field-boundary impacts should use one pulse-like voice");
-assert(runtimeAudioManifest.events.enemyHit.durationFrames === 5, "surviving armored-enemy hits should preserve the original five-frame channel lifetime");
-assert(runtimeAudioManifest.events.enemyHit.voices.length === 1 && runtimeAudioManifest.events.enemyHit.voices[0].wave === "square", "surviving armored-enemy hits should use one pulse-like voice");
-assert(runtimeAudioManifest.events.enemyDestroy.durationFrames === 14, "enemy destruction should preserve the original fourteen-frame lifetime");
-assert(runtimeAudioManifest.events.enemyDestroy.voices.length === 1 && runtimeAudioManifest.events.enemyDestroy.voices[0].wave === "noise-long", "enemy destruction should use one long-period noise voice");
-assert(runtimeAudioManifest.events.playerDestroy.durationFrames === 26, "player destruction should preserve the original twenty-six-frame lifetime");
-assert(runtimeAudioManifest.events.playerDestroy.voices.length === 1 && runtimeAudioManifest.events.playerDestroy.voices[0].wave === "noise-long", "player destruction should use one long-period noise voice");
-assert(runtimeAudioManifest.events.baseHit.durationFrames === 27, "base destruction should preserve the original twenty-seven-frame lifetime");
-assert(runtimeAudioManifest.events.baseHit.voices.length === 1 && runtimeAudioManifest.events.baseHit.voices[0].wave === "square", "base destruction should use one pulse-two replacement voice");
-assert(runtimeAudioManifest.events.movementIce.durationFrames === 4, "ice movement cue should preserve the original four-frame lifetime");
-assert(runtimeAudioManifest.events.movementIce.voices.length === 1 && runtimeAudioManifest.events.movementIce.voices[0].wave === "square", "ice movement cue should use one pulse-like voice");
-assert(runtimeAudioManifest.events.scoreCount.durationFrames === 1, "result-table count audio should preserve the original one-frame lifetime");
-assert(runtimeAudioManifest.events.scoreCount.voices.length === 2, "result-table count audio should preserve both simultaneous channels");
-assert(runtimeAudioManifest.events.scoreCount.voices.map((voice) => voice.wave).join(",") === "square,noise-short", "result-table count audio should pair pulse two with short-period noise");
-assert(runtimeAudioManifest.events.stageBonus.durationFrames === 28, "result-table leader bonus should preserve the original twenty-eight-frame lifetime");
-assert(runtimeAudioManifest.events.stageBonus.voices.length === 1 && runtimeAudioManifest.events.stageBonus.voices[0].wave === "square", "result-table leader bonus should use one pulse-two replacement voice");
-assert(runtimeAudioManifest.events.gameOver.durationFrames === 108, "full-screen game-over replacement fanfare should preserve the original 108-frame lifetime");
-assert(runtimeAudioManifest.events.gameOver.voices.length === 3, "game-over replacement fanfare should preserve a three-voice arrangement");
-assert(runtimeAudioManifest.events.gameOver.voices.map((voice) => voice.wave).join(",") === "square,square,triangle", "game-over replacement fanfare should retain pulse-one, pulse-two, and triangle voices");
-assert(runtimeAudioManifest.events.highScore.durationFrames === 460, "high-score replacement fanfare should preserve the original 460-frame first-voice lifetime");
-assert(runtimeAudioManifest.events.highScore.voices.map((voice) => voice.wave).join(",") === "square,square,triangle", "high-score replacement fanfare should retain pulse-one, pulse-two, and triangle voices");
-assert(stableJson(runtimeAudioManifest) === stableJson(audioManifest), "runtime audio manifest should match data/free-audio-manifest.json");
 const scoreCountAudioLifecycleProbe = context.window.TankDefender8.debugScoreCountAudioLifecycleProbe();
 assert(scoreCountAudioLifecycleProbe.simultaneous.active && scoreCountAudioLifecycleProbe.simultaneous.frame === 0 && scoreCountAudioLifecycleProbe.simultaneous.elapsed === 32, "the first result count should start its paired cue on result frame 32");
 assert(scoreCountAudioLifecycleProbe.simultaneous.visibleKills === 2 && scoreCountAudioLifecycleProbe.simultaneous.voices.filter(Boolean).length === 2, "both players counting on the same frame should produce one simultaneous two-voice event");

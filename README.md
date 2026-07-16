@@ -10,7 +10,7 @@ The project is currently in a dedicated architecture-refactor phase. New 1:1 gam
 
 The presentation domain now owns pure tank, transient-effect, battle-HUD, title-score, curtain, full GAME OVER, and HIGH SCORE visual timelines while Canvas sprite submission and pixel drawing remain runtime responsibilities.
 
-The audio domain now owns pure fixed-frame sound-state lifecycles, voice duration/note projection, per-voice audibility selection, cross-event channel-priority resolution, and player/enemy movement-loop phase/mode projection. Web Audio node creation, pause/resume side effects, and playback remain runtime responsibilities.
+The audio domain now owns the deeply frozen free replacement manifest, pure fixed-frame sound-state lifecycles, voice duration/note projection, per-voice audibility selection, cross-event channel-priority resolution, and player/enemy movement-loop phase/mode projection. Web Audio node creation, pause/resume side effects, and playback remain runtime responsibilities.
 
 ## Run
 
@@ -28,6 +28,7 @@ Then open `http://127.0.0.1:8765/index.html`.
 node --check src/audio/audio-mix-rules.js
 node --check src/audio/audio-presentation.js
 node --check src/audio/fixed-frame-audio-state.js
+node --check src/audio/free-audio-manifest.js
 node --check src/core/battle-random.js
 node --check src/core/directions.js
 node --check src/core/frame-counter.js
@@ -91,7 +92,8 @@ tank-defender-8/
 |   |-- audio/
 |   |   |-- audio-mix-rules.js
 |   |   |-- audio-presentation.js
-|   |   `-- fixed-frame-audio-state.js
+|   |   |-- fixed-frame-audio-state.js
+|   |   `-- free-audio-manifest.js
 |   |-- config/
 |   |   |-- combat-settings.js
 |   |   |-- enemy-ai-settings.js
@@ -163,6 +165,7 @@ tank-defender-8/
 |   |   |-- explosion-settings.test.js
 |   |   |-- fixed-frame-audio-state.test.js
 |   |   |-- frame-counter.test.js
+|   |   |-- free-audio-manifest.test.js
 |   |   |-- game-session-settings.test.js
 |   |   |-- player-movement-settings.test.js
 |   |   |-- player-state.test.js
@@ -208,6 +211,7 @@ tank-defender-8/
 |   |   |-- explosion-settings.test.js
 |   |   |-- fixed-frame-audio-state.test.js
 |   |   |-- frame-counter.test.js
+|   |   |-- free-audio-manifest.test.js
 |   |   |-- game-session-settings.test.js
 |   |   |-- geometry.test.js
 |   |   |-- player-movement-settings.test.js
@@ -261,6 +265,8 @@ tank-defender-8/
 `src/audio/audio-mix-rules.js` owns the pure pulse-one, pulse-two, triangle, and noise channel-priority matrix plus movement-loop mode selection. It distinguishes an actively paused game from a still-playing pause cue, preserves independent channels, and keeps player movement-request detection lazy so blocked states cannot alter runtime work or demo behavior. `src/game.js` supplies the current event flags and performs node synchronization. Direct unit coverage locks the full priority matrix, while browser integration centralizes the cross-channel probes formerly scattered through the smoke suite.
 
 `src/audio/fixed-frame-audio-state.js` owns creation, begin/reset transitions, pause-hold selection, fixed-frame advancement, and exact end-frame clamping for all retained sound events. Runtime-owned Web Audio node handles remain opaque entries on each state and are stopped or recreated only by `src/game.js`. Direct unit coverage locks independent state records, retained node ownership, pause modes, invalid-duration fallback, and completion boundaries; browser integration centralizes one-frame, paused, pause-running, retrigger, cleanup, and final-frame lifecycle probes formerly held by the smoke suite.
+
+`src/audio/free-audio-manifest.js` owns the deeply frozen browser module copy of `data/free-audio-manifest.json` and the independent deep-clone API consumed by the runtime. Unit coverage compares every event against the JSON source, locks all retained durations/channel layouts and intentional silent enemy shooting, and proves nested clone isolation. Browser integration verifies module registration and confirms each public runtime clone remains equal to the JSON source without exposing the frozen internal object.
 
 `src/presentation/battle-hud-presentation.js` owns right-panel reserve-enemy/life counts, the 16-frame PAUSE blink selector, the 127-frame in-field GAME OVER slide plus 129-frame hold, and the compact 32x8 two-player elimination-message projection. Thin runtime adapters supply current counters, pause/demo flags, and stage-pack game-over timings before Canvas drawing. Direct unit coverage locks the pure boundaries, while browser integration retains the lifecycle, audio-coupling, and pixel-footprint probes formerly held by the smoke suite.
 

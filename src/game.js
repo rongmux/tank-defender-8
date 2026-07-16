@@ -30,6 +30,10 @@
     resetFixedFrameAudioState
   } = requireRuntimeModule("fixedFrameAudioState");
   const {
+    FREE_AUDIO_MANIFEST,
+    cloneAudioManifest
+  } = requireRuntimeModule("freeAudioManifest");
+  const {
     directionTowardTarget,
     enemyAiChanceMatches,
     enemyAiPhaseForInterval,
@@ -284,7 +288,6 @@
   const DEMO_INITIAL_FRAME_LOW = 0x02;
   const STAGE_MAP_DRAW_FRAMES = 13;
   const STAGE_ATTRIBUTE_COPY_FRAMES = 64;
-  const STAGE_START_AUDIO_FRAMES = 264;
   const STAGE_RESULT_ROW_LAYOUT = Object.freeze({
     p1KillsRightX: 104,
     leftArrowX: 112,
@@ -300,352 +303,6 @@
     { label: "2 PLAYERS", action: "two", x: 88, y: 152, color: "#f3f0d4" },
     { label: "CONSTRUCTION", action: "construction", x: 88, y: 168, color: "#f3f0d4" }
   ];
-  const FREE_AUDIO_MANIFEST = {
-    id: "free-synth-audio",
-    type: "procedural-web-audio",
-    sampleRate: "browser",
-    events: {
-      editorSave: { freq: 640, duration: 0.05, gain: 0.025, wave: "triangle" },
-      editorLoad: { freq: 520, duration: 0.05, gain: 0.025, wave: "triangle" },
-      editorClear: { freq: 230, duration: 0.05, gain: 0.02, wave: "square" },
-      editorPaint: { freq: 360, duration: 0.03, gain: 0.02, wave: "square", brushPitch: 45 },
-      editorPaintSubtile: { freq: 360, duration: 0.025, gain: 0.018, wave: "square", brushPitch: 45 },
-      editorBrush: { freq: 300, duration: 0.025, gain: 0.016, wave: "triangle", brushPitch: 60 },
-      bulletCancel: { freq: 210, duration: 0.025, gain: 0.015, wave: "square" },
-      baseHit: {
-        durationFrames: 27,
-        voices: [
-          {
-            gain: 0.045,
-            wave: "square",
-            segments: [
-              { frequencies: [261, 246, 196, 155, 131, 123, 98, 78, 65], noteFrames: 3, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      brickHit: {
-        durationFrames: 3,
-        voices: [
-          {
-            gain: 0.02,
-            wave: "triangle",
-            segments: [
-              { frequencies: [165, 246, 139], noteFrames: 1, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      steelHit: {
-        durationFrames: 4,
-        voices: [
-          {
-            gain: 0.02,
-            wave: "square",
-            segments: [
-              { frequencies: [1045, 2072], noteFrames: 2, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      enemyHit: {
-        durationFrames: 5,
-        voices: [
-          {
-            gain: 0.02,
-            wave: "square",
-            segments: [
-              { frequencies: [2601], noteFrames: 1, repeat: 1 },
-              { frequencies: [2728], noteFrames: 2, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      enemyDestroy: {
-        durationFrames: 14,
-        voices: [
-          {
-            gain: 0.05,
-            wave: "noise-long",
-            segments: [
-              { frequencies: [3523], noteFrames: 2, repeat: 1, gain: 0.05 },
-              { frequencies: [3523], noteFrames: 2, repeat: 1, gain: 0.045 },
-              { frequencies: [3523], noteFrames: 10, repeat: 1, gain: 0.022 }
-            ]
-          }
-        ]
-      },
-      bonusLife: {
-        durationFrames: 60,
-        voices: [
-          {
-            gain: 0.018,
-            wave: "square",
-            segments: [
-              { frequencies: [659, 784, 659, 988, 659, 784, 523], noteFrames: 6, repeat: 1 },
-              { frequencies: [988], noteFrames: 18, repeat: 1 }
-            ]
-          },
-          {
-            gain: 0.014,
-            wave: "square",
-            segments: [
-              { frequencies: [523], noteFrames: 2, repeat: 1 },
-              { frequencies: [784, 988, 784, 659, 784, 988, 659], noteFrames: 6, repeat: 1 },
-              { frequencies: [587], noteFrames: 10, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      pause: {
-        durationFrames: 36,
-        voices: [
-          {
-            gain: 0.018,
-            wave: "square",
-            segments: [
-              { frequencies: [659, 740, 784, 988, 1109, 1175], noteFrames: 4, repeat: 1 },
-              { frequencies: [988], noteFrames: 12, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      stageStart: {
-        durationFrames: STAGE_START_AUDIO_FRAMES,
-        voices: [
-          {
-            gain: 0.012,
-            wave: "square",
-            segments: [
-              { frequencies: [330, 392, 440], noteFrames: 8, repeat: 2 },
-              { frequencies: [440, 523, 587], noteFrames: 8, repeat: 2 },
-              { frequencies: [523, 587, 659], noteFrames: 8, repeat: 2 },
-              { frequencies: [659, 784, 880], noteFrames: 8, repeat: 2 },
-              { frequencies: [988], noteFrames: 24, repeat: 1 },
-              { frequencies: [988], noteFrames: 8, repeat: 3 },
-              { frequencies: [988], noteFrames: 24, repeat: 1 }
-            ]
-          },
-          {
-            gain: 0.018,
-            wave: "triangle",
-            segments: [
-              { frequencies: [110], noteFrames: 24, repeat: 1 },
-              { frequencies: [110], noteFrames: 8, repeat: 3 },
-              { frequencies: [131], noteFrames: 24, repeat: 1 },
-              { frequencies: [131], noteFrames: 8, repeat: 3 },
-              { frequencies: [147], noteFrames: 24, repeat: 1 },
-              { frequencies: [147], noteFrames: 8, repeat: 3 },
-              { frequencies: [165], noteFrames: 8, repeat: 3 },
-              { frequencies: [196], noteFrames: 8, repeat: 3 },
-              { frequencies: [220], noteFrames: 24, repeat: 1 },
-              { frequencies: [220], noteFrames: 8, repeat: 3 },
-              { frequencies: [220], noteFrames: 24, repeat: 1 }
-            ]
-          },
-          {
-            gain: 0.01,
-            wave: "square",
-            segments: [
-              { frequencies: [165], noteFrames: 24, repeat: 1 },
-              { frequencies: [165], noteFrames: 8, repeat: 3 },
-              { frequencies: [196], noteFrames: 24, repeat: 1 },
-              { frequencies: [196], noteFrames: 8, repeat: 3 },
-              { frequencies: [220], noteFrames: 24, repeat: 1 },
-              { frequencies: [220], noteFrames: 8, repeat: 3 },
-              { frequencies: [262], noteFrames: 8, repeat: 3 },
-              { frequencies: [294], noteFrames: 8, repeat: 3 },
-              { frequencies: [330], noteFrames: 24, repeat: 1 },
-              { frequencies: [330], noteFrames: 8, repeat: 3 },
-              { frequencies: [330], noteFrames: 24, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      movementEnemy: { frequencies: [72, 64], stepFrames: 4, gain: 0.01, wave: "square", loop: true },
-      movementPlayer: { frequencies: [112, 96], stepFrames: 16, gain: 0.012, wave: "square", loop: true },
-      movementIce: {
-        durationFrames: 4,
-        voices: [
-          {
-            gain: 0.016,
-            wave: "square",
-            segments: [
-              { frequencies: [279, 349, 415, 523], noteFrames: 1, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      playerDestroy: {
-        durationFrames: 26,
-        voices: [
-          {
-            gain: 0.05,
-            wave: "noise-long",
-            segments: [
-              { frequencies: [1762], noteFrames: 2, repeat: 2, gain: 0.05 },
-              { frequencies: [1762], noteFrames: 2, repeat: 2, gain: 0.0467 },
-              { frequencies: [1762], noteFrames: 2, repeat: 2, gain: 0.0433 },
-              { frequencies: [1762], noteFrames: 2, repeat: 2, gain: 0.04 },
-              { frequencies: [1762], noteFrames: 2, repeat: 2, gain: 0.0367 },
-              { frequencies: [1762], noteFrames: 2, repeat: 1, gain: 0.0333 },
-              { frequencies: [1762], noteFrames: 2, repeat: 1, gain: 0.03 },
-              { frequencies: [1762], noteFrames: 2, repeat: 1, gain: 0.0267 }
-            ]
-          }
-        ]
-      },
-      powerUp: {
-        durationFrames: 39,
-        voices: [
-          {
-            gain: 0.016,
-            wave: "square",
-            segments: [
-              {
-                frequencies: [988, 659, 784, 988, 880, 587, 740, 880, 659, 784, 988, 659, 784],
-                noteFrames: 3,
-                repeat: 1
-              }
-            ]
-          }
-        ]
-      },
-      powerUpAppear: {
-        durationFrames: 32,
-        voices: [
-          {
-            gain: 0.015,
-            wave: "square",
-            segments: [
-              { frequencies: [392, 330, 392, 440, 392, 440, 494, 523], noteFrames: 4, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      playerShoot: {
-        durationFrames: 15,
-        voices: [
-          {
-            gain: 0.018,
-            wave: "square",
-            segments: [
-              { frequencies: [1165], noteFrames: 15, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      scoreCount: {
-        durationFrames: 1,
-        voices: [
-          {
-            gain: 0.018,
-            wave: "square",
-            segments: [
-              { frequencies: [165], noteFrames: 1, repeat: 1 }
-            ]
-          },
-          {
-            gain: 0.014,
-            wave: "noise-short",
-            segments: [
-              { frequencies: [27965], noteFrames: 1, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      stageBonus: {
-        durationFrames: 28,
-        voices: [
-          {
-            gain: 0.018,
-            wave: "square",
-            segments: [
-              { frequencies: [988, 659, 659, 784, 784, 988], noteFrames: 3, repeat: 1 },
-              { frequencies: [988], noteFrames: 10, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      gameOver: {
-        durationFrames: 108,
-        voices: [
-          {
-            gain: 0.018,
-            wave: "square",
-            segments: [
-              { frequencies: [523, 464], noteFrames: 6, repeat: 1 },
-              { frequencies: [523], noteFrames: 24, repeat: 1 },
-              { frequencies: [391, 348, 311, 261, 261, 261], noteFrames: 8, repeat: 1 },
-              { frequencies: [261], noteFrames: 24, repeat: 1 }
-            ]
-          },
-          {
-            gain: 0.014,
-            wave: "square",
-            segments: [
-              { frequencies: [391, 391], noteFrames: 6, repeat: 1 },
-              { frequencies: [391], noteFrames: 24, repeat: 1 },
-              { frequencies: [311, 293, 246, 261, 261, 261], noteFrames: 8, repeat: 1 },
-              { frequencies: [261], noteFrames: 24, repeat: 1 }
-            ]
-          },
-          {
-            gain: 0.022,
-            wave: "triangle",
-            segments: [
-              { frequencies: [329, 311], noteFrames: 6, repeat: 1 },
-              { frequencies: [329], noteFrames: 24, repeat: 1 },
-              { frequencies: [261, 232, 196, 196, 196, 196], noteFrames: 8, repeat: 1 },
-              { frequencies: [196], noteFrames: 24, repeat: 1 }
-            ]
-          }
-        ]
-      },
-      highScore: {
-        durationFrames: 460,
-        voices: [
-          {
-            gain: 0.018,
-            wave: "square",
-            segments: [
-              { frequencies: [924, 782], noteFrames: 5, repeat: 24 },
-              { frequencies: [1243, 1108], noteFrames: 5, repeat: 8 },
-              { frequencies: [98], noteFrames: 80, repeat: 1, gain: 0 },
-              { frequencies: [1554], noteFrames: 60, repeat: 1, gain: 0.012 }
-            ]
-          },
-          {
-            gain: 0.018,
-            wave: "square",
-            segments: [
-              { frequencies: [695, 621], noteFrames: 5, repeat: 24 },
-              { frequencies: [981, 736], noteFrames: 5, repeat: 8 },
-              { frequencies: [78, 98, 116, 147, 155, 196, 233, 293, 311, 391, 464, 586, 621, 782, 924, 1165], noteFrames: 5, repeat: 1, gain: 0.022 },
-              { frequencies: [1165], noteFrames: 60, repeat: 1, gain: 0.012 }
-            ]
-          },
-          {
-            gain: 0.022,
-            wave: "triangle",
-            segments: [
-              { frequencies: [55, 55], noteFrames: 65, repeat: 1, gain: 0 },
-              { frequencies: [232, 232, 232], noteFrames: 10, repeat: 1 },
-              { frequencies: [311], noteFrames: 15, repeat: 1 },
-              { frequencies: [347], noteFrames: 5, repeat: 1 },
-              { frequencies: [391], noteFrames: 30, repeat: 1 },
-              { frequencies: [347, 311, 391], noteFrames: 10, repeat: 1 },
-              { frequencies: [246], noteFrames: 15, repeat: 1 },
-              { frequencies: [278], noteFrames: 5, repeat: 1 },
-              { frequencies: [311], noteFrames: 30, repeat: 1 },
-              { frequencies: [278, 246, 185], noteFrames: 10, repeat: 1 },
-              { frequencies: [155], noteFrames: 60, repeat: 1 }
-            ]
-          }
-        ]
-      }
-    }
-  };
   const FREE_SPRITE_MANIFEST = {
     id: "free-procedural-sprites",
     type: "procedural-rect-sprites",
@@ -1288,10 +945,6 @@
     addStageMotif(grid, stage);
     prepareBattleGrid(grid);
     return grid;
-  }
-
-  function cloneAudioManifest() {
-    return JSON.parse(JSON.stringify(FREE_AUDIO_MANIFEST));
   }
 
   function cloneSpriteManifest() {
@@ -9171,7 +8824,7 @@
         stageStartAudio: {
           active: stageStartAudio.active,
           frame: stageStartAudio.frame,
-          durationFrames: STAGE_START_AUDIO_FRAMES
+          durationFrames: FREE_AUDIO_MANIFEST.events.stageStart.durationFrames
         },
         bonusLifeAudio: {
           active: bonusLifeAudio.active,
@@ -13853,7 +13506,7 @@
       return {
         active: stageStartAudio.active,
         frame: stageStartAudio.frame,
-        durationFrames: STAGE_START_AUDIO_FRAMES,
+        durationFrames: FREE_AUDIO_MANIFEST.events.stageStart.durationFrames,
         movementAudioMode: movementAudio.mode,
         paused: game.paused,
         pauseAudioActive: pauseAudio.active,

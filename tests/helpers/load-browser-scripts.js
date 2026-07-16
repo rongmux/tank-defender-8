@@ -7,6 +7,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/core/frame-counter.js",
   "src/core/battle-random.js",
   "src/core/directions.js",
+  "src/audio/free-audio-manifest.js",
   "src/audio/audio-presentation.js",
   "src/audio/audio-mix-rules.js",
   "src/audio/fixed-frame-audio-state.js",
