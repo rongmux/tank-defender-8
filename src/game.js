@@ -99,6 +99,7 @@
   } = requireRuntimeModule("enemySequences");
   const { createPlayerState, resetPlayerState } = requireRuntimeModule("playerState");
   const { createProjectileState } = requireRuntimeModule("projectileState");
+  const { createEnemyState } = requireRuntimeModule("enemyState");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -4664,40 +4665,17 @@
       return;
     }
     clearPowerUpForCarrierSpawn(carrier);
-    game.enemies.push({
-      kind: "enemy",
+    game.enemies.push(createEnemyState({
       id: 100 + game.enemySpawned,
       slotIndex,
-      x: point.x,
-      y: point.y,
-      w: 14,
-      h: 14,
-      dir: DOWN,
-      speed: type.speed,
-      hp: type.hp,
-      maxHp: type.hp,
-      bulletSpeed: type.bullet,
-      bulletPower: type.wallPower,
-      reloadBase: type.reload,
-      reload: gameSettings().timings.enemyInitialReload,
-      score: type.score,
-      color: type.color,
-      hitColors: type.hitColors ? type.hitColors.slice() : null,
-      accent: "#2b2a28",
+      spawn: point,
+      direction: DOWN,
+      type,
       typeIndex,
-      carrier,
-      powerUpType: enemySpec.powerUpType || null,
-      fireChance: type.fireChance,
-      alternateMovement: typeIndex !== 1 && type.speed === ENEMY_MOVE_SPEED.normal,
-      blockedPauseTicks: 0,
-      pendingTurn: false,
-      spawnFlash: gameSettings().timings.enemySpawnFlash,
-      alive: true,
-      destroying: false,
-      destroyTicks: 0,
-      slide: 0,
-      trackPhase: 0
-    });
+      spec: enemySpec,
+      settings: gameSettings(),
+      normalMoveSpeed: ENEMY_MOVE_SPEED.normal
+    }));
     game.enemySpawned += 1;
     game.nextSpawn = enemySpawnDelay(game.stage, game.enemySpawned);
   }
@@ -10547,7 +10525,11 @@
           interval: scaleEnemySpawnDelayForPlayers(defaultEnemySpawnDelay(1), game.playerCount),
           frames,
           slots: game.enemies.map((enemy) => enemy.slotIndex),
-          spawnIndices: game.enemies.map((enemy) => getEnemySpec(1, enemy.id - 100).spawnIndex)
+          spawnIndices: game.enemies.map((enemy) => getEnemySpec(1, enemy.id - 100).spawnIndex),
+          states: game.enemies.map((enemy) => ({
+            ...enemy,
+            hitColors: enemy.hitColors ? enemy.hitColors.slice() : null
+          }))
         };
       } finally {
         Object.assign(game, previous);
