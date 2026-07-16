@@ -7,6 +7,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/core/frame-counter.js",
   "src/core/battle-random.js",
   "src/core/directions.js",
+  "src/rules/enemy-spawn-rules.js",
   "src/entities/enemy-state.js",
   "src/entities/player-state.js",
   "src/entities/power-up-state.js",

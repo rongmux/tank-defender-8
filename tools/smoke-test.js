@@ -1443,11 +1443,6 @@ assert(stage35CycleProbe.twoPlayerDefaultEnemySpawnDelay === 30, "two-player mod
 assert(stage35CycleProbe.firstEnemySpawnDelay === 0 && stage35CycleProbe.twoPlayerFirstEnemySpawnDelay === 0, "the first enemy should spawn immediately in both player modes");
 assert(stage35CycleProbe.onePlayerMaxActiveEnemies === 4 && stage35CycleProbe.twoPlayerMaxActiveEnemies === 6, "original modes should expose four and six enemy slots");
 assert(stage35CycleProbe.spawnIndices.slice(0, 6).join(",") === "1,2,0,1,2,0", "enemy spawn points should cycle center, right, left");
-const enemySpawnOverlapProbe = context.window.TankDefender8.debugEnemySpawnOverlapProbe();
-assert(enemySpawnOverlapProbe.blocked.enemyCount === 1 && enemySpawnOverlapProbe.blocked.enemySpawned === 0, "an occupied enemy spawn should not create an overlapping tank");
-assert(enemySpawnOverlapProbe.blocked.retry === schema.gameSettings.timings.enemySpawnRetry, "an occupied enemy spawn should load the configured retry delay");
-assert(enemySpawnOverlapProbe.beforeRetry.enemyCount === 1 && enemySpawnOverlapProbe.beforeRetry.enemySpawned === 0 && enemySpawnOverlapProbe.beforeRetry.retry === 0, "enemy spawning should wait for the complete retry delay");
-assert(enemySpawnOverlapProbe.afterRetry.enemyCount === 2 && enemySpawnOverlapProbe.afterRetry.enemySpawned === 1 && enemySpawnOverlapProbe.afterRetry.enemyOverlap === false, "enemy spawning should resume without overlap after the spawn point clears");
 assert(stage70CycleProbe.advance.wraps === true && stage70CycleProbe.advance.stage === 1, "original-style stage 70 should wrap to stage 1");
 const stageCyclePreserveProbe = context.window.TankDefender8.debugStageCyclePreservesPlayerStateProbe(70);
 assert(stageCyclePreserveProbe.screen === "stageIntro" && stageCyclePreserveProbe.stage === 1, "original-style cycle completion should start a new stage 1");

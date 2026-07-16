@@ -11,6 +11,12 @@
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
   const {
+    activeEnemyCount,
+    findAvailableEnemySlot,
+    isEnemySpawnPointOccupied,
+    selectEnemySpawnIndex
+  } = requireRuntimeModule("enemySpawnRules");
+  const {
     DEFAULT_BONUS_LIFE_SCORES,
     DEFAULT_DEATH_POWER_LEVEL,
     DEFAULT_INITIAL_LIVES,
@@ -4496,20 +4502,21 @@
 
   function spawnEnemies() {
     if (game.enemySpawned >= enemyTotal()) return;
-    if (game.enemies.filter((enemy) => enemy.alive).length >= maxActiveEnemies()) return;
+    const capacity = maxActiveEnemies();
+    if (activeEnemyCount(game.enemies) >= capacity) return;
     if (game.nextSpawn > 0) {
       game.nextSpawn -= 1;
       return;
     }
     const enemySpec = getEnemySpec(game.stage, game.enemySpawned);
-    const spawnIndex = enemySpec.spawnIndex === undefined ? (game.enemySpawned + 1) % 3 : enemySpec.spawnIndex;
+    const spawnIndex = selectEnemySpawnIndex(enemySpec, game.enemySpawned);
     const point = enemySpawnPoint(spawnIndex);
     const typeIndex = enemySpec.typeIndex;
     const type = enemyTypeDefinitions()[typeIndex] || enemyTypeDefinitions()[0];
     const carrier = enemySpec.carrier;
-    const slotIndex = nextEnemySlot();
+    const slotIndex = findAvailableEnemySlot(game.enemies, capacity);
     if (slotIndex === null) return;
-    if (isEnemySpawnOccupied(point)) {
+    if (isEnemySpawnPointOccupied(point, game.players, game.enemies)) {
       game.nextSpawn = gameSettings().timings.enemySpawnRetry;
       return;
     }
@@ -4527,22 +4534,6 @@
     }));
     game.enemySpawned += 1;
     game.nextSpawn = enemySpawnDelay(game.stage, game.enemySpawned);
-  }
-
-  function isEnemySpawnOccupied(point) {
-    const spawnRect = { x: point.x, y: point.y, w: 14, h: 14 };
-    return game.players.concat(game.enemies).some((tank) =>
-      tank.alive && !tank.destroying && !(tank.respawn > 0) && rectsOverlap(spawnRect, tank)
-    );
-  }
-
-  function nextEnemySlot() {
-    const highestSlot = maxActiveEnemies() + 1;
-    const used = new Set(game.enemies.filter((enemy) => enemy.alive).map((enemy) => enemy.slotIndex));
-    for (let slot = highestSlot; slot >= 2; slot -= 1) {
-      if (!used.has(slot)) return slot;
-    }
-    return null;
   }
 
   function enemySpawnDelay(stage, index) {
