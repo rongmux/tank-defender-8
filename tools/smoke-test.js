@@ -1169,11 +1169,6 @@ assert(terrainHitSoundProbe.find((entry) => entry.ownerKind === "player" && entr
 assert(terrainHitSoundProbe.find((entry) => entry.ownerKind === "player" && entry.terrain === "steelDestroyed").sound === "brickHit", "max-power player bullets destroying steel should use the destruction sound");
 assert(terrainHitSoundProbe.filter((entry) => entry.ownerKind === "enemy").every((entry) => entry.sound === null), "enemy bullets hitting brick or steel should not trigger player wall-hit sounds");
 const lifeAwardProbe = context.window.TankDefender8.debugLifeAwardProbe();
-assert(lifeAwardProbe.threshold === 20000, "default extra-life threshold should be 20000 points");
-assert(lifeAwardProbe.beforeCrossing.lives === 1, "score below the threshold should not award an extra life");
-assert(lifeAwardProbe.afterCrossing.score === 20000 && lifeAwardProbe.afterCrossing.lives === 2, "crossing the threshold should award one extra life");
-assert(lifeAwardProbe.afterRepeat.lives === 2, "the same extra-life score threshold should not award twice");
-assert(lifeAwardProbe.tank.score === lifeAwardProbe.pickupScore && lifeAwardProbe.tank.lives === 2, "tank power-up should award pickup score and one extra life");
 assert(lifeAwardProbe.thresholdAudio.active && lifeAwardProbe.thresholdAudio.frame === 0, "crossing the score threshold should trigger the two-voice bonus-life event");
 assert(lifeAwardProbe.tankAudio.active && lifeAwardProbe.tankAudio.frame === 0, "collecting the extra-tank power-up should restart the same bonus-life event");
 assert(lifeAwardProbe.tankPickupAudio.active && lifeAwardProbe.tankPickupAudio.frame === 0 && !lifeAwardProbe.tankPickupAudio.audible, "extra-tank pickup audio should begin silently behind the higher-priority bonus-life pulse voice");

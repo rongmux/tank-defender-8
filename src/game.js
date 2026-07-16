@@ -106,6 +106,7 @@
     createExplosionState,
     createScorePopupState
   } = requireRuntimeModule("transientEffectState");
+  const { addScorePoints, awardBonusLives } = requireRuntimeModule("scoreRules");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -4398,25 +4399,10 @@
   }
 
   function addPlayerScore(player, points) {
-    const previousScore = player.score;
-    player.score += points;
-    updateHighScore(player.score);
-    awardBonusLives(player, previousScore, player.score);
-  }
-
-  function awardBonusLives(player, previousScore, nextScore) {
-    const thresholds = gameSettings().bonusLifeScores;
-    while (player.nextBonusLifeIndex < thresholds.length && previousScore >= thresholds[player.nextBonusLifeIndex]) {
-      player.nextBonusLifeIndex += 1;
-    }
-    while (player.nextBonusLifeIndex < thresholds.length && nextScore >= thresholds[player.nextBonusLifeIndex]) {
-      const threshold = thresholds[player.nextBonusLifeIndex];
-      player.nextBonusLifeIndex += 1;
-      if (previousScore < threshold) {
-        player.lives += 1;
-        playSound("bonusLife");
-      }
-    }
+    const { previousScore, nextScore } = addScorePoints(player, points);
+    updateHighScore(nextScore);
+    const awarded = awardBonusLives(player, previousScore, nextScore, gameSettings().bonusLifeScores);
+    for (let index = 0; index < awarded; index += 1) playSound("bonusLife");
   }
 
   function killPlayer(player) {

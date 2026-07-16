@@ -12,6 +12,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/entities/power-up-state.js",
   "src/entities/projectile-state.js",
   "src/entities/transient-effect-state.js",
+  "src/rules/score-rules.js",
   "src/config/value-normalization.js",
   "src/config/game-session-settings.js",
   "src/config/combat-settings.js",
