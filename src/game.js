@@ -107,6 +107,12 @@
     createScorePopupState
   } = requireRuntimeModule("transientEffectState");
   const { addScorePoints, awardBonusLives } = requireRuntimeModule("scoreRules");
+  const {
+    createStageResultPresentation,
+    createStageResultSummary,
+    selectStageClearBonusRecipients,
+    stageResultVisibleKillCount
+  } = requireRuntimeModule("stageResultRules");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -157,16 +163,6 @@
   const STAGE_CURTAIN_OPEN_FRAMES = 16;
   const STAGE_PREPARE_FRAMES = 2;
   const STAGE_START_AUDIO_FRAMES = 264;
-  const STAGE_RESULT_TIMING = {
-    initialWait: 30,
-    rowSetup: 1,
-    countUpdate: 1,
-    countHold: 8,
-    betweenRows: 20,
-    beforeTotals: 30,
-    beforeBonus: 15,
-    finalHold: 120
-  };
   const STAGE_RESULT_ROW_LAYOUT = Object.freeze({
     p1KillsRightX: 104,
     leftArrowX: 112,
@@ -5202,48 +5198,12 @@
    * @returns {object} Visible row values and reveal-frame boundaries for the supplied frame.
    */
   function stageClearPresentation(players, elapsed) {
-    const result = stageClearResultSummary(players || game.players);
     const frame = Math.max(0, Math.floor(elapsed === undefined ? game.stageClearElapsed : elapsed));
-    const countStep = STAGE_RESULT_TIMING.countUpdate + STAGE_RESULT_TIMING.countHold;
-    let cursor = STAGE_RESULT_TIMING.initialWait;
-    const rows = result.rows.map((row, index) => {
-      const steps = Math.max(row.p1Kills, row.p2Kills);
-      const firstCountFrame = cursor + STAGE_RESULT_TIMING.rowSetup + STAGE_RESULT_TIMING.countUpdate;
-      const countedSteps = steps <= 0 || frame < firstCountFrame
-        ? 0
-        : clamp(Math.floor((frame - firstCountFrame) / countStep) + 1, 0, steps);
-      const visible = {
-        ...row,
-        firstCountFrame,
-        countStep,
-        p1VisibleKills: Math.min(row.p1Kills, countedSteps),
-        p2VisibleKills: Math.min(row.p2Kills, countedSteps)
-      };
-      visible.p1VisiblePoints = visible.p1VisibleKills * row.score;
-      visible.p2VisiblePoints = visible.p2VisibleKills * row.score;
-      cursor += STAGE_RESULT_TIMING.rowSetup + (steps + 1) * countStep;
-      if (index < result.rows.length - 1) cursor += STAGE_RESULT_TIMING.betweenRows;
-      return visible;
-    });
-    const totalsRevealFrame = cursor + STAGE_RESULT_TIMING.beforeTotals;
-    const bonusRevealFrame = totalsRevealFrame + STAGE_RESULT_TIMING.beforeBonus;
-    const endFrame = bonusRevealFrame + STAGE_RESULT_TIMING.finalHold;
-    return {
-      result,
-      rows,
+    return createStageResultPresentation(
+      players || game.players,
+      enemyTypeDefinitions(),
       frame,
-      totalsRevealFrame,
-      bonusRevealFrame,
-      endFrame,
-      showTotals: frame >= totalsRevealFrame,
-      showBonus: frame >= bonusRevealFrame || game.stageClearBonusAwarded
-    };
-  }
-
-  function stageResultVisibleKillCount(presentation) {
-    return presentation.rows.reduce(
-      (sum, row) => sum + row.p1VisibleKills + row.p2VisibleKills,
-      0
+      game.stageClearBonusAwarded
     );
   }
 
@@ -5253,61 +5213,11 @@
   }
 
   function stageClearBonusRecipients(players) {
-    const bonus = gameSettings().stageClearBonus;
-    if (!bonus.points) return [];
-    if (bonus.twoPlayerOnly && players.length < 2) return [];
-    const presentPlayers = players.filter(Boolean);
-    if (!presentPlayers.length) return [];
-    const counts = presentPlayers.map((player) => ({
-      player,
-      count: player.stageKills.reduce((sum, value) => sum + value, 0)
-    }));
-    const maxCount = Math.max(...counts.map((entry) => entry.count));
-    if (maxCount <= 0) return [];
-    const leaders = counts.filter((entry) => entry.count === maxCount).map((entry) => entry.player);
-    if (bonus.requireStrictLead && leaders.length !== 1) return [];
-    return leaders.filter((player) => player.lives > 0);
+    return selectStageClearBonusRecipients(players, gameSettings().stageClearBonus);
   }
 
   function stageClearResultSummary(players) {
-    const p1 = players[0] || emptyResultPlayer(1);
-    const p2 = players[1] || emptyResultPlayer(2);
-    const rows = stageClearResultRows(p1, p2);
-    const p1EnemyPoints = rows.reduce((sum, row) => sum + row.p1Points, 0);
-    const p2EnemyPoints = rows.reduce((sum, row) => sum + row.p2Points, 0);
-    return {
-      p1,
-      p2,
-      rows,
-      p1EnemyPoints,
-      p2EnemyPoints,
-      p1BonusPoints: Math.max(0, (p1.stagePoints || 0) - p1EnemyPoints),
-      p2BonusPoints: Math.max(0, (p2.stagePoints || 0) - p2EnemyPoints),
-      p1StagePoints: p1.stagePoints || 0,
-      p2StagePoints: p2.stagePoints || 0
-    };
-  }
-
-  function stageClearResultRows(p1, p2) {
-    return enemyTypeDefinitions().map((type, index) => {
-      const p1Kills = stageKillCount(p1, index);
-      const p2Kills = stageKillCount(p2, index);
-      return {
-        typeIndex: index,
-        name: type.name,
-        color: type.color,
-        score: type.score,
-        p1Kills,
-        p1Points: p1Kills * type.score,
-        p2Kills,
-        p2Points: p2Kills * type.score
-      };
-    });
-  }
-
-  function stageKillCount(player, typeIndex) {
-    if (!player || !Array.isArray(player.stageKills)) return 0;
-    return Math.max(0, Math.floor(Number(player.stageKills[typeIndex]) || 0));
+    return createStageResultSummary(players, enemyTypeDefinitions());
   }
 
   function makeStageClearResultProbePlayer(id, kills, bonusPoints) {
@@ -6315,14 +6225,6 @@
       ctx.fillRect(x + 6, y + 1, 2, 3);
       ctx.fillRect(x + 4, y, 2, 5);
     }
-  }
-
-  function emptyResultPlayer(id) {
-    return {
-      id,
-      stagePoints: 0,
-      stageKills: Array(enemyTypeDefinitions().length).fill(0)
-    };
   }
 
   function drawMiniTank(x, y, color) {

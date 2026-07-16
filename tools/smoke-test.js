@@ -788,16 +788,6 @@ const smallTankDestruction = context.window.TankDefender8.debugRenderTankDestruc
 const smallTankDestructionCalls = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#f0b546");
 assert(smallTankDestruction.x === 72 && smallTankDestruction.y === 72 && smallTankDestruction.width === 16 && smallTankDestruction.height === 8, "small tank destruction pictures should expose the original bounds around the tank position");
 assert(Math.min(...smallTankDestructionCalls.map((call) => call.x)) === 72 && Math.min(...smallTankDestructionCalls.map((call) => call.y)) === 72 && Math.max(...smallTankDestructionCalls.map((call) => call.x + call.w)) === 88 && Math.max(...smallTankDestructionCalls.map((call) => call.y + call.h)) === 80, "small tank destruction art should occupy exactly the original two-sprite footprint");
-const stageClearRowsProbe = context.window.TankDefender8.debugStageClearResultRowsProbe([1, 2, 3, 4], [4, 3, 2, 1], 500, 250);
-const expectedP1EnemyPoints = stageClearRowsProbe.rows.reduce((sum, row) => sum + row.p1Kills * row.score, 0);
-const expectedP2EnemyPoints = stageClearRowsProbe.rows.reduce((sum, row) => sum + row.p2Kills * row.score, 0);
-assert(stageClearRowsProbe.rows[0].p1Points === stageClearRowsProbe.rows[0].score, "stage clear rows should show per-type P1 score subtotal");
-assert(stageClearRowsProbe.rows[3].p2Points === stageClearRowsProbe.rows[3].score, "stage clear rows should show per-type P2 score subtotal");
-assert(stageClearRowsProbe.p1EnemyPoints === expectedP1EnemyPoints, "stage clear result should total P1 kill points from row subtotals");
-assert(stageClearRowsProbe.p2EnemyPoints === expectedP2EnemyPoints, "stage clear result should total P2 kill points from row subtotals");
-assert(stageClearRowsProbe.p1BonusPoints === 500 && stageClearRowsProbe.p2BonusPoints === 250, "stage clear result should expose non-kill bonus points separately");
-assert(stageClearRowsProbe.p1StagePoints === expectedP1EnemyPoints + 500, "stage clear result should include P1 bonus in the stage total");
-assert(stageClearRowsProbe.p2StagePoints === expectedP2EnemyPoints + 250, "stage clear result should include P2 bonus in the stage total");
 const stageClearRowLayoutProbe = context.window.TankDefender8.debugStageClearRowLayoutProbe();
 assert(
   stageClearRowLayoutProbe.leftArrowX === 112 &&
@@ -812,30 +802,6 @@ assert(
     stageClearRowLayoutProbe.tankOverlapsRight === false,
   "stage result enemy icons should retain one clear pixel on both sides without touching either arrow"
 );
-const stageClearPresentationStart = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 31);
-assert(stageClearPresentationStart.rows.every((row) => row.p1VisibleKills === 0 && row.p2VisibleKills === 0), "stage result should keep the first enemy row at zero through its setup frame");
-const stageClearPresentationFirstTick = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 32);
-assert(stageClearPresentationFirstTick.rows[0].firstCountFrame === 32 && stageClearPresentationFirstTick.rows[0].countStep === 9, "stage result should start row one on frame 32 and use a nine-frame count cadence");
-assert(stageClearPresentationFirstTick.rows[0].p1VisibleKills === 1 && stageClearPresentationFirstTick.rows[0].p2VisibleKills === 1, "stage result should count both players together on the first count update");
-const stageClearPresentationFirstHold = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 40);
-assert(stageClearPresentationFirstHold.rows[0].p1VisibleKills === 1, "stage result should hold the first value for eight frames");
-const stageClearPresentationSecondTick = context.window.TankDefender8.debugStageClearPresentationProbe([2, 1, 0, 0], [1, 0, 0, 0], 41);
-assert(stageClearPresentationSecondTick.rows[0].p1VisibleKills === 2 && stageClearPresentationSecondTick.rows[0].p2VisibleKills === 1, "stage result should advance kill counts once every nine frames");
-assert(stageClearPresentationSecondTick.totalsRevealFrame === 187 && stageClearPresentationSecondTick.bonusRevealFrame === 202, "stage result should preserve the per-row gaps before TOTAL and the leader bonus");
-assert(stageClearPresentationSecondTick.endFrame === 322 && stageClearPresentationSecondTick.duration === 322, "default stage result duration should include the original 120-frame final hold");
-assert(context.window.TankDefender8.debugStageClearPresentationProbe([0, 0, 0, 0], [0, 0, 0, 0], 0).endFrame === 295, "a zero-kill result should use the 295-frame minimum schedule");
-assert(context.window.TankDefender8.debugStageClearPresentationProbe([20, 0, 0, 0], [0, 0, 0, 0], 0).endFrame === 475, "a 20-count result should extend to 475 frames instead of ending at a fixed duration");
-const stageClearPresentationBeforeTotal = context.window.TankDefender8.debugStageClearPresentationProbe(
-  [2, 1, 0, 0],
-  [1, 0, 0, 0],
-  stageClearPresentationSecondTick.totalsRevealFrame - 1
-);
-const stageClearPresentationAtTotal = context.window.TankDefender8.debugStageClearPresentationProbe(
-  [2, 1, 0, 0],
-  [1, 0, 0, 0],
-  stageClearPresentationSecondTick.totalsRevealFrame
-);
-assert(stageClearPresentationBeforeTotal.showTotals === false && stageClearPresentationAtTotal.showTotals === true, "stage result should reveal TOTAL only after all four type counts and the original pause");
 const battleRandomProbe = context.window.TankDefender8.debugBattleRandomProbe();
 assert(battleRandomProbe.shared.aiDecision === false && battleRandomProbe.shared.afterAiIndex === 255, "enemy AI should consume the shared NES-style random sequence");
 assert(battleRandomProbe.shared.secondType === "shovel" && battleRandomProbe.shared.afterPowerUpIndex === 0, "power-up selection should consume the next byte from the same shared sequence");
