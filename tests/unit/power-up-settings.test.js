@@ -3,7 +3,9 @@ const {
   DEFAULT_POWERUP_DURATIONS,
   DEFAULT_POWERUP_RULES,
   normalizePowerUpDurations,
-  normalizePowerUpRules
+  normalizePowerUpRules,
+  shouldClearPowerUpForCarrierSpawn,
+  shouldReleaseCarrierPowerUp
 } = require("../../src/config/power-up-settings");
 
 assert.deepEqual(DEFAULT_POWERUP_DURATIONS, {
@@ -60,5 +62,16 @@ assert.throws(() => normalizePowerUpRules({ clearUncollectedOnCarrierSpawn: "fal
 for (const pickupScore of [-1, 1.5, 1000000]) {
   assert.throws(() => normalizePowerUpRules({ pickupScore }), /pickupScore must be an integer from 0 to 999999/);
 }
+
+assert.equal(shouldReleaseCarrierPowerUp(false, false, "hit"), false);
+assert.equal(shouldReleaseCarrierPowerUp(false, true, "destroyed"), false);
+assert.equal(shouldReleaseCarrierPowerUp(true, false, "hit"), true);
+assert.equal(shouldReleaseCarrierPowerUp(true, true, "hit"), true);
+assert.equal(shouldReleaseCarrierPowerUp(true, false, "destroyed"), false);
+assert.equal(shouldReleaseCarrierPowerUp(true, true, "destroyed"), true);
+assert.equal(shouldReleaseCarrierPowerUp(true, true, "unknown"), false);
+assert.equal(shouldClearPowerUpForCarrierSpawn(false, true), false);
+assert.equal(shouldClearPowerUpForCarrierSpawn(true, false), false);
+assert.equal(shouldClearPowerUpForCarrierSpawn(true, true), true);
 
 console.log("power-up-settings unit test passed");

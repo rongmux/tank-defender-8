@@ -26,6 +26,13 @@ assert.equal(defaultHelmet.protected.invuln, 10);
 assert.equal(defaultHelmet.protected.score, 500);
 assert.equal(defaultHelmet.protected.alive, true);
 assert.equal(defaultHelmet.unprotected.alive, false);
+const defaultCarrier = JSON.parse(JSON.stringify(api.debugCarrierReleaseProbe(4)));
+assert.equal(defaultCarrier.rule, "hit");
+assert.equal(defaultCarrier.releaseOnThisHit, true);
+assert.equal(api.debugCarrierReleaseProbe(1).releaseOnThisHit, true);
+const defaultCarrierClear = JSON.parse(JSON.stringify(api.debugCarrierSpawnClearsPowerUpProbe(true)));
+assert.equal(defaultCarrierClear.cleared, true);
+assert.equal(defaultCarrierClear.hasPowerUp, false);
 
 const customPack = {
   id: "power-up-settings-integration",

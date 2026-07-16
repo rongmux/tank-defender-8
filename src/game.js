@@ -37,7 +37,9 @@
   } = requireRuntimeModule("playerMovementSettings");
   const {
     DEFAULT_POWERUP_DURATIONS,
-    DEFAULT_POWERUP_RULES
+    DEFAULT_POWERUP_RULES,
+    shouldClearPowerUpForCarrierSpawn,
+    shouldReleaseCarrierPowerUp
   } = requireRuntimeModule("powerUpSettings");
   const { DEFAULT_TIMINGS, SPAWN_ANIMATION_FRAMES } = requireRuntimeModule("timingSettings");
   const {
@@ -4222,7 +4224,11 @@
           bullet.remove = true;
           addRuleExplosion("enemyHit", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
           playSound(enemy.hp <= 0 ? "enemyDestroy" : "enemyHit");
-          if (shouldReleaseCarrierPowerUp(wasCarrier, enemy.hp <= 0)) releaseCarrierPowerUp(enemy);
+          if (shouldReleaseCarrierPowerUp(
+            wasCarrier,
+            enemy.hp <= 0,
+            gameSettings().powerUpRules.carrierRelease
+          )) releaseCarrierPowerUp(enemy);
           if (enemy.hp <= 0) destroyEnemy(enemy, bullet.ownerId);
           return true;
         }
@@ -4358,14 +4364,11 @@
     spawnPowerUp(enemy.powerUpType);
   }
 
-  function shouldReleaseCarrierPowerUp(wasCarrier, destroyed) {
-    if (!wasCarrier) return false;
-    const rule = gameSettings().powerUpRules.carrierRelease;
-    return rule === "hit" || (rule === "destroyed" && destroyed);
-  }
-
   function clearPowerUpForCarrierSpawn(carrier) {
-    if (!carrier || !gameSettings().powerUpRules.clearUncollectedOnCarrierSpawn) return false;
+    if (!shouldClearPowerUpForCarrierSpawn(
+      carrier,
+      gameSettings().powerUpRules.clearUncollectedOnCarrierSpawn
+    )) return false;
     game.powerUp = null;
     return true;
   }
@@ -10027,7 +10030,11 @@
         rule: gameSettings().powerUpRules.carrierRelease,
         clearUncollectedOnCarrierSpawn: gameSettings().powerUpRules.clearUncollectedOnCarrierSpawn,
         pickupScore: gameSettings().powerUpRules.pickupScore,
-        releaseOnThisHit: shouldReleaseCarrierPowerUp(true, hp - 1 <= 0)
+        releaseOnThisHit: shouldReleaseCarrierPowerUp(
+          true,
+          hp - 1 <= 0,
+          gameSettings().powerUpRules.carrierRelease
+        )
       };
     },
     debugCarrierFlashProbe() {

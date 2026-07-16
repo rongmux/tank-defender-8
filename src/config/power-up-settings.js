@@ -76,10 +76,21 @@
     return value;
   }
 
+  function shouldReleaseCarrierPowerUp(wasCarrier, destroyed, carrierRelease) {
+    if (!wasCarrier) return false;
+    return carrierRelease === "hit" || (carrierRelease === "destroyed" && destroyed);
+  }
+
+  function shouldClearPowerUpForCarrierSpawn(carrier, clearUncollectedOnCarrierSpawn) {
+    return Boolean(carrier && clearUncollectedOnCarrierSpawn);
+  }
+
   return Object.freeze({
     DEFAULT_POWERUP_DURATIONS,
     DEFAULT_POWERUP_RULES,
     normalizePowerUpDurations,
-    normalizePowerUpRules
+    normalizePowerUpRules,
+    shouldClearPowerUpForCarrierSpawn,
+    shouldReleaseCarrierPowerUp
   });
 });

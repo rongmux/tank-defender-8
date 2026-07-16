@@ -868,10 +868,6 @@ const destroyedBaseShovelProbe = context.window.TankDefender8.debugShovelDestroy
 assert(destroyedBaseShovelProbe.score === destroyedBaseShovelProbe.pickupScore && destroyedBaseShovelProbe.popupCount === 1, "shovel collected after base destruction should still award and display pickup score");
 assert(destroyedBaseShovelProbe.shovelTimer === 0, "shovel collected after base destruction should not start the protection timer");
 assert(destroyedBaseShovelProbe.wallTypes.every((type) => type === "brick"), "shovel collected after base destruction should not replace the base wall with steel");
-const carrierProbe = context.window.TankDefender8.debugCarrierReleaseProbe(4);
-assert(carrierProbe.rule === "hit", "carrier power-up should release on hit by default");
-assert(carrierProbe.releaseOnThisHit === true, "multi-hit carriers should release power-ups on the first hit by default");
-assert(context.window.TankDefender8.debugCarrierReleaseProbe(1).releaseOnThisHit === true, "one-hit carriers should release when hit");
 const carrierFlashProbe = context.window.TankDefender8.debugCarrierFlashProbe();
 assert(carrierFlashProbe.flashColor === carrierFlashProbe.flashColorValue, "carrier enemies should flash with the warning color");
 assert(carrierFlashProbe.normalPhaseColor === carrierFlashProbe.baseColor, "carrier enemies should alternate back to their base tank color");
@@ -882,8 +878,6 @@ assert(pausedTankVisualProbe.afterOneFrame.tick === 7 && pausedTankVisualProbe.a
 assert(pausedTankVisualProbe.afterOneFrame.carrierColor === pausedTankVisualProbe.afterOneFrame.carrierBaseColor && pausedTankVisualProbe.afterOneFrame.stunnedVisible === false, "carrier color and stunned-player visibility should cross their eight-frame boundary during pause");
 assert(pausedTankVisualProbe.afterNineFrames.displayFrame === 16 && pausedTankVisualProbe.afterNineFrames.carrierColor === pausedTankVisualProbe.afterNineFrames.carrierFlashColor && pausedTankVisualProbe.afterNineFrames.stunnedVisible === true, "paused tank flashing should repeat across the next eight-frame boundary");
 assert(pausedTankVisualProbe.afterResume.tick === 23 && pausedTankVisualProbe.afterResume.displayFrame === 16, "battle elapsed time and the NMI-style visual phase should remain independent after pause");
-const carrierClearProbe = context.window.TankDefender8.debugCarrierSpawnClearsPowerUpProbe(true);
-assert(carrierClearProbe.cleared === true && carrierClearProbe.hasPowerUp === false, "carrier spawn should clear uncollected power-ups by default");
 const globalTimerProbe = context.window.TankDefender8.debugGlobalTimerCadenceProbe();
 assert(globalTimerProbe.unitFrames === 64, "original long-duration timers should use 64-frame units");
 assert(globalTimerProbe.boundaries.map((entry) => entry.active).join(",") === "false,false,true,false,false,true", "global timers should tick only when the low frame counter is zero modulo 64");
