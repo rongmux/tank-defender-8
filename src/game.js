@@ -117,6 +117,7 @@
     canPlayerCollectPowerUp,
     findPowerUpCollector
   } = requireRuntimeModule("powerUpCollectionRules");
+  const { applyPowerUpEffect: applyPowerUpStateEffect } = requireRuntimeModule("powerUpEffectRules");
   const {
     ORIGINAL_POWER_UP_RANDOM_TABLE: originalPowerUpRandomTable,
     dedupePowerUpSpots,
@@ -4477,25 +4478,19 @@
         { style: "powerUp", ttl: 49 }
       );
     }
-    if (type === "grenade") {
-      playSound("enemyDestroy");
+    const effect = applyPowerUpStateEffect(player, game, type, {
+      baseAlive: game.base.alive,
+      durations: gameSettings().powerUpDurations,
+      maxPlayerLevel: gameSettings().playerUpgradeRules.length - 1
+    });
+    if (effect.soundName) playSound(effect.soundName);
+    if (effect.rebuildBaseWall) buildBaseWall(game.grid, STEEL);
+    if (effect.destroyActiveEnemies) {
       for (const enemy of game.enemies) {
         if (!enemy.alive || enemy.destroying || enemy.spawnFlash > 0) continue;
         enemy.hp = 0;
         destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false, showScore: false });
       }
-    } else if (type === "helmet") {
-      player.invuln = Math.max(player.invuln, gameSettings().powerUpDurations.helmet);
-    } else if (type === "shovel" && game.base.alive) {
-      buildBaseWall(game.grid, STEEL);
-      game.shovelTimer = gameSettings().powerUpDurations.shovel;
-    } else if (type === "star") {
-      player.level = Math.min(3, player.level + 1);
-    } else if (type === "timer") {
-      game.freezeTimer = gameSettings().powerUpDurations.timer;
-    } else if (type === "tank") {
-      player.lives += 1;
-      playSound("bonusLife");
     }
   }
 

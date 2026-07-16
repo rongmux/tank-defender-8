@@ -31,6 +31,7 @@ node --check src/entities/power-up-state.js
 node --check src/entities/projectile-state.js
 node --check src/entities/transient-effect-state.js
 node --check src/rules/power-up-collection-rules.js
+node --check src/rules/power-up-effect-rules.js
 node --check src/rules/power-up-spawn-rules.js
 node --check src/rules/projectile-collision-rules.js
 node --check src/rules/projectile-impact-rules.js
@@ -101,6 +102,7 @@ tank-defender-8/
 |   |   `-- transient-effect-state.js
 |   |-- rules/
 |   |   |-- power-up-collection-rules.js
+|   |   |-- power-up-effect-rules.js
 |   |   |-- power-up-spawn-rules.js
 |   |   |-- projectile-collision-rules.js
 |   |   |-- projectile-impact-rules.js
@@ -140,6 +142,7 @@ tank-defender-8/
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
+|   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- stage-flow-settings.test.js
@@ -177,6 +180,7 @@ tank-defender-8/
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
+|   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- stage-flow-settings.test.js
@@ -208,7 +212,9 @@ tank-defender-8/
 
 `src/entities/power-up-state.js` now owns both collectible-record creation and one-frame TTL advancement. Positive TTL values decrement to immediate removal at zero, while zero or negative values preserve the same object as an untimed power-up.
 
-`src/rules/power-up-collection-rules.js` owns active-player pickup eligibility, the strict 12px center-distance boundary on both axes, and reverse slot selection that gives player two priority when both players qualify on the same frame. Runtime code retains power-up removal, score/effect application, popups, and audio.
+`src/rules/power-up-collection-rules.js` owns active-player pickup eligibility, the strict 12px center-distance boundary on both axes, and reverse slot selection that gives player two priority when both players qualify on the same frame. Runtime code retains power-up removal, scoring, popups, and pickup audio.
+
+`src/rules/power-up-effect-rules.js` owns the synchronous state transitions for all six power-ups: grenade enemy-destruction requests, helmet protection extension, live-base shovel timers, capped star upgrades, timer freezes, and tank extra lives. It returns terrain, enemy, and audio actions to `src/game.js`, keeping those runtime side effects outside the rule module; dedicated tests now cover both direct state transitions and the live grenade/shovel/timer paths.
 
 `src/rules/power-up-spawn-rules.js` owns the original eight-entry power-up random table, stable coordinate deduplication, 16-bit uniform candidate selection, and exclusion of the previous position when alternatives exist. Runtime code still filters configured and fallback positions against battlefield bounds, the live base, solid terrain, and tank occupancy before passing reachable candidates to this module.
 

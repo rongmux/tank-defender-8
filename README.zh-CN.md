@@ -31,6 +31,7 @@ node --check src/entities/power-up-state.js
 node --check src/entities/projectile-state.js
 node --check src/entities/transient-effect-state.js
 node --check src/rules/power-up-collection-rules.js
+node --check src/rules/power-up-effect-rules.js
 node --check src/rules/power-up-spawn-rules.js
 node --check src/rules/projectile-collision-rules.js
 node --check src/rules/projectile-impact-rules.js
@@ -101,6 +102,7 @@ tank-defender-8/
 |   |   `-- transient-effect-state.js
 |   |-- rules/
 |   |   |-- power-up-collection-rules.js
+|   |   |-- power-up-effect-rules.js
 |   |   |-- power-up-spawn-rules.js
 |   |   |-- projectile-collision-rules.js
 |   |   |-- projectile-impact-rules.js
@@ -140,6 +142,7 @@ tank-defender-8/
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
+|   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- stage-flow-settings.test.js
@@ -177,6 +180,7 @@ tank-defender-8/
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
+|   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- stage-flow-settings.test.js
@@ -208,7 +212,9 @@ tank-defender-8/
 
 `src/entities/power-up-state.js` 现已同时接管可拾取记录创建和单帧 TTL 推进。正 TTL 逐帧递减并在归零时立即移除，零或负值则保留同一对象作为不计时道具。
 
-`src/rules/power-up-collection-rules.js` 接管活动玩家拾取资格、两个中心轴都严格小于 12px 的边界，以及双人同帧都满足条件时让 P2 优先的倒序槽位选择。运行时代码保留道具移除、分数/效果应用、提示和音频。
+`src/rules/power-up-collection-rules.js` 接管活动玩家拾取资格、两个中心轴都严格小于 12px 的边界，以及双人同帧都满足条件时让 P2 优先的倒序槽位选择。运行时代码保留道具移除、计分、提示和拾取音效。
+
+`src/rules/power-up-effect-rules.js` 接管六类道具的同步状态变化：手雷的敌人销毁请求、头盔保护延长、基地存活时的铲子计时、带上限的星星升级、定时器冻结，以及坦克加命。模块把地形、敌人和音频动作返回给 `src/game.js`，使这些运行时副作用不进入规则层；专用测试现已同时覆盖直接状态变化以及真实手雷/铲子/定时器路径。
 
 `src/rules/power-up-spawn-rules.js` 接管原版 8 项道具随机表、稳定坐标去重、16 位均匀候选选择，以及存在替代位置时排除上次位置。运行时代码仍先依据战场边界、当前基地、固体地形和坦克占位过滤配置/回退位置，再把可达候选交给该模块。
 
