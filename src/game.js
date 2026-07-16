@@ -110,6 +110,10 @@
   const { createEnemyState } = requireRuntimeModule("enemyState");
   const { POWER_UP_SIZE: POWERUP_SIZE, createPowerUpState } = requireRuntimeModule("powerUpState");
   const {
+    canPlayerCollectPowerUp,
+    findPowerUpCollector
+  } = requireRuntimeModule("powerUpCollectionRules");
+  const {
     ORIGINAL_POWER_UP_RANDOM_TABLE: originalPowerUpRandomTable,
     dedupePowerUpSpots,
     powerUpSpawnKey,
@@ -4447,24 +4451,8 @@
         return;
       }
     }
-    const player = powerUpCollector(game.powerUp);
+    const player = findPowerUpCollector(game.players, game.powerUp);
     if (player) collectPowerUp(player, game.powerUp);
-  }
-
-  function powerUpCollector(power) {
-    for (let index = game.players.length - 1; index >= 0; index -= 1) {
-      if (canPlayerCollectPowerUp(game.players[index], power)) return game.players[index];
-    }
-    return null;
-  }
-
-  function canPlayerCollectPowerUp(player, power) {
-    if (!player.alive || player.respawn > 0 || player.spawnFlash > 0) return false;
-    const playerCenterX = player.x + player.w / 2;
-    const playerCenterY = player.y + player.h / 2;
-    const powerCenterX = power.x + power.w / 2;
-    const powerCenterY = power.y + power.h / 2;
-    return Math.abs(playerCenterX - powerCenterX) < 12 && Math.abs(playerCenterY - powerCenterY) < 12;
   }
 
   function collectPowerUp(player, power) {
@@ -10944,11 +10932,11 @@
         const player1 = makePlayer(1);
         const player2 = makePlayer(2);
         game.players = [player1, player2];
-        const simultaneous = powerUpCollector(power);
+        const simultaneous = findPowerUpCollector(game.players, power);
         player2.spawnFlash = 1;
-        const player2Spawning = powerUpCollector(power);
+        const player2Spawning = findPowerUpCollector(game.players, power);
         game.players = [player1];
-        const onePlayer = powerUpCollector(power);
+        const onePlayer = findPowerUpCollector(game.players, power);
         return {
           simultaneousPlayerId: simultaneous ? simultaneous.id : null,
           player2SpawningPlayerId: player2Spawning ? player2Spawning.id : null,

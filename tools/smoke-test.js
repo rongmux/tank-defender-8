@@ -917,15 +917,6 @@ const noExpirePowerUpProbe = context.window.TankDefender8.debugPowerUpTtlProbe(0
 assert(noExpirePowerUpProbe.survives === true && noExpirePowerUpProbe.ttl === 0, "zero power-up TTL should not expire by time");
 const expiringPowerUpProbe = context.window.TankDefender8.debugPowerUpTtlProbe(1);
 assert(expiringPowerUpProbe.survives === false, "positive power-up TTL should still expire when it reaches zero");
-const pickupBoundaryProbe = context.window.TankDefender8.debugPowerUpPickupBoundaryProbe();
-assert(pickupBoundaryProbe.samePosition && pickupBoundaryProbe.positiveEleven && pickupBoundaryProbe.negativeEleven, "power-up pickup should accept absolute center-coordinate differences below twelve pixels");
-assert(!pickupBoundaryProbe.positiveTwelveX && !pickupBoundaryProbe.negativeTwelveX && !pickupBoundaryProbe.positiveTwelveY && !pickupBoundaryProbe.negativeTwelveY, "power-up pickup should reject center-coordinate differences of twelve pixels on either axis");
-assert(!pickupBoundaryProbe.spawning && !pickupBoundaryProbe.respawning && !pickupBoundaryProbe.dead, "power-ups should not be collected by spawning, respawning, or destroyed players");
-assert(pickupBoundaryProbe.stunned && pickupBoundaryProbe.invulnerable, "active stunned or protected players should still collect power-ups");
-const pickupPriorityProbe = context.window.TankDefender8.debugPowerUpPickupPriorityProbe();
-assert(pickupPriorityProbe.simultaneousPlayerId === 2, "player two should receive a power-up when both player slots qualify on the same frame");
-assert(pickupPriorityProbe.player2SpawningPlayerId === 1, "player-one pickup should remain available while player two is spawning");
-assert(pickupPriorityProbe.onePlayerId === 1, "one-player power-up pickup should still select player one");
 canvasContext.calls.length = 0;
 canvasContext.resetPixels();
 const pickupRenderProbe = context.window.TankDefender8.debugPowerUpPickupRenderProbe();

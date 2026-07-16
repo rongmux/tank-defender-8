@@ -30,6 +30,7 @@ node --check src/entities/player-state.js
 node --check src/entities/power-up-state.js
 node --check src/entities/projectile-state.js
 node --check src/entities/transient-effect-state.js
+node --check src/rules/power-up-collection-rules.js
 node --check src/rules/power-up-spawn-rules.js
 node --check src/rules/projectile-collision-rules.js
 node --check src/rules/projectile-impact-rules.js
@@ -99,6 +100,7 @@ tank-defender-8/
 |   |   |-- projectile-state.js
 |   |   `-- transient-effect-state.js
 |   |-- rules/
+|   |   |-- power-up-collection-rules.js
 |   |   |-- power-up-spawn-rules.js
 |   |   |-- projectile-collision-rules.js
 |   |   |-- projectile-impact-rules.js
@@ -137,6 +139,7 @@ tank-defender-8/
 |   |   |-- projectile-state.test.js
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
+|   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- stage-flow-settings.test.js
@@ -173,6 +176,7 @@ tank-defender-8/
 |   |   |-- projectile-state.test.js
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
+|   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- stage-flow-settings.test.js
@@ -201,6 +205,8 @@ tank-defender-8/
 `src/config/` owns data validation shared by stage-pack configuration: `value-normalization.js` validates numeric ranges and colors; `game-session-settings.js` owns initial lives, sorted bonus-life thresholds, death power level, and the timer enemy-freeze switch; `combat-settings.js` owns projectile size/spawn/bounds geometry plus two-player friendly-fire activation and stun timing; `enemy-ai-settings.js` owns intersection routing, blocked retries, target-axis probability, and the legacy AI field aliases; `enemy-spawn-settings.js` owns per-stage spawn curves, stage/extended-loop floors, two-player reduction, legacy multiplier compatibility, and pure delay calculations; `enemy-types.js` owns the four default enemy definitions, movement/projectile tiers, power-up type names, enemy-type cloning and validation, and per-stage enemy-spec normalization; `explosion-settings.js` owns the nine nested explosion TTL/color defaults, deep cloning, and pack override validation; `player-movement-settings.js` owns fixed-loop movement speed, the original three-of-four cadence, legacy speed-only compatibility, ice inertia, and independent configuration cloning; `player-upgrades.js` owns the four star-upgrade levels, independent cloning, and pack override validation; `power-up-settings.js` owns helmet/shovel/timer durations, carrier release and clearing rules, pickup scoring, and their validation; `stage-flow-settings.js` owns final-stage looping, extended-loop map/enemy selection, and two-player stage-clear leader bonuses; `timing-settings.js` owns the fixed-logic-loop stage, spawn, respawn, retry, invulnerability, and power-up lifetime timings; and `stage-settings.js` owns active-enemy capacities, default player/enemy/power-up spawn layouts, strict 13x13 coordinate validation, and tile-to-pixel conversion. `src/core/` contains pure browser-and-Node-compatible rules with no DOM or Canvas dependency; shared battle randomness, four-direction constants/vectors, independent frame counters, and rectangle geometry live there. `src/entities/` owns mutable gameplay records: `player-state.js` creates complete one/two-player records and resets transient position, destruction, protection, firing, sliding, and track state without discarding persistent score, life, kill, or upgrade state; `enemy-state.js` materializes type/spec data into a placed enemy with independent armor colors, spawn/reload timers, carrier data, movement cadence flags, and clean AI/destruction state; `projectile-state.js` creates the common player/enemy projectile record from tank geometry, direction, upgrade/type combat values, and stage-pack projectile geometry; `power-up-state.js` creates a collectible 12px power-up with its validated field position and configured lifetime after runtime random/terrain filtering; and `transient-effect-state.js` creates explosion and score-popup records and advances their shared TTL lifecycle while preserving surviving identities. `src/rules/score-rules.js` mutates player score and reserve-life progress while returning the values needed by runtime-owned high-score persistence and audio side effects; `stage-result-rules.js` selects bonus recipients, builds per-type result rows/summaries, and computes the original count/reveal timeline; `tank-collision-rules.js` owns entity rectangles, the exact bullet-center hit range, active collision-peer filtering, total overlap, field/base blocking, and strictly decreasing terrain/tank overlap recovery; `terrain-collision-rules.js` owns 16px tile, 8px steel-quarter, and 4px brick-fragment geometry, overlap masks, and exact solid terrain area. `src/stages/` owns the stage domain: `stage-grid.js` provides tile constants, brick-fragment state, grid mutation, validation, and 13x13/26x26 codecs; `enemy-sequences.js` owns the 35-stage enemy group table, 20-enemy expansion, carrier positions, spawn-point rotation, and sequence summaries; `stage-pack.js` composes all configuration validators, enforces complete map/enemy/stage counts, supports both map encodings, and builds runtime grid/enemy lookup helpers; and `stage-routing.js` resolves the displayed 1-70 cycle onto finite map/enemy datasets, enemy totals, and one/two-player capacity limits. `src/game.js` remains the composition root and legacy runtime, and must shrink as behavior moves behind explicit module APIs. `tests/helpers/` owns reusable Canvas, audio, DOM, storage, input, and script-loading fakes. `tests/unit/` exercises pure modules directly, `tests/integration/` verifies extracted configuration, base session rules, score/bonus-life and stage-result progression, fixed logic timings, fragment-accurate terrain/tank/bullet collision and recovery, projectile/friendly-fire rules, projectile, enemy, power-up, and transient visual-effect creation/lifecycle, enemy AI, enemy spawn pacing, explosion settings, player movement/cadence, player state/respawn, power-up settings, stage flow, stage settings, stage-grid, stage-pack import, stage routing, enemy-sequence, and star-upgrade behavior through the real browser API, and `tests/run-tests.js` runs both before the remaining regression suite in `tools/smoke-test.js`.
 
 `src/config/power-up-settings.js` now owns the pure carrier transitions behind its validated settings: whether a hit releases a carried power-up and whether a newly spawning carrier clears the current uncollected power-up. Runtime code retains only the actual spawn and clear side effects.
+
+`src/rules/power-up-collection-rules.js` owns active-player pickup eligibility, the strict 12px center-distance boundary on both axes, and reverse slot selection that gives player two priority when both players qualify on the same frame. Runtime code retains power-up removal, score/effect application, popups, and audio.
 
 `src/rules/power-up-spawn-rules.js` owns the original eight-entry power-up random table, stable coordinate deduplication, 16-bit uniform candidate selection, and exclusion of the previous position when alternatives exist. Runtime code still filters configured and fallback positions against battlefield bounds, the live base, solid terrain, and tank occupancy before passing reachable candidates to this module.
 
