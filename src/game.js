@@ -85,6 +85,11 @@
   } = requireRuntimeModule("stageSettings");
   const { tryNormalizeStagePack } = requireRuntimeModule("stagePack");
   const {
+    resolveEnemyTotal,
+    resolveMaxActiveEnemies,
+    resolveStageRoute
+  } = requireRuntimeModule("stageRouting");
+  const {
     BONUS_ENEMY_INDICES,
     DEFAULT_ENEMY_TOTAL,
     DEFAULT_ORIGINAL_STAGE_COUNT,
@@ -1309,63 +1314,50 @@
     };
   }
 
+  function stageRoute(stage) {
+    const pack = game.stagePack || builtInStagePack;
+    return resolveStageRoute({
+      stage,
+      currentStage: game.stage,
+      totalStages: pack.totalStages || builtInStagePack.totalStages,
+      stageAdvance: (pack.gameSettings || builtInStagePack.gameSettings).stageAdvance || DEFAULT_STAGE_ADVANCE,
+      originalStageCount: DEFAULT_ORIGINAL_STAGE_COUNT
+    });
+  }
+
   function stageCount() {
-    return game.stagePack.totalStages || builtInStagePack.totalStages;
+    return stageRoute().stageCount;
   }
 
   function stageCycleLimit() {
-    const count = stageCount();
-    const advance = gameSettings().stageAdvance || DEFAULT_STAGE_ADVANCE;
-    if (
-      advance.loopAfterFinalStage &&
-      count === DEFAULT_ORIGINAL_STAGE_COUNT &&
-      advance.extendedLoopEndStage > count
-    ) {
-      return advance.extendedLoopEndStage;
-    }
-    return count;
+    return stageRoute().stageCycleLimit;
   }
 
   function isExtendedLoopStage(stage) {
-    const value = Math.max(1, Math.floor(Number(stage) || game.stage || 1));
-    return value > stageCount() && value <= stageCycleLimit();
+    return stageRoute(stage).isExtendedLoopStage;
   }
 
   function mapDataStage(stage) {
-    const count = stageCount();
-    const value = Math.max(1, Math.floor(Number(stage) || game.stage || 1));
-    if (isExtendedLoopStage(value)) return ((value - 1) % count) + 1;
-    return clamp(value, 1, count);
+    return stageRoute(stage).mapDataStage;
   }
 
   function enemyDataStage(stage) {
-    const count = stageCount();
-    const value = Math.max(1, Math.floor(Number(stage) || game.stage || 1));
-    if (isExtendedLoopStage(value)) {
-      const repeated = gameSettings().stageAdvance.extendedLoopEnemyStage;
-      return clamp(repeated, 1, count);
-    }
-    return clamp(value, 1, count);
+    return stageRoute(stage).enemyDataStage;
   }
 
   function enemyTotal(stage) {
     const pack = game.stagePack || builtInStagePack;
-    const stageIndex = enemyDataStage(stage || game.stage) - 1;
-    if (pack.enemyTotals && pack.enemyTotals[stageIndex]) return pack.enemyTotals[stageIndex];
-    if (pack.enemies && pack.enemies[stageIndex]) return pack.enemies[stageIndex].length;
-    return pack.enemyTotal || DEFAULT_ENEMY_TOTAL;
+    return resolveEnemyTotal(pack, enemyDataStage(stage || game.stage), DEFAULT_ENEMY_TOTAL);
   }
 
   function maxActiveEnemies(stage, players) {
     if (game.demoMode) return DEMO_MAX_ACTIVE_ENEMIES;
     const pack = game.stagePack || builtInStagePack;
-    const stageIndex = mapDataStage(stage || game.stage) - 1;
     const playerCount = Math.max(1, Math.floor(Number(players) || game.playerCount || 1));
-    if (pack.stageSettings && pack.stageSettings[stageIndex]) {
-      const settings = pack.stageSettings[stageIndex];
-      return playerCount > 1 ? settings.maxActiveEnemiesTwoPlayer : settings.maxActiveEnemies;
-    }
-    return playerCount > 1 ? DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER : DEFAULT_MAX_ACTIVE_ENEMIES;
+    return resolveMaxActiveEnemies(pack, mapDataStage(stage || game.stage), playerCount, {
+      onePlayer: DEFAULT_MAX_ACTIVE_ENEMIES,
+      twoPlayer: DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER
+    });
   }
 
   function gameSettings() {

@@ -1591,8 +1591,6 @@ const stage35CycleProbe = context.window.TankDefender8.debugStageCycleProbe(35);
 const stage36CycleProbe = context.window.TankDefender8.debugStageCycleProbe(36);
 const stage70CycleProbe = context.window.TankDefender8.debugStageCycleProbe(70);
 assert(stage35CycleProbe.advance.stage === 36 && stage35CycleProbe.advance.wraps === false, "original-style stage 35 should advance to stage 36");
-assert(stage36CycleProbe.mapDataStage === 1, "original-style stage 36 should reuse stage 1 map data");
-assert(stage36CycleProbe.enemyDataStage === 35, "original-style stage 36 should use stage 35 enemy pattern data");
 assert(stableJson(stage36CycleProbe.enemyTypeCounts) === stableJson(stage35CycleProbe.enemyTypeCounts), "stage 36 enemy group should match stage 35");
 assert(stage36CycleProbe.carrierNumbers.join(",") === stage35CycleProbe.carrierNumbers.join(","), "stage 36 carriers should match stage 35");
 assert(stage35CycleProbe.defaultEnemySpawnDelay === 50, "stage 35 should use the original fifty-frame interval value");

@@ -40,6 +40,7 @@ node --check src/config/stage-settings.js
 node --check src/stages/enemy-sequences.js
 node --check src/stages/stage-grid.js
 node --check src/stages/stage-pack.js
+node --check src/stages/stage-routing.js
 node --check src/game.js
 node --check tools/build-free-stage-pack.js
 node tests/run-tests.js
@@ -78,7 +79,8 @@ tank-defender-8/
 |   |-- stages/
 |   |   |-- enemy-sequences.js
 |   |   |-- stage-grid.js
-|   |   `-- stage-pack.js
+|   |   |-- stage-pack.js
+|   |   `-- stage-routing.js
 |   `-- game.js
 |-- tests/
 |   |-- helpers/
@@ -101,6 +103,7 @@ tank-defender-8/
 |   |   |-- stage-settings.test.js
 |   |   |-- stage-grid.test.js
 |   |   |-- stage-pack.test.js
+|   |   |-- stage-routing.test.js
 |   |   `-- timing-settings.test.js
 |   |-- unit/
 |   |   |-- battle-random.test.js
@@ -121,6 +124,7 @@ tank-defender-8/
 |   |   |-- stage-settings.test.js
 |   |   |-- stage-grid.test.js
 |   |   |-- stage-pack.test.js
+|   |   |-- stage-routing.test.js
 |   |   |-- timing-settings.test.js
 |   |   `-- value-normalization.test.js
 |   `-- run-tests.js
@@ -134,7 +138,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/config/` 负责关卡包配置共享的数据校验：`value-normalization.js` 校验数值范围和颜色；`game-session-settings.js` 接管初始生命、排序后的奖励生命阈值、死亡星级和定时器冻结敌人开关；`combat-settings.js` 接管弹丸尺寸/出生/边界几何以及双人友军伤害开关和眩晕时序；`enemy-ai-settings.js` 接管交叉点寻路、受阻重试、目标轴概率和旧 AI 字段别名；`enemy-spawn-settings.js` 接管逐关生成曲线、关卡/扩展循环下限、双人减法、旧倍率兼容和纯间隔计算；`enemy-types.js` 接管四类默认敌人定义、移动/子弹速度档位、道具类型名称、敌人类型克隆与校验，以及单关敌人规格规范化；`explosion-settings.js` 接管九类嵌套爆炸 TTL/颜色默认值、深克隆和关卡包覆盖校验；`player-movement-settings.js` 接管固定逻辑循环中的移动速度、原版四帧三次移动 cadence、旧版仅覆盖速度时的兼容行为、冰面惯性和独立配置克隆；`player-upgrades.js` 接管四个星星升级等级、独立克隆和关卡包覆盖校验；`power-up-settings.js` 接管头盔/铲子/定时器持续时间、携带者释放和清理规则、拾取分数及其校验；`stage-flow-settings.js` 接管最终关循环、扩展循环地图/敌人数据选择和双人通关领先奖励；`timing-settings.js` 接管固定逻辑循环中的关卡、出生、重生、重试、无敌和道具寿命时序；`stage-settings.js` 接管活动敌人上限、默认玩家/敌人/道具出生布局、严格的 13x13 坐标校验以及图块到像素的转换。`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则；共享战斗随机数、独立帧计数器和矩形几何已迁入该目录。`src/stages/` 负责关卡域：`stage-grid.js` 提供图块常量、砖块碎片状态、网格修改与校验以及 13x13/26x26 编解码；`enemy-sequences.js` 接管 35 关敌人编组表、每关 20 辆敌人的展开、携带者位置、出生点轮转和序列摘要；`stage-pack.js` 组合全部配置校验器、强制校验完整地图/敌人/关卡数量、支持两种地图编码，并构建运行时网格与敌人查询方法。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的 Canvas、音频、DOM、存储、输入和脚本加载模拟。`tests/unit/` 直接验证纯模块，`tests/integration/` 通过真实浏览器 API 验证已抽离的配置、基础会话规则、固定逻辑时序、碰撞、弹丸/友军伤害规则、敌人 AI、敌人生成节奏、爆炸设置、玩家移动/cadence、道具设置、关卡流程、关卡设置、关卡网格、关卡包导入、敌人序列和星星升级行为，`tests/run-tests.js` 会先运行这两层测试，再运行 `tools/smoke-test.js` 中剩余的回归套件。
+`src/config/` 负责关卡包配置共享的数据校验：`value-normalization.js` 校验数值范围和颜色；`game-session-settings.js` 接管初始生命、排序后的奖励生命阈值、死亡星级和定时器冻结敌人开关；`combat-settings.js` 接管弹丸尺寸/出生/边界几何以及双人友军伤害开关和眩晕时序；`enemy-ai-settings.js` 接管交叉点寻路、受阻重试、目标轴概率和旧 AI 字段别名；`enemy-spawn-settings.js` 接管逐关生成曲线、关卡/扩展循环下限、双人减法、旧倍率兼容和纯间隔计算；`enemy-types.js` 接管四类默认敌人定义、移动/子弹速度档位、道具类型名称、敌人类型克隆与校验，以及单关敌人规格规范化；`explosion-settings.js` 接管九类嵌套爆炸 TTL/颜色默认值、深克隆和关卡包覆盖校验；`player-movement-settings.js` 接管固定逻辑循环中的移动速度、原版四帧三次移动 cadence、旧版仅覆盖速度时的兼容行为、冰面惯性和独立配置克隆；`player-upgrades.js` 接管四个星星升级等级、独立克隆和关卡包覆盖校验；`power-up-settings.js` 接管头盔/铲子/定时器持续时间、携带者释放和清理规则、拾取分数及其校验；`stage-flow-settings.js` 接管最终关循环、扩展循环地图/敌人数据选择和双人通关领先奖励；`timing-settings.js` 接管固定逻辑循环中的关卡、出生、重生、重试、无敌和道具寿命时序；`stage-settings.js` 接管活动敌人上限、默认玩家/敌人/道具出生布局、严格的 13x13 坐标校验以及图块到像素的转换。`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则；共享战斗随机数、独立帧计数器和矩形几何已迁入该目录。`src/stages/` 负责关卡域：`stage-grid.js` 提供图块常量、砖块碎片状态、网格修改与校验以及 13x13/26x26 编解码；`enemy-sequences.js` 接管 35 关敌人编组表、每关 20 辆敌人的展开、携带者位置、出生点轮转和序列摘要；`stage-pack.js` 组合全部配置校验器、强制校验完整地图/敌人/关卡数量、支持两种地图编码，并构建运行时网格与敌人查询方法；`stage-routing.js` 将显示用的 1-70 关循环映射到有限的地图/敌人数据，并解析敌人总数和单双人容量上限。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的 Canvas、音频、DOM、存储、输入和脚本加载模拟。`tests/unit/` 直接验证纯模块，`tests/integration/` 通过真实浏览器 API 验证已抽离的配置、基础会话规则、固定逻辑时序、碰撞、弹丸/友军伤害规则、敌人 AI、敌人生成节奏、爆炸设置、玩家移动/cadence、道具设置、关卡流程、关卡设置、关卡网格、关卡包导入、关卡路由、敌人序列和星星升级行为，`tests/run-tests.js` 会先运行这两层测试，再运行 `tools/smoke-test.js` 中剩余的回归套件。
 
 迁移顺序依次为核心计时/随机/几何、配置与关卡包、游戏实体与规则、输入/编辑器、音频、渲染/画面、调试适配器，最后收敛应用启动入口。每次抽离都必须保留无需构建的静态启动方式，在同一提交中迁移对应测试，并在下一子系统开始前通过完整回归。重构和测试拆分全部完成前，暂停新增 1:1 游戏机制。
 
