@@ -10,6 +10,13 @@
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
   const {
+    DEFAULT_BONUS_LIFE_SCORES,
+    DEFAULT_DEATH_POWER_LEVEL,
+    DEFAULT_INITIAL_LIVES,
+    DEFAULT_TIMER_FREEZES_ENEMY_TIME,
+    normalizeGameSessionSettings
+  } = requireRuntimeModule("gameSessionSettings");
+  const {
     DEFAULT_FRIENDLY_FIRE,
     DEFAULT_PROJECTILE_RULES,
     normalizeFriendlyFire,
@@ -168,9 +175,6 @@
     rightArrowX: 136,
     p2KillsX: 152
   });
-  const DEFAULT_INITIAL_LIVES = 3;
-  const DEFAULT_BONUS_LIFE_SCORES = [20000];
-  const DEFAULT_DEATH_POWER_LEVEL = 0;
   const CARRIER_FLASH_COLOR = "#dd3d33";
   const BASE_DESTRUCTION_TAIL_FRAMES = 4;
   const BASE_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
@@ -200,7 +204,6 @@
   const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
   const TANK_DESTRUCTION_EXPLOSION_RULES = new Set(["enemyDestroy", "playerDestroy"]);
   const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
-  const DEFAULT_TIMER_FREEZES_ENEMY_TIME = true;
   const TITLE_MENU_ITEMS = [
     { label: "1 PLAYER", action: "one", x: 88, y: 136, color: "#f3f0d4" },
     { label: "2 PLAYERS", action: "two", x: 88, y: 152, color: "#f3f0d4" },
@@ -1287,28 +1290,11 @@
 
   function normalizeGameSettings(settings) {
     const source = settings || {};
-    if (typeof source !== "object") throw new Error("gameSettings must be an object");
-    const initialLives = source.initialLives === undefined ? DEFAULT_INITIAL_LIVES : Number(source.initialLives);
-    if (!Number.isInteger(initialLives) || initialLives < 1 || initialLives > 9) {
-      throw new Error("gameSettings.initialLives must be an integer from 1 to 9");
-    }
-    const rawBonusScores = source.bonusLifeScores === undefined ? DEFAULT_BONUS_LIFE_SCORES : source.bonusLifeScores;
-    if (!Array.isArray(rawBonusScores)) throw new Error("gameSettings.bonusLifeScores must be an array");
-    const bonusLifeScores = rawBonusScores.map((score, index) => {
-      const value = Number(score);
-      if (!Number.isInteger(value) || value < 1 || value > 999999) {
-        throw new Error(`gameSettings.bonusLifeScores[${index}] must be an integer from 1 to 999999`);
-      }
-      return value;
-    }).sort((a, b) => a - b);
-    const deathPowerLevel = source.deathPowerLevel === undefined ? DEFAULT_DEATH_POWER_LEVEL : Number(source.deathPowerLevel);
-    if (!Number.isInteger(deathPowerLevel) || deathPowerLevel < 0 || deathPowerLevel > 3) {
-      throw new Error("gameSettings.deathPowerLevel must be an integer from 0 to 3");
-    }
+    const sessionSettings = normalizeGameSessionSettings(settings);
     return {
-      initialLives,
-      bonusLifeScores,
-      deathPowerLevel,
+      initialLives: sessionSettings.initialLives,
+      bonusLifeScores: sessionSettings.bonusLifeScores,
+      deathPowerLevel: sessionSettings.deathPowerLevel,
       powerUpDurations: normalizePowerUpDurations(source.powerUpDurations),
       powerUpRules: normalizePowerUpRules(source.powerUpRules),
       timings: normalizeTimings(source.timings),
@@ -1321,18 +1307,8 @@
       stageClearBonus: normalizeStageClearBonus(source.stageClearBonus),
       enemyAi: normalizeEnemyAi(source.enemyAi),
       playerUpgradeRules: normalizePlayerUpgradeRules(source.playerUpgradeRules),
-      timerFreezesEnemyTime: normalizeBooleanSetting(
-        source.timerFreezesEnemyTime,
-        DEFAULT_TIMER_FREEZES_ENEMY_TIME,
-        "gameSettings.timerFreezesEnemyTime"
-      )
+      timerFreezesEnemyTime: sessionSettings.timerFreezesEnemyTime
     };
-  }
-
-  function normalizeBooleanSetting(value, fallback, label) {
-    if (value === undefined) return fallback;
-    if (typeof value !== "boolean") throw new Error(`${label} must be a boolean`);
-    return value;
   }
 
   function normalizeStagePack(pack) {

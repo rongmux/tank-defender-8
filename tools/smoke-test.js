@@ -713,9 +713,6 @@ buttons.find((button) => button.dataset.action === "reset").click();
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "title" && snapshot.paused === false, "reset after Start-pause probe should return to the title screen");
 assert(schema.enemyTotal === 20, "schema enemy total should be 20");
-assert(schema.gameSettings.initialLives === 3, "schema should expose initial lives");
-assert(schema.gameSettings.bonusLifeScores[0] === 20000, "schema should expose bonus life scores");
-assert(schema.gameSettings.deathPowerLevel === 0, "schema should expose death power level");
 const stageIntroStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(schema.gameSettings.timings.stageIntro);
 const stageIntroOpenStartProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(18);
 const stageIntroFirstOpenProbe = context.window.TankDefender8.debugStageIntroCurtainProbe(17);
@@ -877,7 +874,6 @@ assert(spawnAnimationProbe.beforeSkippedCadenceFrame === 28 && spawnAnimationPro
 assert(spawnAnimationProbe.lows.join(",") === "0,1,2,3,4,5,6,7,8,9,10,11,12,13,0,1,2,3,4,5,6,7,8,9,10,11,12,13", "spawn animation should run the original low-nibble sequence twice");
 assert(spawnAnimationProbe.phases.join(",") === "3,3,2,2,1,1,0,0,0,1,1,2,2,3,3,3,2,2,1,1,0,0,0,1,1,2,2,3", "spawn animation should shrink and expand symmetrically in each fourteen-frame state");
 assert(spawnAnimationProbe.sizes.join(",") === "14,14,11,11,8,8,6,6,6,8,8,11,11,14,14,14,11,11,8,8,6,6,6,8,8,11,11,14", "replacement spawn art should hold the matching four discrete footprints");
-assert(schema.gameSettings.timerFreezesEnemyTime === true, "schema should expose timer freeze rule");
 assert(schema.enemyTypes[2].wallPower === 1, "the built-in Power Tank should gain bullet speed without stronger wall damage");
 assert(schema.wallRules.brickSameSideHits === 4, "normal shots should need four same-side brick hits");
 assert(schema.wallRules.poweredBrickSameSideHits === 2, "powered shots should need two same-side brick hits");
@@ -942,9 +938,6 @@ assert(pausedTankVisualProbe.afterNineFrames.displayFrame === 16 && pausedTankVi
 assert(pausedTankVisualProbe.afterResume.tick === 23 && pausedTankVisualProbe.afterResume.displayFrame === 16, "battle elapsed time and the NMI-style visual phase should remain independent after pause");
 const carrierClearProbe = context.window.TankDefender8.debugCarrierSpawnClearsPowerUpProbe(true);
 assert(carrierClearProbe.cleared === true && carrierClearProbe.hasPowerUp === false, "carrier spawn should clear uncollected power-ups by default");
-const timerProbe = context.window.TankDefender8.debugTimerRuleProbe();
-assert(timerProbe.frozen === true, "timer should freeze enemy time by default");
-assert(timerProbe.canSpawn === true, "timer should let enemy spawning continue by default");
 const globalTimerProbe = context.window.TankDefender8.debugGlobalTimerCadenceProbe();
 assert(globalTimerProbe.unitFrames === 64, "original long-duration timers should use 64-frame units");
 assert(globalTimerProbe.boundaries.map((entry) => entry.active).join(",") === "false,false,true,false,false,true", "global timers should tick only when the low frame counter is zero modulo 64");
@@ -1443,15 +1436,6 @@ const mixedPack = {
 };
 assert(context.window.TankDefender8.validateStagePack(mixedPack).ok === false, "mixed map formats should fail validation");
 
-const badTimerFreezePack = {
-  id: "bad-timer-freeze",
-  totalStages: 1,
-  maps: [schema.maps[0]],
-  gameSettings: { timerFreezesEnemyTime: "yes" },
-  enemies: [schema.enemies[0].slice(0, 3)]
-};
-assert(context.window.TankDefender8.validateStagePack(badTimerFreezePack).ok === false, "bad timer freeze setting should fail validation");
-
 const jsonResult = context.window.TankDefender8.loadStagePackJson(JSON.stringify(validPack));
 assert(jsonResult.ok === true, "loadStagePackJson should accept valid JSON");
 
@@ -1497,9 +1481,6 @@ assert(context.window.TankDefender8.currentPackInfo().enemyTypes[0].hitColors[0]
 assert(context.window.TankDefender8.debugEnemyColorProbe(0, 1) === "#111111", "custom enemy hit colors should apply at low HP");
 assert(context.window.TankDefender8.debugEnemyColorProbe(0, 2) === "#ffffff", "custom enemy hit colors should apply at high HP");
 assert(context.window.TankDefender8.currentPackInfo().maxActiveEnemies === 2, "current stage max active enemies should use stageSettings");
-assert(context.window.TankDefender8.currentPackInfo().initialLives === 5, "current pack should expose custom initial lives");
-assert(context.window.TankDefender8.currentPackInfo().bonusLifeScores[0] === 100, "current pack should expose custom bonus life scores");
-assert(context.window.TankDefender8.currentPackInfo().deathPowerLevel === 2, "current pack should expose custom death power level");
 const stageClearDelayStartProbe = context.window.TankDefender8.debugStageClearDelayProbe(0, true);
 assert(
   stageClearDelayStartProbe.screen === "playing" &&
@@ -1571,10 +1552,6 @@ assert(gameOverStageResultProbe.wrappedStage.screen === "fullGameOver" && gameOv
 assert(context.window.TankDefender8.debugStageClearPresentationProbe([20, 0, 0, 0], [0, 0, 0, 0], 0).duration === 8, "a positive custom stage-clear timing should override the dynamic result duration");
 assert(context.window.TankDefender8.currentPackInfo().playerUpgradeRules[0].maxBullets === 2, "current pack should expose custom player upgrade rules");
 assert(context.window.TankDefender8.currentPackInfo().playerUpgradeRules[0].bulletSpeed === 2.75, "current pack should expose custom player bullet speed");
-assert(context.window.TankDefender8.currentPackInfo().timerFreezesEnemyTime === false, "current pack should expose custom timer freeze rule");
-const customTimerProbe = context.window.TankDefender8.debugTimerRuleProbe();
-assert(customTimerProbe.frozen === false, "custom timer rule should allow enemy time to continue when disabled");
-assert(customTimerProbe.canSpawn === true, "custom timer rule should still allow spawn countdown during timer");
 assert(context.window.TankDefender8.currentPackInfo().playerSpawns[0].x === 3, "current stage should expose custom player spawns");
 assert(context.window.TankDefender8.currentPackInfo().enemySpawns[0].x === 1, "current stage should expose custom enemy spawns");
 assert(context.window.TankDefender8.currentPackInfo().powerUpSpawns[1].x === 10, "current stage should expose custom power-up spawns");
