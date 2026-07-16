@@ -73,6 +73,16 @@
     tankTrackFrameName
   } = requireRuntimeModule("tankPresentation");
   const {
+    BASE_DESTRUCTION_TAIL_FRAMES,
+    baseDestructionPresentation: selectBaseDestructionPresentation,
+    enemyDestructionPresentation: selectEnemyDestructionPresentation,
+    explosionPresentation: selectExplosionPresentation,
+    isTankDestructionStyle,
+    playerDestructionPresentation: selectPlayerDestructionPresentation,
+    scorePopupPresentation: selectScorePopupPresentation,
+    tankDestructionPresentation: selectTankDestructionPresentation
+  } = requireRuntimeModule("effectPresentation");
+  const {
     DEFAULT_STAGE_ADVANCE,
     DEFAULT_STAGE_CLEAR_BONUS
   } = requireRuntimeModule("stageFlowSettings");
@@ -207,6 +217,12 @@
   const FIELD_Y = 16;
   const FIELD_W = GRID * TILE;
   const FIELD_H = GRID * TILE;
+  const BATTLE_PRESENTATION_LAYOUT = Object.freeze({
+    x: FIELD_X,
+    y: FIELD_Y,
+    width: FIELD_W,
+    height: FIELD_H
+  });
   const PANEL_X = FIELD_X + FIELD_W;
   const STEP_MS = 1000 / 60;
   const DEFAULT_HIGH_SCORE = 20000;
@@ -250,33 +266,7 @@
     rightArrowX: 136,
     p2KillsX: 152
   });
-  const BASE_DESTRUCTION_TAIL_FRAMES = 4;
-  const BASE_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
-    1, 1, 1,
-    2, 2, 2, 2,
-    3, 3, 3, 3,
-    4, 4, 4, 4,
-    5, 5, 5, 5,
-    4, 4, 4, 4,
-    3, 3, 3, 3,
-    2, 2, 2, 2,
-    1, 1, 1, 1
-  ]);
-  const ENEMY_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
-    1, 1, 1,
-    2, 2, 2,
-    3, 3, 3,
-    4, 4, 4,
-    5, 5, 5,
-    3, 3, 3
-  ]);
-  const PLAYER_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
-    ...ENEMY_DESTRUCTION_REFERENCE_PHASES,
-    1, 1, 1, 1, 1, 1
-  ]);
   const BULLET_IMPACT_EXPLOSION_RULES = new Set(["brickHit", "steelHit", "steelBlocked", "enemyHit", "playerStun"]);
-  const TANK_DESTRUCTION_EXPLOSION_RULES = new Set(["enemyDestroy", "playerDestroy"]);
-  const BULLET_IMPACT_PHASE_SIZES = [8, 12, 16];
   const TITLE_MENU_ITEMS = [
     { label: "1 PLAYER", action: "one", x: 88, y: 136, color: "#f3f0d4" },
     { label: "2 PLAYERS", action: "two", x: 88, y: 152, color: "#f3f0d4" },
@@ -4630,7 +4620,7 @@
     const rule = explosionRule(ruleName);
     const style = BULLET_IMPACT_EXPLOSION_RULES.has(ruleName)
       ? "bulletImpact"
-      : (TANK_DESTRUCTION_EXPLOSION_RULES.has(ruleName) ? ruleName : "default");
+      : (isTankDestructionStyle(ruleName) ? ruleName : "default");
     addExplosion(
       x,
       y,
@@ -5474,7 +5464,7 @@
 
   function renderExplosions() {
     for (const explosion of game.explosions) {
-      if (TANK_DESTRUCTION_EXPLOSION_RULES.has(explosion.style)) {
+      if (isTankDestructionStyle(explosion.style)) {
         drawTankDestructionExplosion(explosion);
         continue;
       }
@@ -5507,32 +5497,12 @@
     }
   }
 
-  /** Maps the player's $73 death state onto 18 explosion ticks and the final phase-1 state. */
   function playerDestructionPresentation(player) {
-    const totalTicks = Math.max(1, Math.floor(Number(player.destroyTotalTicks) || gameSettings().timings.playerRespawn));
-    const remainingTicks = clamp(Math.floor(Number(player.respawn) || 0), 1, totalTicks);
-    const tick = totalTicks - remainingTicks;
-    const explosionTicks = clamp(
-      Math.floor(Number(player.destroyExplosionTicks) || explosionRule("playerDestroy").ttl),
-      1,
-      totalTicks
-    );
-    const finalState = tick >= explosionTicks;
-    const referenceFrame = finalState
-      ? 0
-      : Math.min(
-        ENEMY_DESTRUCTION_REFERENCE_PHASES.length - 1,
-        Math.floor((tick * ENEMY_DESTRUCTION_REFERENCE_PHASES.length) / explosionTicks)
-      );
-    const phase = finalState ? 1 : ENEMY_DESTRUCTION_REFERENCE_PHASES[referenceFrame];
-    const centerX = FIELD_X + player.x + player.w / 2;
-    const centerY = FIELD_Y + player.y + player.h / 2;
-    return {
-      kind: finalState ? "final" : "explosion",
-      tick,
-      referenceFrame,
-      ...destructionExplosionGeometry(phase, centerX, centerY)
-    };
+    return selectPlayerDestructionPresentation(player, {
+      layout: BATTLE_PRESENTATION_LAYOUT,
+      totalTicks: gameSettings().timings.playerRespawn,
+      explosionTicks: explosionRule("playerDestroy").ttl
+    });
   }
 
   function renderEnemyDestructions() {
@@ -5551,34 +5521,12 @@
     }
   }
 
-  /** Presents 18 explosion ticks followed by the original six-tick fixed score state. */
   function enemyDestructionPresentation(enemy) {
-    const explosionTicks = Math.max(1, Math.floor(Number(enemy.destroyExplosionTicks) || explosionRule("enemyDestroy").ttl));
-    const totalTicks = explosionTicks + ENEMY_DESTRUCTION_SCORE_TICKS;
-    const tick = clamp(Math.floor(Number(enemy.destroyTicks) || 0), 0, totalTicks - 1);
-    const centerX = FIELD_X + enemy.x + enemy.w / 2;
-    const centerY = FIELD_Y + enemy.y + enemy.h / 2;
-    if (tick >= explosionTicks && enemy.destroyShowScore !== false) {
-      return {
-        kind: "score",
-        tick,
-        text: String(enemy.score),
-        x: Math.round(centerX - 8),
-        y: Math.round(centerY - 8)
-      };
-    }
-    const explosionTick = tick >= explosionTicks ? 0 : tick;
-    const referenceFrame = Math.min(
-      ENEMY_DESTRUCTION_REFERENCE_PHASES.length - 1,
-      Math.floor((explosionTick * ENEMY_DESTRUCTION_REFERENCE_PHASES.length) / explosionTicks)
-    );
-    const phase = ENEMY_DESTRUCTION_REFERENCE_PHASES[referenceFrame];
-    return {
-      kind: "explosion",
-      tick,
-      referenceFrame,
-      ...destructionExplosionGeometry(phase, centerX, centerY)
-    };
+    return selectEnemyDestructionPresentation(enemy, {
+      layout: BATTLE_PRESENTATION_LAYOUT,
+      explosionTicks: explosionRule("enemyDestroy").ttl,
+      scoreTicks: ENEMY_DESTRUCTION_SCORE_TICKS
+    });
   }
 
   function renderBaseDestruction() {
@@ -5591,80 +5539,20 @@
     });
   }
 
-  /** Maps the configurable visible lifetime onto the original 35-frame 1-2-3-4-5-4-3-2-1 sequence. */
   function baseDestructionPresentation(timer) {
-    const visibleFrames = explosionRule("baseDestroy").ttl;
-    const duration = visibleFrames + BASE_DESTRUCTION_TAIL_FRAMES;
-    const remaining = clamp(Math.floor(Number(timer) || 0), 0, duration);
-    const elapsed = duration - remaining;
-    if (elapsed <= 0 || elapsed > visibleFrames) return null;
-    const frame = elapsed - 1;
-    const referenceFrame = visibleFrames <= 1
-      ? 0
-      : Math.round((frame * (BASE_DESTRUCTION_REFERENCE_PHASES.length - 1)) / (visibleFrames - 1));
-    const phase = BASE_DESTRUCTION_REFERENCE_PHASES[referenceFrame];
-    const centerX = FIELD_X + game.base.x + game.base.w / 2;
-    const centerY = FIELD_Y + game.base.y + game.base.h / 2;
-    return {
-      frame,
-      referenceFrame,
-      ...destructionExplosionGeometry(phase, centerX, centerY)
-    };
+    return selectBaseDestructionPresentation(timer, game.base, {
+      layout: BATTLE_PRESENTATION_LAYOUT,
+      visibleFrames: explosionRule("baseDestroy").ttl,
+      tailFrames: BASE_DESTRUCTION_TAIL_FRAMES
+    });
   }
 
-  /** Maps enemy/player tank destruction onto the original shared five explosion pictures. */
   function tankDestructionPresentation(explosion) {
-    const phases = explosion.style === "playerDestroy"
-      ? PLAYER_DESTRUCTION_REFERENCE_PHASES
-      : ENEMY_DESTRUCTION_REFERENCE_PHASES;
-    const visibleFrames = Math.max(1, Math.floor(Number(explosion.max) || 1));
-    const elapsed = clamp(visibleFrames - Math.floor(Number(explosion.ttl) || 0), 0, visibleFrames - 1);
-    const referenceFrame = Math.min(phases.length - 1, Math.floor((elapsed * phases.length) / visibleFrames));
-    return {
-      frame: elapsed,
-      referenceFrame,
-      ...destructionExplosionGeometry(
-        phases[referenceFrame],
-        FIELD_X + explosion.x,
-        FIELD_Y + explosion.y
-      )
-    };
-  }
-
-  function destructionExplosionGeometry(phase, centerX, centerY) {
-    const large = phase >= 4;
-    const width = large ? 32 : 16;
-    const height = large ? 32 : 8;
-    return {
-      phase,
-      frameName: `phase${phase}`,
-      size: width,
-      width,
-      height,
-      x: Math.round(centerX - width / 2),
-      y: Math.round(centerY - (large ? height / 2 : 8)),
-      spriteX: Math.round(centerX - 16),
-      spriteY: Math.round(centerY - 16)
-    };
+    return selectTankDestructionPresentation(explosion, BATTLE_PRESENTATION_LAYOUT);
   }
 
   function explosionPresentation(explosion) {
-    const elapsed = Math.max(0, explosion.max - explosion.ttl);
-    let phase = null;
-    let size;
-    if (explosion.style === "bulletImpact") {
-      phase = Math.min(2, Math.floor((elapsed * 3) / Math.max(1, explosion.max)));
-      size = BULLET_IMPACT_PHASE_SIZES[phase];
-    } else {
-      const age = 1 - explosion.ttl / explosion.max;
-      size = 3 + Math.floor(age * 13);
-    }
-    return {
-      phase,
-      size,
-      x: Math.round(FIELD_X + explosion.x - size / 2),
-      y: Math.round(FIELD_Y + explosion.y - size / 2)
-    };
+    return selectExplosionPresentation(explosion, BATTLE_PRESENTATION_LAYOUT);
   }
 
   function renderScorePopups() {
@@ -5675,19 +5563,7 @@
   }
 
   function scorePopupPresentation(popup) {
-    const text = String(popup.value);
-    const fixed = popup.style === "powerUp";
-    const advance = fixed ? 5 : 6;
-    const width = text.length * advance;
-    const age = fixed ? 0 : 1 - popup.ttl / popup.max;
-    return {
-      text,
-      width,
-      advance,
-      x: clamp(Math.round(FIELD_X + popup.x - width / 2), FIELD_X, FIELD_X + FIELD_W - width),
-      y: clamp(Math.round(FIELD_Y + popup.y - (fixed ? 4 : 7 + age * 6)), FIELD_Y, FIELD_Y + FIELD_H - 7),
-      color: fixed ? "#f7f1c6" : popup.ttl % 10 < 5 ? "#f7f1c6" : "#e0b84b"
-    };
+    return selectScorePopupPresentation(popup, BATTLE_PRESENTATION_LAYOUT);
   }
 
   function renderPanel() {

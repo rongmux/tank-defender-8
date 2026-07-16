@@ -32,6 +32,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/config/power-up-settings.js",
   "src/config/timing-settings.js",
   "src/presentation/tank-presentation.js",
+  "src/presentation/effect-presentation.js",
   "src/config/stage-flow-settings.js",
   "src/config/enemy-types.js",
   "src/config/player-upgrades.js",

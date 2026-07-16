@@ -739,42 +739,6 @@ const stageResultCloseRenderProbe = context.window.TankDefender8.debugRenderStag
 const stageResultGreyCurtainRects = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#6b6f78" && call.w === 256 && call.h === 64);
 assert(stageResultCloseRenderProbe.coverRows === 8, "stage-result closing render should use the shared discrete curtain progression");
 assert(stageResultGreyCurtainRects.some((call) => call.y === 0) && stageResultGreyCurtainRects.some((call) => call.y === 176), "stage-result closing render should cover the result table from both screen edges");
-const bulletImpactExplosionProbe = context.window.TankDefender8.debugBulletImpactExplosionProbe();
-assert(Object.values(bulletImpactExplosionProbe.ruleTtls).every((ttl) => ttl === 9), "all wall and boundary bullet impacts should share a nine-frame default");
-assert(bulletImpactExplosionProbe.beforePause === 9 && bulletImpactExplosionProbe.afterPause === 9, "pausing should freeze a bullet impact on its current frame");
-assert(bulletImpactExplosionProbe.frames.map((frame) => frame.ttl).join(",") === "9,8,7,6,5,4,3,2,1", "bullet impact should remain visible for exactly nine frames");
-assert(bulletImpactExplosionProbe.frames.map((frame) => frame.phase).join(",") === "0,0,0,1,1,1,2,2,2", "bullet impact should show three animation phases for three frames each");
-assert(bulletImpactExplosionProbe.frames.map((frame) => frame.size).join(",") === "8,8,8,12,12,12,16,16,16", "replacement impact art should hold one footprint for each three-frame phase");
-const tankDestructionExplosionProbe = context.window.TankDefender8.debugTankDestructionExplosionProbe();
-const collapseDestructionPhases = (frames) => frames
-  .map((frame) => frame.phase)
-  .filter((phase, index, phases) => index === 0 || phase !== phases[index - 1]);
-assert(tankDestructionExplosionProbe.enemy.length === 18 && tankDestructionExplosionProbe.player.length === 24, "tank destruction probes should preserve the original enemy explosion and complete player death-state tick counts");
-assert(tankDestructionExplosionProbe.enemy.every((frame) => frame.style === "enemyDestroy") && tankDestructionExplosionProbe.player.every((frame) => frame.style === "playerDestroy"), "live explosion routing should retain the distinct enemy and player destruction styles");
-assert(collapseDestructionPhases(tankDestructionExplosionProbe.enemy).join(",") === "1,2,3,4,5,3", "enemy destruction should follow the original small-small-small-large-large-small picture sequence");
-assert(collapseDestructionPhases(tankDestructionExplosionProbe.player).join(",") === "1,2,3,4,5,3,1", "player destruction should restore the original final small picture after the enemy sequence");
-assert(tankDestructionExplosionProbe.player.slice(0, 18).every((frame) => frame.kind === "explosion") && tankDestructionExplosionProbe.player.slice(18).every((frame) => frame.kind === "final" && frame.phase === 1), "player destruction should use eighteen explosion ticks followed by six ticks of the first small picture");
-assert(tankDestructionExplosionProbe.enemy.every((frame) => frame.frameName === `phase${frame.phase}`), "enemy destruction phases should select their matching shared sprite frame");
-assert(tankDestructionExplosionProbe.player.every((frame) => frame.frameName === `phase${frame.phase}`), "player destruction phases should select their matching shared sprite frame");
-assert(tankDestructionExplosionProbe.enemy.every((frame) => frame.phase >= 4 ? frame.width === 32 && frame.height === 32 : frame.width === 16 && frame.height === 8), "enemy destruction should switch between the original 16x8 and 32x32 sprite bounds");
-assert(tankDestructionExplosionProbe.player.every((frame) => frame.phase >= 4 ? frame.width === 32 && frame.height === 32 : frame.width === 16 && frame.height === 8), "player destruction should switch between the original 16x8 and 32x32 sprite bounds");
-const tankDestructionFrameSignatures = [1, 2, 3, 4, 5].map((phase) => {
-  canvasContext.calls.length = 0;
-  const sample = tankDestructionExplosionProbe.enemy.find((frame) => frame.phase === phase);
-  const presentation = context.window.TankDefender8.debugRenderTankDestructionExplosionFrame("enemyDestroy", sample.elapsed);
-  const signature = canvasContext.calls
-    .filter((call) => call.op === "fillRect" && (call.style === "#f0b546" || call.style === "#f7f1c6"))
-    .map((call) => `${call.style}:${call.x},${call.y},${call.w},${call.h}`)
-    .join("|");
-  return { phase: presentation.phase, signature };
-});
-assert(tankDestructionFrameSignatures.map((entry) => entry.phase).join(",") === "1,2,3,4,5", "tank destruction render samples should cover all five shared pictures");
-assert(new Set(tankDestructionFrameSignatures.map((entry) => entry.signature)).size === 5, "all five tank destruction pictures should render distinct replacement art");
-canvasContext.calls.length = 0;
-const smallTankDestruction = context.window.TankDefender8.debugRenderTankDestructionExplosionFrame("enemyDestroy", 0);
-const smallTankDestructionCalls = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#f0b546");
-assert(smallTankDestruction.x === 72 && smallTankDestruction.y === 72 && smallTankDestruction.width === 16 && smallTankDestruction.height === 8, "small tank destruction pictures should expose the original bounds around the tank position");
-assert(Math.min(...smallTankDestructionCalls.map((call) => call.x)) === 72 && Math.min(...smallTankDestructionCalls.map((call) => call.y)) === 72 && Math.max(...smallTankDestructionCalls.map((call) => call.x + call.w)) === 88 && Math.max(...smallTankDestructionCalls.map((call) => call.y + call.h)) === 80, "small tank destruction art should occupy exactly the original two-sprite footprint");
 const stageClearRowLayoutProbe = context.window.TankDefender8.debugStageClearRowLayoutProbe();
 assert(
   stageClearRowLayoutProbe.leftArrowX === 112 &&
@@ -902,13 +866,6 @@ assert(pausedPowerUpVisualProbe.initial.waterFrame === pausedPowerUpVisualProbe.
 assert(pausedPowerUpVisualProbe.afterResume.tick === 23 && pausedPowerUpVisualProbe.afterResume.displayFrame === 16, "resumed power-up animation should retain the independently advanced NMI-style display phase");
 const waterAnimationProbe = context.window.TankDefender8.debugWaterAnimationCadenceProbe();
 assert(waterAnimationProbe.map((entry) => entry.frame).join(",") === "waterA,waterA,waterB,waterB,waterA,waterA,waterB", "water animation should switch on bit five of the global frame counter");
-const scorePopupProbe = context.window.TankDefender8.debugScorePopupProbe();
-assert(scorePopupProbe.enemyPopup === null, "destroyed enemies should not create detached floating score popups");
-assert(scorePopupProbe.enemyScoreAward.score === scorePopupProbe.armorScore && scorePopupProbe.enemyScoreAward.stagePoints === scorePopupProbe.armorScore && scorePopupProbe.enemyScoreAward.stageKills.reduce((total, count) => total + count, 0) === 1, "a lethal hit should award score and kill-table credit immediately before the retained destruction state finishes");
-assert(scorePopupProbe.enemyPresentation.kind === "score" && Number(scorePopupProbe.enemyPresentation.text) === scorePopupProbe.armorScore, "destroyed enemies should show a fixed score in their retained final state");
-const pausedScorePopupProbe = context.window.TankDefender8.debugPausedScorePopupProbe();
-assert(pausedScorePopupProbe.afterOneFrame.tick === 27 && pausedScorePopupProbe.afterOneFrame.ttl === 1, "paused gameplay should count down the pickup score without advancing the gameplay tick");
-assert(pausedScorePopupProbe.afterTwoFrames.tick === 27 && pausedScorePopupProbe.afterTwoFrames.popupCount === 0, "pickup score should expire on schedule while gameplay remains paused");
 const playerGameOverMessageProbe = context.window.TankDefender8.debugPlayerGameOverMessageProbe();
 const playerGameOverFrame = (run, frame) => run.frames.find((entry) => entry.frame === frame);
 assert(playerGameOverMessageProbe.initialTimer === 13 && playerGameOverMessageProbe.moveThreshold === 10, "an individually eliminated player should use the original thirteen-step message counter and three moving steps");
@@ -1459,57 +1416,6 @@ assert(baseWallPriorityProbe.shielded.explosions.length === 1, "base-shielding w
 assert(baseWallPriorityProbe.exposed.baseAlive === false, "exposed base should be destroyed by an overlapping bullet");
 assert(baseWallPriorityProbe.exposed.screen === "playing" && baseWallPriorityProbe.exposed.baseDestroyTimer === 39, "exposed base destruction should load the original pre-banner countdown");
 assert(baseWallPriorityProbe.exposed.explosions.length === 0 && baseWallPriorityProbe.exposed.presentation === null, "the hit frame should show only the destroyed base before the first HQ explosion frame");
-const baseDestructionProbe = context.window.TankDefender8.debugBaseDestructionSequenceProbe();
-assert(baseDestructionProbe.entry.hit && !baseDestructionProbe.entry.baseAlive && baseDestructionProbe.entry.bulletRemoved, "the base destruction sequence should begin from a real base collision");
-assert(baseDestructionProbe.entry.duration === 39 && baseDestructionProbe.entry.timer === 39 && baseDestructionProbe.entry.presentation === null, "the hit frame should retain the loaded 0x27 counter without rendering an explosion early");
-assert(baseDestructionProbe.entry.explosionCount === 0, "base destruction should not create a generic bullet-impact explosion");
-assert(baseDestructionProbe.pauseAccepted === false, "pause input should be rejected throughout the base destruction countdown");
-assert(baseDestructionProbe.playerEndX === baseDestructionProbe.playerStartX && baseDestructionProbe.playerBulletCount === 0, "base destruction should clear player movement and fire input");
-assert(baseDestructionProbe.bulletEndX > baseDestructionProbe.bulletStartX && baseDestructionProbe.enemyEndFlash === baseDestructionProbe.enemyStartFlash - 39, "battle bullets and enemy spawn animation should continue during base destruction");
-assert(baseDestructionProbe.frames.slice(0, 35).map((frame) => frame.phase).join(",") === "1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,4,4,4,4,3,3,3,3,2,2,2,2,1,1,1,1", "base explosion phases should match the original 1-2-3-4-5-4-3-2-1 handler sequence");
-assert(baseDestructionProbe.frames.slice(0, 35).map((frame) => `${frame.width}x${frame.height}`).join(",") === "16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,32x32,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8,16x8", "base explosion phases should switch between the original 16x8 and 32x32 footprints");
-assert(baseDestructionProbe.frames.slice(0, 35).every((frame) => frame.frameName === `phase${frame.phase}`), "each HQ phase should select its own replacement sprite frame");
-assert(baseDestructionProbe.frames.slice(35).every((frame) => frame.phase === 0 && frame.width === 0 && frame.height === 0 && frame.frameName === null), "the final four countdown frames should show only the destroyed base");
-assert(baseDestructionProbe.frames[26].movementAudioMode === "enemy" && !baseDestructionProbe.frames.some((frame) => frame.movementAudioMode === "player"), "cleared player controls should let only the enemy engine loop resume after the HQ pulse ends");
-assert(baseDestructionProbe.frames.slice(0, 38).every((frame) => frame.screen === "playing") && baseDestructionProbe.frames[38].screen === "gameOver", "the game-over battlefield timer should begin only after all thirty-nine base-destruction updates");
-assert(baseDestructionProbe.gameOverTimer === 256, "the normal 256-frame in-field GAME OVER sequence should start after base destruction");
-canvasContext.calls.length = 0;
-assert(context.window.TankDefender8.debugRenderBaseDestructionFrame(39) === null && !canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42"), "the base hit frame should not draw the first explosion phase prematurely");
-canvasContext.calls.length = 0;
-const smallBaseExplosion = context.window.TankDefender8.debugRenderBaseDestructionFrame(38);
-const smallBaseExplosionCalls = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#f05a42");
-const smallBaseExplosionBounds = {
-  x: Math.min(...smallBaseExplosionCalls.map((call) => call.x)),
-  y: Math.min(...smallBaseExplosionCalls.map((call) => call.y)),
-  right: Math.max(...smallBaseExplosionCalls.map((call) => call.x + call.w)),
-  bottom: Math.max(...smallBaseExplosionCalls.map((call) => call.y + call.h))
-};
-assert(smallBaseExplosion.phase === 1 && smallBaseExplosion.frameName === "phase1" && smallBaseExplosion.x === 112 && smallBaseExplosion.y === 208 && smallBaseExplosion.width === 16 && smallBaseExplosion.height === 8, "small HQ phases should expose the original 16x8 footprint at the original coordinates");
-assert(smallBaseExplosionBounds.x === 112 && smallBaseExplosionBounds.y === 208 && smallBaseExplosionBounds.right === 128 && smallBaseExplosionBounds.bottom === 216, "small HQ replacement art should occupy exactly the original two-sprite bounds");
-canvasContext.calls.length = 0;
-const largeBaseExplosion = context.window.TankDefender8.debugRenderBaseDestructionFrame(27);
-const largeBaseExplosionCalls = canvasContext.calls.filter((call) => call.op === "fillRect" && call.style === "#f05a42");
-const largeBaseExplosionBounds = {
-  x: Math.min(...largeBaseExplosionCalls.map((call) => call.x)),
-  y: Math.min(...largeBaseExplosionCalls.map((call) => call.y)),
-  right: Math.max(...largeBaseExplosionCalls.map((call) => call.x + call.w)),
-  bottom: Math.max(...largeBaseExplosionCalls.map((call) => call.y + call.h))
-};
-assert(largeBaseExplosion.phase === 4 && largeBaseExplosion.frameName === "phase4" && largeBaseExplosion.x === 104 && largeBaseExplosion.y === 200 && largeBaseExplosion.width === 32 && largeBaseExplosion.height === 32, "large HQ phases should expose the original 32x32 footprint at the original coordinates");
-assert(largeBaseExplosionBounds.x === 104 && largeBaseExplosionBounds.y === 200 && largeBaseExplosionBounds.right === 136 && largeBaseExplosionBounds.bottom === 232, "large HQ replacement art should occupy exactly the original eight-sprite bounds");
-const baseExplosionFrameSignatures = [38, 35, 31, 27, 23].map((timer) => {
-  canvasContext.calls.length = 0;
-  const presentation = context.window.TankDefender8.debugRenderBaseDestructionFrame(timer);
-  const signature = canvasContext.calls
-    .filter((call) => call.op === "fillRect" && (call.style === "#f05a42" || call.style === "#f7f1c6"))
-    .map((call) => `${call.style}:${call.x},${call.y},${call.w},${call.h}`)
-    .join("|");
-  return { phase: presentation.phase, frameName: presentation.frameName, signature };
-});
-assert(baseExplosionFrameSignatures.map((entry) => entry.phase).join(",") === "1,2,3,4,5", "HQ render samples should cover all five original phases");
-assert(new Set(baseExplosionFrameSignatures.map((entry) => entry.frameName)).size === 5 && new Set(baseExplosionFrameSignatures.map((entry) => entry.signature)).size === 5, "all five HQ phases should use visually distinct replacement frames");
-canvasContext.calls.length = 0;
-assert(context.window.TankDefender8.debugRenderBaseDestructionFrame(3) === null && !canvasContext.calls.some((call) => call.op === "fillRect" && call.style === "#f05a42"), "the four-frame tail should leave only the destroyed base visible");
 fileInput.files = [{ text: async () => JSON.stringify(validPack) }];
 assert(typeof fileInput.listeners.change === "function", "file input change listener missing");
 Promise.resolve(fileInput.listeners.change()).then(() => {
