@@ -96,6 +96,7 @@
     buildOriginalStyleEnemySequences,
     summarizeEnemySequences
   } = requireRuntimeModule("enemySequences");
+  const { createPlayerState, resetPlayerState } = requireRuntimeModule("playerState");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -1508,59 +1509,17 @@
   }
 
   function createPlayer(id) {
-    const spawn = playerSpawnPoint(id);
-    const spawnFlash = gameSettings().timings.playerSpawnFlash;
-    return {
-      kind: "player",
+    return createPlayerState({
       id,
-      x: spawn.x,
-      y: spawn.y,
-      spawnX: spawn.x,
-      spawnY: spawn.y,
-      w: 14,
-      h: 14,
-      dir: UP,
-      speed: gameSettings().playerMovement.speed,
-      alive: true,
-      lives: gameSettings().initialLives,
-      nextBonusLifeIndex: 0,
-      respawn: 0,
-      destroying: false,
-      destroyTotalTicks: 0,
-      destroyExplosionTicks: 0,
-      spawnFlash,
-      invuln: spawnFlash > 0 ? 0 : gameSettings().timings.playerInvulnerability,
-      stun: 0,
-      pendingSnap: false,
-      level: 0,
-      reload: 0,
-      score: 0,
-      stagePoints: 0,
-      stageKills: Array(enemyTypeDefinitions().length).fill(0),
-      totalKills: Array(enemyTypeDefinitions().length).fill(0),
-      slide: 0,
-      trackPhase: 0,
-      color: id === 1 ? "#e3c64e" : "#55b96a",
-      accent: id === 1 ? "#fff0a8" : "#b7ffbd"
-    };
+      spawn: playerSpawnPoint(id),
+      settings: gameSettings(),
+      enemyTypeCount: enemyTypeDefinitions().length,
+      direction: UP
+    });
   }
 
   function resetPlayerPosition(player) {
-    player.x = player.spawnX;
-    player.y = player.spawnY;
-    player.dir = UP;
-    player.alive = player.lives > 0;
-    player.respawn = 0;
-    player.destroying = false;
-    player.destroyTotalTicks = 0;
-    player.destroyExplosionTicks = 0;
-    player.spawnFlash = gameSettings().timings.playerSpawnFlash;
-    player.invuln = player.spawnFlash > 0 ? 0 : gameSettings().timings.playerInvulnerability;
-    player.stun = 0;
-    player.pendingSnap = false;
-    player.reload = 0;
-    player.slide = 0;
-    player.trackPhase = 0;
+    resetPlayerState(player, { settings: gameSettings(), direction: UP });
   }
 
   function startGame(players, options) {

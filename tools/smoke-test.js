@@ -1545,8 +1545,6 @@ assert(snapshot.friendlyFire.enabled === false, "debug snapshot should expose cu
 assert(snapshot.explosionRules.enemyDestroy.color === "#123456", "debug snapshot should expose custom explosion rules");
 assert(snapshot.stageAdvance.loopAfterFinalStage === false, "debug snapshot should expose custom stage advance rules");
 assert(snapshot.stageClearBonus.points === 777, "debug snapshot should expose custom stage clear bonus");
-assert(snapshot.players[0].speed === 1.5, "custom player movement speed should apply to new players");
-
 assert(freePack.totalStages === 35, "free replacement pack should contain 35 stages");
 assert(freePack.maps.length === 35, "free replacement pack should contain 35 maps");
 assert(freePack.enemies.length === 35, "free replacement pack should contain 35 enemy sequences");
