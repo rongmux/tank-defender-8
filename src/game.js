@@ -57,7 +57,21 @@
     shouldClearPowerUpForCarrierSpawn,
     shouldReleaseCarrierPowerUp
   } = requireRuntimeModule("powerUpSettings");
-  const { DEFAULT_TIMINGS, SPAWN_ANIMATION_FRAMES } = requireRuntimeModule("timingSettings");
+  const { DEFAULT_TIMINGS } = requireRuntimeModule("timingSettings");
+  const {
+    CARRIER_FLASH_COLOR,
+    CARRIER_FLASH_PHASE_FRAMES,
+    PLAYER_UPGRADE_OVERLAY_COLORS,
+    directionName,
+    enemyColor,
+    isPlayerShieldVisible,
+    isPlayerTankVisible,
+    playerUpgradeOverlayParts,
+    shieldColorForTick,
+    spawnAnimationPresentation,
+    tankPrimaryColor,
+    tankTrackFrameName
+  } = requireRuntimeModule("tankPresentation");
   const {
     DEFAULT_STAGE_ADVANCE,
     DEFAULT_STAGE_CLEAR_BONUS
@@ -195,8 +209,6 @@
   const FIELD_H = GRID * TILE;
   const PANEL_X = FIELD_X + FIELD_W;
   const STEP_MS = 1000 / 60;
-  const SPAWN_ANIMATION_CYCLE = 14;
-  const SPAWN_PHASE_SIZES = [6, 8, 11, 14];
   const DEFAULT_HIGH_SCORE = 20000;
   const TITLE_DEMO_IDLE_FRAMES = 0x0a * 0x40;
   const DEMO_DISPLAY_STAGE = 30;
@@ -238,7 +250,6 @@
     rightArrowX: 136,
     p2KillsX: 152
   });
-  const CARRIER_FLASH_COLOR = "#dd3d33";
   const BASE_DESTRUCTION_TAIL_FRAMES = 4;
   const BASE_DESTRUCTION_REFERENCE_PHASES = Object.freeze([
     1, 1, 1,
@@ -1042,11 +1053,6 @@
     O: ["010", "101", "101", "101", "010"],
     R: ["110", "101", "110", "101", "101"],
     V: ["101", "101", "101", "101", "010"]
-  };
-  const PLAYER_UPGRADE_OVERLAY_COLORS = {
-    level1: "#f7f1c6",
-    level2: "#f8e08b",
-    level3: "#dbe0ef"
   };
   const builtInStagePack = {
     id: "original-style",
@@ -5181,7 +5187,7 @@
       if (player.spawnFlash > 0) {
         drawSpawn(player);
       } else {
-        if (isPlayerShieldVisible(player)) drawShield(player);
+        if (isPlayerShieldVisible(player, game.paused)) drawShield(player);
         if (isPlayerTankVisible(player, battleDisplayFrame())) drawTank(player, player.color, player.accent);
       }
     }
@@ -5335,12 +5341,6 @@
     if (tank.kind === "player") drawPlayerUpgradeOverlay(tank, x, y, accent);
   }
 
-  function tankTrackFrameName(tank) {
-    const orientation = tank.dir === UP || tank.dir === DOWN ? "vertical" : "horizontal";
-    const phase = (Math.floor(Number(tank.trackPhase) || 0) & 1) === 0 ? "A" : "B";
-    return `${orientation}${phase}`;
-  }
-
   function drawPlayerUpgradeOverlay(tank, x, y, accent) {
     const parts = playerUpgradeOverlayParts(tank.level, tank.dir);
     if (!parts.length) return;
@@ -5356,66 +5356,6 @@
     }
   }
 
-  function playerUpgradeOverlayParts(level, dir) {
-    const value = clamp(Math.floor(Number(level) || 0), 0, 3);
-    const parts = [];
-    if (value >= 1) {
-      if (dir === UP) {
-        parts.push({ role: "level1", rect: [6, 0, 2, 3] }, { role: "level1", rect: [5, 2, 4, 1] });
-      } else if (dir === DOWN) {
-        parts.push({ role: "level1", rect: [6, 11, 2, 3] }, { role: "level1", rect: [5, 11, 4, 1] });
-      } else if (dir === LEFT) {
-        parts.push({ role: "level1", rect: [0, 6, 3, 2] }, { role: "level1", rect: [2, 5, 1, 4] });
-      } else {
-        parts.push({ role: "level1", rect: [11, 6, 3, 2] }, { role: "level1", rect: [11, 5, 1, 4] });
-      }
-    }
-    if (value >= 2) {
-      parts.push(
-        { role: "level2", rect: [0, 1, 2, 2] },
-        { role: "level2", rect: [12, 1, 2, 2] },
-        { role: "level2", rect: [0, 11, 2, 2] },
-        { role: "level2", rect: [12, 11, 2, 2] }
-      );
-    }
-    if (value >= 3) {
-      if (dir === UP) {
-        parts.push({ role: "level3", rect: [5, 0, 4, 1] }, { role: "level3", rect: [6, 1, 2, 2] });
-      } else if (dir === DOWN) {
-        parts.push({ role: "level3", rect: [5, 13, 4, 1] }, { role: "level3", rect: [6, 11, 2, 2] });
-      } else if (dir === LEFT) {
-        parts.push({ role: "level3", rect: [0, 5, 1, 4] }, { role: "level3", rect: [1, 6, 2, 2] });
-      } else {
-        parts.push({ role: "level3", rect: [13, 5, 1, 4] }, { role: "level3", rect: [11, 6, 2, 2] });
-      }
-    }
-    return parts;
-  }
-
-  function tankPrimaryColor(tank, color, tick) {
-    let primary = tank.carrier && Math.floor(tick / 8) % 2 === 0 ? CARRIER_FLASH_COLOR : color;
-    return primary;
-  }
-
-  function isPlayerTankVisible(player, tick) {
-    return !(player.stun > 0 && (tick & 8) !== 0);
-  }
-
-  function directionName(dir) {
-    if (dir === UP) return "up";
-    if (dir === RIGHT) return "right";
-    if (dir === DOWN) return "down";
-    return "left";
-  }
-
-  function enemyColor(enemy) {
-    if (enemy.hitColors && enemy.hitColors.length) {
-      const index = clamp(Math.ceil(enemy.hp) - 1, 0, enemy.hitColors.length - 1);
-      if (enemy.hitColors[index]) return enemy.hitColors[index];
-    }
-    return enemy.color;
-  }
-
   function drawShield(tank) {
     const x = Math.round(FIELD_X + tank.x - 2);
     const y = Math.round(FIELD_Y + tank.y - 2);
@@ -5423,18 +5363,6 @@
     drawManifestSprite("shield", "box", x, y, {
       primary: shieldColorForTick(game.frameLow)
     });
-  }
-
-  /**
-   * Keeps protection state active while matching the original paused loop,
-   * which skips submitting the shield sprites for that display frame.
-   */
-  function isPlayerShieldVisible(player) {
-    return player.invuln > 0 && !game.paused;
-  }
-
-  function shieldColorForTick(tick) {
-    return (Math.max(0, Math.floor(Number(tick) || 0)) & 2) === 0 ? "#78d9ff" : "#ffffff";
   }
 
   function drawSpawn(tank) {
@@ -5453,14 +5381,6 @@
       scale,
       { primary: "#f3f0d4" }
     );
-  }
-
-  function spawnAnimationPresentation(remaining, total) {
-    const duration = Math.max(1, Math.floor(Number(total) || SPAWN_ANIMATION_FRAMES));
-    const elapsed = Math.max(0, duration - Math.max(1, Math.floor(Number(remaining) || 1)));
-    const low = elapsed % SPAWN_ANIMATION_CYCLE;
-    const phase = Math.floor(Math.abs(low - 7) / 2);
-    return { elapsed, low, phase, size: SPAWN_PHASE_SIZES[phase] };
   }
 
   function drawBullet(bullet) {
@@ -9957,7 +9877,7 @@
         flashColor: tankPrimaryColor(carrierTank, type.color, 0),
         normalPhaseColor: tankPrimaryColor(carrierTank, type.color, 8),
         flashColorValue: CARRIER_FLASH_COLOR,
-        phaseFrames: 8
+        phaseFrames: CARRIER_FLASH_PHASE_FRAMES
       };
     },
     debugPausedTankVisualProbe() {
@@ -10314,9 +10234,9 @@
         game.paused = false;
         game.players = [player];
 
-        const activeVisible = isPlayerShieldVisible(player);
+        const activeVisible = isPlayerShieldVisible(player, game.paused);
         game.paused = true;
-        const pausedVisible = isPlayerShieldVisible(player);
+        const pausedVisible = isPlayerShieldVisible(player, game.paused);
         const beforePausedUpdate = { tick: game.tick, invuln: player.invuln };
         update();
         const afterPausedUpdate = {
@@ -10325,9 +10245,9 @@
           invuln: player.invuln
         };
         game.paused = false;
-        const resumedVisible = isPlayerShieldVisible(player);
+        const resumedVisible = isPlayerShieldVisible(player, game.paused);
         player.invuln = 0;
-        const expiredVisible = isPlayerShieldVisible(player);
+        const expiredVisible = isPlayerShieldVisible(player, game.paused);
         return { activeVisible, pausedVisible, resumedVisible, expiredVisible, beforePausedUpdate, afterPausedUpdate };
       } finally {
         Object.assign(game, previous);

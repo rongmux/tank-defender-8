@@ -8,6 +8,8 @@
 
 项目当前处于独立的架构重构阶段。在把单文件运行时和 smoke 测试拆分为显式浏览器模块、纯规则模块、共享测试基础设施、单元测试套件和按功能划分的集成套件期间，暂停新增 1:1 游戏机制。核心计时、随机数、几何和方向向量现已模块化；配置域接管共享值校验、基础会话/生命规则、弹丸/友军伤害规则、敌人 AI 与生成节奏、敌人类型/规格规范化、爆炸时序/颜色、玩家移动/cadence、玩家星星升级档位、道具持续时间/规则、关卡流程/奖励、固定逻辑时序以及各关活动敌人上限/出生点配置；关卡域接管地图网格规则、关卡包组合/路由及原版风格敌人编组/序列模型；实体域接管玩家生命周期、敌人/子弹/道具创建以及爆炸/分数提示的短生命周期状态；玩法规则域现已接管得分/奖励生命推进、结算行/领先者/计数时序、坦克/子弹碰撞边界、不同拥有者的子弹抵消、子弹边界/命中表现选择、精确到碎片的地形重叠脱困，以及定向砖块条带/钢墙象限破坏。整个迁移过程必须继续兼容无需构建的静态启动方式。
 
+表现层现已接管纯坦克视觉帧选择；Canvas 精灵提交和像素绘制仍由运行时负责。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -30,6 +32,7 @@ node --check src/entities/player-state.js
 node --check src/entities/power-up-state.js
 node --check src/entities/projectile-state.js
 node --check src/entities/transient-effect-state.js
+node --check src/presentation/tank-presentation.js
 node --check src/rules/enemy-ai-rules.js
 node --check src/rules/enemy-spawn-rules.js
 node --check src/rules/power-up-collection-rules.js
@@ -102,6 +105,8 @@ tank-defender-8/
 |   |   |-- power-up-state.js
 |   |   |-- projectile-state.js
 |   |   `-- transient-effect-state.js
+|   |-- presentation/
+|   |   `-- tank-presentation.js
 |   |-- rules/
 |   |   |-- enemy-ai-rules.js
 |   |   |-- enemy-spawn-rules.js
@@ -158,8 +163,8 @@ tank-defender-8/
 |   |   |-- stage-result-rules.test.js
 |   |   |-- stage-routing.test.js
 |   |   |-- tank-collision-rules.test.js
+|   |   |-- tank-presentation.test.js
 |   |   |-- terrain-collision-rules.test.js
-|   |   |-- test-file-discovery.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
 |   |   `-- wall-damage-rules.test.js
@@ -198,7 +203,9 @@ tank-defender-8/
 |   |   |-- stage-result-rules.test.js
 |   |   |-- stage-routing.test.js
 |   |   |-- tank-collision-rules.test.js
+|   |   |-- tank-presentation.test.js
 |   |   |-- terrain-collision-rules.test.js
+|   |   |-- test-file-discovery.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
 |   |   |-- value-normalization.test.js
@@ -221,6 +228,8 @@ tank-defender-8/
 `src/entities/enemy-state.js` 现已同时接管完整敌人记录创建和销毁状态推进。满足 cadence 的 tick 会规范化计数器、保留已配置爆炸阶段、额外固定显示 6 tick 分数，并只在精确边界释放敌人槽位；`src/game.js` 提供槽位 cadence 和后备爆炸时长，再在收到释放结果时累加全局击败敌人数。
 
 `src/entities/player-state.js` 现已接管完整玩家记录创建、关卡/重生复位以及保留式死亡生命周期。它会拒绝非存活、已在销毁或受保护玩家的命中，初始化死亡降级/计时并清理瞬态战斗状态，只在有效移动帧推进重生 tick，并在最后一命结束时判定立即重生准备或淘汰。运行时代码保留音频、出生位置恢复、保护激活和单玩家 GAME OVER 提示。
+
+`src/presentation/tank-presentation.js` 接管方向与履带帧名、星级升级叠层的几何/颜色、装甲颜色、携带道具与眩晕闪烁 cadence、护盾可见性/颜色以及四档尺寸的出生动画序列。`src/game.js` 保留 Canvas 精灵提交和调色板绘制。直接单元测试覆盖全部纯选择器，浏览器集成测试保留原先位于 smoke 套件中的运行时探针和像素级履带/升级外观断言。
 
 `src/rules/enemy-ai-rules.js` 接管按槽位交替的移动 cadence、8px 转向路口、由间隔派生的随机/玩家/基地阶段、存活玩家目标选择、轴优先方向、精确到随机字节的 AI 概率，以及默认/自定义开火判断。`src/game.js` 仍从共享 NES 风格随机序列取字节，并执行移动、碰撞脱困、转向和射击，因此抽取不会改变随机数消费顺序。
 
