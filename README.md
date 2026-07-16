@@ -10,7 +10,7 @@ The project is currently in a dedicated architecture-refactor phase. New 1:1 gam
 
 The presentation domain now owns pure tank, transient-effect, battle-HUD, title-score, curtain, full GAME OVER, and HIGH SCORE visual timelines while Canvas sprite submission and pixel drawing remain runtime responsibilities.
 
-The audio domain now owns pure fixed-frame voice duration/note projection, per-voice audibility selection, and player/enemy movement-loop phase projection. Web Audio node creation, channel priority, pause behavior, and playback side effects remain runtime responsibilities.
+The audio domain now owns pure fixed-frame voice duration/note projection, per-voice audibility selection, cross-event channel-priority resolution, and player/enemy movement-loop phase/mode projection. Web Audio node creation, pause/resume behavior, and playback side effects remain runtime responsibilities.
 
 ## Run
 
@@ -25,6 +25,7 @@ Then open `http://127.0.0.1:8765/index.html`.
 ## Verify
 
 ```powershell
+node --check src/audio/audio-mix-rules.js
 node --check src/audio/audio-presentation.js
 node --check src/core/battle-random.js
 node --check src/core/directions.js
@@ -87,6 +88,7 @@ tank-defender-8/
 |   `-- sample-stage-pack.json
 |-- src/
 |   |-- audio/
+|   |   |-- audio-mix-rules.js
 |   |   `-- audio-presentation.js
 |   |-- config/
 |   |   |-- combat-settings.js
@@ -143,6 +145,7 @@ tank-defender-8/
 |   |   |-- load-browser-scripts.js
 |   |   `-- test-file-discovery.js
 |   |-- integration/
+|   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- collision.test.js
@@ -184,6 +187,7 @@ tank-defender-8/
 |   |   |-- transient-effect-state.test.js
 |   |   `-- wall-damage-rules.test.js
 |   |-- unit/
+|   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
@@ -248,7 +252,9 @@ tank-defender-8/
 
 `src/entities/player-state.js` now owns complete player-record creation, stage/respawn reset, and the retained death lifecycle. It rejects hits against inactive, already-destroying, or protected players; initializes death power/timers and clears transient combat state; advances respawn ticks only on eligible movement frames; and resolves the final life into either immediate respawn setup or elimination. Runtime code retains audio, spawn-position restoration, protection activation, and the per-player GAME OVER message.
 
-`src/audio/audio-presentation.js` owns fixed-frame voice duration and note projection, scalar or per-voice audibility selection, and manifest-driven player/enemy movement-loop phases. Thin runtime adapters inject the selected manifest event, while `src/game.js` retains Web Audio buffer/oscillator creation, channel priority, pause/resume behavior, and all playback side effects. Direct unit coverage locks malformed inputs, segment/repeat boundaries, silent notes, gains, and movement phases; browser integration retains representative score-count, movement-priority, ice-cue, and stage-start probes formerly held by the smoke suite.
+`src/audio/audio-presentation.js` owns fixed-frame voice duration and note projection, scalar or per-voice audibility selection, and manifest-driven player/enemy movement-loop phases. Thin runtime adapters inject the selected manifest event, while `src/game.js` retains Web Audio buffer/oscillator creation, pause/resume behavior, and all playback side effects. Direct unit coverage locks malformed inputs, segment/repeat boundaries, silent notes, gains, and movement phases; browser integration retains representative score-count, movement-phase, ice-cue, and stage-start probes formerly held by the smoke suite.
+
+`src/audio/audio-mix-rules.js` owns the pure pulse-one, pulse-two, triangle, and noise channel-priority matrix plus movement-loop mode selection. It distinguishes an actively paused game from a still-playing pause cue, preserves independent channels, and keeps player movement-request detection lazy so blocked states cannot alter runtime work or demo behavior. `src/game.js` supplies the current event flags and performs node synchronization. Direct unit coverage locks the full priority matrix, while browser integration centralizes the cross-channel probes formerly scattered through the smoke suite.
 
 `src/presentation/battle-hud-presentation.js` owns right-panel reserve-enemy/life counts, the 16-frame PAUSE blink selector, the 127-frame in-field GAME OVER slide plus 129-frame hold, and the compact 32x8 two-player elimination-message projection. Thin runtime adapters supply current counters, pause/demo flags, and stage-pack game-over timings before Canvas drawing. Direct unit coverage locks the pure boundaries, while browser integration retains the lifecycle, audio-coupling, and pixel-footprint probes formerly held by the smoke suite.
 

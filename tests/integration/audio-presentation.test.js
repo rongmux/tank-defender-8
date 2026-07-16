@@ -18,24 +18,6 @@ assert.deepEqual(scoreCount.frames[0].voices.map((voice) => voice.frequency), [1
 assert.equal(scoreCount.frames[1].voices.every((voice) => voice === null), true);
 
 const movement = JSON.parse(JSON.stringify(api.debugMovementAudioProbe()));
-assert.deepEqual(movement.modes, {
-  title: "none",
-  idleBattle: "enemy",
-  stageStart: "none",
-  bonusLifePulse2: "none",
-  bonusLifePulse1Tail: "enemy",
-  powerUpPickup: "none",
-  powerUpAppear: "none",
-  baseHit: "none",
-  enemyHit: "none",
-  pauseCue: "none",
-  heldDirection: "player",
-  heldDuringDeathState: "player",
-  heldAfterTankRemoved: "enemy",
-  paused: "none",
-  clearDelay: "none",
-  gameOver: "none"
-});
 assert.deepEqual(movement.enemyFrames.map((frame) => frame.frequency), [72, 72, 64, 64, 72]);
 assert.deepEqual(movement.playerFrames.map((frame) => frame.frequency), [112, 112, 96, 96, 112]);
 assert.equal(movement.ice.durationFrames, 4);

@@ -17,6 +17,11 @@
     movementAudioPresentation: selectMovementAudioPresentation
   } = requireRuntimeModule("audioPresentation");
   const {
+    isMovementAudioBlocked,
+    resolveAudioAudibility: selectAudioAudibility,
+    resolveMovementAudioMode: selectMovementAudioMode
+  } = requireRuntimeModule("audioMixRules");
+  const {
     directionTowardTarget,
     enemyAiChanceMatches,
     enemyAiPhaseForInterval,
@@ -2320,8 +2325,26 @@
     return fixedFrameAudioPresentation("stageStart", frame);
   }
 
+  function currentAudioMixState() {
+    return {
+      screen: game.screen, paused: game.paused,
+      clearPendingTimer: game.clearPendingTimer, baseDestroyTimer: game.baseDestroyTimer,
+      bonusLifePulse1Active: bonusLifePulse1Active(), bonusLifePulse2Active: bonusLifePulse2Active(),
+      active: {
+        pause: pauseAudio.active, stageStart: stageStartAudio.active,
+        powerUpPickup: powerUpPickupAudio.active, powerUpAppear: powerUpAppearAudio.active,
+        baseHit: baseHitAudio.active, steelHit: steelHitAudio.active, enemyHit: enemyHitAudio.active,
+        playerDestroy: playerDestroyAudio.active, playerShoot: playerShootAudio.active
+      }
+    };
+  }
+
+  function currentAudioAudibility() {
+    return selectAudioAudibility(currentAudioMixState());
+  }
+
   function stageStartAudioAudibility() {
-    return [true, true, !pauseAudio.active];
+    return currentAudioAudibility().stageStartAudibility;
   }
 
   function syncStageStartAudioNodes() {
@@ -2352,7 +2375,7 @@
   }
 
   function bonusLifeAudioAudibility() {
-    return [true, !pauseAudio.active];
+    return currentAudioAudibility().bonusLifeAudibility;
   }
 
   function syncBonusLifeAudioNodes() {
@@ -2402,7 +2425,7 @@
   }
 
   function powerUpPickupAudioAudible() {
-    return !pauseAudio.active && !stageStartAudio.active && !bonusLifePulse2Active();
+    return currentAudioAudibility().powerUpPickupAudible;
   }
 
   function syncPowerUpPickupAudioNodes() {
@@ -2436,10 +2459,7 @@
 
   // Lower-index original pulse-two events keep the channel while this cue still advances silently.
   function powerUpAppearAudioAudible() {
-    return !pauseAudio.active &&
-      !stageStartAudio.active &&
-      !bonusLifePulse2Active() &&
-      !powerUpPickupAudio.active;
+    return currentAudioAudibility().powerUpAppearAudible;
   }
 
   function syncPowerUpAppearAudioNodes() {
@@ -2470,7 +2490,7 @@
   }
 
   function brickHitAudioAudible() {
-    return !game.paused && !stageStartAudio.active;
+    return currentAudioAudibility().brickHitAudible;
   }
 
   function syncBrickHitAudioNodes() {
@@ -2494,11 +2514,7 @@
   }
 
   function baseHitAudioAudible() {
-    return !pauseAudio.active &&
-      !stageStartAudio.active &&
-      !bonusLifePulse2Active() &&
-      !powerUpPickupAudio.active &&
-      !powerUpAppearAudio.active;
+    return currentAudioAudibility().baseHitAudible;
   }
 
   function syncBaseHitAudioNodes() {
@@ -2531,12 +2547,7 @@
   }
 
   function steelHitAudioAudible() {
-    return !pauseAudio.active &&
-      !stageStartAudio.active &&
-      !bonusLifePulse2Active() &&
-      !powerUpPickupAudio.active &&
-      !powerUpAppearAudio.active &&
-      !baseHitAudio.active;
+    return currentAudioAudibility().steelHitAudible;
   }
 
   function syncSteelHitAudioNodes() {
@@ -2563,13 +2574,7 @@
   }
 
   function enemyHitAudioAudible() {
-    return !pauseAudio.active &&
-      !stageStartAudio.active &&
-      !bonusLifePulse2Active() &&
-      !powerUpPickupAudio.active &&
-      !powerUpAppearAudio.active &&
-      !baseHitAudio.active &&
-      !steelHitAudio.active;
+    return currentAudioAudibility().enemyHitAudible;
   }
 
   function syncEnemyHitAudioNodes() {
@@ -2593,7 +2598,7 @@
   }
 
   function enemyDestroyAudioAudible() {
-    return !playerDestroyAudio.active;
+    return currentAudioAudibility().enemyDestroyAudible;
   }
 
   function syncEnemyDestroyAudioNodes() {
@@ -2640,7 +2645,7 @@
   }
 
   function playerShootAudioAudible() {
-    return !stageStartAudio.active && !bonusLifePulse1Active();
+    return currentAudioAudibility().playerShootAudible;
   }
 
   function syncPlayerShootAudioNodes() {
@@ -2666,7 +2671,7 @@
   }
 
   function movementIceAudioAudible() {
-    return !stageStartAudio.active && !bonusLifePulse1Active() && !playerShootAudio.active;
+    return currentAudioAudibility().movementIceAudible;
   }
 
   function syncMovementIceAudioNodes() {
@@ -2757,7 +2762,7 @@
   }
 
   function stageBonusAudioAudible() {
-    return !bonusLifePulse2Active();
+    return currentAudioAudibility().stageBonusAudible;
   }
 
   function syncStageBonusAudioNodes() {
@@ -2895,20 +2900,12 @@
    * the always-running enemy engine loop while an active battle is accepting input.
    */
   function movementAudioModeForState() {
-    if (
-      game.screen !== "playing" ||
-      game.paused ||
-      game.clearPendingTimer > 0 ||
-      stageStartAudio.active ||
-      bonusLifePulse2Active() ||
-      powerUpPickupAudio.active ||
-      powerUpAppearAudio.active ||
-      baseHitAudio.active ||
-      steelHitAudio.active ||
-      enemyHitAudio.active ||
-      pauseAudio.active
-    ) return "none";
-    return game.baseDestroyTimer <= 0 && playerMovementAudioRequested() ? "player" : "enemy";
+    const state = currentAudioMixState();
+    if (isMovementAudioBlocked(state)) return "none";
+    return selectMovementAudioMode({
+      ...state,
+      playerMovementRequested: playerMovementAudioRequested()
+    });
   }
 
   function syncMovementAudio() {
