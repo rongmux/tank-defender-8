@@ -117,11 +117,6 @@ assert(runtimeAudioManifest.events.gameOver.voices.map((voice) => voice.wave).jo
 assert(runtimeAudioManifest.events.highScore.durationFrames === 460, "high-score replacement fanfare should preserve the original 460-frame first-voice lifetime");
 assert(runtimeAudioManifest.events.highScore.voices.map((voice) => voice.wave).join(",") === "square,square,triangle", "high-score replacement fanfare should retain pulse-one, pulse-two, and triangle voices");
 assert(stableJson(runtimeAudioManifest) === stableJson(audioManifest), "runtime audio manifest should match data/free-audio-manifest.json");
-const scoreCountAudioProbe = context.window.TankDefender8.debugScoreCountAudioProbe();
-assert(scoreCountAudioProbe.durationFrames === 1 && scoreCountAudioProbe.voiceDurations.join(",") === "1,1", "both score-count voices should last exactly one fixed logic frame");
-assert(scoreCountAudioProbe.frames[0].voices.map((voice) => voice.wave).join(",") === "square,noise-short", "score-count frame zero should expose pulse and short-noise voices together");
-assert(scoreCountAudioProbe.frames[0].voices.map((voice) => voice.frequency).join(",") === "165,27965", "score-count replacement voices should use the original pulse pitch and noise clock rate");
-assert(scoreCountAudioProbe.frames[1].voices.every((voice) => voice === null), "both score-count voices should be silent on frame one");
 const scoreCountAudioLifecycleProbe = context.window.TankDefender8.debugScoreCountAudioLifecycleProbe();
 assert(scoreCountAudioLifecycleProbe.simultaneous.active && scoreCountAudioLifecycleProbe.simultaneous.frame === 0 && scoreCountAudioLifecycleProbe.simultaneous.elapsed === 32, "the first result count should start its paired cue on result frame 32");
 assert(scoreCountAudioLifecycleProbe.simultaneous.visibleKills === 2 && scoreCountAudioLifecycleProbe.simultaneous.voices.filter(Boolean).length === 2, "both players counting on the same frame should produce one simultaneous two-voice event");
@@ -146,42 +141,6 @@ assert(stageBonusAudioLifecycleProbe.bonusLifePriority.scoreDelta === 1000 && st
 assert(!stageBonusAudioLifecycleProbe.tied.active && stageBonusAudioLifecycleProbe.tied.recipients.length === 0 && stageBonusAudioLifecycleProbe.tied.score === 0, "a tied two-player result should neither award nor play the leader bonus");
 assert(!stageBonusAudioLifecycleProbe.gameOver.active && !stageBonusAudioLifecycleProbe.gameOver.bonusAwarded && stageBonusAudioLifecycleProbe.gameOver.score === 0, "a game-over result should not award or play the leader bonus");
 assert(!stageBonusAudioLifecycleProbe.stageCleanup.active && stageBonusAudioLifecycleProbe.stageCleanup.frame === 0, "starting the next stage should clear any pending result bonus cue");
-const movementAudioProbe = context.window.TankDefender8.debugMovementAudioProbe();
-assert(
-  movementAudioProbe.modes.title === "none" &&
-    movementAudioProbe.modes.idleBattle === "enemy" &&
-    movementAudioProbe.modes.stageStart === "none" &&
-    movementAudioProbe.modes.bonusLifePulse2 === "none" &&
-    movementAudioProbe.modes.bonusLifePulse1Tail === "enemy" &&
-    movementAudioProbe.modes.powerUpPickup === "none" &&
-    movementAudioProbe.modes.powerUpAppear === "none" &&
-    movementAudioProbe.modes.baseHit === "none" &&
-    movementAudioProbe.modes.enemyHit === "none" &&
-    movementAudioProbe.modes.pauseCue === "none" &&
-    movementAudioProbe.modes.heldDirection === "player",
-  "active battle audio should honor stage and bonus pulse-channel priority before enemy and held-player movement"
-);
-assert(
-  movementAudioProbe.modes.heldDuringDeathState === "player" &&
-    movementAudioProbe.modes.heldAfterTankRemoved === "enemy",
-  "held movement should continue while the original nonzero tank state exists and yield after removal"
-);
-assert(
-  movementAudioProbe.modes.paused === "none" &&
-    movementAudioProbe.modes.clearDelay === "none" &&
-    movementAudioProbe.modes.gameOver === "none",
-  "pause, the post-clear battle delay, and game over should silence both movement loops"
-);
-assert(
-  movementAudioProbe.enemyFrames.map((frame) => frame.frequency).join(",") === "72,72,64,64,72" &&
-    movementAudioProbe.playerFrames.map((frame) => frame.frequency).join(",") === "112,112,96,96,112",
-  "movement loop phases should advance only at their original four- and sixteen-frame boundaries"
-);
-assert(
-  movementAudioProbe.ice.durationFrames === 4 &&
-    movementAudioProbe.ice.voices[0].segments[0].frequencies.length === 4,
-  "ice movement should expose one independent four-note cue lasting four fixed logic frames"
-);
 const brickHitAudioProbe = context.window.TankDefender8.debugBrickHitAudioProbe();
 assert(brickHitAudioProbe.durationFrames === 3 && brickHitAudioProbe.voiceDurations.join(",") === "3", "destructive wall impact audio should contain one three-frame voice");
 assert(brickHitAudioProbe.waves.join(",") === "triangle", "destructive wall impact audio should retain its triangle replacement voice");
@@ -337,15 +296,6 @@ assert(!movementIceAudioLifecycleProbe.stageStartSuppressedEnd.active && movemen
 assert(movementIceAudioLifecycleProbe.bonusLifePriority.active && !movementIceAudioLifecycleProbe.bonusLifePriority.audible && movementIceAudioLifecycleProbe.bonusLifePriority.movementAudioMode === "none", "bonus-life pulse one should mask a simultaneous ice cue");
 assert(!movementIceAudioLifecycleProbe.bonusLifeSuppressedEnd.active && movementIceAudioLifecycleProbe.bonusLifeSuppressedEnd.frame === 4, "a bonus-life-masked ice cue should still consume its four-frame lifetime");
 assert(!movementIceAudioLifecycleProbe.stageCleanup.active && movementIceAudioLifecycleProbe.stageCleanup.frame === 0, "starting a stage should clear any pending ice movement cue");
-const stageStartAudioProbe = context.window.TankDefender8.debugStageStartAudioProbe();
-assert(stageStartAudioProbe.durationFrames === 264, "stage-start audio probe should expose the original fixed-frame duration");
-assert(stageStartAudioProbe.voiceDurations.join(",") === "264,264,264", "all three stage-start voices should end together on frame 264");
-assert(stageStartAudioProbe.waves.join(",") === "square,triangle,square", "stage-start audio probe should retain its pulse-triangle-pulse channel order");
-assert(stageStartAudioProbe.frames[0].voices.every(Boolean) && stageStartAudioProbe.frames[1].voices[0].frequency === 330, "all stage-start voices should sound from frame zero through the first eight-frame note");
-assert(stageStartAudioProbe.frames[2].voices[0].frequency === 392, "the lead stage-start voice should change pitch on frame eight");
-assert(stageStartAudioProbe.frames[4].voices[0].segmentIndex === 1, "the lead stage-start phrase should enter its second segment on frame 48");
-assert(stageStartAudioProbe.frames[7].voices.every(Boolean), "all stage-start voices should remain active on frame 263");
-assert(stageStartAudioProbe.frames[8].voices.every((voice) => voice === null), "all stage-start voices should stop at frame 264");
 const bonusLifeAudioProbe = context.window.TankDefender8.debugBonusLifeAudioProbe();
 assert(bonusLifeAudioProbe.durationFrames === 60, "bonus-life audio should use the original sixty-frame event lifetime");
 assert(bonusLifeAudioProbe.voiceDurations.join(",") === "60,54", "bonus-life pulse voices should preserve their distinct sixty- and fifty-four-frame lengths");

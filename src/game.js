@@ -11,6 +11,12 @@
   const { advanceFrameCounter, resetFrameCounter } = requireRuntimeModule("frameCounter");
   const { clamp, rectOverlapArea, rectsOverlap } = requireRuntimeModule("geometry");
   const {
+    fixedFrameAudioPresentation: selectFixedFrameAudioPresentation,
+    fixedFrameVoiceDuration,
+    fixedFrameVoiceIsAudible,
+    movementAudioPresentation: selectMovementAudioPresentation
+  } = requireRuntimeModule("audioPresentation");
+  const {
     directionTowardTarget,
     enemyAiChanceMatches,
     enemyAiPhaseForInterval,
@@ -2138,59 +2144,8 @@
     }
   }
 
-  function fixedFrameVoiceDuration(voice) {
-    const segments = voice && Array.isArray(voice.segments) ? voice.segments : [];
-    return segments.reduce((total, segment) => {
-      const frequencies = Array.isArray(segment.frequencies) ? segment.frequencies : [];
-      const noteFrames = Math.max(1, Math.floor(Number(segment.noteFrames) || 1));
-      const repeat = Math.max(1, Math.floor(Number(segment.repeat) || 1));
-      return total + frequencies.length * noteFrames * repeat;
-    }, 0);
-  }
-
-  function fixedFrameVoicePresentation(voice, frame) {
-    const targetFrame = Math.max(0, Math.floor(Number(frame) || 0));
-    const segments = voice && Array.isArray(voice.segments) ? voice.segments : [];
-    let cursor = 0;
-    for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
-      const segment = segments[segmentIndex];
-      const frequencies = Array.isArray(segment.frequencies) ? segment.frequencies : [];
-      const noteFrames = Math.max(1, Math.floor(Number(segment.noteFrames) || 1));
-      const repeat = Math.max(1, Math.floor(Number(segment.repeat) || 1));
-      for (let repeatIndex = 0; repeatIndex < repeat; repeatIndex += 1) {
-        for (let noteIndex = 0; noteIndex < frequencies.length; noteIndex += 1) {
-          if (targetFrame < cursor + noteFrames) {
-            const frequency = Number(frequencies[noteIndex]);
-            const configuredGain = Number(segment.gain ?? voice.gain);
-            const gain = Number.isFinite(configuredGain) ? Math.max(0, configuredGain) : 0.01;
-            if (!(frequency > 0) || gain === 0) return null;
-            return {
-              frequency,
-              gain,
-              wave: segment.wave || voice.wave || "square",
-              segmentIndex,
-              repeatIndex,
-              noteIndex,
-              frameInNote: targetFrame - cursor
-            };
-          }
-          cursor += noteFrames;
-        }
-      }
-    }
-    return null;
-  }
-
   function fixedFrameAudioPresentation(eventName, frame) {
-    const event = FREE_AUDIO_MANIFEST.events[eventName];
-    const voices = event && Array.isArray(event.voices) ? event.voices : [];
-    const targetFrame = Math.max(0, Math.floor(Number(frame) || 0));
-    const computedDuration = voices.reduce((longest, voice) => Math.max(longest, fixedFrameVoiceDuration(voice)), 0);
-    return {
-      frame: targetFrame,
-      durationFrames: Math.max(1, Math.floor(Number(event && event.durationFrames) || computedDuration || 1)),
-      voices: voices.map((voice) => fixedFrameVoicePresentation(voice, targetFrame))
-    };
+    return selectFixedFrameAudioPresentation(FREE_AUDIO_MANIFEST.events[eventName], frame);
   }
 
   function shortNoiseBuffer(clockRate) {
@@ -2287,11 +2242,6 @@
       }
     }
     state.nodes = [];
-  }
-
-  function fixedFrameVoiceIsAudible(audible, voiceIndex) {
-    if (Array.isArray(audible)) return audible[voiceIndex] !== false;
-    return audible !== false;
   }
 
   function syncFixedFrameAudioNodes(state, eventName, audible, runsWhilePaused) {
@@ -2867,22 +2817,7 @@
   }
 
   function movementAudioPresentation(mode, tick) {
-    const eventName = mode === "player" ? "movementPlayer" : "movementEnemy";
-    const event = FREE_AUDIO_MANIFEST.events[eventName];
-    const frequencies = event && Array.isArray(event.frequencies) ? event.frequencies : [];
-    if (!frequencies.length) return null;
-    const stepFrames = Math.max(1, Math.floor(Number(event.stepFrames) || 1));
-    const frame = Math.max(0, Math.floor(Number(tick) || 0));
-    const phase = Math.floor(frame / stepFrames) % frequencies.length;
-    return {
-      mode,
-      eventName,
-      phase,
-      frequency: frequencies[phase],
-      stepFrames,
-      gain: event.gain,
-      wave: event.wave
-    };
+    return selectMovementAudioPresentation(mode, tick, FREE_AUDIO_MANIFEST.events);
   }
 
   function stopMovementAudioNode() {

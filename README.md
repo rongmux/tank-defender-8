@@ -10,6 +10,8 @@ The project is currently in a dedicated architecture-refactor phase. New 1:1 gam
 
 The presentation domain now owns pure tank, transient-effect, battle-HUD, title-score, curtain, full GAME OVER, and HIGH SCORE visual timelines while Canvas sprite submission and pixel drawing remain runtime responsibilities.
 
+The audio domain now owns pure fixed-frame voice duration/note projection, per-voice audibility selection, and player/enemy movement-loop phase projection. Web Audio node creation, channel priority, pause behavior, and playback side effects remain runtime responsibilities.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder locally:
@@ -23,6 +25,7 @@ Then open `http://127.0.0.1:8765/index.html`.
 ## Verify
 
 ```powershell
+node --check src/audio/audio-presentation.js
 node --check src/core/battle-random.js
 node --check src/core/directions.js
 node --check src/core/frame-counter.js
@@ -83,6 +86,8 @@ tank-defender-8/
 |   |-- sample-quadrant-stage-pack.json
 |   `-- sample-stage-pack.json
 |-- src/
+|   |-- audio/
+|   |   `-- audio-presentation.js
 |   |-- config/
 |   |   |-- combat-settings.js
 |   |   |-- enemy-ai-settings.js
@@ -138,6 +143,7 @@ tank-defender-8/
 |   |   |-- load-browser-scripts.js
 |   |   `-- test-file-discovery.js
 |   |-- integration/
+|   |   |-- audio-presentation.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
@@ -178,6 +184,7 @@ tank-defender-8/
 |   |   |-- transient-effect-state.test.js
 |   |   `-- wall-damage-rules.test.js
 |   |-- unit/
+|   |   |-- audio-presentation.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
 |   |   |-- browser-entry.test.js
@@ -240,6 +247,8 @@ tank-defender-8/
 `src/entities/enemy-state.js` now owns both complete enemy-record creation and destruction-state advancement. Eligible ticks normalize the counter, preserve the configured explosion phase, hold the fixed score for six more ticks, and release the enemy slot only at the exact boundary; `src/game.js` supplies slot cadence and the fallback explosion duration, then increments the global defeated-enemy count when release is reported.
 
 `src/entities/player-state.js` now owns complete player-record creation, stage/respawn reset, and the retained death lifecycle. It rejects hits against inactive, already-destroying, or protected players; initializes death power/timers and clears transient combat state; advances respawn ticks only on eligible movement frames; and resolves the final life into either immediate respawn setup or elimination. Runtime code retains audio, spawn-position restoration, protection activation, and the per-player GAME OVER message.
+
+`src/audio/audio-presentation.js` owns fixed-frame voice duration and note projection, scalar or per-voice audibility selection, and manifest-driven player/enemy movement-loop phases. Thin runtime adapters inject the selected manifest event, while `src/game.js` retains Web Audio buffer/oscillator creation, channel priority, pause/resume behavior, and all playback side effects. Direct unit coverage locks malformed inputs, segment/repeat boundaries, silent notes, gains, and movement phases; browser integration retains representative score-count, movement-priority, ice-cue, and stage-start probes formerly held by the smoke suite.
 
 `src/presentation/battle-hud-presentation.js` owns right-panel reserve-enemy/life counts, the 16-frame PAUSE blink selector, the 127-frame in-field GAME OVER slide plus 129-frame hold, and the compact 32x8 two-player elimination-message projection. Thin runtime adapters supply current counters, pause/demo flags, and stage-pack game-over timings before Canvas drawing. Direct unit coverage locks the pure boundaries, while browser integration retains the lifecycle, audio-coupling, and pixel-footprint probes formerly held by the smoke suite.
 

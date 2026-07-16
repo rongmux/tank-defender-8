@@ -10,6 +10,8 @@
 
 表现层现已接管纯坦克、瞬态效果、战斗 HUD、标题计分、幕布、全屏 GAME OVER 和 HIGH SCORE 的视觉时间轴；Canvas 精灵提交和像素绘制仍由运行时负责。
 
+音频域现已接管纯固定帧声部时长/音符投影、逐声部可听性选择以及玩家/敌人移动循环相位投影。Web Audio 节点创建、声道优先级、暂停行为和播放副作用仍由运行时负责。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -23,6 +25,7 @@ python -m http.server 8765 --bind 127.0.0.1
 ## 验证
 
 ```powershell
+node --check src/audio/audio-presentation.js
 node --check src/core/battle-random.js
 node --check src/core/directions.js
 node --check src/core/frame-counter.js
@@ -83,6 +86,8 @@ tank-defender-8/
 |   |-- sample-quadrant-stage-pack.json
 |   `-- sample-stage-pack.json
 |-- src/
+|   |-- audio/
+|   |   `-- audio-presentation.js
 |   |-- config/
 |   |   |-- combat-settings.js
 |   |   |-- enemy-ai-settings.js
@@ -138,6 +143,7 @@ tank-defender-8/
 |   |   |-- load-browser-scripts.js
 |   |   `-- test-file-discovery.js
 |   |-- integration/
+|   |   |-- audio-presentation.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
@@ -178,6 +184,7 @@ tank-defender-8/
 |   |   |-- transient-effect-state.test.js
 |   |   `-- wall-damage-rules.test.js
 |   |-- unit/
+|   |   |-- audio-presentation.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
 |   |   |-- browser-entry.test.js
@@ -240,6 +247,8 @@ tank-defender-8/
 `src/entities/enemy-state.js` 现已同时接管完整敌人记录创建和销毁状态推进。满足 cadence 的 tick 会规范化计数器、保留已配置爆炸阶段、额外固定显示 6 tick 分数，并只在精确边界释放敌人槽位；`src/game.js` 提供槽位 cadence 和后备爆炸时长，再在收到释放结果时累加全局击败敌人数。
 
 `src/entities/player-state.js` 现已接管完整玩家记录创建、关卡/重生复位以及保留式死亡生命周期。它会拒绝非存活、已在销毁或受保护玩家的命中，初始化死亡降级/计时并清理瞬态战斗状态，只在有效移动帧推进重生 tick，并在最后一命结束时判定立即重生准备或淘汰。运行时代码保留音频、出生位置恢复、保护激活和单玩家 GAME OVER 提示。
+
+`src/audio/audio-presentation.js` 接管固定帧声部时长与音符投影、全局或逐声部可听性选择，以及由清单驱动的玩家/敌人移动循环相位。薄运行时适配器只注入所选清单事件，`src/game.js` 保留 Web Audio 缓冲区/振荡器创建、声道优先级、暂停/恢复行为及全部播放副作用。直接单元测试锁定异常输入、片段/重复边界、静音音符、增益和移动相位；浏览器集成测试保留原先位于 smoke 套件中的代表性计分音、移动优先级、冰面提示音和开场音探针。
 
 `src/presentation/battle-hud-presentation.js` 接管右侧栏后备敌人/生命计数、16 帧 PAUSE 闪烁选择、场内 GAME OVER 的 127 帧滑入与 129 帧停留，以及双人模式单玩家淘汰时 32x8 紧凑提示的投影。薄运行时适配器在 Canvas 绘制前注入当前计数、暂停/演示标志和关卡包 GAME OVER 时序。直接单元测试锁定纯规则边界，浏览器集成测试保留原先位于 smoke 套件中的生命周期、音频耦合和像素占位探针。
 
