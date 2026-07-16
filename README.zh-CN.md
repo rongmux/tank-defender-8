@@ -8,7 +8,7 @@
 
 项目当前处于独立的架构重构阶段。在把单文件运行时和 smoke 测试拆分为显式浏览器模块、纯规则模块、共享测试基础设施、单元测试套件和按功能划分的集成套件期间，暂停新增 1:1 游戏机制。核心计时、随机数、几何和方向向量现已模块化；配置域接管共享值校验、基础会话/生命规则、弹丸/友军伤害规则、敌人 AI 与生成节奏、敌人类型/规格规范化、爆炸时序/颜色、玩家移动/cadence、玩家星星升级档位、道具持续时间/规则、关卡流程/奖励、固定逻辑时序以及各关活动敌人上限/出生点配置；关卡域接管地图网格规则、关卡包组合/路由及原版风格敌人编组/序列模型；实体域接管玩家生命周期、敌人/子弹/道具创建以及爆炸/分数提示的短生命周期状态；玩法规则域现已接管得分/奖励生命推进、结算行/领先者/计数时序、坦克/子弹碰撞边界、不同拥有者的子弹抵消、子弹边界/命中表现选择、精确到碎片的地形重叠脱困，以及定向砖块条带/钢墙象限破坏。整个迁移过程必须继续兼容无需构建的静态启动方式。
 
-表现层现已接管纯坦克、瞬态效果、战斗 HUD、标题计分、幕布、全屏 GAME OVER 和 HIGH SCORE 的视觉时间轴；Canvas 精灵提交和像素绘制仍由运行时负责。
+表现层现已接管深冻结的免费替代精灵清单，以及纯坦克、瞬态效果、战斗 HUD、标题计分、幕布、全屏 GAME OVER 和 HIGH SCORE 的视觉时间轴；Canvas 精灵提交和像素绘制仍由运行时负责。
 
 音频域现已接管深冻结的免费替代音频清单、纯固定帧音效状态生命周期、声部时长/音符投影、逐声部可听性选择、跨事件声道优先级解析，以及玩家/敌人移动循环相位/模式投影。Web Audio 节点创建、暂停/恢复副作用和播放仍由运行时负责。
 
@@ -40,6 +40,7 @@ node --check src/entities/projectile-state.js
 node --check src/entities/transient-effect-state.js
 node --check src/presentation/battle-hud-presentation.js
 node --check src/presentation/effect-presentation.js
+node --check src/presentation/free-sprite-manifest.js
 node --check src/presentation/screen-presentation.js
 node --check src/presentation/tank-presentation.js
 node --check src/rules/enemy-ai-rules.js
@@ -122,6 +123,7 @@ tank-defender-8/
 |   |-- presentation/
 |   |   |-- battle-hud-presentation.js
 |   |   |-- effect-presentation.js
+|   |   |-- free-sprite-manifest.js
 |   |   |-- screen-presentation.js
 |   |   `-- tank-presentation.js
 |   |-- rules/
@@ -166,6 +168,7 @@ tank-defender-8/
 |   |   |-- fixed-frame-audio-state.test.js
 |   |   |-- frame-counter.test.js
 |   |   |-- free-audio-manifest.test.js
+|   |   |-- free-sprite-manifest.test.js
 |   |   |-- game-session-settings.test.js
 |   |   |-- player-movement-settings.test.js
 |   |   |-- player-state.test.js
@@ -212,6 +215,7 @@ tank-defender-8/
 |   |   |-- fixed-frame-audio-state.test.js
 |   |   |-- frame-counter.test.js
 |   |   |-- free-audio-manifest.test.js
+|   |   |-- free-sprite-manifest.test.js
 |   |   |-- game-session-settings.test.js
 |   |   |-- geometry.test.js
 |   |   |-- player-movement-settings.test.js
@@ -267,6 +271,8 @@ tank-defender-8/
 `src/audio/fixed-frame-audio-state.js` 接管所有保留音效的创建、开始/复位转换、暂停保持选择、固定帧推进和精确结束帧钳位。运行时拥有的 Web Audio 节点句柄仍作为各状态中的不透明条目，只由 `src/game.js` 停止或重建。直接单元测试锁定独立状态记录、节点所有权保留、暂停模式、非法时长回退和完成边界；浏览器集成测试集中接管原先位于 smoke 套件中的一帧、暂停、暂停中继续运行、重新触发、清理和最终帧生命周期探针。
 
 `src/audio/free-audio-manifest.js` 接管 `data/free-audio-manifest.json` 的深冻结浏览器模块副本，以及运行时使用的独立深克隆 API。单元测试逐事件对照 JSON 数据源，锁定全部保留时长/声道布局、敌方射击保持静音，以及嵌套克隆隔离；浏览器集成测试验证模块注册，并确认每次公开运行时克隆都与 JSON 数据源一致，同时不会暴露内部冻结对象。
+
+`src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 
 `src/presentation/battle-hud-presentation.js` 接管右侧栏后备敌人/生命计数、16 帧 PAUSE 闪烁选择、场内 GAME OVER 的 127 帧滑入与 129 帧停留，以及双人模式单玩家淘汰时 32x8 紧凑提示的投影。薄运行时适配器在 Canvas 绘制前注入当前计数、暂停/演示标志和关卡包 GAME OVER 时序。直接单元测试锁定纯规则边界，浏览器集成测试保留原先位于 smoke 套件中的生命周期、音频耦合和像素占位探针。
 

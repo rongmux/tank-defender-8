@@ -5,7 +5,6 @@ const { createBrowserGameHarness } = require("../tests/helpers/browser-game-harn
 const root = path.resolve(__dirname, "..");
 const quadrantPack = JSON.parse(fs.readFileSync(path.join(root, "data", "sample-quadrant-stage-pack.json"), "utf8"));
 const freePack = JSON.parse(fs.readFileSync(path.join(root, "data", "free-35-stage-pack.json"), "utf8"));
-const spriteManifest = JSON.parse(fs.readFileSync(path.join(root, "data", "free-sprite-manifest.json"), "utf8"));
 
 const {
   context,
@@ -293,44 +292,6 @@ assert(pausedStageEndProbe.incomplete.tick === 41 && pausedStageEndProbe.detecte
 assert(pausedStageEndProbe.detected.enemyCount === 0 && pausedStageEndProbe.detected.paused === false && pausedStageEndProbe.detected.pauseElapsed === 0, "detecting the final defeated enemy during pause should leave the pausable battle loop");
 assert(pausedStageEndProbe.detected.screen === "playing" && pausedStageEndProbe.detected.clearPendingTimer === pausedStageEndProbe.delay, "paused stage completion should load the full active clear delay without consuming a frame on detection");
 assert(pausedStageEndProbe.pauseAcceptedDuringDelay === false, "the post-clear activity delay should reject new pause input");
-const runtimeSpriteManifest = context.window.TankDefender8.spriteManifest();
-assert(runtimeSpriteManifest.id === "free-procedural-sprites", "runtime sprite manifest id should match the free replacement manifest");
-assert(runtimeSpriteManifest.sprites.tank.frames.up.length === 7, "runtime sprite manifest should expose tank frames");
-assert(Object.keys(runtimeSpriteManifest.sprites.tankTracks.frames).join(",") === "verticalA,verticalB,horizontalA,horizontalB", "tank sprite manifest should expose both tread phases for both orientations");
-assert(
-  stableJson(runtimeSpriteManifest.sprites.tankTracks.frames.verticalA) !== stableJson(runtimeSpriteManifest.sprites.tankTracks.frames.verticalB) &&
-    stableJson(runtimeSpriteManifest.sprites.tankTracks.frames.horizontalA) !== stableJson(runtimeSpriteManifest.sprites.tankTracks.frames.horizontalB),
-  "tank tread phases should use visibly different pixel geometry"
-);
-assert(runtimeSpriteManifest.sprites.powerUp.size === 16, "power-up replacement sprites should retain the original 16x16 footprint");
-assert(runtimeSpriteManifest.sprites.powerUp.frames.timer.length === 10, "timer power-up should use a recognizable stopwatch silhouette");
-assert(runtimeSpriteManifest.sprites.powerUp.frames.shovel.length === 12, "shovel power-up should use a recognizable handle and blade silhouette");
-assert(
-  ["grenade", "helmet", "shovel", "star", "timer", "tank"].every((type) =>
-    runtimeSpriteManifest.sprites.powerUp.frames[type].some((part) => part.role === "outline")
-  ),
-  "all six original power-up replacements should expose a dark pixel outline"
-);
-assert(runtimeSpriteManifest.sprites.wallQuarter.frames.steel.filter((part) => part.role === "bolt").length === 2, "steel walls should expose distinct dark bolt details instead of resembling ice");
-assert(runtimeSpriteManifest.sprites.powerUp.frames.star.length >= 8, "runtime sprite manifest should expose a multi-part star power-up frame");
-assert(
-  runtimeSpriteManifest.sprites.powerUp.frames.star.filter((part) => part.role === "primary").length >= 5,
-  "runtime sprite manifest should draw the star as a recognizable five-point upgrade"
-);
-assert(runtimeSpriteManifest.sprites.terrain.frames.waterA.length === 3, "runtime sprite manifest should expose terrain frames");
-assert(
-  stableJson(runtimeSpriteManifest.sprites.terrain.frames.waterA.slice(1)) !== stableJson(runtimeSpriteManifest.sprites.terrain.frames.waterB.slice(1)),
-  "water terrain frames should use visibly different wave geometry"
-);
-assert(runtimeSpriteManifest.sprites.base.frames.alive.length === 4, "runtime sprite manifest should expose base frames");
-assert(runtimeSpriteManifest.sprites.bullet.frames.default.length === 1, "runtime sprite manifest should expose bullet frames");
-assert(runtimeSpriteManifest.sprites.spawn.frames.box[0].op === "stroke", "runtime sprite manifest should expose stroke sprite parts");
-assert(Object.keys(runtimeSpriteManifest.sprites.hiddenDrop.frames).join(",") === "morph0,morph1,morph2,morph3,fall", "hidden-message replacement drop should expose all morph and fall frames");
-assert(runtimeSpriteManifest.sprites.miniTank.frames.up.length === 5, "runtime sprite manifest should expose mini tank frames");
-assert(runtimeSpriteManifest.sprites.explosion.frames.burst.length === 2, "runtime sprite manifest should expose explosion frames");
-assert(Object.keys(runtimeSpriteManifest.sprites.destructionExplosion.frames).join(",") === "phase1,phase2,phase3,phase4,phase5", "runtime sprite manifest should expose all five shared tank/HQ destruction frames");
-assert(runtimeSpriteManifest.sprites.enemyCounter.frames.remaining.length === 1, "runtime sprite manifest should expose enemy counter frames");
-assert(stableJson(runtimeSpriteManifest) === stableJson(spriteManifest), "runtime sprite manifest should match data/free-sprite-manifest.json");
 let snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.highScore === 20000, "high score should retain the original 20000-point floor");
 const schema = context.window.TankDefender8.stagePackSchema();

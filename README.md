@@ -8,7 +8,7 @@ This repository does not include original NES ROM data, original sprites, origin
 
 The project is currently in a dedicated architecture-refactor phase. New 1:1 gameplay work is frozen while the single-file runtime and smoke test are split into explicit browser modules, pure rule modules, shared test infrastructure, unit suites, and feature integration suites. Core timing, randomness, geometry, and direction vectors are now modular; the configuration domain owns shared value validation, base session/life rules, projectile/friendly-fire rules, enemy AI and spawn pacing, enemy type/spec normalization, explosion timings/colors, player movement/cadence, player star-upgrade tiers, power-up durations/rules, stage flow/bonuses, fixed logic timings, and per-stage capacity/spawn settings; the stage domain owns map-grid rules, stage-pack composition/routing, and the original-style enemy group/sequence model; the entity domain owns player lifecycle, enemy/projectile/power-up creation, and transient explosion/score-popup state; and the gameplay-rules domain now owns score/bonus-life progression, stage-result rows/leader/count timing, tank/bullet collision boundaries, opposing-projectile cancellation, projectile boundary/impact selection, fragment-accurate terrain overlap recovery, and directional brick-strip/steel-quarter wall damage. The no-build static launch path remains a hard compatibility requirement throughout the migration.
 
-The presentation domain now owns pure tank, transient-effect, battle-HUD, title-score, curtain, full GAME OVER, and HIGH SCORE visual timelines while Canvas sprite submission and pixel drawing remain runtime responsibilities.
+The presentation domain now owns the deeply frozen free replacement sprite manifest plus pure tank, transient-effect, battle-HUD, title-score, curtain, full GAME OVER, and HIGH SCORE visual timelines while Canvas sprite submission and pixel drawing remain runtime responsibilities.
 
 The audio domain now owns the deeply frozen free replacement manifest, pure fixed-frame sound-state lifecycles, voice duration/note projection, per-voice audibility selection, cross-event channel-priority resolution, and player/enemy movement-loop phase/mode projection. Web Audio node creation, pause/resume side effects, and playback remain runtime responsibilities.
 
@@ -40,6 +40,7 @@ node --check src/entities/projectile-state.js
 node --check src/entities/transient-effect-state.js
 node --check src/presentation/battle-hud-presentation.js
 node --check src/presentation/effect-presentation.js
+node --check src/presentation/free-sprite-manifest.js
 node --check src/presentation/screen-presentation.js
 node --check src/presentation/tank-presentation.js
 node --check src/rules/enemy-ai-rules.js
@@ -122,6 +123,7 @@ tank-defender-8/
 |   |-- presentation/
 |   |   |-- battle-hud-presentation.js
 |   |   |-- effect-presentation.js
+|   |   |-- free-sprite-manifest.js
 |   |   |-- screen-presentation.js
 |   |   `-- tank-presentation.js
 |   |-- rules/
@@ -166,6 +168,7 @@ tank-defender-8/
 |   |   |-- fixed-frame-audio-state.test.js
 |   |   |-- frame-counter.test.js
 |   |   |-- free-audio-manifest.test.js
+|   |   |-- free-sprite-manifest.test.js
 |   |   |-- game-session-settings.test.js
 |   |   |-- player-movement-settings.test.js
 |   |   |-- player-state.test.js
@@ -212,6 +215,7 @@ tank-defender-8/
 |   |   |-- fixed-frame-audio-state.test.js
 |   |   |-- frame-counter.test.js
 |   |   |-- free-audio-manifest.test.js
+|   |   |-- free-sprite-manifest.test.js
 |   |   |-- game-session-settings.test.js
 |   |   |-- geometry.test.js
 |   |   |-- player-movement-settings.test.js
@@ -267,6 +271,8 @@ tank-defender-8/
 `src/audio/fixed-frame-audio-state.js` owns creation, begin/reset transitions, pause-hold selection, fixed-frame advancement, and exact end-frame clamping for all retained sound events. Runtime-owned Web Audio node handles remain opaque entries on each state and are stopped or recreated only by `src/game.js`. Direct unit coverage locks independent state records, retained node ownership, pause modes, invalid-duration fallback, and completion boundaries; browser integration centralizes one-frame, paused, pause-running, retrigger, cleanup, and final-frame lifecycle probes formerly held by the smoke suite.
 
 `src/audio/free-audio-manifest.js` owns the deeply frozen browser module copy of `data/free-audio-manifest.json` and the independent deep-clone API consumed by the runtime. Unit coverage compares every event against the JSON source, locks all retained durations/channel layouts and intentional silent enemy shooting, and proves nested clone isolation. Browser integration verifies module registration and confirms each public runtime clone remains equal to the JSON source without exposing the frozen internal object.
+
+`src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 
 `src/presentation/battle-hud-presentation.js` owns right-panel reserve-enemy/life counts, the 16-frame PAUSE blink selector, the 127-frame in-field GAME OVER slide plus 129-frame hold, and the compact 32x8 two-player elimination-message projection. Thin runtime adapters supply current counters, pause/demo flags, and stage-pack game-over timings before Canvas drawing. Direct unit coverage locks the pure boundaries, while browser integration retains the lifecycle, audio-coupling, and pixel-footprint probes formerly held by the smoke suite.
 
