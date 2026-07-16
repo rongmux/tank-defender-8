@@ -27,8 +27,16 @@
     };
   }
 
+  /** Advances a timed power-up by one frame; non-positive TTL values remain persistent. */
+  function advancePowerUpState(powerUp) {
+    if (!powerUp || powerUp.ttl <= 0) return powerUp;
+    powerUp.ttl -= 1;
+    return powerUp.ttl <= 0 ? null : powerUp;
+  }
+
   return Object.freeze({
     POWER_UP_SIZE,
+    advancePowerUpState,
     createPowerUpState
   });
 });

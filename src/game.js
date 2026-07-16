@@ -108,7 +108,11 @@
     wallHitSoundName
   } = requireRuntimeModule("projectileImpactRules");
   const { createEnemyState } = requireRuntimeModule("enemyState");
-  const { POWER_UP_SIZE: POWERUP_SIZE, createPowerUpState } = requireRuntimeModule("powerUpState");
+  const {
+    POWER_UP_SIZE: POWERUP_SIZE,
+    advancePowerUpState,
+    createPowerUpState
+  } = requireRuntimeModule("powerUpState");
   const {
     canPlayerCollectPowerUp,
     findPowerUpCollector
@@ -4444,13 +4448,8 @@
 
   function updatePowerUp() {
     if (!game.powerUp) return;
-    if (game.powerUp.ttl > 0) {
-      game.powerUp.ttl -= 1;
-      if (game.powerUp.ttl <= 0) {
-        game.powerUp = null;
-        return;
-      }
-    }
+    game.powerUp = advancePowerUpState(game.powerUp);
+    if (!game.powerUp) return;
     const player = findPowerUpCollector(game.players, game.powerUp);
     if (player) collectPowerUp(player, game.powerUp);
   }

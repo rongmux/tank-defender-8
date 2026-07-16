@@ -913,10 +913,6 @@ assert(timerSpawnProbe.afterSpawnAnimation.spawnedEnemyFlash === 0 && timerSpawn
 assert(timerSpawnProbe.afterFrozenActiveFrame.enemyX === timerSpawnProbe.afterSpawnAnimation.enemyX && timerSpawnProbe.afterFrozenActiveFrame.enemyY === timerSpawnProbe.afterSpawnAnimation.enemyY, "a newly active enemy should remain stationary while the timer is active");
 assert(timerSpawnProbe.afterFrozenActiveFrame.enemyReload === timerSpawnProbe.afterSpawnAnimation.enemyReload, "a newly active enemy should keep its reload timer frozen");
 assert(timerSpawnProbe.afterSpawnAnimation.enemyBulletCount === 0 && timerSpawnProbe.afterFrozenActiveFrame.enemyBulletCount === 0, "a newly active enemy should not fire while the timer is active");
-const noExpirePowerUpProbe = context.window.TankDefender8.debugPowerUpTtlProbe(0);
-assert(noExpirePowerUpProbe.survives === true && noExpirePowerUpProbe.ttl === 0, "zero power-up TTL should not expire by time");
-const expiringPowerUpProbe = context.window.TankDefender8.debugPowerUpTtlProbe(1);
-assert(expiringPowerUpProbe.survives === false, "positive power-up TTL should still expire when it reaches zero");
 canvasContext.calls.length = 0;
 canvasContext.resetPixels();
 const pickupRenderProbe = context.window.TankDefender8.debugPowerUpPickupRenderProbe();

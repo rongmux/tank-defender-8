@@ -19,6 +19,11 @@ assert.equal(defaultLifecycle.start.powerUp.h, 12);
 assert.equal(defaultLifecycle.start.powerUp.ttl, schema.gameSettings.timings.powerUpTtl);
 assert.equal(defaultLifecycle.noSpotSpawned, false);
 assert.equal(defaultLifecycle.noSpot.powerUp, null);
+const persistentTtl = JSON.parse(JSON.stringify(api.debugPowerUpTtlProbe(0)));
+assert.equal(persistentTtl.survives, true);
+assert.equal(persistentTtl.ttl, 0);
+const expiringTtl = JSON.parse(JSON.stringify(api.debugPowerUpTtlProbe(1)));
+assert.equal(expiringTtl.survives, false);
 
 const customPack = {
   id: "power-up-state-integration",
@@ -50,5 +55,7 @@ assert.deepEqual(JSON.parse(JSON.stringify(direct)), {
   h: 12,
   ttl: 15
 });
+assert.equal(modules.powerUpState.advancePowerUpState(direct), direct);
+assert.equal(direct.ttl, 14);
 
 console.log("power-up-state integration test passed");

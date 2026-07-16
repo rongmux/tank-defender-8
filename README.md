@@ -206,6 +206,8 @@ tank-defender-8/
 
 `src/config/power-up-settings.js` now owns the pure carrier transitions behind its validated settings: whether a hit releases a carried power-up and whether a newly spawning carrier clears the current uncollected power-up. Runtime code retains only the actual spawn and clear side effects.
 
+`src/entities/power-up-state.js` now owns both collectible-record creation and one-frame TTL advancement. Positive TTL values decrement to immediate removal at zero, while zero or negative values preserve the same object as an untimed power-up.
+
 `src/rules/power-up-collection-rules.js` owns active-player pickup eligibility, the strict 12px center-distance boundary on both axes, and reverse slot selection that gives player two priority when both players qualify on the same frame. Runtime code retains power-up removal, score/effect application, popups, and audio.
 
 `src/rules/power-up-spawn-rules.js` owns the original eight-entry power-up random table, stable coordinate deduplication, 16-bit uniform candidate selection, and exclusion of the previous position when alternatives exist. Runtime code still filters configured and fallback positions against battlefield bounds, the live base, solid terrain, and tank occupancy before passing reachable candidates to this module.
