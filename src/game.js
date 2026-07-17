@@ -59,17 +59,6 @@
     selectEnemySpawnIndex
   } = requireRuntimeModule("enemySpawnRules");
   const {
-    DEFAULT_BONUS_LIFE_SCORES,
-    DEFAULT_DEATH_POWER_LEVEL,
-    DEFAULT_INITIAL_LIVES,
-    DEFAULT_TIMER_FREEZES_ENEMY_TIME
-  } = requireRuntimeModule("gameSessionSettings");
-  const {
-    DEFAULT_FRIENDLY_FIRE,
-    DEFAULT_PROJECTILE_RULES
-  } = requireRuntimeModule("combatSettings");
-  const { DEFAULT_ENEMY_AI } = requireRuntimeModule("enemyAiSettings");
-  const {
     DEFAULT_ENEMY_SPAWN_PACING,
     calculateEnemySpawnDelay,
     scaleEnemySpawnDelay
@@ -84,12 +73,9 @@
     clonePlayerMovementSettings
   } = requireRuntimeModule("playerMovementSettings");
   const {
-    DEFAULT_POWERUP_DURATIONS,
-    DEFAULT_POWERUP_RULES,
     shouldClearPowerUpForCarrierSpawn,
     shouldReleaseCarrierPowerUp
   } = requireRuntimeModule("powerUpSettings");
-  const { DEFAULT_TIMINGS } = requireRuntimeModule("timingSettings");
   const {
     CARRIER_FLASH_COLOR,
     CARRIER_FLASH_PHASE_FRAMES,
@@ -131,10 +117,7 @@
     pausePresentation: selectPausePresentation,
     playerGameOverMessagePresentation: selectPlayerGameOverMessagePresentation
   } = requireRuntimeModule("battleHudPresentation");
-  const {
-    DEFAULT_STAGE_ADVANCE,
-    DEFAULT_STAGE_CLEAR_BONUS
-  } = requireRuntimeModule("stageFlowSettings");
+  const { DEFAULT_STAGE_ADVANCE } = requireRuntimeModule("stageFlowSettings");
   const {
     DEFAULT_ENEMY_TYPES: defaultEnemyTypes,
     ENEMY_FIRE_CHANCE,
@@ -217,6 +200,7 @@
     summarizeEnemySequences
   } = requireRuntimeModule("enemySequences");
   const { createBuiltInStagePack } = requireRuntimeModule("builtInStagePack");
+  const { createStagePackSchema } = requireRuntimeModule("stagePackSchema");
   const {
     advancePlayerDestructionState,
     beginPlayerDestructionState,
@@ -13496,78 +13480,7 @@
       };
     },
     stagePackSchema() {
-      return {
-        totalStages: 35,
-        enemyTotal: 20,
-        enemyTypes: cloneEnemyTypes(defaultEnemyTypes),
-        gameSettings: {
-          initialLives: DEFAULT_INITIAL_LIVES,
-          bonusLifeScores: DEFAULT_BONUS_LIFE_SCORES.slice(),
-          deathPowerLevel: DEFAULT_DEATH_POWER_LEVEL,
-          powerUpDurations: { ...DEFAULT_POWERUP_DURATIONS },
-          powerUpRules: { ...DEFAULT_POWERUP_RULES },
-          timings: { ...DEFAULT_TIMINGS },
-          enemySpawnPacing: { ...DEFAULT_ENEMY_SPAWN_PACING },
-          playerMovement: clonePlayerMovementSettings(DEFAULT_PLAYER_MOVEMENT),
-          projectileRules: { ...DEFAULT_PROJECTILE_RULES },
-          friendlyFire: { ...DEFAULT_FRIENDLY_FIRE },
-          explosionRules: cloneExplosionRules(DEFAULT_EXPLOSION_RULES),
-          stageAdvance: { ...DEFAULT_STAGE_ADVANCE },
-          stageClearBonus: { ...DEFAULT_STAGE_CLEAR_BONUS },
-          enemyAi: { ...DEFAULT_ENEMY_AI },
-          playerUpgradeRules: clonePlayerUpgradeRules(defaultPlayerUpgradeRules),
-          timerFreezesEnemyTime: DEFAULT_TIMER_FREEZES_ENEMY_TIME
-        },
-        playerUpgradeRules: clonePlayerUpgradeRules(defaultPlayerUpgradeRules),
-        wallRules: cloneWallRules(),
-        stageSettings: [
-          {
-            maxActiveEnemies: DEFAULT_MAX_ACTIVE_ENEMIES,
-            maxActiveEnemiesTwoPlayer: DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER,
-            playerSpawns: [{ x: 4, y: 12 }, { x: 8, y: 12 }],
-            enemySpawns: [{ x: 0, y: 0 }, { x: 6, y: 0 }, { x: 12, y: 0 }],
-            powerUpSpawns: DEFAULT_POWERUP_SPAWNS.map(powerUpPixelToTilePoint)
-          }
-        ],
-        maps: [
-          [
-            ".............",
-            ".............",
-            ".............",
-            ".............",
-            ".............",
-            ".............",
-            ".............",
-            ".............",
-            ".............",
-            ".............",
-            ".............",
-            ".....BBB.....",
-            ".....B.B....."
-          ]
-        ],
-        quadrants: [
-          Array.from({ length: 26 }, () => "..........................")
-        ],
-        mapFormat: "Use either maps for 13x13 full tiles or quadrants for 26x26 8px subtiles, not both.",
-        enemies: [
-          builtInStagePack.enemies[0].map((enemy, index) => ({
-            ...enemy,
-            powerUpType: null,
-            spawnDelay: index === 0 ? DEFAULT_ENEMY_SPAWN_PACING.firstDelay : 96
-          }))
-        ],
-        tileCodes: {
-          ".": "empty",
-          B: "brick",
-          "#": "brick",
-          S: "steel",
-          W: "water",
-          "~": "water",
-          F: "forest",
-          I: "ice"
-        }
-      };
+      return createStagePackSchema();
     }
   };
 
