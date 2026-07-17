@@ -176,6 +176,7 @@
     resetPlayerState: playerState.resetPlayerState,
     resolvePlayerDeathState: playerState.resolvePlayerDeathState,
     POWER_UP_SIZE: powerUpState.POWER_UP_SIZE,
+    POWERUP_SIZE: powerUpState.POWER_UP_SIZE,
     advancePowerUpState: powerUpState.advancePowerUpState,
     createPowerUpState: powerUpState.createPowerUpState,
     createProjectileState: projectileState.createProjectileState,

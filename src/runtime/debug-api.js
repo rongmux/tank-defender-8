@@ -72,6 +72,18 @@
     }
     eval(depsAliases);
 
+    // Stage-runtime function aliases (from state.stageRuntime)
+    var stageAliases = '';
+    var sr = state.stageRuntime;
+    if (sr) {
+      for (var srKey in sr) {
+        if (sr.hasOwnProperty(srKey) && typeof sr[srKey] === 'function') {
+          stageAliases += 'function ' + srKey + '() { return sr["' + srKey.replace(/"/g, '\\"') + '"].apply(sr, arguments); }';
+        }
+      }
+    }
+    eval(stageAliases);
+
     // Function aliases (delegate to state.fn)
     function update() { return state.fn.update.apply(state.fn, arguments); }
     function render() { return state.fn.render.apply(state.fn, arguments); }

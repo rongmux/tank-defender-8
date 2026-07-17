@@ -383,7 +383,7 @@
   var advanceTimedStates = deps.advanceTimedStates;
   var applyPowerUpEffect = deps.applyPowerUpEffect;
   var awardBonusLives = deps.awardBonusLives;
-  var baseDestructionPresentation = deps.baseDestructionPresentation;
+  // (baseDestructionPresentation — local wrapper, not deps alias)
   var beginFixedFrameAudioState = deps.beginFixedFrameAudioState;
   var beginPlayerDestructionState = deps.beginPlayerDestructionState;
   var brickFragmentRect = deps.brickFragmentRect;
@@ -430,9 +430,9 @@
   var enemyAiPhaseForInterval = deps.enemyAiPhaseForInterval;
   var enemyAiSettings = deps.enemyAiSettings;
   var enemyColor = deps.enemyColor;
-  var enemyDestructionPresentation = deps.enemyDestructionPresentation;
+  // (enemyDestructionPresentation — local wrapper, not deps alias)
   var entityRect = deps.entityRect;
-  var explosionPresentation = deps.explosionPresentation;
+  // (explosionPresentation — local wrapper, not deps alias)
   var filterActiveTankCollisionPeers = deps.filterActiveTankCollisionPeers;
   var findAvailableEnemySlot = deps.findAvailableEnemySlot;
   var findPowerUpCollector = deps.findPowerUpCollector;
@@ -440,12 +440,12 @@
   var fixedFrameAudioUpdateMode = deps.fixedFrameAudioUpdateMode;
   var fixedFrameVoiceDuration = deps.fixedFrameVoiceDuration;
   var fixedFrameVoiceIsAudible = deps.fixedFrameVoiceIsAudible;
-  var fullGameOverPresentation = deps.fullGameOverPresentation;
+  // (fullGameOverPresentation — local wrapper, not deps alias)
   var gameOverBannerPresentation = deps.gameOverBannerPresentation;
   var gameSessionSettings = deps.gameSessionSettings;
   var gridToQuadrants = deps.gridToQuadrants;
   var heldEditorDirection = deps.heldEditorDirection;
-  var highScorePresentation = deps.highScorePresentation;
+  // (highScorePresentation — local wrapper, not deps alias)
   var isEditorDirectionCode = deps.isEditorDirectionCode;
   var isEnemyAtTurnIntersection = deps.isEnemyAtTurnIntersection;
   var isEnemyMovementFrame = deps.isEnemyMovementFrame;
@@ -457,7 +457,7 @@
   var makeCell = deps.makeCell;
   var makeGrid = deps.makeGrid;
   var makeOriginalConstructionGrid = deps.makeOriginalConstructionGrid;
-  var moveEditorCursor = deps.moveEditorCursor;
+  // (moveEditorCursor — local wrapper, not deps alias)
   var movementAudioPresentation = deps.movementAudioPresentation;
   var nextEditorPatternIndex = deps.nextEditorPatternIndex;
   var nextEditorTileType = deps.nextEditorTileType;
@@ -465,15 +465,15 @@
   var originalEditorButtonHeld = deps.originalEditorButtonHeld;
   var overlappedBrickFragments = deps.overlappedBrickFragments;
   var overlappedQuarters = deps.overlappedQuarters;
-  var panelEnemyCounterRemaining = deps.panelEnemyCounterRemaining;
-  var panelLifeCount = deps.panelLifeCount;
+  // (panelEnemyCounterRemaining — local wrapper, not deps alias)
+  // (panelLifeCount — local wrapper, not deps alias)
   var parseEditorStageText = deps.parseEditorStageText;
   var parseJsonText = deps.parseJsonText;
   var parseStageQuadrants = deps.parseStageQuadrants;
-  var pausePresentation = deps.pausePresentation;
+  // (pausePresentation — local wrapper, not deps alias)
   var pixelGlyph = deps.pixelGlyph;
-  var playerDestructionPresentation = deps.playerDestructionPresentation;
-  var playerGameOverMessagePresentation = deps.playerGameOverMessagePresentation;
+  // (playerDestructionPresentation — local wrapper, not deps alias)
+  // (playerGameOverMessagePresentation — local wrapper, not deps alias)
   var playerUpgradeOverlayParts = deps.playerUpgradeOverlayParts;
   var powerUpPixelToTilePoint = deps.powerUpPixelToTilePoint;
   var powerUpSpawnKey = deps.powerUpSpawnKey;
@@ -486,7 +486,7 @@
   var quadrantType = deps.quadrantType;
   var quarterMaskFromBrickFragments = deps.quarterMaskFromBrickFragments;
   var quarterRect = deps.quarterRect;
-  var rectHitsSolidTerrain = deps.rectHitsSolidTerrain;
+  // (rectHitsSolidTerrain — local wrapper, not deps alias)
   var rectOverlapArea = deps.rectOverlapArea;
   var rectsOverlap = deps.rectsOverlap;
   var resetFixedFrameAudioState = deps.resetFixedFrameAudioState;
@@ -498,7 +498,7 @@
   var resolvePlayerDeathState = deps.resolvePlayerDeathState;
   var rightAlignedPixelTextX = deps.rightAlignedPixelTextX;
   var scaleEnemySpawnDelay = deps.scaleEnemySpawnDelay;
-  var scorePopupPresentation = deps.scorePopupPresentation;
+  // (scorePopupPresentation — local wrapper, not deps alias)
   var selectEnemySpawnIndex = deps.selectEnemySpawnIndex;
   var selectEnemyTargetPlayer = deps.selectEnemyTargetPlayer;
   var selectPowerUpSpawnSpot = deps.selectPowerUpSpawnSpot;
@@ -513,20 +513,20 @@
   var shouldEnemyFireForByte = deps.shouldEnemyFireForByte;
   var shouldReleaseCarrierPowerUp = deps.shouldReleaseCarrierPowerUp;
   var shovelWallTypeForTimer = deps.shovelWallTypeForTimer;
-  var solidTerrainOverlapArea = deps.solidTerrainOverlapArea;
+  // (solidTerrainOverlapArea — local wrapper, not deps alias)
   var spawnAnimationPresentation = deps.spawnAnimationPresentation;
   var stageFlowSettings = deps.stageFlowSettings;
-  var stageIntroCurtainState = deps.stageIntroCurtainState;
+  // (stageIntroCurtainState — local wrapper, not deps alias)
   var stageResultVisibleKillCount = deps.stageResultVisibleKillCount;
   var stageRouting = deps.stageRouting;
-  var stageSelectCurtainState = deps.stageSelectCurtainState;
+  // (stageSelectCurtainState — local wrapper, not deps alias)
   var summarizeEnemySequences = deps.summarizeEnemySequences;
-  var tankDestructionPresentation = deps.tankDestructionPresentation;
+  // (tankDestructionPresentation — local wrapper, not deps alias)
   var tankPrimaryColor = deps.tankPrimaryColor;
   var tankTrackFrameName = deps.tankTrackFrameName;
   var targetableEnemyPlayers = deps.targetableEnemyPlayers;
   var timingSettings = deps.timingSettings;
-  var titleScoreLayout = deps.titleScoreLayout;
+  // (titleScoreLayout — local wrapper, not deps alias)
   var totalRectOverlapArea = deps.totalRectOverlapArea;
   var tryNormalizeStagePack = deps.tryNormalizeStagePack;
   var valueNormalization = deps.valueNormalization;
