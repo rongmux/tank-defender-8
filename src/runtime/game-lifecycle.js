@@ -62,7 +62,7 @@
 
     fn.resetPlayerPosition = function (player) {
       deps.resetPlayerState(player, {
-        settings: state.stageRuntime.gameSettings() || {},
+        settings: state.stageRuntime.gameSettings(),
         direction: deps.UP
       });
     };
@@ -260,7 +260,7 @@
       fn.stopStageBonusAudio();
       state.game.screen = "stageIntro";
       state.game.tick = 0;
-      var settings = state.stageRuntime.gameSettings() || {};
+      var settings = state.stageRuntime.gameSettings();
       state.game.transitionTimer = settings.timings ? settings.timings.stageIntro : 150;
       var constructionGrid = state.game.constructionStageActive && stage === 1
         ? state.game.constructedGrid
@@ -271,9 +271,9 @@
           ? deps.cloneGrid(constructionGrid)
           : state.stageRuntime.createStageGrid(stage);
       if (state.game.customGrid || constructionGrid) {
-        state.stageRuntime.prepareConstructedBattleGrid(state.game.grid);
+        deps.prepareConstructedBattleGrid(state.game.grid);
       } else {
-        state.stageRuntime.prepareBattleGrid(state.game.grid);
+        deps.prepareBattleGrid(state.game.grid);
       }
       state.game.base = {
         x: 6 * sh.TILE, y: 12 * sh.TILE,
@@ -488,7 +488,7 @@
       state.game.constructedGrid = null;
       state.game.constructionStageActive = false;
       state.game.grid = state.stageRuntime.createStageGrid(state.game.stage);
-      state.stageRuntime.prepareBattleGrid(state.game.grid);
+      deps.prepareBattleGrid(state.game.grid);
       state.game.editorGrid = null;
       state.game.editorCursor = { qc: -1, qr: -1 };
       state.game.editorPattern = 0;

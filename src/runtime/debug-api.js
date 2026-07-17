@@ -10,7 +10,6 @@
   var modules = root.TankDefender8Modules || (root.TankDefender8Modules = {});
   modules.debugApi = api;
 })(typeof window !== "undefined" ? window : globalThis, function () {
-  "use strict";
 
   function setupDebugApi(state, deps) {
     // State aliases
@@ -45,6 +44,33 @@
     var stageBonusAudio = state.audio.stageBonus;
     var gameOverAudio = state.audio.gameOver;
     var highScoreAudio = state.audio.highScore;
+
+    // Deps aliases (all non-function properties from module-deps)
+    var depsAliases = '';
+    for (var key in deps) {
+      if (deps.hasOwnProperty(key) && typeof deps[key] !== 'function' && key !== 'sharedState') {
+        depsAliases += 'var ' + key + ' = deps["' + key.replace(/"/g, '\\"') + '"];';
+      }
+    }
+    eval(depsAliases);
+
+    // sharedState property aliases (TILE, SCREEN_W, etc.)
+    var shAliases = '';
+    var sh = deps.sharedState;
+    for (var shKey in sh) {
+      if (sh.hasOwnProperty(shKey) && typeof sh[shKey] !== 'function') {
+        shAliases += 'var ' + shKey + ' = sh["' + shKey.replace(/"/g, '\\"') + '"];';
+      }
+    }
+    eval(shAliases);
+
+    // Deps function aliases (for functions like clamp, cloneGrid, etc.)
+    for (var key2 in deps) {
+      if (deps.hasOwnProperty(key2) && typeof deps[key2] === 'function' && key2 !== 'requireRuntimeModule') {
+        depsAliases += 'function ' + key2 + '() { return deps["' + key2.replace(/"/g, '\\"') + '"].apply(deps, arguments); }';
+      }
+    }
+    eval(depsAliases);
 
     // Function aliases (delegate to state.fn)
     function update() { return state.fn.update.apply(state.fn, arguments); }
