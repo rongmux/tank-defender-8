@@ -9,6 +9,9 @@ const api = context.window.TankDefender8;
 
 assert(modules.wallDamageRules, "wall damage rules module should register before game.js");
 assert.equal(Object.isFrozen(modules.wallDamageRules), true);
+const defaultRules = JSON.parse(JSON.stringify(modules.wallDamageRules.DEFAULT_WALL_RULES));
+assert.deepEqual(JSON.parse(JSON.stringify(api.stagePackSchema().wallRules)), defaultRules);
+assert.deepEqual(JSON.parse(JSON.stringify(api.currentPackInfo().wallRules)), defaultRules);
 
 const steel = JSON.parse(JSON.stringify(api.debugSteelRuleProbe()));
 assert.equal(steel.blocked, false);
@@ -20,6 +23,7 @@ assert.equal(steel.second, true);
 assert.equal(steel.afterSecond.mask, 3);
 
 const brick = JSON.parse(JSON.stringify(api.debugBrickWallPowerProbe()));
+assert.deepEqual(brick.rules, defaultRules);
 assert.equal(brick.rules.brickSameSideHits, 4);
 assert.equal(brick.rules.poweredBrickSameSideHits, 2);
 assert.deepEqual(brick.normalMasks, [15, 14, 14, 12]);

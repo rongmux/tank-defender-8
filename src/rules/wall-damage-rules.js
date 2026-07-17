@@ -26,10 +26,25 @@
   const {
     BRICK_QUARTER_FRAGMENT_MASKS,
     TILE_TYPES,
+    WALL_FRAGMENT,
     normalizeBrickFragmentMask,
     quarterMaskFromBrickFragments
   } = stageGrid;
   const { EMPTY, STEEL } = TILE_TYPES;
+  const DEFAULT_WALL_RULES = Object.freeze({
+    brickSameSideHits: 4,
+    poweredBrickSameSideHits: 2,
+    brickFragmentSize: WALL_FRAGMENT,
+    normalBrickStripLength: WALL_FRAGMENT * 2,
+    normalBrickStripDepth: WALL_FRAGMENT,
+    steelRequiredPower: 3,
+    steelSameSideHits: 1,
+    maxPowerBrickHalfDamage: true
+  });
+
+  function cloneWallRules() {
+    return { ...DEFAULT_WALL_RULES };
+  }
 
   function brickImpactOrder(dir) {
     if (dir === UP) return [2, 3, 0, 1];
@@ -89,9 +104,11 @@
   }
 
   return Object.freeze({
+    DEFAULT_WALL_RULES,
     brickDamageMask,
     brickImpactOrder,
     brickImpactStripMasks,
+    cloneWallRules,
     damageSteelWall,
     damageWall
   });

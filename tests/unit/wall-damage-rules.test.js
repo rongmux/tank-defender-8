@@ -8,15 +8,33 @@ const {
 const wallDamageRules = require("../../src/rules/wall-damage-rules");
 
 const {
+  DEFAULT_WALL_RULES,
   brickDamageMask,
   brickImpactOrder,
   brickImpactStripMasks,
+  cloneWallRules,
   damageSteelWall,
   damageWall
 } = wallDamageRules;
 const { BRICK, EMPTY, STEEL } = TILE_TYPES;
 
 assert.equal(Object.isFrozen(wallDamageRules), true);
+assert.equal(Object.isFrozen(DEFAULT_WALL_RULES), true);
+assert.deepEqual(DEFAULT_WALL_RULES, {
+  brickSameSideHits: 4,
+  poweredBrickSameSideHits: 2,
+  brickFragmentSize: 4,
+  normalBrickStripLength: 8,
+  normalBrickStripDepth: 4,
+  steelRequiredPower: 3,
+  steelSameSideHits: 1,
+  maxPowerBrickHalfDamage: true
+});
+const clonedRules = cloneWallRules();
+assert.deepEqual(clonedRules, DEFAULT_WALL_RULES);
+assert.notEqual(clonedRules, DEFAULT_WALL_RULES);
+clonedRules.brickSameSideHits = 99;
+assert.equal(DEFAULT_WALL_RULES.brickSameSideHits, 4);
 assert.deepEqual(brickImpactOrder(UP), [2, 3, 0, 1]);
 assert.deepEqual(brickImpactOrder(DOWN), [0, 1, 2, 3]);
 assert.deepEqual(brickImpactOrder(LEFT), [1, 3, 0, 2]);

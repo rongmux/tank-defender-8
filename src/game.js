@@ -280,7 +280,7 @@
     rectHitsSolidTerrain: gridRectHitsSolidTerrain,
     solidTerrainOverlapArea: gridSolidTerrainOverlapArea
   } = requireRuntimeModule("terrainCollisionRules");
-  const { damageWall } = requireRuntimeModule("wallDamageRules");
+  const { cloneWallRules, damageWall } = requireRuntimeModule("wallDamageRules");
   const { EMPTY, BRICK, STEEL, WATER, FOREST, ICE } = TILE_TYPES;
 
   const canvas = document.getElementById("game");
@@ -3393,19 +3393,6 @@
   function playerUpgradeRule(level) {
     const rules = gameSettings().playerUpgradeRules || defaultPlayerUpgradeRules;
     return rules[clamp(Math.floor(level || 0), 0, rules.length - 1)];
-  }
-
-  function wallRules() {
-    return {
-      brickSameSideHits: 4,
-      poweredBrickSameSideHits: 2,
-      brickFragmentSize: WALL_FRAGMENT,
-      normalBrickStripLength: HALF,
-      normalBrickStripDepth: WALL_FRAGMENT,
-      steelRequiredPower: 3,
-      steelSameSideHits: 1,
-      maxPowerBrickHalfDamage: true
-    };
   }
 
   function moveTank(tank, dx, dy) {
@@ -7326,7 +7313,7 @@
         timerFreezesEnemyTime: gameSettings().timerFreezesEnemyTime,
         enemyTypes: cloneEnemyTypes(enemyTypeDefinitions()),
         playerUpgradeRules: clonePlayerUpgradeRules(gameSettings().playerUpgradeRules),
-        wallRules: wallRules(),
+        wallRules: cloneWallRules(),
         playerSpawns: currentPlayerSpawns(),
         enemySpawns: currentEnemySpawns(),
         powerUpSpawns: currentPowerUpSpawns(),
@@ -8245,7 +8232,7 @@
         timerFreezesEnemyTime: gameSettings().timerFreezesEnemyTime,
         enemyTypes: cloneEnemyTypes(enemyTypeDefinitions()),
         playerUpgradeRules: clonePlayerUpgradeRules(gameSettings().playerUpgradeRules),
-        wallRules: wallRules(),
+        wallRules: cloneWallRules(),
         playerSpawns: currentPlayerSpawns(),
         enemySpawns: currentEnemySpawns(),
         powerUpSpawns: currentPowerUpSpawns(),
@@ -8408,7 +8395,7 @@
         removedStripSolid,
         remainingStripSolid,
         integration,
-        rules: wallRules()
+        rules: cloneWallRules()
       };
     },
     debugBrickFragmentRenderProbe() {
@@ -13532,7 +13519,7 @@
           timerFreezesEnemyTime: DEFAULT_TIMER_FREEZES_ENEMY_TIME
         },
         playerUpgradeRules: clonePlayerUpgradeRules(defaultPlayerUpgradeRules),
-        wallRules: wallRules(),
+        wallRules: cloneWallRules(),
         stageSettings: [
           {
             maxActiveEnemies: DEFAULT_MAX_ACTIVE_ENEMIES,

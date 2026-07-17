@@ -337,7 +337,7 @@ tank-defender-8/
 
 `src/rules/projectile-impact-rules.js` owns padded field-boundary checks, clamped boundary-impact coordinates, and player-only brick/steel hit-sound selection. Its tests preserve inclusive padding edges, all four 208px battlefield clamps, silent enemy impacts, blocked-steel audio, and max-power steel-destruction audio.
 
-`src/rules/wall-damage-rules.js` owns directional quarter targeting, normal-shot 4px brick-strip peeling, powered 8px brick-quarter removal, and max-power steel-quarter destruction. Its dedicated unit suite covers lower-left and lower-right fragment masks directly, while the browser integration suite preserves the runtime debug-probe behavior that previously lived in the monolithic smoke test.
+`src/rules/wall-damage-rules.js` owns the frozen wall-rule metadata and independent clone API used by pack diagnostics, plus directional quarter targeting, normal-shot 4px brick-strip peeling, powered 8px brick-quarter removal, and max-power steel-quarter destruction. Its dedicated unit suite locks the metadata and covers lower-left and lower-right fragment masks directly, while the browser integration suite verifies schema/current-pack projections and preserves the runtime debug-probe behavior that previously lived in the monolithic smoke test.
 
 The migration order is core timing/random/geometry, configuration and stage packs, gameplay entities and rules, input/editor, audio, rendering/screens, debug adapters, and finally the application bootstrap. Every extraction must keep the static no-build launch path, move its matching tests in the same commit, and pass the full regression suite before the next subsystem moves. New 1:1 gameplay work is paused until this refactor and test split are complete.
 
