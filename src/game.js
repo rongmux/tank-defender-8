@@ -154,7 +154,6 @@
     TILE_TYPES,
     WALL_FRAGMENT,
     brickFragmentsFromQuarterMask,
-    clearRect,
     clearTile,
     cloneGrid,
     gridToQuadrants,
@@ -166,6 +165,14 @@
     quarterMaskFromBrickFragments,
     setTile
   } = requireRuntimeModule("stageGrid");
+  const {
+    buildBaseWall,
+    isReservedCell,
+    makeOriginalConstructionGrid,
+    prepareBattleGrid,
+    prepareConstructedBattleGrid,
+    shovelWallTypeForTimer
+  } = requireRuntimeModule("battlefieldGrid");
   const {
     EDITOR_TILE_TYPES,
     ORIGINAL_EDITOR_PATTERNS,
@@ -708,45 +715,6 @@
         setTile(grid, 10 - i, 2 + i, BRICK, 15);
       }
     }
-  }
-
-  function isReservedCell(c, r) {
-    if (r <= 1 && (c <= 1 || (c >= 5 && c <= 7) || c >= 11)) return true;
-    if (r >= 10 && c >= 3 && c <= 9) return true;
-    if (r >= 11 && c >= 5 && c <= 7) return true;
-    return false;
-  }
-
-  function prepareBattleGrid(grid) {
-    clearRect(grid, 0, 0, 1, 1);
-    clearRect(grid, 5, 0, 7, 1);
-    clearRect(grid, 11, 0, 12, 1);
-    clearRect(grid, 3, 11, 4, 12);
-    clearRect(grid, 8, 11, 9, 12);
-    clearRect(grid, 5, 11, 7, 12);
-    buildBaseWall(grid, BRICK);
-  }
-
-  function prepareConstructedBattleGrid(grid) {
-    clearTile(grid, 6, 12);
-  }
-
-  function makeOriginalConstructionGrid() {
-    const grid = makeGrid();
-    buildBaseWall(grid, BRICK);
-    return grid;
-  }
-
-  function buildBaseWall(grid, type) {
-    const cells = [
-      [5, 11],
-      [6, 11],
-      [7, 11],
-      [5, 12],
-      [7, 12]
-    ];
-    for (const [c, r] of cells) setTile(grid, c, r, type, 15);
-    clearTile(grid, 6, 12);
   }
 
   function createPlayer(id) {
@@ -2731,14 +2699,12 @@
       }
     }
     if (game.shovelTimer < gameSettings().powerUpDurations.shovelFlash) {
-      buildBaseWall(game.grid, shovelWallTypeForTimer(game.shovelTimer, game.frameLow));
+      buildBaseWall(game.grid, shovelWallTypeForTimer(
+        game.shovelTimer,
+        game.frameLow,
+        gameSettings().powerUpDurations.shovelFlash
+      ));
     }
-  }
-
-  function shovelWallTypeForTimer(timer, tick) {
-    if (timer <= 0) return BRICK;
-    if (timer >= gameSettings().powerUpDurations.shovelFlash) return STEEL;
-    return ((Math.max(0, Math.floor(Number(tick) || 0)) & 16) !== 0) ? STEEL : BRICK;
   }
 
   function updatePlayerInvulnerabilityTimers() {
@@ -8603,13 +8569,16 @@
         [7, 12]
       ].map(([c, r]) => ({ c, r, type: tileTypeName(grid[r][c].type), mask: grid[r][c].mask }));
       const flashingTimer = Math.max(1, durations.shovelFlash - 1);
+      const wallTypeForTimer = (timer, tick) => tileTypeName(
+        shovelWallTypeForTimer(timer, tick, durations.shovelFlash)
+      );
       return {
         durationUnits: durations.shovel,
         flashThreshold: durations.shovelFlash,
-        protected: tileTypeName(shovelWallTypeForTimer(durations.shovelFlash, 0)),
-        flashA: tileTypeName(shovelWallTypeForTimer(flashingTimer, 0)),
-        flashB: tileTypeName(shovelWallTypeForTimer(flashingTimer, 16)),
-        expired: tileTypeName(shovelWallTypeForTimer(0, 0)),
+        protected: wallTypeForTimer(durations.shovelFlash, 0),
+        flashA: wallTypeForTimer(flashingTimer, 0),
+        flashB: wallTypeForTimer(flashingTimer, 16),
+        expired: wallTypeForTimer(0, 0),
         cells
       };
     },

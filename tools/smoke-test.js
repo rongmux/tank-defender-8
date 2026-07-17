@@ -494,13 +494,6 @@ const removedBrickPixels = canvasContext.pixelColors(brickFragmentRenderProbe.re
 const remainingBrickPixels = canvasContext.pixelColors(brickFragmentRenderProbe.remaining);
 assert(removedBrickPixels["#000000"] === 32, "the removed 4x8 brick strip should render entirely as battlefield background");
 assert(Object.keys(remainingBrickPixels).some((color) => color !== "#000000" && color !== "null"), "the adjacent 4x8 brick strip should remain visibly rendered");
-const shovelProbe = context.window.TankDefender8.debugShovelWallProbe();
-assert(shovelProbe.durationUnits === 20 && shovelProbe.flashThreshold === 4, "shovel should use twenty 64-frame units and flash below four remaining units");
-assert(shovelProbe.protected === "steel", "shovel protection should keep steel before flash");
-assert(shovelProbe.flashA !== shovelProbe.flashB, "shovel flash window should alternate wall type");
-assert(shovelProbe.expired === "brick", "shovel protection should expire back to brick");
-assert(shovelProbe.cells.filter((cell) => cell.type === "steel" && cell.mask === 15).length === 5, "shovel should protect the five wall cells around the base");
-assert(shovelProbe.cells.some((cell) => cell.c === 6 && cell.r === 12 && cell.type === "empty"), "shovel should keep the eagle cell open");
 const globalTimerProbe = context.window.TankDefender8.debugGlobalTimerCadenceProbe();
 assert(globalTimerProbe.unitFrames === 64, "original long-duration timers should use 64-frame units");
 assert(globalTimerProbe.boundaries.map((entry) => entry.active).join(",") === "false,false,true,false,false,true", "global timers should tick only when the low frame counter is zero modulo 64");
