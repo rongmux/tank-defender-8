@@ -6,7 +6,7 @@ NES-style tank defense game built as a static Canvas app.
 
 This repository does not include original NES ROM data, original sprites, original audio, or original stage maps. Maps, sprites, and audio use free or custom replacement resources. The built-in enemy composition mirrors the publicly documented 35-stage Battle City enemy group table, and the engine remains data-driven so gameplay rules, enemy sequences, and stage packs can be tuned without changing the core code.
 
-The project is currently in a dedicated architecture-refactor phase. New 1:1 gameplay work is frozen while the single-file runtime and smoke test are split into explicit browser modules, pure rule modules, shared test infrastructure, unit suites, and feature integration suites. Core timing, randomness, geometry, and direction vectors are now modular; the configuration domain owns shared value validation, base session/life rules, projectile/friendly-fire rules, enemy AI and spawn pacing, enemy type/spec normalization, explosion timings/colors, player movement/cadence, player star-upgrade tiers, power-up durations/rules, stage flow/bonuses, fixed logic timings, and per-stage capacity/spawn settings; the stage domain owns map-grid rules, battlefield initialization/base-wall behavior, deterministic fallback map generation, stage-pack composition/routing, and the original-style enemy group/sequence model; the entity domain owns player lifecycle, enemy/projectile/power-up creation, and transient explosion/score-popup state; and the gameplay-rules domain now owns score/bonus-life progression, stage-result rows/leader/count timing, tank/bullet collision boundaries, opposing-projectile cancellation, projectile boundary/impact selection, fragment-accurate terrain overlap recovery, and directional brick-strip/steel-quarter wall damage. The no-build static launch path remains a hard compatibility requirement throughout the migration.
+The project is currently in a dedicated architecture-refactor phase. New 1:1 gameplay work is frozen while the single-file runtime and smoke test are split into explicit browser modules, pure rule modules, shared test infrastructure, unit suites, and feature integration suites. Core timing, randomness, geometry, and direction vectors are now modular; the configuration domain owns shared value validation, base session/life rules, projectile/friendly-fire rules, enemy AI and spawn pacing, enemy type/spec normalization, explosion timings/colors, player movement/cadence, player star-upgrade tiers, power-up durations/rules, stage flow/bonuses, fixed logic timings, and per-stage capacity/spawn settings; the stage domain owns map-grid rules, battlefield initialization/base-wall behavior, deterministic fallback map generation, built-in and imported stage-pack composition/routing, and the original-style enemy group/sequence model; the entity domain owns player lifecycle, enemy/projectile/power-up creation, and transient explosion/score-popup state; and the gameplay-rules domain now owns score/bonus-life progression, stage-result rows/leader/count timing, tank/bullet collision boundaries, opposing-projectile cancellation, projectile boundary/impact selection, fragment-accurate terrain overlap recovery, and directional brick-strip/steel-quarter wall damage. The no-build static launch path remains a hard compatibility requirement throughout the migration.
 
 The presentation domain now owns the deeply frozen free replacement sprite manifest, both pixel-font glyph sets and alignment geometry, plus pure tank, transient-effect, battle-HUD, title-score, curtain, full GAME OVER, and HIGH SCORE visual timelines while Canvas sprite submission and pixel drawing remain runtime responsibilities.
 
@@ -74,6 +74,7 @@ node --check src/config/enemy-types.js
 node --check src/config/player-upgrades.js
 node --check src/config/stage-settings.js
 node --check src/stages/battlefield-grid.js
+node --check src/stages/built-in-stage-pack.js
 node --check src/stages/enemy-sequences.js
 node --check src/stages/procedural-stage.js
 node --check src/stages/stage-grid.js
@@ -152,6 +153,7 @@ tank-defender-8/
 |   |   `-- wall-damage-rules.js
 |   |-- stages/
 |   |   |-- battlefield-grid.js
+|   |   |-- built-in-stage-pack.js
 |   |   |-- enemy-sequences.js
 |   |   |-- procedural-stage.js
 |   |   |-- stage-grid.js
@@ -168,6 +170,7 @@ tank-defender-8/
 |   |   |-- audio-presentation.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battlefield-grid.test.js
+|   |   |-- built-in-stage-pack.test.js
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
 |   |   |-- editor-rules.test.js
@@ -220,6 +223,7 @@ tank-defender-8/
 |   |   |-- battle-random.test.js
 |   |   |-- battlefield-grid.test.js
 |   |   |-- browser-entry.test.js
+|   |   |-- built-in-stage-pack.test.js
 |   |   |-- combat-settings.test.js
 |   |   |-- directions.test.js
 |   |   |-- editor-rules.test.js
@@ -298,6 +302,8 @@ tank-defender-8/
 `src/editor/editor-rules.js` owns the six-terrain browser palette, the 14-step original Construction block sequence, Arrow/WASD direction mapping and hold priority, full-cell cursor clamping, panel swatch hit testing, tile cycling, cursor-to-cell conversion, and exact brick-fragment/steel-quarter edits. `src/editor/editor-stage-format.js` owns compact version-2 local-save serialization, compatible loading of the legacy 13x13 `rows` format and current 26x26 `quadrants` format, reusable JSON parse results, default one-stage export/test pack composition, and pretty export serialization. `src/game.js` now retains only editor screen state, local-storage/clipboard/file side effects, messages, sounds, and event wiring. Unit coverage locks both save encodings, malformed JSON versus structurally invalid saves, independent default pack records, spawn coordinates, enemy composition, and serialized output; browser integration owns the complete save, clear, load, export, file import, constructed-stage install, immediate test, and reset workflow formerly held by smoke.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
+
+`src/stages/built-in-stage-pack.js` composes an independent mutable runtime pack from the shared normalized defaults, cloned enemy definitions, the 35 original-style enemy sequences, and procedural map fallback. It also owns the retained enemy-spec coercion and legacy type curve used only when sequence data is absent. Unit coverage locks the complete pack contract, default settings, map source selection, representative enemy records, fallback boundaries, and clone isolation; browser integration compares the public schema and enemy summaries, then verifies the real stage-1 startup map.
 
 `src/stages/procedural-stage.js` owns deterministic fallback-map generation when the active runtime stage source omits map data. It preserves the seeded random sequence, stage-density and terrain thresholds, three-stage mirror cadence, seven-stage motif cycle, reserved spawn region, and final battlefield cleanup behind a frozen browser/Node API. Unit coverage locks the random prefix, threshold boundaries, every motif, independent grid state, and pre-refactor golden maps for stages 1-7 and 35; browser integration verifies stages 1 and 2 through the real title and stage-selection flow.
 

@@ -212,12 +212,11 @@
     resolveStageRoute
   } = requireRuntimeModule("stageRouting");
   const {
-    BONUS_ENEMY_INDICES,
     DEFAULT_ENEMY_TOTAL,
     DEFAULT_ORIGINAL_STAGE_COUNT,
-    buildOriginalStyleEnemySequences,
     summarizeEnemySequences
   } = requireRuntimeModule("enemySequences");
+  const { createBuiltInStagePack } = requireRuntimeModule("builtInStagePack");
   const {
     advancePlayerDestructionState,
     beginPlayerDestructionState,
@@ -345,58 +344,7 @@
   const EDITOR_STORAGE_KEY = "tank-defender-8-editor-stage";
   const HIGH_SCORE_STORAGE_KEY = "tank-defender-8-high-score";
 
-  const builtInStagePack = {
-    id: "original-style",
-    totalStages: DEFAULT_ORIGINAL_STAGE_COUNT,
-    enemyTotal: DEFAULT_ENEMY_TOTAL,
-    enemyTotals: Array.from({ length: DEFAULT_ORIGINAL_STAGE_COUNT }, () => DEFAULT_ENEMY_TOTAL),
-    enemyTypes: cloneEnemyTypes(defaultEnemyTypes),
-    gameSettings: {
-      initialLives: DEFAULT_INITIAL_LIVES,
-      bonusLifeScores: DEFAULT_BONUS_LIFE_SCORES.slice(),
-      deathPowerLevel: DEFAULT_DEATH_POWER_LEVEL,
-      powerUpDurations: { ...DEFAULT_POWERUP_DURATIONS },
-      powerUpRules: { ...DEFAULT_POWERUP_RULES },
-      timings: { ...DEFAULT_TIMINGS },
-      enemySpawnPacing: { ...DEFAULT_ENEMY_SPAWN_PACING },
-      playerMovement: clonePlayerMovementSettings(DEFAULT_PLAYER_MOVEMENT),
-      projectileRules: { ...DEFAULT_PROJECTILE_RULES },
-      friendlyFire: { ...DEFAULT_FRIENDLY_FIRE },
-      explosionRules: cloneExplosionRules(DEFAULT_EXPLOSION_RULES),
-      stageAdvance: { ...DEFAULT_STAGE_ADVANCE },
-      stageClearBonus: { ...DEFAULT_STAGE_CLEAR_BONUS },
-      enemyAi: { ...DEFAULT_ENEMY_AI },
-      playerUpgradeRules: clonePlayerUpgradeRules(defaultPlayerUpgradeRules),
-      timerFreezesEnemyTime: DEFAULT_TIMER_FREEZES_ENEMY_TIME
-    },
-    maps: [],
-    enemies: buildOriginalStyleEnemySequences(),
-    createGrid(stage) {
-      const rows = this.maps[stage - 1];
-      return rows ? parseStageRows(rows) : buildProceduralStage(stage);
-    },
-    enemyAt(stage, index) {
-      const sequence = this.enemies[stage - 1];
-      if (sequence && sequence[index]) {
-        return {
-          typeIndex: clamp(sequence[index].typeIndex || 0, 0, (this.enemyTypes || defaultEnemyTypes).length - 1),
-          carrier: Boolean(sequence[index].carrier),
-          spawnIndex: sequence[index].spawnIndex === undefined ? (index + 1) % 3 : clamp(sequence[index].spawnIndex, 0, 2),
-          powerUpType: sequence[index].powerUpType || null,
-          spawnDelay: sequence[index].spawnDelay === undefined || sequence[index].spawnDelay === null
-            ? null
-            : Math.max(0, Math.floor(sequence[index].spawnDelay))
-        };
-      }
-      return {
-        typeIndex: pickEnemyType(stage, index),
-        carrier: BONUS_ENEMY_INDICES.includes(index),
-        spawnIndex: (index + 1) % 3,
-        powerUpType: null,
-        spawnDelay: null
-      };
-    }
-  };
+  const builtInStagePack = createBuiltInStagePack();
   const keys = new Set();
   const pendingFirePresses = new Set();
   const pendingStageSelectPresses = new Set();
@@ -3418,15 +3366,6 @@
     const pacing = gameSettings().enemySpawnPacing || DEFAULT_ENEMY_SPAWN_PACING;
     const playerCount = Math.max(1, Math.floor(Number(players) || game.playerCount || 1));
     return scaleEnemySpawnDelay(delay, playerCount, pacing);
-  }
-
-  function pickEnemyType(stage, spawned) {
-    const curve = (stage + Math.floor(spawned / 4)) % 10;
-    if (stage > 15 && spawned % 5 === 4) return 3;
-    if (curve >= 8) return 3;
-    if (curve >= 6) return 2;
-    if (curve >= 3) return 1;
-    return 0;
   }
 
   function shoot(tank) {
