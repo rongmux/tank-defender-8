@@ -82,6 +82,11 @@ node --check src/stages/stage-pack.js
 node --check src/stages/stage-pack-schema.js
 node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
+node --check src/runtime/shared-state.js
+node --check src/runtime/module-deps.js
+node --check src/runtime/game-lifecycle.js
+node --check src/runtime/audio-bridge.js
+node --check src/runtime/debug-api.js
 node --check src/game.js
 node --check tests/helpers/test-file-discovery.js
 node --check tools/build-free-stage-pack.js
@@ -163,6 +168,12 @@ tank-defender-8/
 |   |   |-- stage-pack-schema.js
 |   |   |-- stage-routing.js
 |   |   `-- stage-runtime.js
+|   |-- runtime/
+|   |   |-- shared-state.js
+|   |   |-- module-deps.js
+|   |   |-- game-lifecycle.js
+|   |   |-- audio-bridge.js
+|   |   `-- debug-api.js
 |   `-- game.js
 |-- tests/
 |   |-- helpers/
