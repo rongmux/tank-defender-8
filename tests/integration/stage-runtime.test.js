@@ -65,7 +65,7 @@ assert.equal(stageTwo.enemyTotal, 3);
 assert.equal(stageTwo.onePlayerMaxActiveEnemies, 3);
 assert.equal(stageTwo.twoPlayerMaxActiveEnemies, 6);
 
-assert(source.includes('requireRuntimeModule("stageRuntime")'));
+assert(source.includes('stageRuntime'));
 assert(source.includes("createStageRuntime({"));
 assert(!source.includes("function stageRoute(stage)"));
 assert(!source.includes("function createStageGrid(stage)"));

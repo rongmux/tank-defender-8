@@ -71,8 +71,9 @@
     eval(shAliases);
 
     // Deps function aliases (for functions like clamp, cloneGrid, etc.)
+    // Skip functions that already have state.fn versions (manual aliases)
     for (var key2 in deps) {
-      if (deps.hasOwnProperty(key2) && typeof deps[key2] === 'function' && key2 !== 'requireRuntimeModule') {
+      if (deps.hasOwnProperty(key2) && typeof deps[key2] === 'function' && key2 !== 'requireRuntimeModule' && !state.fn.hasOwnProperty(key2)) {
         depsAliases += 'function ' + key2 + '() { return deps["' + key2.replace(/"/g, '\\"') + '"].apply(deps, arguments); }';
       }
     }

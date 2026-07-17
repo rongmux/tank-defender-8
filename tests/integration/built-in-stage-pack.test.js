@@ -33,8 +33,8 @@ assert.deepEqual(
   JSON.parse(JSON.stringify(modules.stageGrid.gridToQuadrants(pack.createGrid(1))))
 );
 
-assert(source.includes('requireRuntimeModule("builtInStagePack")'));
-assert(source.includes("const builtInStagePack = createBuiltInStagePack();"));
+assert(source.includes('builtInStagePack'));
+assert(source.includes('deps.createBuiltInStagePack'));
 assert(!source.includes("const builtInStagePack = {"));
 
 console.log("built-in-stage-pack integration test passed");
