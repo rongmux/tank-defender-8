@@ -54,6 +54,12 @@
     }
     eval(depsAliases);
 
+    // CamelCase renames for debug probes (used alongside UPPER_CASE aliases)
+    var powerTypes = deps.POWER_UP_TYPES;
+    var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
+    var defaultPlayerUpgradeRules = deps.DEFAULT_PLAYER_UPGRADE_RULES;
+    var originalPowerUpRandomTable = deps.ORIGINAL_POWER_UP_RANDOM_TABLE;
+
     // sharedState property aliases (TILE, SCREEN_W, etc.)
     var shAliases = '';
     var sh = deps.sharedState;
