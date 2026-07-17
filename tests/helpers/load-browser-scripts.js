@@ -55,6 +55,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/stages/stage-routing.js",
   "src/stages/enemy-sequences.js",
   "src/stages/built-in-stage-pack.js",
+  "src/stages/stage-runtime.js",
   "src/stages/stage-pack-schema.js",
   "src/editor/editor-stage-format.js",
   "src/game.js"

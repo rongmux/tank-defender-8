@@ -40,7 +40,7 @@ for (const stage of [1, 2]) {
       modules.proceduralStage.buildProceduralStage(stage)
     )))
   );
-  assert(source.includes('requireRuntimeModule("proceduralStage")'));
+  assert(source.includes('requireRuntimeModule("stageRuntime")'));
 }
 
 console.log("procedural-stage integration test passed");

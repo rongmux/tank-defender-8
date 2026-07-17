@@ -117,7 +117,6 @@
     pausePresentation: selectPausePresentation,
     playerGameOverMessagePresentation: selectPlayerGameOverMessagePresentation
   } = requireRuntimeModule("battleHudPresentation");
-  const { DEFAULT_STAGE_ADVANCE } = requireRuntimeModule("stageFlowSettings");
   const {
     DEFAULT_ENEMY_TYPES: defaultEnemyTypes,
     ENEMY_FIRE_CHANCE,
@@ -144,7 +143,6 @@
     makeGrid,
     normalizeBrickFragmentMask,
     parseStageQuadrants,
-    parseStageRows,
     quarterMaskFromBrickFragments,
     setTile
   } = requireRuntimeModule("stageGrid");
@@ -155,7 +153,6 @@
     prepareConstructedBattleGrid,
     shovelWallTypeForTimer
   } = requireRuntimeModule("battlefieldGrid");
-  const { buildProceduralStage } = requireRuntimeModule("proceduralStage");
   const {
     EDITOR_TILE_TYPES,
     ORIGINAL_EDITOR_PATTERNS,
@@ -180,20 +177,10 @@
     serializeEditorStagePack
   } = requireRuntimeModule("editorStageFormat");
   const {
-    DEFAULT_ENEMY_SPAWNS,
-    DEFAULT_MAX_ACTIVE_ENEMIES,
-    DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER,
-    DEFAULT_PLAYER_SPAWNS,
     DEFAULT_POWERUP_SPAWNS,
-    pixelToTilePoint,
     powerUpPixelToTilePoint
   } = requireRuntimeModule("stageSettings");
   const { tryNormalizeStagePack } = requireRuntimeModule("stagePack");
-  const {
-    resolveEnemyTotal,
-    resolveMaxActiveEnemies,
-    resolveStageRoute
-  } = requireRuntimeModule("stageRouting");
   const {
     DEFAULT_ENEMY_TOTAL,
     DEFAULT_ORIGINAL_STAGE_COUNT,
@@ -201,6 +188,7 @@
   } = requireRuntimeModule("enemySequences");
   const { createBuiltInStagePack } = requireRuntimeModule("builtInStagePack");
   const { createStagePackSchema } = requireRuntimeModule("stagePackSchema");
+  const { createStageRuntime } = requireRuntimeModule("stageRuntime");
   const {
     advancePlayerDestructionState,
     beginPlayerDestructionState,
@@ -427,6 +415,31 @@
     editorMessage: "",
     editorMessageTimer: 0
   };
+  const {
+    createStageGrid,
+    currentEnemySpawns,
+    currentPlayerSpawns,
+    currentPowerUpSpawns,
+    enemyDataStage,
+    enemySequenceForStage,
+    enemySpawnPoint,
+    enemyTotal,
+    enemyTypeDefinitions,
+    gameSettings,
+    getEnemySpec,
+    isExtendedLoopStage,
+    mapDataStage,
+    maxActiveEnemies,
+    playerSpawnPoint,
+    stageCount,
+    stageCycleLimit,
+    stageRoute,
+    stageSettings
+  } = createStageRuntime({
+    getState: () => game,
+    builtInStagePack,
+    demoMaxActiveEnemies: DEMO_MAX_ACTIVE_ENEMIES
+  });
 
   function loadHighScore() {
     try {
@@ -453,127 +466,6 @@
       game.highScore = score;
       saveHighScore();
     }
-  }
-
-  function stageRoute(stage) {
-    const pack = game.stagePack || builtInStagePack;
-    return resolveStageRoute({
-      stage,
-      currentStage: game.stage,
-      totalStages: pack.totalStages || builtInStagePack.totalStages,
-      stageAdvance: (pack.gameSettings || builtInStagePack.gameSettings).stageAdvance || DEFAULT_STAGE_ADVANCE,
-      originalStageCount: DEFAULT_ORIGINAL_STAGE_COUNT
-    });
-  }
-
-  function stageCount() {
-    return stageRoute().stageCount;
-  }
-
-  function stageCycleLimit() {
-    return stageRoute().stageCycleLimit;
-  }
-
-  function isExtendedLoopStage(stage) {
-    return stageRoute(stage).isExtendedLoopStage;
-  }
-
-  function mapDataStage(stage) {
-    return stageRoute(stage).mapDataStage;
-  }
-
-  function enemyDataStage(stage) {
-    return stageRoute(stage).enemyDataStage;
-  }
-
-  function enemyTotal(stage) {
-    const pack = game.stagePack || builtInStagePack;
-    return resolveEnemyTotal(pack, enemyDataStage(stage || game.stage), DEFAULT_ENEMY_TOTAL);
-  }
-
-  function maxActiveEnemies(stage, players) {
-    if (game.demoMode) return DEMO_MAX_ACTIVE_ENEMIES;
-    const pack = game.stagePack || builtInStagePack;
-    const playerCount = Math.max(1, Math.floor(Number(players) || game.playerCount || 1));
-    return resolveMaxActiveEnemies(pack, mapDataStage(stage || game.stage), playerCount, {
-      onePlayer: DEFAULT_MAX_ACTIVE_ENEMIES,
-      twoPlayer: DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER
-    });
-  }
-
-  function gameSettings() {
-    const pack = game.stagePack || builtInStagePack;
-    return pack.gameSettings || builtInStagePack.gameSettings;
-  }
-
-  function enemyTypeDefinitions() {
-    const pack = game.stagePack || builtInStagePack;
-    return pack.enemyTypes || builtInStagePack.enemyTypes || defaultEnemyTypes;
-  }
-
-  function stageSettings(stage) {
-    const pack = game.stagePack || builtInStagePack;
-    const stageIndex = mapDataStage(stage || game.stage) - 1;
-    return pack.stageSettings && pack.stageSettings[stageIndex] ? pack.stageSettings[stageIndex] : null;
-  }
-
-  function playerSpawnPoint(id, stage) {
-    const settings = stageSettings(stage);
-    const spawns = settings ? settings.playerSpawns : DEFAULT_PLAYER_SPAWNS;
-    return spawns[id - 1] || DEFAULT_PLAYER_SPAWNS[id - 1] || DEFAULT_PLAYER_SPAWNS[0];
-  }
-
-  function enemySpawnPoint(index, stage) {
-    const settings = stageSettings(stage);
-    const spawns = settings ? settings.enemySpawns : DEFAULT_ENEMY_SPAWNS;
-    return spawns[index] || spawns[index % spawns.length] || DEFAULT_ENEMY_SPAWNS[index % DEFAULT_ENEMY_SPAWNS.length];
-  }
-
-  function currentPlayerSpawns() {
-    const settings = stageSettings();
-    return (settings ? settings.playerSpawns : DEFAULT_PLAYER_SPAWNS).map(pixelToTilePoint);
-  }
-
-  function currentEnemySpawns() {
-    const settings = stageSettings();
-    return (settings ? settings.enemySpawns : DEFAULT_ENEMY_SPAWNS).map(pixelToTilePoint);
-  }
-
-  function currentPowerUpSpawns() {
-    const settings = stageSettings();
-    return (settings ? settings.powerUpSpawns : DEFAULT_POWERUP_SPAWNS).map(powerUpPixelToTilePoint);
-  }
-
-  function createStageGrid(stage) {
-    const pack = game.stagePack || builtInStagePack;
-    const dataStage = mapDataStage(stage);
-    if (typeof pack.createGrid === "function") return pack.createGrid(dataStage);
-    if (pack.quadrants && pack.quadrants[dataStage - 1]) return parseStageQuadrants(pack.quadrants[dataStage - 1]);
-    if (pack.maps && pack.maps[dataStage - 1]) return parseStageRows(pack.maps[dataStage - 1]);
-    return buildProceduralStage(dataStage);
-  }
-
-  function getEnemySpec(stage, index) {
-    const pack = game.stagePack || builtInStagePack;
-    const dataStage = enemyDataStage(stage);
-    if (typeof pack.enemyAt === "function") return pack.enemyAt(dataStage, index);
-    if (pack.enemies && pack.enemies[dataStage - 1] && pack.enemies[dataStage - 1][index]) {
-      return pack.enemies[dataStage - 1][index];
-    }
-    return builtInStagePack.enemyAt(dataStage, index);
-  }
-
-  function enemySequenceForStage(stage) {
-    return Array.from({ length: enemyTotal(stage) }, (_, index) => {
-      const spec = getEnemySpec(stage, index);
-      return {
-        typeIndex: spec.typeIndex,
-        carrier: Boolean(spec.carrier),
-        spawnIndex: spec.spawnIndex,
-        powerUpType: spec.powerUpType || null,
-        spawnDelay: spec.spawnDelay === undefined ? null : spec.spawnDelay
-      };
-    });
   }
 
   function createPlayer(id) {
