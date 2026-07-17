@@ -104,7 +104,7 @@
       state.game.screen = "playing";
       state.game.transitionTimer = 0;
       state.game.titleIdleFrames = 0;
-      deps.resetFrameCounter();
+      fn.resetFrameCounters();
       state.game.frameLow = sh.DEMO_INITIAL_FRAME_LOW;
       fn.syncMovementAudio();
     };
@@ -138,13 +138,12 @@
 
     fn.resetTitleIdleTimer = function () {
       state.game.titleIdleFrames = 0;
-      deps.resetFrameCounter();
-      // resetFrameCounterHigh placeholder — resetFrameCounter resets both
+      fn.resetFrameCounterHigh();
     };
 
     fn.resetTitleIdleHighByte = function () {
       state.game.titleIdleFrames = 0;
-      // resetFrameCounterHigh — handled by resetFrameCounter
+      fn.resetFrameCounterHigh();
     };
 
     // ── Hidden message ────────────────────────────────────────────────────
@@ -236,7 +235,7 @@
 
     fn.changeStageSelection = function (delta) {
       var limit = fn.stageSelectLimit();
-      // resetFrameCounterLow — handled via deps
+      fn.resetFrameCounterLow();
       state.game.stage = deps.clamp(state.game.stage + delta, 1, limit);
     };
 

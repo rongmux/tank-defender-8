@@ -362,6 +362,7 @@
   var ORIGINAL_POWER_UP_RANDOM_TABLE = deps.ORIGINAL_POWER_UP_RANDOM_TABLE;
   var PLAYER_UPGRADE_OVERLAY_COLORS = deps.PLAYER_UPGRADE_OVERLAY_COLORS;
   var POWER_UP_SIZE = deps.POWER_UP_SIZE;
+  var POWERUP_SIZE = deps.POWER_UP_SIZE;
   var POWER_UP_TYPES = deps.POWER_UP_TYPES;
   var QUAD_GRID = deps.QUAD_GRID;
   var RIGHT = deps.RIGHT;
@@ -530,6 +531,36 @@
   var tryNormalizeStagePack = deps.tryNormalizeStagePack;
   var valueNormalization = deps.valueNormalization;
   var wallHitSoundName = deps.wallHitSoundName;
+
+  // Renamed import aliases (original → local name)
+  var selectFixedFrameAudioPresentation = deps.fixedFrameAudioPresentation;
+  var selectMovementAudioPresentation = deps.movementAudioPresentation;
+  var selectAudioAudibility = deps.resolveAudioAudibility;
+  var selectMovementAudioMode = deps.resolveMovementAudioMode;
+  var selectBaseDestructionPresentation = deps.baseDestructionPresentation;
+  var selectEnemyDestructionPresentation = deps.enemyDestructionPresentation;
+  var selectExplosionPresentation = deps.explosionPresentation;
+  var selectPlayerDestructionPresentation = deps.playerDestructionPresentation;
+  var selectScorePopupPresentation = deps.scorePopupPresentation;
+  var selectTankDestructionPresentation = deps.tankDestructionPresentation;
+  var selectFullGameOverPresentation = deps.fullGameOverPresentation;
+  var selectHighScorePresentation = deps.highScorePresentation;
+  var selectStageIntroCurtainState = deps.stageIntroCurtainState;
+  var selectStageSelectCurtainState = deps.stageSelectCurtainState;
+  var selectTitleScoreLayout = deps.titleScoreLayout;
+  var selectGameOverBannerPresentation = deps.gameOverBannerPresentation;
+  var selectPanelEnemyCounterRemaining = deps.panelEnemyCounterRemaining;
+  var selectPanelLifeCount = deps.panelLifeCount;
+  var selectPausePresentation = deps.pausePresentation;
+  var selectPlayerGameOverMessagePresentation = deps.playerGameOverMessagePresentation;
+  var selectEditorCursorMove = deps.moveEditorCursor;
+  var applyPowerUpStateEffect = deps.applyPowerUpEffect;
+  var gridRectHitsSolidTerrain = deps.rectHitsSolidTerrain;
+  var gridSolidTerrainOverlapArea = deps.solidTerrainOverlapArea;
+  var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
+  var defaultPlayerUpgradeRules = deps.DEFAULT_PLAYER_UPGRADE_RULES;
+  var powerTypes = deps.POWER_UP_TYPES;
+  var originalPowerUpRandomTable = deps.ORIGINAL_POWER_UP_RANDOM_TABLE;
 
   function handleAction(action) {
     initAudio();
