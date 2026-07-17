@@ -46,6 +46,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/config/player-upgrades.js",
   "src/stages/stage-grid.js",
   "src/stages/battlefield-grid.js",
+  "src/stages/procedural-stage.js",
   "src/editor/editor-rules.js",
   "src/rules/terrain-collision-rules.js",
   "src/rules/wall-damage-rules.js",

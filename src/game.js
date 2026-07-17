@@ -167,12 +167,12 @@
   } = requireRuntimeModule("stageGrid");
   const {
     buildBaseWall,
-    isReservedCell,
     makeOriginalConstructionGrid,
     prepareBattleGrid,
     prepareConstructedBattleGrid,
     shovelWallTypeForTimer
   } = requireRuntimeModule("battlefieldGrid");
+  const { buildProceduralStage } = requireRuntimeModule("proceduralStage");
   const {
     EDITOR_TILE_TYPES,
     ORIGINAL_EDITOR_PATTERNS,
@@ -373,7 +373,7 @@
     enemies: buildOriginalStyleEnemySequences(),
     createGrid(stage) {
       const rows = this.maps[stage - 1];
-      return rows ? parseStageRows(rows) : buildStage(stage);
+      return rows ? parseStageRows(rows) : buildProceduralStage(stage);
     },
     enemyAt(stage, index) {
       const sequence = this.enemies[stage - 1];
@@ -496,16 +496,6 @@
     editorMessageTimer: 0
   };
 
-  function rng(seed) {
-    let t = seed >>> 0;
-    return function next() {
-      t += 0x6d2b79f5;
-      let r = Math.imul(t ^ (t >>> 15), 1 | t);
-      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
-      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-
   function loadHighScore() {
     try {
       const value = Number(localStorage.getItem(HIGH_SCORE_STORAGE_KEY));
@@ -531,36 +521,6 @@
       game.highScore = score;
       saveHighScore();
     }
-  }
-
-  function buildStage(stage) {
-    const grid = makeGrid();
-    const next = rng(0x8c0ffee ^ Math.imul(stage, 2654435761));
-    const mirror = stage % 3 !== 0;
-    const density = 0.27 + Math.min(stage, 35) * 0.003;
-
-    for (let r = 1; r < 11; r += 1) {
-      const cLimit = mirror ? 6 : 12;
-      for (let c = 0; c <= cLimit; c += 1) {
-        const targetCols = mirror && c !== 6 ? [c, 12 - c] : [c];
-        const roll = next();
-        let type = EMPTY;
-        if (roll < density) type = BRICK;
-        else if (roll < density + 0.055 + stage * 0.001) type = STEEL;
-        else if (roll < density + 0.105) type = WATER;
-        else if (roll < density + 0.175) type = FOREST;
-        else if (roll < density + 0.215) type = ICE;
-
-        for (const col of targetCols) {
-          if (isReservedCell(col, r)) continue;
-          setTile(grid, col, r, type, 15);
-        }
-      }
-    }
-
-    addStageMotif(grid, stage);
-    prepareBattleGrid(grid);
-    return grid;
   }
 
   function stageRoute(stage) {
@@ -658,7 +618,7 @@
     if (typeof pack.createGrid === "function") return pack.createGrid(dataStage);
     if (pack.quadrants && pack.quadrants[dataStage - 1]) return parseStageQuadrants(pack.quadrants[dataStage - 1]);
     if (pack.maps && pack.maps[dataStage - 1]) return parseStageRows(pack.maps[dataStage - 1]);
-    return buildStage(dataStage);
+    return buildProceduralStage(dataStage);
   }
 
   function getEnemySpec(stage, index) {
@@ -682,39 +642,6 @@
         spawnDelay: spec.spawnDelay === undefined ? null : spec.spawnDelay
       };
     });
-  }
-
-  function addStageMotif(grid, stage) {
-    const variant = stage % 7;
-    if (variant === 1) {
-      for (let c = 2; c <= 10; c += 2) setTile(grid, c, 5, STEEL, 15);
-      for (let r = 2; r <= 9; r += 3) setTile(grid, 6, r, BRICK, 15);
-    } else if (variant === 2) {
-      for (let r = 2; r <= 8; r += 1) {
-        setTile(grid, 3, r, WATER, 0);
-        setTile(grid, 9, r, WATER, 0);
-      }
-    } else if (variant === 3) {
-      for (let c = 1; c <= 11; c += 1) if (c !== 6) setTile(grid, c, 6, FOREST, 0);
-      for (let r = 2; r <= 10; r += 2) setTile(grid, 6, r, BRICK, 15);
-    } else if (variant === 4) {
-      for (let c = 1; c <= 11; c += 1) {
-        if (c < 4 || c > 8) setTile(grid, c, 3, ICE, 0);
-        setTile(grid, c, 9, c % 2 ? BRICK : EMPTY, 15);
-      }
-    } else if (variant === 5) {
-      for (let r = 2; r <= 9; r += 1) {
-        setTile(grid, 2, r, BRICK, 15);
-        setTile(grid, 10, r, BRICK, 15);
-      }
-      setTile(grid, 6, 4, STEEL, 15);
-      setTile(grid, 6, 8, STEEL, 15);
-    } else if (variant === 6) {
-      for (let i = 0; i < 5; i += 1) {
-        setTile(grid, 2 + i, 2 + i, BRICK, 15);
-        setTile(grid, 10 - i, 2 + i, BRICK, 15);
-      }
-    }
   }
 
   function createPlayer(id) {
