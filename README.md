@@ -16,6 +16,8 @@ The editor domain now owns the original-style Construction tile palette and bloc
 
 The runtime layer now owns shared mutable state, the browser-module dependency barrel, high-score/title/stage/editor lifecycle orchestration, Web Audio side effects, and the public debug adapter. Stage-pack diagnostics are isolated behind a pure projection module so `currentPackInfo()` and `debugSnapshot()` share one independently testable source for cloned configuration, routing, spawn, enemy-type, upgrade, and sequence data. Stage-result diagnostics bind the four public bonus, result-row, row-layout, and count-presentation probes to pure stage-result rules without retaining diagnostic-only helpers in the game composition root. Audio diagnostics now isolate all 31 manifest, presentation, channel-priority, pause, and lifecycle probes behind an explicit bound scope instead of the monolithic debug adapter. Stage-flow diagnostics isolate all 17 curtain, stage-cycle, stage-clear, automatic-advance, and game-over lifecycle probes behind the same receiver-preserving boundary. Screen-flow diagnostics isolate title scoring, frame counters, stage-select input cadence, title demo/hidden-message routing, high-score, and full-screen game-over probes. Enemy diagnostics isolate carrier behavior, target selection, AI/movement cadence, blocked recovery, spawn timelines, and spawn animation probes. The complete public debug snapshot is also a pure projection module, keeping its screen, timing, audio, pack, map/editor, and player records independently editable without exposing runtime state.
 
+Effect diagnostics now isolate explosion rules, tank-destruction timelines, delayed enemy release, rendered destruction frames, and paused bullet-impact lifecycles behind the same explicit receiver-preserving boundary.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder locally:
@@ -91,6 +93,7 @@ node --check src/runtime/stage-result-diagnostics.js
 node --check src/runtime/stage-flow-diagnostics.js
 node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
+node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
@@ -185,6 +188,7 @@ tank-defender-8/
 |   |   |-- stage-flow-diagnostics.js
 |   |   |-- screen-flow-diagnostics.js
 |   |   |-- enemy-diagnostics.js
+|   |   |-- effect-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
@@ -208,6 +212,7 @@ tank-defender-8/
 |   |   |-- debug-snapshot.test.js
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-stage-format.test.js
+|   |   |-- effect-diagnostics.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
 |   |   |-- enemy-ai-rules.test.js
@@ -270,6 +275,7 @@ tank-defender-8/
 |   |   |-- directions.test.js
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-stage-format.test.js
+|   |   |-- effect-diagnostics.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
 |   |   |-- enemy-ai-rules.test.js
@@ -362,6 +368,8 @@ tank-defender-8/
 `src/stages/stage-runtime.js` binds the pure route/settings/grid modules to a dynamically read game state. Its frozen runtime API owns active-pack fallback, displayed/map/enemy stage resolution, per-stage enemy totals and one/two-player capacities, default/custom spawn lookup, map decoding/procedural fallback, enemy-spec fallback, and normalized stage sequences. Direct tests switch one runtime between built-in, custom, raw-quadrant, mapless, and demo states; browser integration verifies public pack diagnostics and removes the corresponding query wrappers from `src/game.js`.
 
 `src/runtime/` contains the browser composition boundary created during the runtime split. `shared-state.js` creates the single mutable state graph and fixed layout/timing constants; `module-deps.js` validates script order and exposes the explicit dependency barrel; `game-lifecycle.js` owns high-score persistence plus title, stage, editor, pack-loading, and transition orchestration; `audio-bridge.js` owns Web Audio node creation and event synchronization; and `debug-api.js` adapts retained runtime functions into the public test/diagnostic API. `audio-diagnostics.js` owns the 31 contiguous manifest, presentation, movement, priority, pause, and fixed-frame lifecycle probes behind 142 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`; extracting it plus dead aliases reduces `debug-api.js` from 8,957 to 6,171 lines. Its unit suite locks method order, validation, binding precedence, and clone isolation; browser integration executes every probe in sequence and preserves the pre-refactor 61,974-byte SHA-256 output. `stage-pack-diagnostics.js` owns the exact cloned projection shared by `currentPackInfo()` and the stage-pack section of `debugSnapshot()`, including route metadata, normalized settings, enemy types, upgrade/wall rules, spawn layouts, and the active enemy sequence. `stage-result-diagnostics.js` binds four frozen public stage-result probes to pure rules, normalizes diagnostic player records, projects bonus recipients, row scores/layout gaps, and count/reveal timing, and removes two debug-only helpers from `src/game.js`. Its unit suite covers input normalization, bonus eligibility, dynamic timing overrides, presentation boundaries, and output isolation; browser integration locks public API order and the pre-refactor 1,478-byte output hash. `stage-flow-diagnostics.js` binds 17 contiguous curtain, stage-cycle, stage-clear, automatic-advance, and game-over probes through 49 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`; extracting it and 17 dead aliases reduces `debug-api.js` from 6,171 to 5,483 lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all 17 probes at their original public indices and preserves the pre-refactor 13,047-byte output SHA-256. `screen-flow-diagnostics.js` binds 11 contiguous title-score, frame-counter, stage-select cadence, title demo/hidden-message, high-score, and full-screen game-over probes through 57 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`; extracting it and 32 dead aliases reduces `debug-api.js` from 5,483 to 4,833 lines. Its unit suite locks validation, exact method order, binding precedence, receiver identity, and cloned layout output; browser integration executes all 11 probes at their original public indices and preserves the pre-refactor 25,534-byte output SHA-256. `enemy-diagnostics.js` binds 11 contiguous carrier, enemy presentation, target selection, AI/movement cadence, blocked recovery, spawn timeline, and spawn-animation probes through 34 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`; extracting it and four dead aliases reduces `debug-api.js` from 4,833 to 4,497 lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all 11 probes at their original public indices and preserves the pre-refactor 3,839-byte output SHA-256. `debug-snapshot.js` owns the complete 95-field public state projection: screen and fixed counters, all 17 retained audio events, stage-pack diagnostics, score popups, battle/editor grids, field geometry, and independently cloned player summaries. Unit tests lock the exact field order, audio event mapping, representative values, and clone isolation; browser integration verifies module registration, the thin adapter, and repeated-call isolation.
+
+`effect-diagnostics.js` binds the five contiguous explosion-rule, tank-destruction, enemy-release, rendered-frame, and paused-impact probes through 31 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and seven dead-adapter removals leave `debug-api.js` at 4,175 physical lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all five probes at their original public indices 130-134 and preserves the pre-refactor 6,548-byte output SHA-256.
 
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 
