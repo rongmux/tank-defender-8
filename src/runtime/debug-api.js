@@ -364,8 +364,6 @@
     function stageClearPresentation() { return state.fn.stageClearPresentation.apply(state.fn, arguments); }
     function stageResultDuration() { return state.fn.stageResultDuration.apply(state.fn, arguments); }
     function stageClearBonusRecipients() { return state.fn.stageClearBonusRecipients.apply(state.fn, arguments); }
-    function stageClearResultSummary() { return state.fn.stageClearResultSummary.apply(state.fn, arguments); }
-    function makeStageClearResultProbePlayer() { return state.fn.makeStageClearResultProbePlayer.apply(state.fn, arguments); }
     function renderTitle() { return state.fn.renderTitle.apply(state.fn, arguments); }
     function renderHiddenMessage() { return state.fn.renderHiddenMessage.apply(state.fn, arguments); }
     function renderHighScore() { return state.fn.renderHighScore.apply(state.fn, arguments); }
@@ -543,8 +541,8 @@
             game.stageClearElapsed = 31;
             game.transitionTimer = 999;
             game.players = [
-              makeStageClearResultProbePlayer(1, [2, 0, 0, 0], 0),
-              makeStageClearResultProbePlayer(2, [1, 0, 0, 0], 0)
+              createStageResultProbePlayer(enemyTypeDefinitions(), 1, [2, 0, 0, 0], 0),
+              createStageResultProbePlayer(enemyTypeDefinitions(), 2, [1, 0, 0, 0], 0)
             ];
     
             update();
@@ -567,8 +565,8 @@
     
             stopScoreCountAudio();
             game.players = [
-              makeStageClearResultProbePlayer(1, [0, 0, 0, 0], 0),
-              makeStageClearResultProbePlayer(2, [0, 0, 0, 0], 0)
+              createStageResultProbePlayer(enemyTypeDefinitions(), 1, [0, 0, 0, 0], 0),
+              createStageResultProbePlayer(enemyTypeDefinitions(), 2, [0, 0, 0, 0], 0)
             ];
             game.stageClearElapsed = 31;
             update();
@@ -645,7 +643,10 @@
           const previousAudio = audioStates.map((state) => ({ active: state.active, frame: state.frame }));
           const makeResultPlayer = (id, kills) => {
             const player = createPlayer(id);
-            return Object.assign(player, makeStageClearResultProbePlayer(id, kills, 0));
+            return Object.assign(
+              player,
+              createStageResultProbePlayer(enemyTypeDefinitions(), id, kills, 0)
+            );
           };
           const state = () => {
             const presentation = stageBonusAudioPresentation(stageBonusAudio.frame);
@@ -8951,84 +8952,12 @@
             Object.assign(game, previous);
           }
         },
-        debugStageClearBonusProbe(p1Kills, p2Kills, p1Lives, p2Lives) {
-          const players = [
-            {
-              id: 1,
-              lives: p1Lives === undefined ? 1 : Math.max(0, Math.floor(Number(p1Lives) || 0)),
-              stageKills: [Math.max(0, Math.floor(Number(p1Kills) || 0))]
-            },
-            {
-              id: 2,
-              lives: p2Lives === undefined ? 1 : Math.max(0, Math.floor(Number(p2Lives) || 0)),
-              stageKills: [Math.max(0, Math.floor(Number(p2Kills) || 0))]
-            }
-          ];
-          return {
-            points: gameSettings().stageClearBonus.points,
-            recipients: stageClearBonusRecipients(players).map((player) => player.id)
-          };
-        },
-        debugStageClearResultRowsProbe(p1Kills, p2Kills, p1BonusPoints, p2BonusPoints) {
-          const summary = stageClearResultSummary([
-            makeStageClearResultProbePlayer(1, p1Kills, p1BonusPoints),
-            makeStageClearResultProbePlayer(2, p2Kills, p2BonusPoints)
-          ]);
-          return {
-            rows: summary.rows.map((row) => ({
-              typeIndex: row.typeIndex,
-              score: row.score,
-              p1Kills: row.p1Kills,
-              p1Points: row.p1Points,
-              p2Kills: row.p2Kills,
-              p2Points: row.p2Points
-            })),
-            p1EnemyPoints: summary.p1EnemyPoints,
-            p2EnemyPoints: summary.p2EnemyPoints,
-            p1BonusPoints: summary.p1BonusPoints,
-            p2BonusPoints: summary.p2BonusPoints,
-            p1StagePoints: summary.p1StagePoints,
-            p2StagePoints: summary.p2StagePoints
-          };
-        },
-        debugStageClearRowLayoutProbe() {
-          const layout = STAGE_RESULT_ROW_LAYOUT;
-          const leftArrowRight = layout.leftArrowX + layout.arrowWidth;
-          const miniTankRight = layout.miniTankX + layout.miniTankWidth;
-          return {
-            ...layout,
-            leftGap: layout.miniTankX - leftArrowRight,
-            rightGap: layout.rightArrowX - miniTankRight,
-            leftOverlapsTank: leftArrowRight > layout.miniTankX,
-            tankOverlapsRight: miniTankRight > layout.rightArrowX
-          };
-        },
-        debugStageClearPresentationProbe(p1Kills, p2Kills, elapsed) {
-          const players = [
-            makeStageClearResultProbePlayer(1, p1Kills, 0),
-            makeStageClearResultProbePlayer(2, p2Kills, 0)
-          ];
-          const presentation = stageClearPresentation(players, elapsed);
-          return {
-            rows: presentation.rows.map((row) => ({
-              typeIndex: row.typeIndex,
-              p1Kills: row.p1Kills,
-              p2Kills: row.p2Kills,
-              firstCountFrame: row.firstCountFrame,
-              countStep: row.countStep,
-              p1VisibleKills: row.p1VisibleKills,
-              p2VisibleKills: row.p2VisibleKills,
-              p1VisiblePoints: row.p1VisiblePoints,
-              p2VisiblePoints: row.p2VisiblePoints
-            })),
-            totalsRevealFrame: presentation.totalsRevealFrame,
-            bonusRevealFrame: presentation.bonusRevealFrame,
-            endFrame: presentation.endFrame,
-            duration: stageResultDuration(players),
-            showTotals: presentation.showTotals,
-            showBonus: presentation.showBonus
-          };
-        },
+        ...createStageResultDiagnostics({
+          getGameSettings: gameSettings,
+          getEnemyTypes: enemyTypeDefinitions,
+          getStageClearElapsed: () => game.stageClearElapsed,
+          getStageClearBonusAwarded: () => game.stageClearBonusAwarded
+        }),
         stagePackSchema() {
           return createStagePackSchema();
         }

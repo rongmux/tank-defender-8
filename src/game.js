@@ -416,7 +416,6 @@
   var createScorePopupState = deps.createScorePopupState;
   var createStagePackSchema = deps.createStagePackSchema;
   var createStageResultPresentation = deps.createStageResultPresentation;
-  var createStageResultSummary = deps.createStageResultSummary;
   var createStageRuntime = deps.createStageRuntime;
   var damageWall = deps.damageWall;
   var dedupePowerUpSpots = deps.dedupePowerUpSpots;
@@ -2333,24 +2332,6 @@
     return selectStageClearBonusRecipients(players, gameSettings().stageClearBonus);
   }
 
-  function stageClearResultSummary(players) {
-    return createStageResultSummary(players, enemyTypeDefinitions());
-  }
-
-  function makeStageClearResultProbePlayer(id, kills, bonusPoints) {
-    const types = enemyTypeDefinitions();
-    const stageKills = types.map((type, index) => {
-      if (!Array.isArray(kills)) return 0;
-      return Math.max(0, Math.floor(Number(kills[index]) || 0));
-    });
-    const enemyPoints = stageKills.reduce((sum, count, index) => sum + count * types[index].score, 0);
-    return {
-      id,
-      stageKills,
-      stagePoints: enemyPoints + Math.max(0, Math.floor(Number(bonusPoints) || 0))
-    };
-  }
-
   function render() {
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = "#000000";
@@ -3368,8 +3349,6 @@
   state.fn.stageClearPresentation = stageClearPresentation;
   state.fn.stageResultDuration = stageResultDuration;
   state.fn.stageClearBonusRecipients = stageClearBonusRecipients;
-  state.fn.stageClearResultSummary = stageClearResultSummary;
-  state.fn.makeStageClearResultProbePlayer = makeStageClearResultProbePlayer;
   state.fn.renderTitle = renderTitle;
   state.fn.renderHiddenMessage = renderHiddenMessage;
   state.fn.renderHighScore = renderHighScore;

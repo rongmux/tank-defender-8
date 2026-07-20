@@ -79,6 +79,7 @@
   var stageRouting = requireRuntimeModule("stageRouting");
   var stageRuntime = requireRuntimeModule("stageRuntime");
   var stagePackDiagnostics = requireRuntimeModule("stagePackDiagnostics");
+  var stageResultDiagnostics = requireRuntimeModule("stageResultDiagnostics");
   var debugSnapshot = requireRuntimeModule("debugSnapshot");
 
   // ── Presentation ───────────────────────────────────────────────────────────
@@ -214,7 +215,6 @@
     addScorePoints: scoreRules.addScorePoints,
     awardBonusLives: scoreRules.awardBonusLives,
     createStageResultPresentation: stageResultRules.createStageResultPresentation,
-    createStageResultSummary: stageResultRules.createStageResultSummary,
     selectStageClearBonusRecipients: stageResultRules.selectStageClearBonusRecipients,
     stageResultVisibleKillCount: stageResultRules.stageResultVisibleKillCount,
     bulletHitsTankByCenter: tankCollisionRules.bulletHitsTankByCenter,
@@ -269,6 +269,8 @@
     stageRouting: stageRouting,
     createStageRuntime: stageRuntime.createStageRuntime,
     createCurrentPackInfo: stagePackDiagnostics.createCurrentPackInfo,
+    createStageResultDiagnostics: stageResultDiagnostics.createStageResultDiagnostics,
+    createStageResultProbePlayer: stageResultDiagnostics.createStageResultProbePlayer,
     createDebugSnapshot: debugSnapshot.createDebugSnapshot,
 
     // Presentation

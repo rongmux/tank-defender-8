@@ -14,7 +14,7 @@
 
 编辑器域现已接管原版风格 Construction 图块调色板和块图案序列、D-pad/WASD 方向别名、整格光标移动、面板命中测试、地形循环、精确到 8px 的砖/钢象限修改、带版本的存档文档、旧版 13x13 存档兼容、单关卡包组装及 JSON 编解码。浏览器存储、剪贴板/文件访问、消息、音效和输入监听仍由运行时负责。
 
-运行时层现已接管共享可变状态、浏览器模块依赖桶、最高分/标题/关卡/编辑器生命周期编排、Web Audio 副作用和公开调试适配器。关卡包诊断已隔离为纯投影模块，使 `currentPackInfo()` 与 `debugSnapshot()` 对克隆配置、路由、出生点、敌人类型、升级规则和敌人序列共用同一个可独立测试的数据源。完整公开调试快照也已成为纯投影模块，使其画面、时序、音频、关卡包、地图/编辑器和玩家记录都可独立编辑，而不会暴露运行时状态。
+运行时层现已接管共享可变状态、浏览器模块依赖桶、最高分/标题/关卡/编辑器生命周期编排、Web Audio 副作用和公开调试适配器。关卡包诊断已隔离为纯投影模块，使 `currentPackInfo()` 与 `debugSnapshot()` 对克隆配置、路由、出生点、敌人类型、升级规则和敌人序列共用同一个可独立测试的数据源。关卡结算诊断现将公开的奖励、结算行、行布局和计数表现四个探针绑定到纯关卡结算规则，不再把仅供诊断使用的辅助函数保留在游戏组合入口中。完整公开调试快照也已成为纯投影模块，使其画面、时序、音频、关卡包、地图/编辑器和玩家记录都可独立编辑，而不会暴露运行时状态。
 
 ## 运行
 
@@ -86,6 +86,7 @@ node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
 node --check src/runtime/stage-pack-diagnostics.js
+node --check src/runtime/stage-result-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
@@ -175,6 +176,7 @@ tank-defender-8/
 |   |-- runtime/
 |   |   |-- shared-state.js
 |   |   |-- stage-pack-diagnostics.js
+|   |   |-- stage-result-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
@@ -232,6 +234,7 @@ tank-defender-8/
 |   |   |-- stage-pack.test.js
 |   |   |-- stage-pack-diagnostics.test.js
 |   |   |-- stage-pack-schema.test.js
+|   |   |-- stage-result-diagnostics.test.js
 |   |   |-- stage-result-rules.test.js
 |   |   |-- stage-routing.test.js
 |   |   |-- stage-runtime.test.js
@@ -290,6 +293,7 @@ tank-defender-8/
 |   |   |-- stage-pack.test.js
 |   |   |-- stage-pack-diagnostics.test.js
 |   |   |-- stage-pack-schema.test.js
+|   |   |-- stage-result-diagnostics.test.js
 |   |   |-- stage-result-rules.test.js
 |   |   |-- stage-routing.test.js
 |   |   |-- stage-runtime.test.js
@@ -341,7 +345,7 @@ tank-defender-8/
 
 `src/stages/stage-runtime.js` 将纯路由/配置/网格模块绑定到动态读取的游戏状态。其冻结运行时 API 接管活动关卡包回退、显示/地图/敌人关卡解析、逐关敌人总数与单双人容量、默认/自定义出生点查询、地图解码/程序化回退、敌人规格回退及规范化关卡序列。直接测试让同一个运行时在内置、自定义、原始 quadrants、无地图和演示状态间切换；浏览器集成测试验证公开关卡包诊断，并从 `src/game.js` 删除对应查询包装函数。
 
-`src/runtime/` 包含运行时拆分后形成的浏览器组合边界。`shared-state.js` 创建唯一的可变状态图以及固定布局/时序常量；`module-deps.js` 校验脚本顺序并公开显式依赖桶；`game-lifecycle.js` 接管最高分持久化及标题、关卡、编辑器、关卡包加载和过渡编排；`audio-bridge.js` 接管 Web Audio 节点创建与事件同步；`debug-api.js` 把保留的运行时函数适配为公开测试/诊断 API。`stage-pack-diagnostics.js` 接管 `currentPackInfo()` 与 `debugSnapshot()` 关卡包区段共用的精确克隆投影，包括路由元数据、规范化设置、敌人类型、升级/墙体规则、出生布局和活动敌人序列。`debug-snapshot.js` 现已接管完整的 95 字段公开状态投影：画面与固定计数器、全部 17 个保留音频事件、关卡包诊断、分数提示、战场/编辑器网格、场地几何和独立克隆的玩家摘要。单元测试锁定精确字段顺序、音频事件映射、代表值和克隆隔离；浏览器集成测试验证模块注册、薄适配器和重复调用隔离。
+`src/runtime/` 包含运行时拆分后形成的浏览器组合边界。`shared-state.js` 创建唯一的可变状态图以及固定布局/时序常量；`module-deps.js` 校验脚本顺序并公开显式依赖桶；`game-lifecycle.js` 接管最高分持久化及标题、关卡、编辑器、关卡包加载和过渡编排；`audio-bridge.js` 接管 Web Audio 节点创建与事件同步；`debug-api.js` 把保留的运行时函数适配为公开测试/诊断 API。`stage-pack-diagnostics.js` 接管 `currentPackInfo()` 与 `debugSnapshot()` 关卡包区段共用的精确克隆投影，包括路由元数据、规范化设置、敌人类型、升级/墙体规则、出生布局和活动敌人序列。`stage-result-diagnostics.js` 将四个冻结的公开关卡结算探针绑定到纯规则，规范化诊断玩家记录，投影奖励领取者、结算行得分/布局间距和计数/揭示时序，并从 `src/game.js` 删除两个仅供调试使用的辅助函数。其单元测试覆盖输入规范化、奖励资格、动态时序覆盖、表现边界和输出隔离；浏览器集成测试锁定公开 API 顺序及重构前 1,478 字节输出哈希。`debug-snapshot.js` 现已接管完整的 95 字段公开状态投影：画面与固定计数器、全部 17 个保留音频事件、关卡包诊断、分数提示、战场/编辑器网格、场地几何和独立克隆的玩家摘要。单元测试锁定精确字段顺序、音频事件映射、代表值和克隆隔离；浏览器集成测试验证模块注册、薄适配器和重复调用隔离。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 
