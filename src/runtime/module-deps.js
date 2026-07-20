@@ -84,6 +84,7 @@
   var screenFlowDiagnostics = requireRuntimeModule("screenFlowDiagnostics");
   var wallDiagnostics = requireRuntimeModule("wallDiagnostics");
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
+  var timerDiagnostics = requireRuntimeModule("timerDiagnostics");
   var effectDiagnostics = requireRuntimeModule("effectDiagnostics");
   var debugSnapshot = requireRuntimeModule("debugSnapshot");
 
@@ -281,6 +282,7 @@
     createScreenFlowDiagnostics: screenFlowDiagnostics.createScreenFlowDiagnostics,
     createWallDiagnostics: wallDiagnostics.createWallDiagnostics,
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
+    createTimerDiagnostics: timerDiagnostics.createTimerDiagnostics,
     createEffectDiagnostics: effectDiagnostics.createEffectDiagnostics,
     createDebugSnapshot: debugSnapshot.createDebugSnapshot,
 

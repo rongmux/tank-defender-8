@@ -20,6 +20,8 @@ Effect diagnostics now isolate explosion rules, tank-destruction timelines, dela
 
 Wall diagnostics now isolate steel damage, directional brick strips, brick-fragment rendering, shovel-wall timing, and destroyed-base shovel behavior behind an explicit state/audio boundary.
 
+Timer diagnostics now isolate global countdown cadence, shield visibility during pause, timer power-up freezing, the final frozen frame, and enemy spawning during a freeze behind the same explicit receiver-preserving boundary.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder locally:
@@ -96,6 +98,7 @@ node --check src/runtime/stage-flow-diagnostics.js
 node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
+node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
@@ -192,6 +195,7 @@ tank-defender-8/
 |   |   |-- screen-flow-diagnostics.js
 |   |   |-- wall-diagnostics.js
 |   |   |-- enemy-diagnostics.js
+|   |   |-- timer-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
@@ -262,6 +266,7 @@ tank-defender-8/
 |   |   |-- tank-collision-rules.test.js
 |   |   |-- tank-presentation.test.js
 |   |   |-- terrain-collision-rules.test.js
+|   |   |-- timer-diagnostics.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
 |   |   |-- wall-damage-rules.test.js
@@ -328,6 +333,7 @@ tank-defender-8/
 |   |   |-- tank-presentation.test.js
 |   |   |-- terrain-collision-rules.test.js
 |   |   |-- test-file-discovery.test.js
+|   |   |-- timer-diagnostics.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
 |   |   |-- value-normalization.test.js
@@ -378,6 +384,8 @@ tank-defender-8/
 `effect-diagnostics.js` binds the five contiguous explosion-rule, tank-destruction, enemy-release, rendered-frame, and paused-impact probes through 31 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and seven dead-adapter removals leave `debug-api.js` at 4,175 physical lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all five probes at their original public indices 130-134 and preserves the pre-refactor 6,548-byte output SHA-256.
 
 `wall-diagnostics.js` binds the five contiguous steel-damage, directional brick-strip, brick-fragment rendering, shovel-wall timing, and destroyed-base shovel probes through 29 explicitly destructured runtime symbols plus the live brick-impact audio record, with receiver-preserving function binding and no `eval`. The extraction leaves `debug-api.js` at 3,979 physical lines without dead adapters. Its unit suite locks state/audio validation, exact method order, binding precedence, and receiver identity; browser integration executes all five probes at their original public indices 51-55 and preserves the pre-refactor 1,929-byte output SHA-256.
+
+`timer-diagnostics.js` binds the seven contiguous timer-rule, global countdown, shield cadence/pause, freeze behavior, final frozen-frame, and spawn-during-freeze probes through 18 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and three dead-adapter removals leave `debug-api.js` at 3,557 physical lines. Its unit suite locks validation, exact method order, binding precedence, receiver identity, and state restoration; browser integration executes all seven probes at their original public indices 67-73 and preserves the pre-refactor 2,184-byte output SHA-256.
 
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 

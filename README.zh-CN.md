@@ -20,6 +20,8 @@
 
 墙体诊断现通过显式状态/音频边界，隔离了钢墙破坏、定向砖块条带、砖块碎片渲染、铲子围墙时序和基地已毁后的铲子行为。
 
+计时诊断现通过同一套显式且保留接收者的边界，隔离了全局倒计时节奏、暂停时的护盾可见性、定时器道具冻结、最后一个冻结帧和冻结期间的敌人生成。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -96,6 +98,7 @@ node --check src/runtime/stage-flow-diagnostics.js
 node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
+node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
@@ -192,6 +195,7 @@ tank-defender-8/
 |   |   |-- screen-flow-diagnostics.js
 |   |   |-- wall-diagnostics.js
 |   |   |-- enemy-diagnostics.js
+|   |   |-- timer-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
@@ -262,6 +266,7 @@ tank-defender-8/
 |   |   |-- tank-collision-rules.test.js
 |   |   |-- tank-presentation.test.js
 |   |   |-- terrain-collision-rules.test.js
+|   |   |-- timer-diagnostics.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
 |   |   |-- wall-damage-rules.test.js
@@ -328,6 +333,7 @@ tank-defender-8/
 |   |   |-- tank-presentation.test.js
 |   |   |-- terrain-collision-rules.test.js
 |   |   |-- test-file-discovery.test.js
+|   |   |-- timer-diagnostics.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
 |   |   |-- value-normalization.test.js
@@ -378,6 +384,8 @@ tank-defender-8/
 `effect-diagnostics.js` 通过保留接收者的函数绑定和 31 个显式解构的运行时符号，接管连续的 5 个爆炸规则、坦克摧毁、敌人释放、渲染帧和暂停命中特效探针，且不使用 `eval`。抽离并移除 7 个死适配器后，`debug-api.js` 保留 4,175 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 130-134 依次执行全部 5 个探针，并保持重构前 6,548 字节输出的 SHA-256。
 
 `wall-diagnostics.js` 通过保留接收者的函数绑定、29 个显式解构的运行时符号和实时砖块命中音频记录，接管连续的 5 个钢墙破坏、定向砖块条带、砖块碎片渲染、铲子围墙时序和基地已毁后的铲子探针，且不使用 `eval`。抽离后，`debug-api.js` 保留 3,979 个物理行，未产生死适配器。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 51-55 依次执行全部 5 个探针，并保持重构前 1,929 字节输出的 SHA-256。
+
+`timer-diagnostics.js` 通过保留接收者的函数绑定和 18 个显式解构的运行时符号，接管连续的 7 个定时器规则、全局倒计时、护盾节奏/暂停、冻结行为、最后冻结帧和冻结期间生成探针，且不使用 `eval`。抽离并移除 3 个死适配器后，`debug-api.js` 保留 3,557 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和状态恢复；浏览器集成测试在原公开索引 67-73 依次执行全部 7 个探针，并保持重构前 2,184 字节输出的 SHA-256。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 
