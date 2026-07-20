@@ -18,6 +18,8 @@
 
 效果诊断现通过同一套显式且保留接收者的边界，隔离了爆炸规则、坦克摧毁时间线、敌人延迟释放、摧毁帧渲染和暂停时的子弹命中特效生命周期。
 
+墙体诊断现通过显式状态/音频边界，隔离了钢墙破坏、定向砖块条带、砖块碎片渲染、铲子围墙时序和基地已毁后的铲子行为。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -92,6 +94,7 @@ node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
 node --check src/runtime/stage-flow-diagnostics.js
 node --check src/runtime/screen-flow-diagnostics.js
+node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/debug-snapshot.js
@@ -187,6 +190,7 @@ tank-defender-8/
 |   |   |-- stage-result-diagnostics.js
 |   |   |-- stage-flow-diagnostics.js
 |   |   |-- screen-flow-diagnostics.js
+|   |   |-- wall-diagnostics.js
 |   |   |-- enemy-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- debug-snapshot.js
@@ -260,7 +264,8 @@ tank-defender-8/
 |   |   |-- terrain-collision-rules.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
-|   |   `-- wall-damage-rules.test.js
+|   |   |-- wall-damage-rules.test.js
+|   |   `-- wall-diagnostics.test.js
 |   |-- unit/
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
@@ -326,7 +331,8 @@ tank-defender-8/
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
 |   |   |-- value-normalization.test.js
-|   |   `-- wall-damage-rules.test.js
+|   |   |-- wall-damage-rules.test.js
+|   |   `-- wall-diagnostics.test.js
 |   `-- run-tests.js
 |-- tools/
 |   |-- build-free-stage-pack.js
@@ -370,6 +376,8 @@ tank-defender-8/
 `src/runtime/` 包含运行时拆分后形成的浏览器组合边界。`shared-state.js` 创建唯一的可变状态图以及固定布局/时序常量；`module-deps.js` 校验脚本顺序并公开显式依赖桶；`game-lifecycle.js` 接管最高分持久化及标题、关卡、编辑器、关卡包加载和过渡编排；`audio-bridge.js` 接管 Web Audio 节点创建与事件同步；`debug-api.js` 把保留的运行时函数适配为公开测试/诊断 API。`audio-diagnostics.js` 通过保留接收者的函数绑定和 142 个显式解构的运行时符号，接管连续的 31 个清单、表现、移动、优先级、暂停和固定帧生命周期探针，且不使用 `eval`；抽离该模块并清理死别名后，`debug-api.js` 从 8,957 行降至 6,171 行。其单元测试锁定方法顺序、输入校验、绑定优先级和克隆隔离；浏览器集成测试依次执行全部探针，并保持重构前 61,974 字节输出的 SHA-256。`stage-pack-diagnostics.js` 接管 `currentPackInfo()` 与 `debugSnapshot()` 关卡包区段共用的精确克隆投影，包括路由元数据、规范化设置、敌人类型、升级/墙体规则、出生布局和活动敌人序列。`stage-result-diagnostics.js` 将四个冻结的公开关卡结算探针绑定到纯规则，规范化诊断玩家记录，投影奖励领取者、结算行得分/布局间距和计数/揭示时序，并从 `src/game.js` 删除两个仅供调试使用的辅助函数。其单元测试覆盖输入规范化、奖励资格、动态时序覆盖、表现边界和输出隔离；浏览器集成测试锁定公开 API 顺序及重构前 1,478 字节输出哈希。`stage-flow-diagnostics.js` 通过保留接收者的函数绑定和 49 个显式解构的运行时符号，接管连续的 17 个幕布、关卡循环、通关、自动推进和 Game Over 探针，且不使用 `eval`；抽离该模块并清理 17 个死别名后，`debug-api.js` 从 6,171 行降至 5,483 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引依次执行全部 17 个探针，并保持重构前 13,047 字节输出的 SHA-256。`screen-flow-diagnostics.js` 通过保留接收者的函数绑定和 57 个显式解构的运行时符号，接管连续的 11 个标题计分、帧计数、选关节奏、标题演示/隐藏信息、最高分和全屏 Game Over 探针，且不使用 `eval`；抽离该模块并清理 32 个死别名后，`debug-api.js` 从 5,483 行降至 4,833 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和克隆布局输出；浏览器集成测试在原公开索引依次执行全部 11 个探针，并保持重构前 25,534 字节输出的 SHA-256。`enemy-diagnostics.js` 通过保留接收者的函数绑定和 34 个显式解构的运行时符号，接管连续的 11 个携带者、敌人表现、目标选择、AI/移动节奏、受阻恢复、生成时间线和出生动画探针，且不使用 `eval`；抽离该模块并清理 4 个死别名后，`debug-api.js` 从 4,833 行降至 4,497 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引依次执行全部 11 个探针，并保持重构前 3,839 字节输出的 SHA-256。`debug-snapshot.js` 现已接管完整的 95 字段公开状态投影：画面与固定计数器、全部 17 个保留音频事件、关卡包诊断、分数提示、战场/编辑器网格、场地几何和独立克隆的玩家摘要。单元测试锁定精确字段顺序、音频事件映射、代表值和克隆隔离；浏览器集成测试验证模块注册、薄适配器和重复调用隔离。
 
 `effect-diagnostics.js` 通过保留接收者的函数绑定和 31 个显式解构的运行时符号，接管连续的 5 个爆炸规则、坦克摧毁、敌人释放、渲染帧和暂停命中特效探针，且不使用 `eval`。抽离并移除 7 个死适配器后，`debug-api.js` 保留 4,175 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 130-134 依次执行全部 5 个探针，并保持重构前 6,548 字节输出的 SHA-256。
+
+`wall-diagnostics.js` 通过保留接收者的函数绑定、29 个显式解构的运行时符号和实时砖块命中音频记录，接管连续的 5 个钢墙破坏、定向砖块条带、砖块碎片渲染、铲子围墙时序和基地已毁后的铲子探针，且不使用 `eval`。抽离后，`debug-api.js` 保留 3,979 个物理行，未产生死适配器。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 51-55 依次执行全部 5 个探针，并保持重构前 1,929 字节输出的 SHA-256。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 

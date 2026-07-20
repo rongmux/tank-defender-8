@@ -42,7 +42,12 @@ assert.notEqual(second.enemyTypes[0].hp, -1);
 
 const debugSource = fs.readFileSync(path.join(root, "src/runtime/debug-api.js"), "utf8");
 const adapterStart = debugSource.indexOf("        debugSnapshot() {");
-const adapterEnd = debugSource.indexOf("        debugSteelRuleProbe()", adapterStart);
+const adapterEnd = debugSource.indexOf(
+  "        ...createWallDiagnostics(state, deps),",
+  adapterStart
+);
+assert.notEqual(adapterStart, -1);
+assert.notEqual(adapterEnd, -1);
 const adapterSource = debugSource.slice(adapterStart, adapterEnd);
 assert(debugSource.includes("return createDebugSnapshot(state);"));
 assert.equal((adapterSource.match(/movementAudioMode:/g) || []).length, 0);
