@@ -78,6 +78,7 @@
   var stagePackSchema = requireRuntimeModule("stagePackSchema");
   var stageRouting = requireRuntimeModule("stageRouting");
   var stageRuntime = requireRuntimeModule("stageRuntime");
+  var stagePackDiagnostics = requireRuntimeModule("stagePackDiagnostics");
 
   // ── Presentation ───────────────────────────────────────────────────────────
   var audioPresentation = requireRuntimeModule("audioPresentation");
@@ -266,6 +267,8 @@
     createStagePackSchema: stagePackSchema.createStagePackSchema,
     stageRouting: stageRouting,
     createStageRuntime: stageRuntime.createStageRuntime,
+    createCurrentPackInfo: stagePackDiagnostics.createCurrentPackInfo,
+    createDebugPackInfo: stagePackDiagnostics.createDebugPackInfo,
 
     // Presentation
     fixedFrameAudioPresentation: audioPresentation.fixedFrameAudioPresentation,

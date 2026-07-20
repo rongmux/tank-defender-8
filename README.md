@@ -14,6 +14,8 @@ The audio domain now owns the deeply frozen free replacement manifest, pure fixe
 
 The editor domain now owns the original-style Construction tile palette and block-pattern sequence, D-pad/WASD direction aliases, full-cell cursor movement, panel hit testing, terrain cycling, exact 8px brick/steel quadrant mutation, versioned save documents, legacy 13x13 save compatibility, single-stage pack composition, and JSON codecs. Browser storage, clipboard/file access, messages, sound effects, and input listeners remain runtime responsibilities.
 
+The runtime layer now owns shared mutable state, the browser-module dependency barrel, high-score/title/stage/editor lifecycle orchestration, Web Audio side effects, and the public debug adapter. Stage-pack diagnostics are isolated behind a pure projection module so `currentPackInfo()` and `debugSnapshot()` share one independently testable source for cloned configuration, routing, spawn, enemy-type, upgrade, and sequence data.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder locally:
@@ -83,6 +85,7 @@ node --check src/stages/stage-pack-schema.js
 node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
+node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-bridge.js
@@ -170,6 +173,7 @@ tank-defender-8/
 |   |   `-- stage-runtime.js
 |   |-- runtime/
 |   |   |-- shared-state.js
+|   |   |-- stage-pack-diagnostics.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
 |   |   |-- audio-bridge.js
@@ -223,6 +227,7 @@ tank-defender-8/
 |   |   |-- stage-settings.test.js
 |   |   |-- stage-grid.test.js
 |   |   |-- stage-pack.test.js
+|   |   |-- stage-pack-diagnostics.test.js
 |   |   |-- stage-pack-schema.test.js
 |   |   |-- stage-result-rules.test.js
 |   |   |-- stage-routing.test.js
@@ -279,6 +284,7 @@ tank-defender-8/
 |   |   |-- stage-settings.test.js
 |   |   |-- stage-grid.test.js
 |   |   |-- stage-pack.test.js
+|   |   |-- stage-pack-diagnostics.test.js
 |   |   |-- stage-pack-schema.test.js
 |   |   |-- stage-result-rules.test.js
 |   |   |-- stage-routing.test.js
@@ -298,6 +304,7 @@ tank-defender-8/
 |   `-- smoke-test.js
 |-- index.html
 |-- styles.css
+|-- reasonix.toml
 |-- README.md
 `-- README.zh-CN.md
 ```
@@ -329,6 +336,8 @@ tank-defender-8/
 `src/stages/stage-pack-schema.js` owns the fresh editable example returned by the public `stagePackSchema()` API: normalized default settings, cloned enemy/upgrade data, fixed wall metadata, default spawn coordinates, both documented map encodings, sample enemy delays, and tile-code help. Its unit suite locks every readable section, clone isolation, and the complete pre-refactor 6,498-byte JSON SHA-256; browser integration proves the public adapter matches the pure module and remains independent of a loaded custom pack.
 
 `src/stages/stage-runtime.js` binds the pure route/settings/grid modules to a dynamically read game state. Its frozen runtime API owns active-pack fallback, displayed/map/enemy stage resolution, per-stage enemy totals and one/two-player capacities, default/custom spawn lookup, map decoding/procedural fallback, enemy-spec fallback, and normalized stage sequences. Direct tests switch one runtime between built-in, custom, raw-quadrant, mapless, and demo states; browser integration verifies public pack diagnostics and removes the corresponding query wrappers from `src/game.js`.
+
+`src/runtime/` contains the browser composition boundary created during the runtime split. `shared-state.js` creates the single mutable state graph and fixed layout/timing constants; `module-deps.js` validates script order and exposes the explicit dependency barrel; `game-lifecycle.js` owns high-score persistence plus title, stage, editor, pack-loading, and transition orchestration; `audio-bridge.js` owns Web Audio node creation and event synchronization; and `debug-api.js` adapts retained runtime functions into the public test/diagnostic API. `stage-pack-diagnostics.js` now owns the exact cloned projection shared by `currentPackInfo()` and the stage-pack section of `debugSnapshot()`, including route metadata, normalized settings, enemy types, upgrade/wall rules, spawn layouts, and the active enemy sequence. Unit tests lock exact field sets and clone isolation; browser integration verifies both public adapters use the same projection and that the former duplicated object literals are absent.
 
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 
