@@ -14,7 +14,7 @@ The audio domain now owns the deeply frozen free replacement manifest, pure fixe
 
 The editor domain now owns the original-style Construction tile palette and block-pattern sequence, D-pad/WASD direction aliases, full-cell cursor movement, panel hit testing, terrain cycling, exact 8px brick/steel quadrant mutation, versioned save documents, legacy 13x13 save compatibility, single-stage pack composition, and JSON codecs. Browser storage, clipboard/file access, messages, sound effects, and input listeners remain runtime responsibilities.
 
-The runtime layer now owns shared mutable state, the browser-module dependency barrel, high-score/title/stage/editor lifecycle orchestration, Web Audio side effects, and the public debug adapter. Stage-pack diagnostics are isolated behind a pure projection module so `currentPackInfo()` and `debugSnapshot()` share one independently testable source for cloned configuration, routing, spawn, enemy-type, upgrade, and sequence data.
+The runtime layer now owns shared mutable state, the browser-module dependency barrel, high-score/title/stage/editor lifecycle orchestration, Web Audio side effects, and the public debug adapter. Stage-pack diagnostics are isolated behind a pure projection module so `currentPackInfo()` and `debugSnapshot()` share one independently testable source for cloned configuration, routing, spawn, enemy-type, upgrade, and sequence data. The complete public debug snapshot is also a pure projection module, keeping its screen, timing, audio, pack, map/editor, and player records independently editable without exposing runtime state.
 
 ## Run
 
@@ -86,6 +86,7 @@ node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
 node --check src/runtime/stage-pack-diagnostics.js
+node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-bridge.js
@@ -174,6 +175,7 @@ tank-defender-8/
 |   |-- runtime/
 |   |   |-- shared-state.js
 |   |   |-- stage-pack-diagnostics.js
+|   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
 |   |   |-- audio-bridge.js
@@ -192,6 +194,7 @@ tank-defender-8/
 |   |   |-- built-in-stage-pack.test.js
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
+|   |   |-- debug-snapshot.test.js
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-presentation.test.js
@@ -247,6 +250,7 @@ tank-defender-8/
 |   |   |-- browser-entry.test.js
 |   |   |-- built-in-stage-pack.test.js
 |   |   |-- combat-settings.test.js
+|   |   |-- debug-snapshot.test.js
 |   |   |-- directions.test.js
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-stage-format.test.js
@@ -337,7 +341,7 @@ tank-defender-8/
 
 `src/stages/stage-runtime.js` binds the pure route/settings/grid modules to a dynamically read game state. Its frozen runtime API owns active-pack fallback, displayed/map/enemy stage resolution, per-stage enemy totals and one/two-player capacities, default/custom spawn lookup, map decoding/procedural fallback, enemy-spec fallback, and normalized stage sequences. Direct tests switch one runtime between built-in, custom, raw-quadrant, mapless, and demo states; browser integration verifies public pack diagnostics and removes the corresponding query wrappers from `src/game.js`.
 
-`src/runtime/` contains the browser composition boundary created during the runtime split. `shared-state.js` creates the single mutable state graph and fixed layout/timing constants; `module-deps.js` validates script order and exposes the explicit dependency barrel; `game-lifecycle.js` owns high-score persistence plus title, stage, editor, pack-loading, and transition orchestration; `audio-bridge.js` owns Web Audio node creation and event synchronization; and `debug-api.js` adapts retained runtime functions into the public test/diagnostic API. `stage-pack-diagnostics.js` now owns the exact cloned projection shared by `currentPackInfo()` and the stage-pack section of `debugSnapshot()`, including route metadata, normalized settings, enemy types, upgrade/wall rules, spawn layouts, and the active enemy sequence. Unit tests lock exact field sets and clone isolation; browser integration verifies both public adapters use the same projection and that the former duplicated object literals are absent.
+`src/runtime/` contains the browser composition boundary created during the runtime split. `shared-state.js` creates the single mutable state graph and fixed layout/timing constants; `module-deps.js` validates script order and exposes the explicit dependency barrel; `game-lifecycle.js` owns high-score persistence plus title, stage, editor, pack-loading, and transition orchestration; `audio-bridge.js` owns Web Audio node creation and event synchronization; and `debug-api.js` adapts retained runtime functions into the public test/diagnostic API. `stage-pack-diagnostics.js` owns the exact cloned projection shared by `currentPackInfo()` and the stage-pack section of `debugSnapshot()`, including route metadata, normalized settings, enemy types, upgrade/wall rules, spawn layouts, and the active enemy sequence. `debug-snapshot.js` now owns the complete 95-field public state projection: screen and fixed counters, all 17 retained audio events, stage-pack diagnostics, score popups, battle/editor grids, field geometry, and independently cloned player summaries. Unit tests lock the exact field order, audio event mapping, representative values, and clone isolation; browser integration verifies module registration, the thin adapter, and repeated-call isolation.
 
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 
