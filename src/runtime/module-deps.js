@@ -81,6 +81,7 @@
   var stagePackDiagnostics = requireRuntimeModule("stagePackDiagnostics");
   var stageResultDiagnostics = requireRuntimeModule("stageResultDiagnostics");
   var stageFlowDiagnostics = requireRuntimeModule("stageFlowDiagnostics");
+  var screenFlowDiagnostics = requireRuntimeModule("screenFlowDiagnostics");
   var debugSnapshot = requireRuntimeModule("debugSnapshot");
 
   // ── Presentation ───────────────────────────────────────────────────────────
@@ -274,6 +275,7 @@
     createStageResultDiagnostics: stageResultDiagnostics.createStageResultDiagnostics,
     createStageResultProbePlayer: stageResultDiagnostics.createStageResultProbePlayer,
     createStageFlowDiagnostics: stageFlowDiagnostics.createStageFlowDiagnostics,
+    createScreenFlowDiagnostics: screenFlowDiagnostics.createScreenFlowDiagnostics,
     createDebugSnapshot: debugSnapshot.createDebugSnapshot,
 
     // Presentation
