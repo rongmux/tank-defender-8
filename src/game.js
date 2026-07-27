@@ -382,7 +382,6 @@
   var buildBaseWall = deps.buildBaseWall;
   var bulletHitsTankByCenter = deps.bulletHitsTankByCenter;
   var canPlayerCollectPowerUp = deps.canPlayerCollectPowerUp;
-  var canTankOccupyRect = deps.canTankOccupyRect;
   var clamp = deps.clamp;
   var clearTile = deps.clearTile;
   var cloneAudioManifest = deps.cloneAudioManifest;
@@ -419,7 +418,6 @@
   // (enemyDestructionPresentation — local wrapper, not deps alias)
   var entityRect = deps.entityRect;
   // (explosionPresentation — local wrapper, not deps alias)
-  var filterActiveTankCollisionPeers = deps.filterActiveTankCollisionPeers;
   var fixedFrameAudioPresentation = deps.fixedFrameAudioPresentation;
   var fixedFrameAudioUpdateMode = deps.fixedFrameAudioUpdateMode;
   var fixedFrameVoiceDuration = deps.fixedFrameVoiceDuration;
@@ -467,7 +465,6 @@
   var quadrantType = deps.quadrantType;
   var quarterMaskFromBrickFragments = deps.quarterMaskFromBrickFragments;
   var quarterRect = deps.quarterRect;
-  // (rectHitsSolidTerrain — local wrapper, not deps alias)
   var rectOverlapArea = deps.rectOverlapArea;
   var rectsOverlap = deps.rectsOverlap;
   var resetFixedFrameAudioState = deps.resetFixedFrameAudioState;
@@ -490,7 +487,6 @@
   var shouldEnemyFireForByte = deps.shouldEnemyFireForByte;
   var shouldReleaseCarrierPowerUp = deps.shouldReleaseCarrierPowerUp;
   var shovelWallTypeForTimer = deps.shovelWallTypeForTimer;
-  // (solidTerrainOverlapArea — local wrapper, not deps alias)
   var spawnAnimationPresentation = deps.spawnAnimationPresentation;
   var stageFlowSettings = deps.stageFlowSettings;
   // (stageIntroCurtainState — local wrapper, not deps alias)
@@ -504,7 +500,6 @@
   var targetableEnemyPlayers = deps.targetableEnemyPlayers;
   var timingSettings = deps.timingSettings;
   // (titleScoreLayout — local wrapper, not deps alias)
-  var totalRectOverlapArea = deps.totalRectOverlapArea;
   var tryNormalizeStagePack = deps.tryNormalizeStagePack;
   var valueNormalization = deps.valueNormalization;
   var wallHitSoundName = deps.wallHitSoundName;
@@ -531,21 +526,20 @@
   var selectPausePresentation = deps.pausePresentation;
   var selectPlayerGameOverMessagePresentation = deps.playerGameOverMessagePresentation;
   var selectEditorCursorMove = deps.moveEditorCursor;
-  var gridRectHitsSolidTerrain = deps.rectHitsSolidTerrain;
-  var gridSolidTerrainOverlapArea = deps.solidTerrainOverlapArea;
   var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
   var defaultPlayerUpgradeRules = deps.DEFAULT_PLAYER_UPGRADE_RULES;
 
+  deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
     addPlayerScore: addPlayerScore,
     addScorePopup: addScorePopup,
     buildBaseWall: buildBaseWall,
-    canTankOccupy: canTankOccupy,
+    canTankOccupy: fn.canTankOccupy,
     destroyEnemy: destroyEnemy,
     gameSettings: gameSettings,
     playSound: playSound,
     randomByte: randomByte,
-    rectHitsSolidTerrain: rectHitsSolidTerrain,
+    rectHitsSolidTerrain: fn.rectHitsSolidTerrain,
     stageSettings: stageSettings
   });
   deps.requireRuntimeModule("enemySpawnRuntime").setupEnemySpawnRuntime(state, deps, {
@@ -1242,7 +1236,7 @@
 
   function updatePlayerMovement(player, desiredDir, stunned) {
     if (player.stun > 0 && !stunned) return;
-    const onIce = isTankOnIce(player);
+    const onIce = fn.isTankOnIce(player);
     const inputDir = stunned || (onIce && (player.slide & 16) !== 0) ? -1 : desiredDir;
     if (inputDir !== -1) {
       if (onIce && (player.slide & 31) === 0) {
@@ -1250,23 +1244,23 @@
         playSound("movementIce");
       }
       if (player.dir !== inputDir) {
-        player.pendingSnap = isPerpendicularTurn(player.dir, inputDir);
+        player.pendingSnap = fn.isPerpendicularTurn(player.dir, inputDir);
         player.dir = inputDir;
       }
       if (player.pendingSnap) {
-        snapForDirection(player);
+        fn.snapForDirection(player);
         player.pendingSnap = false;
       }
-      moveTank(player, DIR_X[player.dir] * player.speed, DIR_Y[player.dir] * player.speed);
-      advanceTankTracks(player);
+      fn.moveTank(player, DIR_X[player.dir] * player.speed, DIR_Y[player.dir] * player.speed);
+      fn.advanceTankTracks(player);
     } else if (player.slide > 0 && onIce) {
       player.slide -= 1;
-      moveTank(
+      fn.moveTank(
         player,
         DIR_X[player.dir] * gameSettings().playerMovement.iceSlideSpeed,
         DIR_Y[player.dir] * gameSettings().playerMovement.iceSlideSpeed
       );
-      advanceTankTracks(player);
+      fn.advanceTankTracks(player);
     }
   }
 
@@ -1356,8 +1350,8 @@
     }
 
     const distance = enemy.alternateMovement ? 1 : enemy.speed;
-    const moved = moveTank(enemy, DIR_X[enemy.dir] * distance, DIR_Y[enemy.dir] * distance);
-    advanceTankTracks(enemy);
+    const moved = fn.moveTank(enemy, DIR_X[enemy.dir] * distance, DIR_Y[enemy.dir] * distance);
+    fn.advanceTankTracks(enemy);
     if (moved) return;
 
     if (aiRoll(ai.blockedRetryChance, nextRandom)) {
@@ -1375,7 +1369,7 @@
    */
   function recoverEnemyTankOverlap(enemy) {
     const currentRect = entityRect(enemy);
-    const currentArea = totalTankOverlapArea(enemy, currentRect);
+    const currentArea = fn.totalTankOverlapArea(enemy, currentRect);
     if (currentArea <= 0) return false;
 
     const distance = enemy.alternateMovement ? 1 : Math.max(1, Number(enemy.speed) || 1);
@@ -1384,8 +1378,8 @@
     for (const dir of directions) {
       const x = enemy.x + DIR_X[dir] * distance;
       const y = enemy.y + DIR_Y[dir] * distance;
-      if (!canTankOccupy(enemy, x, y)) continue;
-      const area = totalTankOverlapArea(enemy, { x, y, w: enemy.w, h: enemy.h });
+      if (!fn.canTankOccupy(enemy, x, y)) continue;
+      const area = fn.totalTankOverlapArea(enemy, { x, y, w: enemy.w, h: enemy.h });
       if (area >= currentArea || (best && area >= best.area)) continue;
       best = { x, y, dir, area };
     }
@@ -1396,7 +1390,7 @@
     enemy.dir = best.dir;
     enemy.blockedPauseTicks = 0;
     enemy.pendingTurn = false;
-    advanceTankTracks(enemy);
+    fn.advanceTankTracks(enemy);
     return true;
   }
 
@@ -1744,65 +1738,6 @@
   function playerUpgradeRule(level) {
     const rules = gameSettings().playerUpgradeRules || defaultPlayerUpgradeRules;
     return rules[clamp(Math.floor(level || 0), 0, rules.length - 1)];
-  }
-
-  function moveTank(tank, dx, dy) {
-    const nx = tank.x + dx;
-    const ny = tank.y + dy;
-    if (!canTankOccupy(tank, nx, ny)) return false;
-    tank.x = nx;
-    tank.y = ny;
-    return true;
-  }
-
-  function advanceTankTracks(tank) {
-    tank.trackPhase = ((Math.floor(Number(tank.trackPhase) || 0) & 1) ^ 1);
-  }
-
-  function canTankOccupy(tank, x, y) {
-    return canTankOccupyRect(entityRect(tank), entityRect(tank, x, y), {
-      fieldWidth: FIELD_W,
-      fieldHeight: FIELD_H,
-      base: game.base,
-      baseAlive: game.base.alive,
-      terrainOverlapArea: solidTerrainOverlapArea,
-      peers: activeTankCollisionPeers(tank)
-    });
-  }
-
-  function activeTankCollisionPeers(tank) {
-    return filterActiveTankCollisionPeers(tank, game.players.concat(game.enemies));
-  }
-
-  function totalTankOverlapArea(tank, rect) {
-    return totalRectOverlapArea(rect, activeTankCollisionPeers(tank));
-  }
-
-  function rectHitsSolidTerrain(rect) {
-    return gridRectHitsSolidTerrain(rect, game.grid);
-  }
-
-  function solidTerrainOverlapArea(rect) {
-    return gridSolidTerrainOverlapArea(rect, game.grid);
-  }
-
-  function isTankOnIce(tank) {
-    const cx = clamp(Math.floor((tank.x + tank.w / 2) / TILE), 0, GRID - 1);
-    const cy = clamp(Math.floor((tank.y + tank.h / 2) / TILE), 0, GRID - 1);
-    return game.grid[cy][cx].type === ICE;
-  }
-
-  function snapForDirection(tank) {
-    const x = Math.floor((tank.x + 4) / HALF) * HALF;
-    const y = Math.floor((tank.y + 4) / HALF) * HALF;
-    if (!canTankOccupy(tank, x, y)) return false;
-    tank.x = x;
-    tank.y = y;
-    return true;
-  }
-
-  function isPerpendicularTurn(fromDir, toDir) {
-    return fromDir !== toDir && (fromDir ^ 2) !== toDir;
   }
 
   function addRuleExplosion(ruleName, x, y) {
@@ -3119,16 +3054,6 @@
   state.fn.shoot = shoot;
   state.fn.createBullet = createBullet;
   state.fn.playerUpgradeRule = playerUpgradeRule;
-  state.fn.moveTank = moveTank;
-  state.fn.advanceTankTracks = advanceTankTracks;
-  state.fn.canTankOccupy = canTankOccupy;
-  state.fn.activeTankCollisionPeers = activeTankCollisionPeers;
-  state.fn.totalTankOverlapArea = totalTankOverlapArea;
-  state.fn.rectHitsSolidTerrain = rectHitsSolidTerrain;
-  state.fn.solidTerrainOverlapArea = solidTerrainOverlapArea;
-  state.fn.isTankOnIce = isTankOnIce;
-  state.fn.snapForDirection = snapForDirection;
-  state.fn.isPerpendicularTurn = isPerpendicularTurn;
   state.fn.addRuleExplosion = addRuleExplosion;
   state.fn.explosionRule = explosionRule;
   state.fn.baseDestructionDuration = baseDestructionDuration;
