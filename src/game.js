@@ -363,7 +363,6 @@
   var WALL_FRAGMENT = deps.WALL_FRAGMENT;
   var WATER = deps.WATER;
   var addScorePoints = deps.addScorePoints;
-  var advanceBattleRandom = deps.advanceBattleRandom;
   var advanceFixedFrameAudioState = deps.advanceFixedFrameAudioState;
   var advanceFrameCounter = deps.advanceFrameCounter;
   var awardBonusLives = deps.awardBonusLives;
@@ -520,6 +519,10 @@
     enemyTotal: enemyTotal,
     gameSettings: gameSettings
   });
+  deps.requireRuntimeModule("battleRandomRuntime").setupBattleRandomRuntime(state, deps, {
+    enemyTotal: enemyTotal,
+    getEnemySpec: getEnemySpec
+  });
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
     addPlayerScore: addPlayerScore,
     addScorePopup: fn.addScorePopup,
@@ -528,7 +531,7 @@
     destroyEnemy: destroyEnemy,
     gameSettings: gameSettings,
     playSound: playSound,
-    randomByte: randomByte,
+    randomByte: fn.randomByte,
     rectHitsSolidTerrain: fn.rectHitsSolidTerrain,
     stageSettings: stageSettings
   });
@@ -549,7 +552,7 @@
     defaultEnemySpawnDelay: fn.defaultEnemySpawnDelay,
     directionTowardTarget: directionTowardTarget,
     gameSettings: gameSettings,
-    randomByte: randomByte,
+    randomByte: fn.randomByte,
     scaleEnemySpawnDelayForPlayers: fn.scaleEnemySpawnDelayForPlayers,
     selectEnemyTargetPlayer: deps.selectEnemyTargetPlayer
   });
@@ -561,7 +564,7 @@
     gameSettings: gameSettings,
     isEnemyAtTurnIntersection: isEnemyAtTurnIntersection,
     moveTank: fn.moveTank,
-    randomByte: randomByte,
+    randomByte: fn.randomByte,
     totalTankOverlapArea: fn.totalTankOverlapArea
   });
   deps.requireRuntimeModule("enemyUpdateRuntime").setupEnemyUpdateRuntime(state, deps, {
@@ -1154,82 +1157,6 @@
 
   function shouldSpawnEnemies() {
     return true;
-  }
-
-  function randomByte(random) {
-    if (typeof random === "function") return Math.floor(random() * 256) & 0xff;
-    return nextBattleRandomByte();
-  }
-
-  function nextBattleRandomByte() {
-    const nextIndex = (game.randomIndex + 1) & 0xff;
-    const next = advanceBattleRandom(
-      game.randomValue,
-      game.randomIndex,
-      game.frameHigh,
-      battleRandomZeroPageByte(nextIndex, game.randomValue)
-    );
-    game.randomValue = next.value;
-    game.randomIndex = next.index;
-    return next.value;
-  }
-
-  function resetBattleRandom() {
-    game.randomValue = 0;
-    game.randomIndex = 0;
-  }
-
-  /**
-   * Projects the live browser battle into the zero-page addresses sampled by D44D.
-   * Unmodelled scratch bytes retain the cold-start value used by the original RAM clear.
-   */
-  function battleRandomZeroPageByte(index, previousRandomValue) {
-    const address = Math.floor(Number(index) || 0) & 0xff;
-    if (address === 0x0a) return game.frameHigh;
-    if (address === 0x0b) return game.frameLow;
-    if (address === 0x0f) return previousRandomValue;
-    if (address === 0x10) return address;
-    if (address === 0x6a) return currentEnemySpawnPositionIndex();
-    if (address === 0x7f) return Math.max(0, enemyTotal() - game.enemySpawned);
-    if (address === 0x82) return game.nextSpawn;
-    if (address === 0x84) {
-      return fn.scaleEnemySpawnDelayForPlayers(fn.defaultEnemySpawnDelay(game.stage), game.playerCount);
-    }
-    if (address >= 0x90 && address <= 0x97) {
-      return tankRandomMemoryByte(address - 0x90, "x");
-    }
-    if (address >= 0x98 && address <= 0x9f) {
-      return tankRandomMemoryByte(address - 0x98, "y");
-    }
-    if (address >= 0xa8 && address <= 0xaf) {
-      return tankRandomTypeByte(address - 0xa8);
-    }
-    return 0;
-  }
-
-  function currentEnemySpawnPositionIndex() {
-    if (game.enemySpawned <= 0) return 0;
-    const spec = getEnemySpec(game.stage, game.enemySpawned - 1);
-    return spec.spawnIndex === undefined ? game.enemySpawned % 3 : spec.spawnIndex;
-  }
-
-  function tankForOriginalSlot(slotIndex) {
-    if (slotIndex < 2) return game.players.find((player) => player.id === slotIndex + 1) || null;
-    return game.enemies.find((enemy) => enemy.alive && enemy.slotIndex === slotIndex) || null;
-  }
-
-  function tankRandomMemoryByte(slotIndex, axis) {
-    const tank = tankForOriginalSlot(slotIndex);
-    if (!tank) return 0;
-    const fieldOffset = axis === "x" ? FIELD_X : FIELD_Y;
-    return (Math.round(Number(tank[axis]) || 0) + fieldOffset) & 0xff;
-  }
-
-  function tankRandomTypeByte(slotIndex) {
-    const tank = tankForOriginalSlot(slotIndex);
-    if (!tank) return 0;
-    if (tank.kind === "player") return ((tank.level & 3) << 4) | (tank.dir & 3);
-    return 0x80 | ((tank.typeIndex & 3) << 5) | (tank.carrier ? 0x04 : 0) | (tank.dir & 3);
   }
 
   function destroyEnemy(enemy, ownerId, options) {
@@ -2522,14 +2449,6 @@
   state.fn.tileTypeName = tileTypeName;
   state.fn.updatePlayerMovement = updatePlayerMovement;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
-  state.fn.randomByte = randomByte;
-  state.fn.nextBattleRandomByte = nextBattleRandomByte;
-  state.fn.resetBattleRandom = resetBattleRandom;
-  state.fn.battleRandomZeroPageByte = battleRandomZeroPageByte;
-  state.fn.currentEnemySpawnPositionIndex = currentEnemySpawnPositionIndex;
-  state.fn.tankForOriginalSlot = tankForOriginalSlot;
-  state.fn.tankRandomMemoryByte = tankRandomMemoryByte;
-  state.fn.tankRandomTypeByte = tankRandomTypeByte;
   state.fn.destroyEnemy = destroyEnemy;
   state.fn.addPlayerScore = addPlayerScore;
   state.fn.killPlayer = killPlayer;

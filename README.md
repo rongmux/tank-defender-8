@@ -112,6 +112,7 @@ node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/player-update-runtime.js
 node --check src/runtime/battle-timing-runtime.js
+node --check src/runtime/battle-random-runtime.js
 node --check src/runtime/projectile-target-runtime.js
 node --check src/runtime/projectile-resolution-runtime.js
 node --check src/runtime/projectile-motion-runtime.js
@@ -232,6 +233,7 @@ tank-defender-8/
 |   |   |-- projectile-runtime.js
 |   |   |-- player-update-runtime.js
 |   |   |-- battle-timing-runtime.js
+|   |   |-- battle-random-runtime.js
 |   |   |-- projectile-target-runtime.js
 |   |   |-- projectile-resolution-runtime.js
 |   |   |-- projectile-motion-runtime.js
@@ -390,6 +392,7 @@ tank-defender-8/
 |   |   |-- projectile-runtime.test.js
 |   |   |-- player-update-runtime.test.js
 |   |   |-- battle-timing-runtime.test.js
+|   |   |-- battle-random-runtime.test.js
 |   |   |-- projectile-target-runtime.test.js
 |   |   |-- projectile-resolution-runtime.test.js
 |   |   |-- projectile-motion-runtime.test.js
@@ -611,6 +614,8 @@ The migration order is core timing/random/geometry, configuration and stage pack
 `src/runtime/player-update-runtime.js` owns fixed-frame player input and Demo updates. It keeps the original Arrow/WASD bindings, one-shot fire presses, movement cadence, spawn protection, respawn timing, power-up-first Demo targeting, and enemy slot priority behind a frozen runtime API. Its unit suite covers the keyboard matrix, firing, recovery, and target selection; browser integration verifies module registration through the real game harness.
 
 `src/runtime/battle-timing-runtime.js` owns the fixed-frame global timer boundary: freeze countdown, shovel-wall restoration/flash timing, player invulnerability countdown, base-destruction countdown, and the exact stage-cleared predicate. Its unit suite locks the 64-frame timer cadence, wall transitions, and enemy-count boundary; browser integration verifies registration without changing the public API order.
+
+`src/runtime/battle-random-runtime.js` owns the live battle adapter around the pure D44D random arithmetic: the stateful random stream, zero-page projections, original enemy spawn position sampling, and player/enemy tank memory/type bytes. Its unit suite locks address mapping, wraparound and slot encoding while the AI, spawn, movement, and power-up runtimes continue to receive the same `randomByte` callback.
 
 ## Stage Pack Format
 

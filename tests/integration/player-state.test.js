@@ -27,6 +27,8 @@ assert(modules.playerUpdateRuntime, "player update runtime should register befor
 assert.equal(Object.isFrozen(modules.playerUpdateRuntime), true);
 assert(modules.battleTimingRuntime, "battle timing runtime should register before game.js");
 assert.equal(Object.isFrozen(modules.battleTimingRuntime), true);
+assert(modules.battleRandomRuntime, "battle random runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.battleRandomRuntime), true);
 
 const defaultRespawn = JSON.parse(JSON.stringify(api.debugPlayerDeathRespawnProbe()));
 assert.equal(defaultRespawn.deathTicks, 24);
