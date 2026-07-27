@@ -530,6 +530,9 @@
     gameSettings: gameSettings,
     playSound: playSound
   });
+  deps.requireRuntimeModule("projectileMotionRuntime").setupProjectileMotionRuntime(state, deps, {
+    resolveBullet: resolveBullet
+  });
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
     addPlayerScore: addPlayerScore,
     addScorePopup: fn.addScorePopup,
@@ -1068,7 +1071,7 @@
     updatePlayerInvulnerabilityTimers();
     fn.updateExplosions();
     updateBaseDestructionTimer();
-    updateBullets();
+    fn.updateBullets();
     fn.updateScorePopups();
     fn.updatePowerUp();
     updatePlayerGameOverMessage();
@@ -1499,23 +1502,6 @@
     if (!tank) return 0;
     if (tank.kind === "player") return ((tank.level & 3) << 4) | (tank.dir & 3);
     return 0x80 | ((tank.typeIndex & 3) << 5) | (tank.carrier ? 0x04 : 0) | (tank.dir & 3);
-  }
-
-  function updateBullets() {
-    for (const bullet of game.bullets) bullet.remove = false;
-
-    for (const bullet of game.bullets) {
-      if (bullet.remove) continue;
-      const steps = Math.max(1, Math.ceil(bullet.speed));
-      for (let i = 0; i < steps && !bullet.remove; i += 1) {
-        bullet.x += (DIR_X[bullet.dir] * bullet.speed) / steps;
-        bullet.y += (DIR_Y[bullet.dir] * bullet.speed) / steps;
-        resolveBullet(bullet);
-      }
-    }
-
-    resolveBulletCollisions(game.bullets);
-    game.bullets = game.bullets.filter((bullet) => !bullet.remove);
   }
 
   function resolveBullet(bullet) {
@@ -2959,7 +2945,6 @@
   state.fn.tankForOriginalSlot = tankForOriginalSlot;
   state.fn.tankRandomMemoryByte = tankRandomMemoryByte;
   state.fn.tankRandomTypeByte = tankRandomTypeByte;
-  state.fn.updateBullets = updateBullets;
   state.fn.resolveBullet = resolveBullet;
   state.fn.hitBase = hitBase;
   state.fn.hitTerrain = hitTerrain;

@@ -110,6 +110,7 @@ node --check src/runtime/shared-state.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
+node --check src/runtime/projectile-motion-runtime.js
 node --check src/runtime/power-up-runtime.js
 node --check src/runtime/enemy-spawn-runtime.js
 node --check src/runtime/audio-diagnostics.js
@@ -222,6 +223,7 @@ tank-defender-8/
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
+|   |   |-- projectile-motion-runtime.js
 |   |   |-- power-up-runtime.js
 |   |   |-- enemy-spawn-runtime.js
 |   |   |-- audio-diagnostics.js
@@ -369,6 +371,7 @@ tank-defender-8/
 |   |   |-- projectile-impact-rules.test.js
 |   |   |-- projectile-state.test.js
 |   |   |-- projectile-runtime.test.js
+|   |   |-- projectile-motion-runtime.test.js
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-runtime.test.js
 |   |   |-- power-up-settings.test.js
@@ -488,6 +491,8 @@ The enemy diagnostics module also exposes `createEnemySpawnOverlapDiagnostics` f
 `transient-effects-runtime.js` owns the live explosion and score-popup boundary extracted from `src/game.js`: explosion-rule fallback, impact/destruction style selection, base-destruction duration, queue insertion, and fixed-frame TTL advancement. Canvas rendering remains in `src/game.js`; its unit test locks explicit setup dependencies, rule fallback, style selection, default popup coordinates, TTL progression, and survivor identity, while the browser transient-effect integration test verifies registration and the unchanged public behavior.
 
 `projectile-runtime.js` owns the fixed-frame firing boundary extracted from `src/game.js`: player upgrade-tier lookup, active-bullet limits per tank, projectile creation from current pack geometry, reload timing, and player-only shooting audio. Collision and movement resolution remain separate runtime boundaries; its unit test locks upgrade clamping, one/two-bullet limits, speed and power propagation, enemy silence, and reload behavior, while the browser projectile integration test verifies registration and pack overrides.
+
+`projectile-motion-runtime.js` owns the fixed-frame projectile stepping boundary extracted from `src/game.js`: remove-flag reset, fractional-speed subdivision, direction-vector movement, per-step collision dispatch, opposing-projectile cancellation, and expired-bullet filtering. Its unit test locks step counts, early impact termination, post-step cancellation ordering, survivor identity, and flag reset; existing projectile collision, boundary-impact, timer, and combat browser tests continue to exercise the live path.
 
 `public-api-adapters.js` owns the four ordered public-entry groups for pack loading/validation, sprite and current-pack projections, `debugSnapshot()`, and `stagePackSchema()`. Receiver-preserving binding keeps state-owned loaders and dependency-owned projections explicit, while the thin composition preserves the original public indices 0-2, 34-35, 50, and 158. Its unit suite locks group order, receiver precedence, validation, and output routing; browser integration verifies the public positions and removes the former dynamic adapter bodies. The resulting `debug-api.js` is 77 physical lines and contains no `eval`.
 
