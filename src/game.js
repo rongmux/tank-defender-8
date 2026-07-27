@@ -454,8 +454,6 @@
   var prepareBattleGrid = deps.prepareBattleGrid;
   var prepareConstructedBattleGrid = deps.prepareConstructedBattleGrid;
   var proceduralStage = deps.proceduralStage;
-  var projectileBoundaryImpactPoint = deps.projectileBoundaryImpactPoint;
-  var projectileOutsideField = deps.projectileOutsideField;
   var quadrantType = deps.quadrantType;
   var quarterMaskFromBrickFragments = deps.quarterMaskFromBrickFragments;
   var quarterRect = deps.quarterRect;
@@ -465,7 +463,6 @@
   var resetFrameCounter = deps.resetFrameCounter;
   var resetPlayerState = deps.resetPlayerState;
   var resolveAudioAudibility = deps.resolveAudioAudibility;
-  var resolveBulletCollisions = deps.resolveBulletCollisions;
   var resolveMovementAudioMode = deps.resolveMovementAudioMode;
   var resolvePlayerDeathState = deps.resolvePlayerDeathState;
   var rightAlignedPixelTextX = deps.rightAlignedPixelTextX;
@@ -530,8 +527,16 @@
     gameSettings: gameSettings,
     playSound: playSound
   });
+  deps.requireRuntimeModule("projectileResolutionRuntime").setupProjectileResolutionRuntime(state, deps, {
+    addRuleExplosion: fn.addRuleExplosion,
+    gameSettings: gameSettings,
+    hitBase: hitBase,
+    hitTank: hitTank,
+    hitTerrain: hitTerrain,
+    playSound: playSound
+  });
   deps.requireRuntimeModule("projectileMotionRuntime").setupProjectileMotionRuntime(state, deps, {
-    resolveBullet: resolveBullet
+    resolveBullet: fn.resolveBullet
   });
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
     addPlayerScore: addPlayerScore,
@@ -1502,22 +1507,6 @@
     if (!tank) return 0;
     if (tank.kind === "player") return ((tank.level & 3) << 4) | (tank.dir & 3);
     return 0x80 | ((tank.typeIndex & 3) << 5) | (tank.carrier ? 0x04 : 0) | (tank.dir & 3);
-  }
-
-  function resolveBullet(bullet) {
-    const padding = gameSettings().projectileRules.boundsPadding;
-    if (projectileOutsideField(bullet, FIELD_W, FIELD_H, padding)) {
-      const impact = projectileBoundaryImpactPoint(bullet, FIELD_W, FIELD_H);
-      bullet.remove = true;
-      fn.addRuleExplosion("steelBlocked", impact.x, impact.y);
-      const sound = wallHitSoundName(bullet, true, false);
-      if (sound) playSound(sound);
-      return;
-    }
-
-    if (hitTerrain(bullet)) return;
-    if (hitBase(bullet)) return;
-    hitTank(bullet);
   }
 
   function hitBase(bullet) {
@@ -2945,7 +2934,6 @@
   state.fn.tankForOriginalSlot = tankForOriginalSlot;
   state.fn.tankRandomMemoryByte = tankRandomMemoryByte;
   state.fn.tankRandomTypeByte = tankRandomTypeByte;
-  state.fn.resolveBullet = resolveBullet;
   state.fn.hitBase = hitBase;
   state.fn.hitTerrain = hitTerrain;
   state.fn.hitTank = hitTank;

@@ -15,6 +15,8 @@ assert(modules.projectileRuntime, "projectile runtime should register before gam
 assert.equal(Object.isFrozen(modules.projectileRuntime), true);
 assert(modules.projectileMotionRuntime, "projectile motion runtime should register before game.js");
 assert.equal(Object.isFrozen(modules.projectileMotionRuntime), true);
+assert(modules.projectileResolutionRuntime, "projectile resolution runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.projectileResolutionRuntime), true);
 
 const defaultProjectile = JSON.parse(JSON.stringify(api.debugProjectileRuleProbe()));
 assert.deepEqual(defaultProjectile, {
