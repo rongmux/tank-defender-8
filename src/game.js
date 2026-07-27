@@ -339,7 +339,6 @@
   var DEFAULT_ORIGINAL_STAGE_COUNT = deps.DEFAULT_ORIGINAL_STAGE_COUNT;
   var DEFAULT_PLAYER_MOVEMENT = deps.DEFAULT_PLAYER_MOVEMENT;
   var DEFAULT_PLAYER_UPGRADE_RULES = deps.DEFAULT_PLAYER_UPGRADE_RULES;
-  var DEFAULT_POWERUP_SPAWNS = deps.DEFAULT_POWERUP_SPAWNS;
   var DIR_X = deps.DIR_X;
   var DIR_Y = deps.DIR_Y;
   var DOWN = deps.DOWN;
@@ -359,11 +358,8 @@
   var ICE = deps.ICE;
   var LEFT = deps.LEFT;
   var ORIGINAL_EDITOR_PATTERNS = deps.ORIGINAL_EDITOR_PATTERNS;
-  var ORIGINAL_POWER_UP_RANDOM_TABLE = deps.ORIGINAL_POWER_UP_RANDOM_TABLE;
   var PLAYER_UPGRADE_OVERLAY_COLORS = deps.PLAYER_UPGRADE_OVERLAY_COLORS;
-  var POWER_UP_SIZE = deps.POWER_UP_SIZE;
   var POWERUP_SIZE = deps.POWER_UP_SIZE;
-  var POWER_UP_TYPES = deps.POWER_UP_TYPES;
   var QUAD_GRID = deps.QUAD_GRID;
   var RIGHT = deps.RIGHT;
   var STAGE_CURTAIN_CLOSE_FRAMES = deps.STAGE_CURTAIN_CLOSE_FRAMES;
@@ -379,9 +375,7 @@
   var advanceFixedFrameAudioState = deps.advanceFixedFrameAudioState;
   var advanceFrameCounter = deps.advanceFrameCounter;
   var advancePlayerDestructionState = deps.advancePlayerDestructionState;
-  var advancePowerUpState = deps.advancePowerUpState;
   var advanceTimedStates = deps.advanceTimedStates;
-  var applyPowerUpEffect = deps.applyPowerUpEffect;
   var awardBonusLives = deps.awardBonusLives;
   // (baseDestructionPresentation — local wrapper, not deps alias)
   var beginFixedFrameAudioState = deps.beginFixedFrameAudioState;
@@ -411,14 +405,12 @@
   var createExplosionState = deps.createExplosionState;
   var createFixedFrameAudioState = deps.createFixedFrameAudioState;
   var createPlayerState = deps.createPlayerState;
-  var createPowerUpState = deps.createPowerUpState;
   var createProjectileState = deps.createProjectileState;
   var createScorePopupState = deps.createScorePopupState;
   var createStagePackSchema = deps.createStagePackSchema;
   var createStageResultPresentation = deps.createStageResultPresentation;
   var createStageRuntime = deps.createStageRuntime;
   var damageWall = deps.damageWall;
-  var dedupePowerUpSpots = deps.dedupePowerUpSpots;
   var directionName = deps.directionName;
   var directionTowardTarget = deps.directionTowardTarget;
   var editorBrushAt = deps.editorBrushAt;
@@ -434,7 +426,6 @@
   // (explosionPresentation — local wrapper, not deps alias)
   var filterActiveTankCollisionPeers = deps.filterActiveTankCollisionPeers;
   var findAvailableEnemySlot = deps.findAvailableEnemySlot;
-  var findPowerUpCollector = deps.findPowerUpCollector;
   var fixedFrameAudioPresentation = deps.fixedFrameAudioPresentation;
   var fixedFrameAudioUpdateMode = deps.fixedFrameAudioUpdateMode;
   var fixedFrameVoiceDuration = deps.fixedFrameVoiceDuration;
@@ -475,8 +466,6 @@
   // (playerGameOverMessagePresentation — local wrapper, not deps alias)
   var playerUpgradeOverlayParts = deps.playerUpgradeOverlayParts;
   var powerUpPixelToTilePoint = deps.powerUpPixelToTilePoint;
-  var powerUpSpawnKey = deps.powerUpSpawnKey;
-  var powerUpTypeForRandomByte = deps.powerUpTypeForRandomByte;
   var prepareBattleGrid = deps.prepareBattleGrid;
   var prepareConstructedBattleGrid = deps.prepareConstructedBattleGrid;
   var proceduralStage = deps.proceduralStage;
@@ -500,7 +489,6 @@
   // (scorePopupPresentation — local wrapper, not deps alias)
   var selectEnemySpawnIndex = deps.selectEnemySpawnIndex;
   var selectEnemyTargetPlayer = deps.selectEnemyTargetPlayer;
-  var selectPowerUpSpawnSpot = deps.selectPowerUpSpawnSpot;
   var selectStageClearBonusRecipients = deps.selectStageClearBonusRecipients;
   var serializeEditorStage = deps.serializeEditorStage;
   var serializeEditorStagePack = deps.serializeEditorStagePack;
@@ -508,7 +496,6 @@
   var setTile = deps.setTile;
   var sharedState = deps.sharedState;
   var shieldColorForTick = deps.shieldColorForTick;
-  var shouldClearPowerUpForCarrierSpawn = deps.shouldClearPowerUpForCarrierSpawn;
   var shouldEnemyFireForByte = deps.shouldEnemyFireForByte;
   var shouldReleaseCarrierPowerUp = deps.shouldReleaseCarrierPowerUp;
   var shovelWallTypeForTimer = deps.shovelWallTypeForTimer;
@@ -553,13 +540,23 @@
   var selectPausePresentation = deps.pausePresentation;
   var selectPlayerGameOverMessagePresentation = deps.playerGameOverMessagePresentation;
   var selectEditorCursorMove = deps.moveEditorCursor;
-  var applyPowerUpStateEffect = deps.applyPowerUpEffect;
   var gridRectHitsSolidTerrain = deps.rectHitsSolidTerrain;
   var gridSolidTerrainOverlapArea = deps.solidTerrainOverlapArea;
   var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
   var defaultPlayerUpgradeRules = deps.DEFAULT_PLAYER_UPGRADE_RULES;
-  var powerTypes = deps.POWER_UP_TYPES;
-  var originalPowerUpRandomTable = deps.ORIGINAL_POWER_UP_RANDOM_TABLE;
+
+  deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
+    addPlayerScore: addPlayerScore,
+    addScorePopup: addScorePopup,
+    buildBaseWall: buildBaseWall,
+    canTankOccupy: canTankOccupy,
+    destroyEnemy: destroyEnemy,
+    gameSettings: gameSettings,
+    playSound: playSound,
+    randomByte: randomByte,
+    rectHitsSolidTerrain: rectHitsSolidTerrain,
+    stageSettings: stageSettings
+  });
 
   function handleAction(action) {
     initAudio();
@@ -1075,7 +1072,7 @@
     updateBaseDestructionTimer();
     updateBullets();
     updateScorePopups();
-    updatePowerUp();
+    fn.updatePowerUp();
     updatePlayerGameOverMessage();
     if (shouldSpawnEnemies()) spawnEnemies();
     if (checkEnding) checkEndState();
@@ -1596,7 +1593,7 @@
             wasCarrier,
             enemy.hp <= 0,
             gameSettings().powerUpRules.carrierRelease
-          )) releaseCarrierPowerUp(enemy);
+          )) fn.releaseCarrierPowerUp(enemy);
           if (enemy.hp <= 0) destroyEnemy(enemy, bullet.ownerId);
           return true;
         }
@@ -1718,126 +1715,6 @@
     if (message.timer >= PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD) message.x += message.dx;
   }
 
-  function releaseCarrierPowerUp(enemy) {
-    enemy.carrier = false;
-    spawnPowerUp(enemy.powerUpType);
-  }
-
-  function clearPowerUpForCarrierSpawn(carrier) {
-    if (!shouldClearPowerUpForCarrierSpawn(
-      carrier,
-      gameSettings().powerUpRules.clearUncollectedOnCarrierSpawn
-    )) return false;
-    game.powerUp = null;
-    return true;
-  }
-
-  function spawnPowerUp(forcedType) {
-    const settings = stageSettings();
-    const spot = pickPowerUpSpawnSpot(settings ? settings.powerUpSpawns : DEFAULT_POWERUP_SPAWNS);
-    if (!spot) return false;
-    const type = forcedType && powerTypes.includes(forcedType)
-      ? forcedType
-      : randomPowerUpType();
-    game.powerUp = createPowerUpState({
-      type,
-      position: spot,
-      ttl: gameSettings().timings.powerUpTtl
-    });
-    playSound("powerUpAppear");
-    return true;
-  }
-
-  function randomPowerUpType(random) {
-    return powerUpTypeForRandomByte(randomByte(random));
-  }
-
-  function pickPowerUpSpawnSpot(spots, random) {
-    const source = powerUpSpawnCandidates(spots);
-    if (!source.length) return null;
-    const positionSample = (randomByte(random) << 8) | randomByte(random);
-    const picked = selectPowerUpSpawnSpot(source, positionSample, game.lastPowerUpSpawn);
-    game.lastPowerUpSpawn = powerUpSpawnKey(picked);
-    return picked;
-  }
-
-  function resetPowerUpSpawnBag() {
-    game.powerUpSpawnBag = [];
-    game.powerUpSpawnBagKey = "";
-  }
-
-  function powerUpSpawnCandidates(spots) {
-    const openSpots = dedupePowerUpSpots(spots.filter(canPowerUpSpawnAt));
-    if (openSpots.length > 1) return openSpots;
-    return dedupePowerUpSpots(openSpots.concat(fallbackPowerUpSpawnSpots()));
-  }
-
-  function fallbackPowerUpSpawnSpots() {
-    const spots = [];
-    for (let r = 0; r < GRID; r += 1) {
-      for (let c = 0; c < GRID; c += 1) {
-        const spot = { x: c * TILE + 2, y: r * TILE + 2 };
-        if (canPowerUpSpawnAt(spot)) spots.push(spot);
-      }
-    }
-    return spots;
-  }
-
-  function canPowerUpSpawnAt(point) {
-    const powerRect = { x: point.x, y: point.y, w: POWERUP_SIZE, h: POWERUP_SIZE };
-    if (powerRect.x < 0 || powerRect.y < 0 || powerRect.x + powerRect.w > FIELD_W || powerRect.y + powerRect.h > FIELD_H) return false;
-    if (game.base.alive && rectsOverlap(powerRect, game.base)) return false;
-    if (rectHitsSolidTerrain(powerRect)) return false;
-    return canTankOccupy({ w: 14, h: 14 }, point.x - 1, point.y - 1);
-  }
-
-  function updatePowerUp() {
-    if (!game.powerUp) return;
-    game.powerUp = advancePowerUpState(game.powerUp);
-    if (!game.powerUp) return;
-    const player = findPowerUpCollector(game.players, game.powerUp);
-    if (player) collectPowerUp(player, game.powerUp);
-  }
-
-  function collectPowerUp(player, power) {
-    const powerType = power.type;
-    game.powerUp = null;
-    applyPowerUp(player, powerType, {
-      popupX: power.x + power.w / 2,
-      popupY: power.y + power.h / 2
-    });
-    game.powerUp = null;
-    if (!game.demoMode) playSound("powerUp");
-  }
-
-  function applyPowerUp(player, type, options) {
-    const opts = options || {};
-    const pickupScore = gameSettings().powerUpRules.pickupScore;
-    if (!game.demoMode) {
-      addPlayerScore(player, pickupScore);
-      addScorePopup(
-        pickupScore,
-        Number.isFinite(opts.popupX) ? opts.popupX : player.x + player.w / 2,
-        Number.isFinite(opts.popupY) ? opts.popupY : player.y + player.h / 2,
-        { style: "powerUp", ttl: 49 }
-      );
-    }
-    const effect = applyPowerUpStateEffect(player, game, type, {
-      baseAlive: game.base.alive,
-      durations: gameSettings().powerUpDurations,
-      maxPlayerLevel: gameSettings().playerUpgradeRules.length - 1
-    });
-    if (effect.soundName) playSound(effect.soundName);
-    if (effect.rebuildBaseWall) buildBaseWall(game.grid, STEEL);
-    if (effect.destroyActiveEnemies) {
-      for (const enemy of game.enemies) {
-        if (!enemy.alive || enemy.destroying || enemy.spawnFlash > 0) continue;
-        enemy.hp = 0;
-        destroyEnemy(enemy, player.id, { awardScore: false, trackKill: false, showScore: false });
-      }
-    }
-  }
-
   function spawnEnemies() {
     if (game.enemySpawned >= enemyTotal()) return;
     const capacity = maxActiveEnemies();
@@ -1858,7 +1735,7 @@
       game.nextSpawn = gameSettings().timings.enemySpawnRetry;
       return;
     }
-    clearPowerUpForCarrierSpawn(carrier);
+    fn.clearPowerUpForCarrierSpawn(carrier);
     game.enemies.push(createEnemyState({
       id: 100 + game.enemySpawned,
       slotIndex,
@@ -3291,18 +3168,6 @@
   state.fn.startPlayerGameOverMessage = startPlayerGameOverMessage;
   state.fn.playerGameOverMessageActive = playerGameOverMessageActive;
   state.fn.updatePlayerGameOverMessage = updatePlayerGameOverMessage;
-  state.fn.releaseCarrierPowerUp = releaseCarrierPowerUp;
-  state.fn.clearPowerUpForCarrierSpawn = clearPowerUpForCarrierSpawn;
-  state.fn.spawnPowerUp = spawnPowerUp;
-  state.fn.randomPowerUpType = randomPowerUpType;
-  state.fn.pickPowerUpSpawnSpot = pickPowerUpSpawnSpot;
-  state.fn.resetPowerUpSpawnBag = resetPowerUpSpawnBag;
-  state.fn.powerUpSpawnCandidates = powerUpSpawnCandidates;
-  state.fn.fallbackPowerUpSpawnSpots = fallbackPowerUpSpawnSpots;
-  state.fn.canPowerUpSpawnAt = canPowerUpSpawnAt;
-  state.fn.updatePowerUp = updatePowerUp;
-  state.fn.collectPowerUp = collectPowerUp;
-  state.fn.applyPowerUp = applyPowerUp;
   state.fn.spawnEnemies = spawnEnemies;
   state.fn.enemySpawnDelay = enemySpawnDelay;
   state.fn.defaultEnemySpawnDelay = defaultEnemySpawnDelay;

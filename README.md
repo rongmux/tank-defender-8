@@ -107,6 +107,7 @@ node --check src/stages/stage-pack-schema.js
 node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
+node --check src/runtime/power-up-runtime.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -214,6 +215,7 @@ tank-defender-8/
 |   |   `-- stage-runtime.js
 |   |-- runtime/
 |   |   |-- shared-state.js
+|   |   |-- power-up-runtime.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -358,6 +360,7 @@ tank-defender-8/
 |   |   |-- projectile-impact-rules.test.js
 |   |   |-- projectile-state.test.js
 |   |   |-- power-up-state.test.js
+|   |   |-- power-up-runtime.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-diagnostics.test.js
@@ -463,6 +466,8 @@ tank-defender-8/
 The enemy diagnostics module also exposes `createEnemySpawnOverlapDiagnostics` for the existing post-timer spawn-overlap probe. Its state setup now lives outside `debug-api.js`, while the adapter remains at its original public API position; the current adapter is 77 physical lines.
 
 `panel-diagnostics.js` binds the two contiguous enemy-counter and life-counter panel probes through the same receiver-preserving scope without `eval`. Its unit suite locks input normalization, binding precedence, method order, and output projection; browser integration verifies module registration, the original public indices 135-136, and the pre-refactor 133-byte output SHA-256.
+
+`power-up-runtime.js` owns the live power-up boundary extracted from `src/game.js`: carrier release and clearing, spawn-point validation and rotation, TTL advancement, collection scoring, and effect side effects. The module receives explicit callbacks for game settings, terrain, collision, audio, score, and enemy destruction, then registers the unchanged `state.fn` surface. Its unit test covers setup validation, registration, spawn rotation, collection, star upgrades, carrier release, and transient-state cleanup; the existing browser power-up suites continue to exercise the real game path.
 
 `public-api-adapters.js` owns the four ordered public-entry groups for pack loading/validation, sprite and current-pack projections, `debugSnapshot()`, and `stagePackSchema()`. Receiver-preserving binding keeps state-owned loaders and dependency-owned projections explicit, while the thin composition preserves the original public indices 0-2, 34-35, 50, and 158. Its unit suite locks group order, receiver precedence, validation, and output routing; browser integration verifies the public positions and removes the former dynamic adapter bodies. The resulting `debug-api.js` is 77 physical lines and contains no `eval`.
 
