@@ -461,7 +461,6 @@
   var setTile = deps.setTile;
   var sharedState = deps.sharedState;
   var shieldColorForTick = deps.shieldColorForTick;
-  var shovelWallTypeForTimer = deps.shovelWallTypeForTimer;
   var spawnAnimationPresentation = deps.spawnAnimationPresentation;
   var stageFlowSettings = deps.stageFlowSettings;
   // (stageIntroCurtainState — local wrapper, not deps alias)
@@ -516,6 +515,10 @@
     gameSettings: gameSettings,
     shoot: fn.shoot,
     updatePlayerMovement: updatePlayerMovement
+  });
+  deps.requireRuntimeModule("battleTimingRuntime").setupBattleTimingRuntime(state, deps, {
+    enemyTotal: enemyTotal,
+    gameSettings: gameSettings
   });
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
     addPlayerScore: addPlayerScore,
@@ -630,7 +633,7 @@
       game.demoMode ||
       game.clearPendingTimer > 0 ||
       game.baseDestroyTimer > 0 ||
-      stageEnemiesCleared()
+      fn.stageEnemiesCleared()
     ) return false;
     game.paused = !game.paused;
     game.pauseElapsed = 0;
@@ -1093,14 +1096,14 @@
     const playerInputEnabled = opts.playerInputEnabled !== false && game.baseDestroyTimer <= 0;
     const checkEnding = opts.checkEnding !== false;
     game.tick += 1;
-    updateFreezeTimer();
+    fn.updateFreezeTimer();
 
     fn.updatePlayers(playerInputEnabled);
     fn.updateEnemies();
-    updateShovelTimer();
-    updatePlayerInvulnerabilityTimers();
+    fn.updateShovelTimer();
+    fn.updatePlayerInvulnerabilityTimers();
     fn.updateExplosions();
-    updateBaseDestructionTimer();
+    fn.updateBaseDestructionTimer();
     fn.updateBullets();
     fn.updateScorePopups();
     fn.updatePowerUp();
@@ -1108,39 +1111,6 @@
     if (shouldSpawnEnemies()) fn.spawnEnemies();
     if (checkEnding) checkEndState();
     syncMovementAudio();
-  }
-
-  function isGlobalTimerTick(tick) {
-    return (Math.max(0, Math.floor(Number(tick) || 0)) & 63) === 0;
-  }
-
-  function updateFreezeTimer() {
-    if (game.freezeTimer > 0 && isGlobalTimerTick(game.frameLow)) game.freezeTimer -= 1;
-  }
-
-  function updateShovelTimer() {
-    if (game.shovelTimer <= 0 || (game.frameLow & 15) !== 0) return;
-    if (isGlobalTimerTick(game.frameLow)) {
-      game.shovelTimer -= 1;
-      if (game.shovelTimer <= 0) {
-        buildBaseWall(game.grid, BRICK);
-        return;
-      }
-    }
-    if (game.shovelTimer < gameSettings().powerUpDurations.shovelFlash) {
-      buildBaseWall(game.grid, shovelWallTypeForTimer(
-        game.shovelTimer,
-        game.frameLow,
-        gameSettings().powerUpDurations.shovelFlash
-      ));
-    }
-  }
-
-  function updatePlayerInvulnerabilityTimers() {
-    if (!isGlobalTimerTick(game.frameLow)) return;
-    for (const player of game.players) {
-      if (player.invuln > 0) player.invuln -= 1;
-    }
   }
 
   function tileTypeName(type) {
@@ -1343,20 +1313,11 @@
     if (message.timer >= PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD) message.x += message.dx;
   }
 
-  /** Runs before bullet collision so a newly hit base retains its full loaded $27 counter for the hit frame. */
-  function updateBaseDestructionTimer() {
-    if (game.baseDestroyTimer > 0) game.baseDestroyTimer -= 1;
-  }
-
-  function stageEnemiesCleared() {
-    return game.enemySpawned >= enemyTotal() && game.enemies.length === 0;
-  }
-
   function checkEndState() {
     game.enemies = game.enemies.filter((enemy) => enemy.alive);
     if (game.demoMode) {
       const demoPlayersDone = game.players.every((player) => !player.alive && player.respawn <= 0 && player.lives <= 0);
-      if (!game.base.alive || demoPlayersDone || stageEnemiesCleared()) endTitleDemo();
+      if (!game.base.alive || demoPlayersDone || fn.stageEnemiesCleared()) endTitleDemo();
       return;
     }
     if (!game.base.alive) {
@@ -1369,7 +1330,7 @@
       enterGameOver();
       return;
     }
-    if (stageEnemiesCleared()) {
+    if (fn.stageEnemiesCleared()) {
       game.paused = false;
       game.pauseElapsed = 0;
       if (game.clearPendingTimer <= 0) {
@@ -2558,10 +2519,6 @@
   state.fn.stageSelectBHeld = stageSelectBHeld;
   state.fn.updateStageSelectControls = updateStageSelectControls;
   state.fn.updateBattle = updateBattle;
-  state.fn.isGlobalTimerTick = isGlobalTimerTick;
-  state.fn.updateFreezeTimer = updateFreezeTimer;
-  state.fn.updateShovelTimer = updateShovelTimer;
-  state.fn.updatePlayerInvulnerabilityTimers = updatePlayerInvulnerabilityTimers;
   state.fn.tileTypeName = tileTypeName;
   state.fn.updatePlayerMovement = updatePlayerMovement;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
@@ -2580,8 +2537,6 @@
   state.fn.startPlayerGameOverMessage = startPlayerGameOverMessage;
   state.fn.playerGameOverMessageActive = playerGameOverMessageActive;
   state.fn.updatePlayerGameOverMessage = updatePlayerGameOverMessage;
-  state.fn.updateBaseDestructionTimer = updateBaseDestructionTimer;
-  state.fn.stageEnemiesCleared = stageEnemiesCleared;
   state.fn.checkEndState = checkEndState;
   state.fn.enterStageClear = enterStageClear;
   state.fn.enterStageResult = enterStageResult;
