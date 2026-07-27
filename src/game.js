@@ -342,7 +342,6 @@
   var EDITOR_TILE_TYPES = deps.EDITOR_TILE_TYPES;
   var EMPTY = deps.EMPTY;
   var ENEMY_DESTRUCTION_SCORE_TICKS = deps.ENEMY_DESTRUCTION_SCORE_TICKS;
-  var ENEMY_FIRE_CHANCE = deps.ENEMY_FIRE_CHANCE;
   var FIXED_FRAME_AUDIO_UPDATE_MODE = deps.FIXED_FRAME_AUDIO_UPDATE_MODE;
   var FOREST = deps.FOREST;
   var FREE_AUDIO_MANIFEST = deps.FREE_AUDIO_MANIFEST;
@@ -402,8 +401,6 @@
   var editorCellForCursor = deps.editorCellForCursor;
   var editorDirectionForCode = deps.editorDirectionForCode;
   var editorPatternAt = deps.editorPatternAt;
-  var enemyAiChanceMatches = deps.enemyAiChanceMatches;
-  var enemyAiPhaseForInterval = deps.enemyAiPhaseForInterval;
   var enemyAiSettings = deps.enemyAiSettings;
   var enemyColor = deps.enemyColor;
   // (enemyDestructionPresentation — local wrapper, not deps alias)
@@ -459,7 +456,6 @@
   var resolvePlayerDeathState = deps.resolvePlayerDeathState;
   var rightAlignedPixelTextX = deps.rightAlignedPixelTextX;
   // (scorePopupPresentation — local wrapper, not deps alias)
-  var selectEnemyTargetPlayer = deps.selectEnemyTargetPlayer;
   var selectStageClearBonusRecipients = deps.selectStageClearBonusRecipients;
   var serializeEditorStage = deps.serializeEditorStage;
   var serializeEditorStagePack = deps.serializeEditorStagePack;
@@ -467,7 +463,6 @@
   var setTile = deps.setTile;
   var sharedState = deps.sharedState;
   var shieldColorForTick = deps.shieldColorForTick;
-  var shouldEnemyFireForByte = deps.shouldEnemyFireForByte;
   var shovelWallTypeForTimer = deps.shovelWallTypeForTimer;
   var spawnAnimationPresentation = deps.spawnAnimationPresentation;
   var stageFlowSettings = deps.stageFlowSettings;
@@ -542,11 +537,19 @@
     maxActiveEnemies: maxActiveEnemies,
     stageCycleLimit: stageCycleLimit
   });
+  deps.requireRuntimeModule("enemyAiRuntime").setupEnemyAiRuntime(state, deps, {
+    defaultEnemySpawnDelay: fn.defaultEnemySpawnDelay,
+    directionTowardTarget: directionTowardTarget,
+    gameSettings: gameSettings,
+    randomByte: randomByte,
+    scaleEnemySpawnDelayForPlayers: fn.scaleEnemySpawnDelayForPlayers,
+    selectEnemyTargetPlayer: deps.selectEnemyTargetPlayer
+  });
   deps.requireRuntimeModule("enemyMovementRuntime").setupEnemyMovementRuntime(state, deps, {
     advanceTankTracks: fn.advanceTankTracks,
-    aiRoll: aiRoll,
+    aiRoll: fn.aiRoll,
     canTankOccupy: fn.canTankOccupy,
-    chooseEnemyDirectionByPhase: chooseEnemyDirectionByPhase,
+    chooseEnemyDirectionByPhase: fn.chooseEnemyDirectionByPhase,
     gameSettings: gameSettings,
     isEnemyAtTurnIntersection: isEnemyAtTurnIntersection,
     moveTank: fn.moveTank,
@@ -557,7 +560,7 @@
     explosionRule: fn.explosionRule,
     gameSettings: gameSettings,
     shoot: fn.shoot,
-    shouldEnemyFire: shouldEnemyFire,
+    shouldEnemyFire: fn.shouldEnemyFire,
     updateEnemyMovement: fn.updateEnemyMovement
   });
   deps.requireRuntimeModule("projectileTargetRuntime").setupProjectileTargetRuntime(state, deps, {
@@ -1311,37 +1314,6 @@
 
   function shouldSpawnEnemies() {
     return true;
-  }
-
-  function chooseEnemyDirectionByPhase(enemy, random) {
-    const nextRandom = typeof random === "function" ? random : undefined;
-    const phase = enemyAiPhase(game.stage, game.frameHigh);
-    if (phase === "random") {
-      enemy.dir = randomByte(nextRandom) & 3;
-      return phase;
-    }
-
-    let target = { x: game.base.x + game.base.w / 2, y: game.base.y + game.base.h / 2 };
-    if (phase === "player") {
-      const player = selectEnemyTargetPlayer(enemy, game.players);
-      if (player) target = { x: player.x + player.w / 2, y: player.y + player.h / 2 };
-    }
-    const horizontalFirst = aiRoll(gameSettings().enemyAi.horizontalFirstChance, nextRandom);
-    enemy.dir = directionTowardTarget(enemy, target, horizontalFirst);
-    return phase;
-  }
-
-  function enemyAiPhase(stage, frameHigh) {
-    const interval = fn.scaleEnemySpawnDelayForPlayers(fn.defaultEnemySpawnDelay(stage), game.playerCount);
-    return enemyAiPhaseForInterval(interval, frameHigh);
-  }
-
-  function shouldEnemyFire(enemy) {
-    return shouldEnemyFireForByte(enemy.fireChance, ENEMY_FIRE_CHANCE, randomByte());
-  }
-
-  function aiRoll(chance, random) {
-    return enemyAiChanceMatches(chance, randomByte(random));
   }
 
   function randomByte(random) {
@@ -2730,10 +2702,6 @@
   state.fn.getPlayerControl = getPlayerControl;
   state.fn.hasControlKey = hasControlKey;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
-  state.fn.chooseEnemyDirectionByPhase = chooseEnemyDirectionByPhase;
-  state.fn.enemyAiPhase = enemyAiPhase;
-  state.fn.shouldEnemyFire = shouldEnemyFire;
-  state.fn.aiRoll = aiRoll;
   state.fn.randomByte = randomByte;
   state.fn.nextBattleRandomByte = nextBattleRandomByte;
   state.fn.resetBattleRandom = resetBattleRandom;
