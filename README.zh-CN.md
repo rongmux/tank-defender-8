@@ -110,8 +110,9 @@ node --check src/runtime/shared-state.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
-node --check src/runtime/projectile-motion-runtime.js
+node --check src/runtime/projectile-target-runtime.js
 node --check src/runtime/projectile-resolution-runtime.js
+node --check src/runtime/projectile-motion-runtime.js
 node --check src/runtime/power-up-runtime.js
 node --check src/runtime/enemy-spawn-runtime.js
 node --check src/runtime/audio-diagnostics.js
@@ -224,8 +225,9 @@ tank-defender-8/
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
-|   |   |-- projectile-motion-runtime.js
+|   |   |-- projectile-target-runtime.js
 |   |   |-- projectile-resolution-runtime.js
+|   |   |-- projectile-motion-runtime.js
 |   |   |-- power-up-runtime.js
 |   |   |-- enemy-spawn-runtime.js
 |   |   |-- audio-diagnostics.js
@@ -373,8 +375,9 @@ tank-defender-8/
 |   |   |-- projectile-impact-rules.test.js
 |   |   |-- projectile-state.test.js
 |   |   |-- projectile-runtime.test.js
-|   |   |-- projectile-motion-runtime.test.js
+|   |   |-- projectile-target-runtime.test.js
 |   |   |-- projectile-resolution-runtime.test.js
+|   |   |-- projectile-motion-runtime.test.js
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-runtime.test.js
 |   |   |-- power-up-settings.test.js
@@ -495,9 +498,11 @@ tank-defender-8/
 
 `projectile-runtime.js` 接管从 `src/game.js` 抽出的固定帧射击边界：玩家升级档位查询、每辆坦克的活动子弹上限、按当前关卡包几何创建子弹、重载时序和仅玩家射击音效。碰撞与移动解析仍保持独立运行时边界；其单元测试锁定升级档位钳位、单/双子弹上限、速度与破墙等级传递、敌人静音和重载行为，浏览器子弹集成测试则验证模块注册与关卡包覆盖。
 
-`projectile-motion-runtime.js` 接管从 `src/game.js` 抽出的固定帧子弹步进边界：重置移除标志、按小数速度细分步数、按方向向量移动、逐步派发碰撞、对向子弹抵消以及过期子弹过滤。其单元测试锁定步数、提前命中终止、步进后抵消顺序、存活对象标识和标志重置；现有子弹碰撞、边界命中、定时器和战斗浏览器测试继续覆盖真实路径。
+`projectile-target-runtime.js` 接管从 `src/game.js` 抽出的子弹目标副作用：基地摧毁、精确到碎片的砖/钢墙伤害、敌人受伤与携带者释放、友军伤害眩晕以及敌方子弹击杀玩家。其单元测试锁定原有副作用顺序和目标过滤；现有碰撞、地形、战斗、道具和音频浏览器探针继续覆盖真实路径。
 
 `projectile-resolution-runtime.js` 接管从 `src/game.js` 抽出的固定顺序子弹命中分派：带边距的场地边界命中、地形/基地/坦克检查，以及边界爆炸和音频副作用。其单元测试锁定提前返回和地形/基地/坦克的精确顺序；现有子弹碰撞和命中规则集成测试继续覆盖真实路径。
+
+`projectile-motion-runtime.js` 接管从 `src/game.js` 抽出的固定帧子弹步进边界：重置移除标志、按小数速度细分步数、按方向向量移动、逐步派发碰撞、对向子弹抵消以及过期子弹过滤。其单元测试锁定步数、提前命中终止、步进后抵消顺序、存活对象标识和标志重置；现有子弹碰撞、边界命中、定时器和战斗浏览器测试继续覆盖真实路径。
 
 `public-api-adapters.js` 接管四组有序的公开入口：关卡包加载/校验、精灵与当前关卡包投影、`debugSnapshot()` 以及 `stagePackSchema()`。保留接收者的绑定让状态所有的加载器和依赖所有的投影保持显式，同时薄组合继续保持原公开索引 0-2、34-35、50 和 158。其单元测试锁定分组顺序、接收者优先级、校验和输出路由；浏览器集成测试验证公开位置，并移除原先动态适配器函数体。最终 `debug-api.js` 为 77 个物理行，且不再包含 `eval`。
 

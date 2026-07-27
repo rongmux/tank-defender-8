@@ -13,6 +13,8 @@ assert(modules.projectileState, "projectile state module should register before 
 assert.equal(Object.isFrozen(modules.projectileState), true);
 assert(modules.projectileRuntime, "projectile runtime should register before game.js");
 assert.equal(Object.isFrozen(modules.projectileRuntime), true);
+assert(modules.projectileTargetRuntime, "projectile target runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.projectileTargetRuntime), true);
 assert(modules.projectileMotionRuntime, "projectile motion runtime should register before game.js");
 assert.equal(Object.isFrozen(modules.projectileMotionRuntime), true);
 assert(modules.projectileResolutionRuntime, "projectile resolution runtime should register before game.js");

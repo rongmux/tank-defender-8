@@ -377,7 +377,6 @@
   var brickFragmentRect = deps.brickFragmentRect;
   var brickFragmentsFromQuarterMask = deps.brickFragmentsFromQuarterMask;
   var buildBaseWall = deps.buildBaseWall;
-  var bulletHitsTankByCenter = deps.bulletHitsTankByCenter;
   var canPlayerCollectPowerUp = deps.canPlayerCollectPowerUp;
   var clamp = deps.clamp;
   var clearTile = deps.clearTile;
@@ -398,7 +397,6 @@
   var createStagePackSchema = deps.createStagePackSchema;
   var createStageResultPresentation = deps.createStageResultPresentation;
   var createStageRuntime = deps.createStageRuntime;
-  var damageWall = deps.damageWall;
   var directionName = deps.directionName;
   var directionTowardTarget = deps.directionTowardTarget;
   var editorBrushAt = deps.editorBrushAt;
@@ -438,8 +436,6 @@
   var nextEditorTileType = deps.nextEditorTileType;
   var normalizeBrickFragmentMask = deps.normalizeBrickFragmentMask;
   var originalEditorButtonHeld = deps.originalEditorButtonHeld;
-  var overlappedBrickFragments = deps.overlappedBrickFragments;
-  var overlappedQuarters = deps.overlappedQuarters;
   // (panelEnemyCounterRemaining — local wrapper, not deps alias)
   // (panelLifeCount — local wrapper, not deps alias)
   var parseEditorStageText = deps.parseEditorStageText;
@@ -458,7 +454,6 @@
   var quarterMaskFromBrickFragments = deps.quarterMaskFromBrickFragments;
   var quarterRect = deps.quarterRect;
   var rectOverlapArea = deps.rectOverlapArea;
-  var rectsOverlap = deps.rectsOverlap;
   var resetFixedFrameAudioState = deps.resetFixedFrameAudioState;
   var resetFrameCounter = deps.resetFrameCounter;
   var resetPlayerState = deps.resetPlayerState;
@@ -476,7 +471,6 @@
   var sharedState = deps.sharedState;
   var shieldColorForTick = deps.shieldColorForTick;
   var shouldEnemyFireForByte = deps.shouldEnemyFireForByte;
-  var shouldReleaseCarrierPowerUp = deps.shouldReleaseCarrierPowerUp;
   var shovelWallTypeForTimer = deps.shovelWallTypeForTimer;
   var spawnAnimationPresentation = deps.spawnAnimationPresentation;
   var stageFlowSettings = deps.stageFlowSettings;
@@ -493,7 +487,6 @@
   // (titleScoreLayout — local wrapper, not deps alias)
   var tryNormalizeStagePack = deps.tryNormalizeStagePack;
   var valueNormalization = deps.valueNormalization;
-  var wallHitSoundName = deps.wallHitSoundName;
 
   // Renamed import aliases (original → local name)
   var selectFixedFrameAudioPresentation = deps.fixedFrameAudioPresentation;
@@ -527,17 +520,6 @@
     gameSettings: gameSettings,
     playSound: playSound
   });
-  deps.requireRuntimeModule("projectileResolutionRuntime").setupProjectileResolutionRuntime(state, deps, {
-    addRuleExplosion: fn.addRuleExplosion,
-    gameSettings: gameSettings,
-    hitBase: hitBase,
-    hitTank: hitTank,
-    hitTerrain: hitTerrain,
-    playSound: playSound
-  });
-  deps.requireRuntimeModule("projectileMotionRuntime").setupProjectileMotionRuntime(state, deps, {
-    resolveBullet: fn.resolveBullet
-  });
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
     addPlayerScore: addPlayerScore,
     addScorePopup: fn.addScorePopup,
@@ -562,6 +544,26 @@
     isExtendedLoopStage: isExtendedLoopStage,
     maxActiveEnemies: maxActiveEnemies,
     stageCycleLimit: stageCycleLimit
+  });
+  deps.requireRuntimeModule("projectileTargetRuntime").setupProjectileTargetRuntime(state, deps, {
+    addRuleExplosion: fn.addRuleExplosion,
+    baseDestructionDuration: fn.baseDestructionDuration,
+    destroyEnemy: destroyEnemy,
+    gameSettings: gameSettings,
+    killPlayer: killPlayer,
+    playSound: playSound,
+    releaseCarrierPowerUp: fn.releaseCarrierPowerUp
+  });
+  deps.requireRuntimeModule("projectileResolutionRuntime").setupProjectileResolutionRuntime(state, deps, {
+    addRuleExplosion: fn.addRuleExplosion,
+    gameSettings: gameSettings,
+    hitBase: fn.hitBase,
+    hitTank: fn.hitTank,
+    hitTerrain: fn.hitTerrain,
+    playSound: playSound
+  });
+  deps.requireRuntimeModule("projectileMotionRuntime").setupProjectileMotionRuntime(state, deps, {
+    resolveBullet: fn.resolveBullet
   });
 
   function handleAction(action) {
@@ -1507,104 +1509,6 @@
     if (!tank) return 0;
     if (tank.kind === "player") return ((tank.level & 3) << 4) | (tank.dir & 3);
     return 0x80 | ((tank.typeIndex & 3) << 5) | (tank.carrier ? 0x04 : 0) | (tank.dir & 3);
-  }
-
-  function hitBase(bullet) {
-    if (!game.base.alive) return false;
-    if (!rectsOverlap(entityRect(bullet), game.base)) return false;
-    game.base.alive = false;
-    game.baseDestroyTimer = game.demoMode ? 0 : fn.baseDestructionDuration();
-    bullet.remove = true;
-    playSound("baseHit");
-    playSound("playerDestroy");
-    return true;
-  }
-
-  function hitTerrain(bullet) {
-    const rect = entityRect(bullet);
-    const c0 = clamp(Math.floor(rect.x / TILE), 0, GRID - 1);
-    const r0 = clamp(Math.floor(rect.y / TILE), 0, GRID - 1);
-    const c1 = clamp(Math.floor((rect.x + rect.w - 1) / TILE), 0, GRID - 1);
-    const r1 = clamp(Math.floor((rect.y + rect.h - 1) / TILE), 0, GRID - 1);
-
-    for (let r = r0; r <= r1; r += 1) {
-      for (let c = c0; c <= c1; c += 1) {
-        const cell = game.grid[r][c];
-        if ((cell.type !== BRICK && cell.type !== STEEL) || cell.mask === 0) continue;
-        const hitMask = cell.type === BRICK
-          ? overlappedBrickFragments(rect, c, r, cell)
-          : overlappedQuarters(rect, c, r, cell.mask);
-        if (!hitMask) continue;
-        const wasSteel = cell.type === STEEL;
-        let damaged = false;
-        if (cell.type === BRICK || bullet.power >= 3) {
-          damaged = damageWall(cell, c, r, bullet, hitMask);
-          fn.addRuleExplosion(damaged ? (wasSteel ? "steelHit" : "brickHit") : "steelBlocked", bullet.x, bullet.y);
-        } else {
-          fn.addRuleExplosion("steelBlocked", bullet.x, bullet.y);
-        }
-        bullet.remove = true;
-        const sound = wallHitSoundName(bullet, wasSteel, damaged);
-        if (sound) playSound(sound);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function hitTank(bullet) {
-    if (bullet.ownerKind === "player") {
-      for (const enemy of game.enemies) {
-        if (!enemy.alive || enemy.destroying || enemy.spawnFlash > 0) continue;
-        if (bulletHitsTankByCenter(bullet, enemy)) {
-          const wasCarrier = enemy.carrier;
-          enemy.hp -= 1;
-          bullet.remove = true;
-          fn.addRuleExplosion("enemyHit", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
-          playSound(enemy.hp <= 0 ? "enemyDestroy" : "enemyHit");
-          if (shouldReleaseCarrierPowerUp(
-            wasCarrier,
-            enemy.hp <= 0,
-            gameSettings().powerUpRules.carrierRelease
-          )) fn.releaseCarrierPowerUp(enemy);
-          if (enemy.hp <= 0) destroyEnemy(enemy, bullet.ownerId);
-          return true;
-        }
-      }
-
-      for (const player of game.players) {
-        if (!player.alive || player.id === bullet.ownerId || player.spawnFlash > 0) continue;
-        if (bulletHitsTankByCenter(bullet, player)) {
-          if (player.invuln > 0) {
-            bullet.remove = true;
-            return true;
-          }
-          if (gameSettings().friendlyFire.enabled && player.stun <= 0) player.stun = gameSettings().friendlyFire.stunFrames;
-          bullet.remove = true;
-          fn.addRuleExplosion("playerStun", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
-          return true;
-        }
-      }
-    } else {
-      for (const player of game.players) {
-        if (!player.alive || player.spawnFlash > 0) continue;
-        if (bulletHitsTankByCenter(bullet, player)) {
-          if (player.invuln > 0) {
-            bullet.remove = true;
-            return true;
-          }
-          bullet.remove = true;
-          fn.addRuleExplosion(
-            "steelBlocked",
-            bullet.x + bullet.w / 2,
-            bullet.y + bullet.h / 2
-          );
-          killPlayer(player);
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   function destroyEnemy(enemy, ownerId, options) {
@@ -2934,9 +2838,6 @@
   state.fn.tankForOriginalSlot = tankForOriginalSlot;
   state.fn.tankRandomMemoryByte = tankRandomMemoryByte;
   state.fn.tankRandomTypeByte = tankRandomTypeByte;
-  state.fn.hitBase = hitBase;
-  state.fn.hitTerrain = hitTerrain;
-  state.fn.hitTank = hitTank;
   state.fn.destroyEnemy = destroyEnemy;
   state.fn.addPlayerScore = addPlayerScore;
   state.fn.killPlayer = killPlayer;
