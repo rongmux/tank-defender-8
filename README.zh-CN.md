@@ -111,6 +111,7 @@ node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/battle-combat-runtime.js
+node --check src/runtime/stage-result-runtime.js
 node --check src/runtime/player-update-runtime.js
 node --check src/runtime/battle-timing-runtime.js
 node --check src/runtime/battle-random-runtime.js
@@ -233,6 +234,7 @@ tank-defender-8/
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
+|   |   |-- stage-result-runtime.js
 |   |   |-- player-update-runtime.js
 |   |   |-- battle-timing-runtime.js
 |   |   |-- battle-random-runtime.js
@@ -393,6 +395,7 @@ tank-defender-8/
 |   |   |-- projectile-state.test.js
 |   |   |-- projectile-runtime.test.js
 |   |   |-- battle-combat-runtime.test.js
+|   |   |-- stage-result-runtime.test.js
 |   |   |-- player-update-runtime.test.js
 |   |   |-- battle-timing-runtime.test.js
 |   |   |-- battle-random-runtime.test.js
@@ -621,6 +624,8 @@ tank-defender-8/
 `src/runtime/battle-random-runtime.js` 接管纯 D44D 随机算术之上的活动战场适配：有状态随机流、零页映射、原版敌人出生位置采样，以及玩家/敌人坦克内存和类型字节。其单元测试锁定地址映射、环绕和槽位编码，同时保证 AI、生成、移动和道具运行时继续收到相同的 `randomByte` 回调。
 
 `src/runtime/battle-combat-runtime.js` 接管敌人摧毁计分、奖励生命阈值、玩家受击/死亡转换、重生恢复以及双人 GAME OVER 横幅时序。音频和最高分持久化作为显式回调保留，投射物、道具和玩家更新运行时继续使用相同的 `state.fn` API。
+
+`src/runtime/stage-result-runtime.js` 接管关卡推进投影、结算表时序、通关奖励领取者选择以及一次性通关奖励副作用。屏幕状态转换仍保留在 `src/game.js`，诊断接口和关卡结算渲染使用同一个冻结运行时 API。
 
 ## 关卡包格式
 

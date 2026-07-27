@@ -63,6 +63,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/transient-effects-runtime.js",
   "src/runtime/projectile-runtime.js",
   "src/runtime/battle-combat-runtime.js",
+  "src/runtime/stage-result-runtime.js",
   "src/runtime/player-update-runtime.js",
   "src/runtime/battle-timing-runtime.js",
   "src/runtime/battle-random-runtime.js",

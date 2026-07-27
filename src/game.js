@@ -383,7 +383,6 @@
   var createFixedFrameAudioState = deps.createFixedFrameAudioState;
   var createPlayerState = deps.createPlayerState;
   var createStagePackSchema = deps.createStagePackSchema;
-  var createStageResultPresentation = deps.createStageResultPresentation;
   var createStageRuntime = deps.createStageRuntime;
   var directionName = deps.directionName;
   var directionTowardTarget = deps.directionTowardTarget;
@@ -445,7 +444,6 @@
   var resolveMovementAudioMode = deps.resolveMovementAudioMode;
   var rightAlignedPixelTextX = deps.rightAlignedPixelTextX;
   // (scorePopupPresentation — local wrapper, not deps alias)
-  var selectStageClearBonusRecipients = deps.selectStageClearBonusRecipients;
   var serializeEditorStage = deps.serializeEditorStage;
   var serializeEditorStagePack = deps.serializeEditorStagePack;
   var setEditorQuadrant = deps.setEditorQuadrant;
@@ -507,6 +505,15 @@
     resetFrameCounterLow: resetFrameCounterLow,
     resetPlayerPosition: resetPlayerPosition,
     updateHighScore: updateHighScore
+  });
+  deps.requireRuntimeModule("stageResultRuntime").setupStageResultRuntime(state, deps, {
+    addPlayerScore: fn.addPlayerScore,
+    enemyDataStage: enemyDataStage,
+    enemyTypeDefinitions: enemyTypeDefinitions,
+    gameSettings: gameSettings,
+    mapDataStage: mapDataStage,
+    playSound: playSound,
+    stageCycleLimit: stageCycleLimit
   });
   deps.requireRuntimeModule("playerUpdateRuntime").setupPlayerUpdateRuntime(state, deps, {
     directionTowardTarget: directionTowardTarget,
@@ -1023,16 +1030,16 @@
     }
 
     if (game.screen === "stageClear") {
-      const previousVisibleKills = stageResultVisibleKillCount(stageClearPresentation());
+      const previousVisibleKills = stageResultVisibleKillCount(fn.stageClearPresentation());
       game.stageClearElapsed += 1;
-      const presentation = stageClearPresentation();
+      const presentation = fn.stageClearPresentation();
       if (stageResultVisibleKillCount(presentation) > previousVisibleKills) playSound("scoreCount");
       if (
         game.stageResultReason === "clear" &&
         !game.stageClearBonusAwarded &&
         game.stageClearElapsed >= presentation.bonusRevealFrame
       ) {
-        awardPendingStageClearBonus();
+        fn.awardPendingStageClearBonus();
       }
       game.transitionTimer -= 1;
       fn.updateExplosions();
@@ -1229,24 +1236,24 @@
     game.stageResultReason = resultReason;
     game.stageClearElapsed = 0;
     game.stageClearBonusPlayerIds = resultReason === "clear"
-      ? stageClearBonusRecipients(game.players).map((player) => player.id)
+      ? fn.stageClearBonusRecipients(game.players).map((player) => player.id)
       : [];
     game.stageClearBonusAwarded = false;
     game.screen = "stageClear";
-    game.transitionTimer = stageResultDuration(game.players);
+    game.transitionTimer = fn.stageResultDuration(game.players);
   }
 
   function finishStageResult() {
     stopScoreCountAudio();
     stopStageBonusAudio();
     if (game.stageResultReason === "gameOver") {
-      const advance = stageAdvanceResult(game.stage);
+      const advance = fn.stageAdvanceResult(game.stage);
       if (!game.customGrid && !advance.stops) game.stage = advance.stage;
       startFullGameOverScreen();
       return;
     }
-    awardPendingStageClearBonus();
-    const advance = stageAdvanceResult(game.stage);
+    fn.awardPendingStageClearBonus();
+    const advance = fn.stageAdvanceResult(game.stage);
     if (!game.customGrid && advance.stops) {
       game.screen = "title";
       resetTitleIdleTimer();
@@ -1258,7 +1265,7 @@
   }
 
   function finishStageClearClosing() {
-    if (!game.customGrid) game.stage = stageAdvanceResult(game.stage).stage;
+    if (!game.customGrid) game.stage = fn.stageAdvanceResult(game.stage).stage;
     startStage(game.stage);
   }
 
@@ -1374,79 +1381,6 @@
     game.constructionVisits = 0;
     game.hiddenInputCount = 0;
     resetTitleIdleTimer();
-  }
-
-  function stageAdvanceResult(stage) {
-    const current = Math.max(1, Math.floor(Number(stage) || 1));
-    const limit = stageCycleLimit();
-    if (current < limit) {
-      const next = current + 1;
-      return {
-        stage: next,
-        wraps: false,
-        stops: false,
-        stageCycleLimit: limit,
-        mapDataStage: mapDataStage(next),
-        enemyDataStage: enemyDataStage(next)
-      };
-    }
-    if (gameSettings().stageAdvance.loopAfterFinalStage) {
-      return {
-        stage: 1,
-        wraps: true,
-        stops: false,
-        stageCycleLimit: limit,
-        mapDataStage: mapDataStage(1),
-        enemyDataStage: enemyDataStage(1)
-      };
-    }
-    return {
-      stage: current,
-      wraps: false,
-      stops: true,
-      stageCycleLimit: limit,
-      mapDataStage: mapDataStage(current),
-      enemyDataStage: enemyDataStage(current)
-    };
-  }
-
-  function awardPendingStageClearBonus() {
-    if (game.stageClearBonusAwarded) return;
-    game.stageClearBonusAwarded = true;
-    const bonus = gameSettings().stageClearBonus;
-    let awarded = false;
-    for (const player of game.players) {
-      if (!game.stageClearBonusPlayerIds.includes(player.id)) continue;
-      fn.addPlayerScore(player, bonus.points);
-      player.stagePoints += bonus.points;
-      awarded = true;
-    }
-    if (awarded) playSound("stageBonus");
-  }
-
-  /**
-   * Builds the original result-table timeline, including its final empty count loop per row.
-   * @param {Array<object>} players Result participants with per-type stage kill counts.
-   * @param {number} elapsed Display frames elapsed since entering the result screen.
-   * @returns {object} Visible row values and reveal-frame boundaries for the supplied frame.
-   */
-  function stageClearPresentation(players, elapsed) {
-    const frame = Math.max(0, Math.floor(elapsed === undefined ? game.stageClearElapsed : elapsed));
-    return createStageResultPresentation(
-      players || game.players,
-      enemyTypeDefinitions(),
-      frame,
-      game.stageClearBonusAwarded
-    );
-  }
-
-  function stageResultDuration(players) {
-    const override = gameSettings().timings.stageClear;
-    return override > 0 ? override : stageClearPresentation(players, 0).endFrame;
-  }
-
-  function stageClearBonusRecipients(players) {
-    return selectStageClearBonusRecipients(players, gameSettings().stageClearBonus);
   }
 
   function render() {
@@ -2085,7 +2019,7 @@
   function renderStageClear() {
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    const presentation = stageClearPresentation();
+    const presentation = fn.stageClearPresentation();
     const result = presentation.result;
     const p1 = result.p1;
     const p2 = result.p2;
@@ -2383,11 +2317,6 @@
   state.fn.startHighScoreScreen = startHighScoreScreen;
   state.fn.updateHighScoreScreen = updateHighScoreScreen;
   state.fn.returnToTitleAfterGame = returnToTitleAfterGame;
-  state.fn.stageAdvanceResult = stageAdvanceResult;
-  state.fn.awardPendingStageClearBonus = awardPendingStageClearBonus;
-  state.fn.stageClearPresentation = stageClearPresentation;
-  state.fn.stageResultDuration = stageResultDuration;
-  state.fn.stageClearBonusRecipients = stageClearBonusRecipients;
   state.fn.renderTitle = renderTitle;
   state.fn.renderHiddenMessage = renderHiddenMessage;
   state.fn.renderHighScore = renderHighScore;
