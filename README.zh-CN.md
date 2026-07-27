@@ -24,6 +24,8 @@
 
 道具诊断现通过显式状态/音频边界，隔离了类型选择、共享随机消耗、可见性与暂停行为、TTL 与拾取、拾取渲染与清除、地形影响、可达出生点轮换和携带者触发清除。
 
+升级诊断现通过同一套显式状态/音频边界，隔离了星星等级规则、升级坦克外观覆盖层渲染和三级坦克生存能力。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -102,6 +104,7 @@ node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
 node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/power-up-diagnostics.js
+node --check src/runtime/upgrade-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
@@ -200,6 +203,7 @@ tank-defender-8/
 |   |   |-- enemy-diagnostics.js
 |   |   |-- timer-diagnostics.js
 |   |   |-- power-up-diagnostics.js
+|   |   |-- upgrade-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
@@ -251,6 +255,7 @@ tank-defender-8/
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-diagnostics.test.js
+|   |   |-- upgrade-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -318,6 +323,7 @@ tank-defender-8/
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-diagnostics.test.js
+|   |   |-- upgrade-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -395,6 +401,8 @@ tank-defender-8/
 `timer-diagnostics.js` 通过保留接收者的函数绑定和 18 个显式解构的运行时符号，接管连续的 7 个定时器规则、全局倒计时、护盾节奏/暂停、冻结行为、最后冻结帧和冻结期间生成探针，且不使用 `eval`。抽离并移除 3 个死适配器后，`debug-api.js` 保留 3,557 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和状态恢复；浏览器集成测试在原公开索引 67-73 依次执行全部 7 个探针，并保持重构前 2,184 字节输出的 SHA-256。
 
 `power-up-diagnostics.js` 通过保留接收者的函数绑定和 54 个显式解构的运行时符号（包括实时拾取音频记录及映射后的道具类型/随机表别名），接管连续的 15 个类型池/共享随机、可见性/暂停、TTL/拾取、拾取渲染/足迹、地形变更、出生筛选/轮换和携带者清除探针，且不使用 `eval`。抽离并移除 13 个死适配器后，`debug-api.js` 保留 3,042 个物理行。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 75-89 依次执行全部 15 个探针，并保持重构前 7,420 字节输出的 SHA-256。
+
+`upgrade-diagnostics.js` 通过保留接收者的函数绑定、17 个显式解构的运行时符号和实时玩家摧毁音频记录，接管连续的 3 个星星升级规则、升级坦克覆盖层和三级坦克生存探针，且不使用 `eval`。抽离后，`debug-api.js` 保留 2,894 个物理行。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 94-96 依次执行全部 3 个探针，并保持重构前 702 字节输出的 SHA-256。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 

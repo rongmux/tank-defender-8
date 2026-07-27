@@ -86,6 +86,7 @@
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
   var timerDiagnostics = requireRuntimeModule("timerDiagnostics");
   var powerUpDiagnostics = requireRuntimeModule("powerUpDiagnostics");
+  var upgradeDiagnostics = requireRuntimeModule("upgradeDiagnostics");
   var effectDiagnostics = requireRuntimeModule("effectDiagnostics");
   var debugSnapshot = requireRuntimeModule("debugSnapshot");
 
@@ -285,6 +286,7 @@
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
     createTimerDiagnostics: timerDiagnostics.createTimerDiagnostics,
     createPowerUpDiagnostics: powerUpDiagnostics.createPowerUpDiagnostics,
+    createUpgradeDiagnostics: upgradeDiagnostics.createUpgradeDiagnostics,
     createEffectDiagnostics: effectDiagnostics.createEffectDiagnostics,
     createDebugSnapshot: debugSnapshot.createDebugSnapshot,
 
