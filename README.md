@@ -110,6 +110,7 @@ node --check src/runtime/shared-state.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
+node --check src/runtime/battle-combat-runtime.js
 node --check src/runtime/player-update-runtime.js
 node --check src/runtime/battle-timing-runtime.js
 node --check src/runtime/battle-random-runtime.js
@@ -231,6 +232,7 @@ tank-defender-8/
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
+|   |   |-- battle-combat-runtime.js
 |   |   |-- player-update-runtime.js
 |   |   |-- battle-timing-runtime.js
 |   |   |-- battle-random-runtime.js
@@ -390,6 +392,7 @@ tank-defender-8/
 |   |   |-- projectile-impact-rules.test.js
 |   |   |-- projectile-state.test.js
 |   |   |-- projectile-runtime.test.js
+|   |   |-- battle-combat-runtime.test.js
 |   |   |-- player-update-runtime.test.js
 |   |   |-- battle-timing-runtime.test.js
 |   |   |-- battle-random-runtime.test.js
@@ -616,6 +619,8 @@ The migration order is core timing/random/geometry, configuration and stage pack
 `src/runtime/battle-timing-runtime.js` owns the fixed-frame global timer boundary: freeze countdown, shovel-wall restoration/flash timing, player invulnerability countdown, base-destruction countdown, and the exact stage-cleared predicate. Its unit suite locks the 64-frame timer cadence, wall transitions, and enemy-count boundary; browser integration verifies registration without changing the public API order.
 
 `src/runtime/battle-random-runtime.js` owns the live battle adapter around the pure D44D random arithmetic: the stateful random stream, zero-page projections, original enemy spawn position sampling, and player/enemy tank memory/type bytes. Its unit suite locks address mapping, wraparound and slot encoding while the AI, spawn, movement, and power-up runtimes continue to receive the same `randomByte` callback.
+
+`src/runtime/battle-combat-runtime.js` owns enemy destruction scoring, bonus-life thresholds, player hit/death transitions, respawn reset, and the two-player GAME OVER message timing. It keeps audio and high-score persistence as explicit callbacks, while projectile, power-up, and player-update runtimes consume the same `state.fn` API.
 
 ## Stage Pack Format
 

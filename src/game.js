@@ -33,10 +33,6 @@
   var HIDDEN_MESSAGE_DROP_FALL_FRAMES = sh.HIDDEN_MESSAGE_DROP_FALL_FRAMES;
   var HIDDEN_MESSAGE_END_FRAME = sh.HIDDEN_MESSAGE_END_FRAME;
   var GAME_OVER_TEXT = sh.GAME_OVER_TEXT;
-  var PLAYER_GAME_OVER_MESSAGE_TIMER = sh.PLAYER_GAME_OVER_MESSAGE_TIMER;
-  var PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD = sh.PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD;
-  var PLAYER_GAME_OVER_MESSAGE_Y = sh.PLAYER_GAME_OVER_MESSAGE_Y;
-  var PLAYER_GAME_OVER_MESSAGE_HIDDEN_Y = sh.PLAYER_GAME_OVER_MESSAGE_HIDDEN_Y;
   var PLAYER_GAME_OVER_STAGE_END_DELAY = sh.PLAYER_GAME_OVER_STAGE_END_DELAY;
   var EXTENDED_STAGE_END_FRAME_HIGH = sh.EXTENDED_STAGE_END_FRAME_HIGH;
   var DEMO_INITIAL_FRAME_LOW = sh.DEMO_INITIAL_FRAME_LOW;
@@ -362,13 +358,10 @@
   var UP = deps.UP;
   var WALL_FRAGMENT = deps.WALL_FRAGMENT;
   var WATER = deps.WATER;
-  var addScorePoints = deps.addScorePoints;
   var advanceFixedFrameAudioState = deps.advanceFixedFrameAudioState;
   var advanceFrameCounter = deps.advanceFrameCounter;
-  var awardBonusLives = deps.awardBonusLives;
   // (baseDestructionPresentation — local wrapper, not deps alias)
   var beginFixedFrameAudioState = deps.beginFixedFrameAudioState;
-  var beginPlayerDestructionState = deps.beginPlayerDestructionState;
   var brickFragmentRect = deps.brickFragmentRect;
   var brickFragmentsFromQuarterMask = deps.brickFragmentsFromQuarterMask;
   var buildBaseWall = deps.buildBaseWall;
@@ -450,7 +443,6 @@
   var resetPlayerState = deps.resetPlayerState;
   var resolveAudioAudibility = deps.resolveAudioAudibility;
   var resolveMovementAudioMode = deps.resolveMovementAudioMode;
-  var resolvePlayerDeathState = deps.resolvePlayerDeathState;
   var rightAlignedPixelTextX = deps.rightAlignedPixelTextX;
   // (scorePopupPresentation — local wrapper, not deps alias)
   var selectStageClearBonusRecipients = deps.selectStageClearBonusRecipients;
@@ -508,9 +500,17 @@
     gameSettings: gameSettings,
     playSound: playSound
   });
+  deps.requireRuntimeModule("battleCombatRuntime").setupBattleCombatRuntime(state, deps, {
+    explosionRule: fn.explosionRule,
+    gameSettings: gameSettings,
+    playSound: playSound,
+    resetFrameCounterLow: resetFrameCounterLow,
+    resetPlayerPosition: resetPlayerPosition,
+    updateHighScore: updateHighScore
+  });
   deps.requireRuntimeModule("playerUpdateRuntime").setupPlayerUpdateRuntime(state, deps, {
     directionTowardTarget: directionTowardTarget,
-    finishPlayerDeath: finishPlayerDeath,
+    finishPlayerDeath: fn.finishPlayerDeath,
     gameSettings: gameSettings,
     shoot: fn.shoot,
     updatePlayerMovement: updatePlayerMovement
@@ -524,11 +524,11 @@
     getEnemySpec: getEnemySpec
   });
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
-    addPlayerScore: addPlayerScore,
+    addPlayerScore: fn.addPlayerScore,
     addScorePopup: fn.addScorePopup,
     buildBaseWall: buildBaseWall,
     canTankOccupy: fn.canTankOccupy,
-    destroyEnemy: destroyEnemy,
+    destroyEnemy: fn.destroyEnemy,
     gameSettings: gameSettings,
     playSound: playSound,
     randomByte: fn.randomByte,
@@ -577,9 +577,9 @@
   deps.requireRuntimeModule("projectileTargetRuntime").setupProjectileTargetRuntime(state, deps, {
     addRuleExplosion: fn.addRuleExplosion,
     baseDestructionDuration: fn.baseDestructionDuration,
-    destroyEnemy: destroyEnemy,
+    destroyEnemy: fn.destroyEnemy,
     gameSettings: gameSettings,
-    killPlayer: killPlayer,
+    killPlayer: fn.killPlayer,
     playSound: playSound,
     releaseCarrierPowerUp: fn.releaseCarrierPowerUp
   });
@@ -1110,7 +1110,7 @@
     fn.updateBullets();
     fn.updateScorePopups();
     fn.updatePowerUp();
-    updatePlayerGameOverMessage();
+    fn.updatePlayerGameOverMessage();
     if (shouldSpawnEnemies()) fn.spawnEnemies();
     if (checkEnding) checkEndState();
     syncMovementAudio();
@@ -1159,87 +1159,6 @@
     return true;
   }
 
-  function destroyEnemy(enemy, ownerId, options) {
-    if (!enemy.alive || enemy.destroying) return;
-    const opts = options || {};
-    const awardScore = !game.demoMode && opts.awardScore !== false;
-    const trackKill = !game.demoMode && opts.trackKill !== false;
-    enemy.destroying = true;
-    enemy.destroyTicks = 0;
-    enemy.destroyExplosionTicks = fn.explosionRule("enemyDestroy").ttl;
-    enemy.destroyShowScore = opts.showScore !== false;
-    const player = game.players.find((candidate) => candidate.id === ownerId);
-    if (player) {
-      if (awardScore) {
-        addPlayerScore(player, enemy.score);
-        player.stagePoints += enemy.score;
-      }
-      if (trackKill) {
-        player.stageKills[enemy.typeIndex] = (player.stageKills[enemy.typeIndex] || 0) + 1;
-        player.totalKills[enemy.typeIndex] = (player.totalKills[enemy.typeIndex] || 0) + 1;
-      }
-    }
-  }
-
-  function addPlayerScore(player, points) {
-    const { previousScore, nextScore } = addScorePoints(player, points);
-    updateHighScore(nextScore);
-    const awarded = awardBonusLives(player, previousScore, nextScore, gameSettings().bonusLifeScores);
-    for (let index = 0; index < awarded; index += 1) playSound("bonusLife");
-  }
-
-  function killPlayer(player) {
-    const started = beginPlayerDestructionState(player, {
-      deathPowerLevel: gameSettings().deathPowerLevel,
-      explosionTicks: fn.explosionRule("playerDestroy").ttl,
-      respawnTicks: gameSettings().timings.playerRespawn
-    });
-    if (!started) return;
-    playSound("playerDestroy");
-    if (player.respawn === 0) finishPlayerDeath(player);
-  }
-
-  function finishPlayerDeath(player) {
-    const outcome = resolvePlayerDeathState(player);
-    if (!outcome.eliminated) {
-      resetPlayerPosition(player);
-      return;
-    }
-    startPlayerGameOverMessage(player);
-  }
-
-  function startPlayerGameOverMessage(player) {
-    if (game.demoMode || game.screen !== "playing") return;
-    if (!game.players.some((candidate) => candidate.id !== player.id && candidate.lives > 0)) return;
-    const isPlayerTwo = player.id === 2;
-    game.playerGameOverMessage = {
-      playerId: player.id,
-      timer: PLAYER_GAME_OVER_MESSAGE_TIMER,
-      x: isPlayerTwo ? 0xc0 : 0x20,
-      y: PLAYER_GAME_OVER_MESSAGE_Y,
-      dx: isPlayerTwo ? -1 : 1
-    };
-    resetFrameCounterLow();
-  }
-
-  function playerGameOverMessageActive() {
-    return Boolean(game.playerGameOverMessage && game.playerGameOverMessage.timer > 0);
-  }
-
-  function updatePlayerGameOverMessage() {
-    const message = game.playerGameOverMessage;
-    if (!message || message.timer <= 0 || game.demoMode) return;
-    if ((game.frameLow & 0x0f) === 0) {
-      message.timer -= 1;
-      if (message.timer <= 0) {
-        message.timer = 0;
-        message.y = PLAYER_GAME_OVER_MESSAGE_HIDDEN_Y;
-        return;
-      }
-    }
-    if (message.timer >= PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD) message.x += message.dx;
-  }
-
   function checkEndState() {
     game.enemies = game.enemies.filter((enemy) => enemy.alive);
     if (game.demoMode) {
@@ -1261,7 +1180,7 @@
       game.paused = false;
       game.pauseElapsed = 0;
       if (game.clearPendingTimer <= 0) {
-        const extendedStageEnd = playerGameOverMessageActive();
+        const extendedStageEnd = fn.playerGameOverMessageActive();
         game.clearPendingTimer = Math.max(
           gameSettings().timings.stageClearDelay,
           extendedStageEnd ? PLAYER_GAME_OVER_STAGE_END_DELAY : 0
@@ -1498,7 +1417,7 @@
     let awarded = false;
     for (const player of game.players) {
       if (!game.stageClearBonusPlayerIds.includes(player.id)) continue;
-      addPlayerScore(player, bonus.points);
+      fn.addPlayerScore(player, bonus.points);
       player.stagePoints += bonus.points;
       awarded = true;
     }
@@ -2449,13 +2368,6 @@
   state.fn.tileTypeName = tileTypeName;
   state.fn.updatePlayerMovement = updatePlayerMovement;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
-  state.fn.destroyEnemy = destroyEnemy;
-  state.fn.addPlayerScore = addPlayerScore;
-  state.fn.killPlayer = killPlayer;
-  state.fn.finishPlayerDeath = finishPlayerDeath;
-  state.fn.startPlayerGameOverMessage = startPlayerGameOverMessage;
-  state.fn.playerGameOverMessageActive = playerGameOverMessageActive;
-  state.fn.updatePlayerGameOverMessage = updatePlayerGameOverMessage;
   state.fn.checkEndState = checkEndState;
   state.fn.enterStageClear = enterStageClear;
   state.fn.enterStageResult = enterStageResult;

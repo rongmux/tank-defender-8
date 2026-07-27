@@ -110,6 +110,7 @@ node --check src/runtime/shared-state.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
+node --check src/runtime/battle-combat-runtime.js
 node --check src/runtime/player-update-runtime.js
 node --check src/runtime/battle-timing-runtime.js
 node --check src/runtime/battle-random-runtime.js
@@ -231,6 +232,7 @@ tank-defender-8/
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
+|   |   |-- battle-combat-runtime.js
 |   |   |-- player-update-runtime.js
 |   |   |-- battle-timing-runtime.js
 |   |   |-- battle-random-runtime.js
@@ -390,6 +392,7 @@ tank-defender-8/
 |   |   |-- projectile-impact-rules.test.js
 |   |   |-- projectile-state.test.js
 |   |   |-- projectile-runtime.test.js
+|   |   |-- battle-combat-runtime.test.js
 |   |   |-- player-update-runtime.test.js
 |   |   |-- battle-timing-runtime.test.js
 |   |   |-- battle-random-runtime.test.js
@@ -616,6 +619,8 @@ tank-defender-8/
 `src/runtime/battle-timing-runtime.js` 接管固定帧全局计时边界：暂停倒计时、铁锹墙恢复/闪烁时序、玩家无敌倒计时、基地摧毁倒计时以及精确的关卡清空判定。其单元测试锁定 64 帧计时节奏、墙体转换和敌人数量边界；浏览器集成测试验证模块注册，同时不改变公开 API 顺序。
 
 `src/runtime/battle-random-runtime.js` 接管纯 D44D 随机算术之上的活动战场适配：有状态随机流、零页映射、原版敌人出生位置采样，以及玩家/敌人坦克内存和类型字节。其单元测试锁定地址映射、环绕和槽位编码，同时保证 AI、生成、移动和道具运行时继续收到相同的 `randomByte` 回调。
+
+`src/runtime/battle-combat-runtime.js` 接管敌人摧毁计分、奖励生命阈值、玩家受击/死亡转换、重生恢复以及双人 GAME OVER 横幅时序。音频和最高分持久化作为显式回调保留，投射物、道具和玩家更新运行时继续使用相同的 `state.fn` API。
 
 ## 关卡包格式
 
