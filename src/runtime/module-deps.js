@@ -89,6 +89,7 @@
   var upgradeDiagnostics = requireRuntimeModule("upgradeDiagnostics");
   var combatDiagnostics = requireRuntimeModule("combatDiagnostics");
   var playerMovementDiagnostics = requireRuntimeModule("playerMovementDiagnostics");
+  var terrainDiagnostics = requireRuntimeModule("terrainDiagnostics");
   var effectDiagnostics = requireRuntimeModule("effectDiagnostics");
   var debugSnapshot = requireRuntimeModule("debugSnapshot");
 
@@ -291,6 +292,7 @@
     createUpgradeDiagnostics: upgradeDiagnostics.createUpgradeDiagnostics,
     createCombatDiagnostics: combatDiagnostics.createCombatDiagnostics,
     createPlayerMovementDiagnostics: playerMovementDiagnostics.createPlayerMovementDiagnostics,
+    createTerrainDiagnostics: terrainDiagnostics.createTerrainDiagnostics,
     createEffectDiagnostics: effectDiagnostics.createEffectDiagnostics,
     createDebugSnapshot: debugSnapshot.createDebugSnapshot,
 

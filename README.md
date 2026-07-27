@@ -28,6 +28,8 @@ Upgrade diagnostics now isolate star-level rules, upgraded-tank overlay renderin
 
 Combat diagnostics now isolate helmet protection, player/enemy projectile collision, spawn locking, bullet limits and firing input, crossing cancellation, field boundaries, terrain-hit sounds, and friendly-fire behavior behind the same explicit state/audio boundary.
 
+Terrain diagnostics now isolate terrain surfaces, base-wall priority, base destruction timing and rendering, tank occupancy, and enemy-overlap recovery behind the same explicit state/audio boundary.
+
 Player-movement diagnostics now isolate fixed-loop cadence, tread animation, friendly-fire stun timing, WASD direction aliases, turn alignment, brick recovery, ice inertia, and ice/forest render layers behind the same explicit state/audio boundary.
 
 ## Run
@@ -111,6 +113,7 @@ node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
 node --check src/runtime/combat-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
+node --check src/runtime/terrain-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
@@ -212,6 +215,7 @@ tank-defender-8/
 |   |   |-- upgrade-diagnostics.js
 |   |   |-- combat-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
+|   |   |-- terrain-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
@@ -266,6 +270,7 @@ tank-defender-8/
 |   |   |-- upgrade-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
+|   |   |-- terrain-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -336,6 +341,7 @@ tank-defender-8/
 |   |   |-- upgrade-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
+|   |   |-- terrain-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -419,6 +425,8 @@ tank-defender-8/
 `combat-diagnostics.js` binds the 12 contiguous helmet-protection, player/enemy projectile-collision, spawn-lock, bullet-limit/firing-input, crossing-cancellation, projectile-boundary, terrain-hit-sound, and friendly-fire probes through 41 explicitly destructured runtime symbols plus five live audio records, with receiver-preserving function binding and no `eval`. The extraction and 15 dead-adapter removals leave `debug-api.js` at 1,457 physical lines. Its unit suite locks state/keys/pending-fire/audio validation, exact method order, binding precedence, and output scope; browser integration executes all 12 probes at their original public indices 101-112 and preserves the pre-refactor 5,147-byte output SHA-256.
 
 `player-movement-diagnostics.js` binds the 11 contiguous fixed-loop cadence, tread animation, friendly-fire stun, WASD input, turn alignment, brick recovery, ice movement, and ice/forest layer probes through 42 explicitly destructured runtime symbols plus the live movement-ice and player-shoot audio records, with receiver-preserving function binding and no `eval`. The extraction and six dead-adapter removals leave `debug-api.js` at 2,312 physical lines. Its unit suite locks state/keys/audio validation, exact method order, binding precedence, and state restoration; browser integration executes all 11 probes at their original public indices 113-123 and preserves the pre-refactor 2,414-byte output SHA-256.
+
+`terrain-diagnostics.js` binds the six contiguous terrain-surface, base-wall-priority, base-destruction-timing/render, tank-occupancy, and enemy-overlap-recovery probes through 40 explicitly destructured runtime symbols plus three live audio records, with receiver-preserving function binding and no `eval`. The extraction and 18 dead-adapter removals leave `debug-api.js` at 1,068 physical lines. Its unit suite locks state/keys/pending-fire/audio validation, exact method order, binding precedence, and collision output scope; browser integration executes all six probes at their original public indices 124-129 and preserves the pre-refactor 6,225-byte output SHA-256.
 
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 

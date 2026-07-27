@@ -28,6 +28,8 @@
 
 战斗诊断现通过同一套显式状态/音频边界，隔离了头盔保护、玩家/敌方子弹碰撞、出生锁定、子弹上限与发射输入、交叉抵消、场地边界、地形命中音效和友军火力行为。
 
+地形诊断现通过同一套显式状态/音频边界，隔离了地形表面、基地围墙优先级、基地摧毁时序与渲染、坦克占位以及敌方重叠恢复。
+
 玩家移动诊断现通过同一套显式状态/音频边界，隔离了固定帧节奏、履带动画、友军火力眩晕时序、WASD 方向别名、转向对齐、砖块脱困、冰面惯性以及冰面/森林渲染层。
 
 ## 运行
@@ -111,6 +113,7 @@ node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
 node --check src/runtime/combat-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
+node --check src/runtime/terrain-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
@@ -212,6 +215,7 @@ tank-defender-8/
 |   |   |-- upgrade-diagnostics.js
 |   |   |-- combat-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
+|   |   |-- terrain-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
@@ -266,6 +270,7 @@ tank-defender-8/
 |   |   |-- upgrade-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
+|   |   |-- terrain-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -336,6 +341,7 @@ tank-defender-8/
 |   |   |-- upgrade-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
+|   |   |-- terrain-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -419,6 +425,8 @@ tank-defender-8/
 `combat-diagnostics.js` 通过保留接收者的函数绑定、41 个显式解构的运行时符号和 5 个实时音频记录，接管连续的 12 个头盔保护、玩家/敌方子弹碰撞、出生锁定、子弹上限/发射输入、交叉抵消、子弹边界、地形命中音效和友军火力探针，且不使用 `eval`。抽离并移除 15 个死适配器后，`debug-api.js` 保留 1,457 个物理行。其单元测试锁定状态/按键/待发射/音频校验、精确方法顺序、绑定优先级和输出作用域；浏览器集成测试在原公开索引 101-112 依次执行全部 12 个探针，并保持重构前 5,147 字节输出的 SHA-256。
 
 `player-movement-diagnostics.js` 通过保留接收者的函数绑定、42 个显式解构的运行时符号和实时冰面移动/玩家射击音频记录，接管连续的 11 个固定帧节奏、履带动画、友军火力眩晕、WASD 输入、转向对齐、砖块脱困、冰面移动以及冰面/森林图层探针，且不使用 `eval`。抽离并移除 6 个死适配器后，`debug-api.js` 保留 2,312 个物理行。其单元测试锁定状态/按键/音频校验、精确方法顺序、绑定优先级和状态恢复；浏览器集成测试在原公开索引 113-123 依次执行全部 11 个探针，并保持重构前 2,414 字节输出的 SHA-256。
+
+`terrain-diagnostics.js` 通过保留接收者的函数绑定、40 个显式解构的运行时符号和 3 个实时音频记录，接管连续的 6 个地形表面、基地围墙优先级、基地摧毁时序/渲染、坦克占位和敌方重叠恢复探针，且不使用 `eval`。抽离并移除 18 个死适配器后，`debug-api.js` 保留 1,068 个物理行。其单元测试锁定状态/按键/待发射/音频校验、精确方法顺序、绑定优先级和碰撞输出作用域；浏览器集成测试在原公开索引 124-129 依次执行全部 6 个探针，并保持重构前 6,225 字节输出的 SHA-256。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 
