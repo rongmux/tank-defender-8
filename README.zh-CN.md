@@ -108,6 +108,7 @@ node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
 node --check src/runtime/power-up-runtime.js
+node --check src/runtime/enemy-spawn-runtime.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -216,6 +217,7 @@ tank-defender-8/
 |   |-- runtime/
 |   |   |-- shared-state.js
 |   |   |-- power-up-runtime.js
+|   |   |-- enemy-spawn-runtime.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -344,6 +346,7 @@ tank-defender-8/
 |   |   |-- enemy-spawn-settings.test.js
 |   |   |-- enemy-spawn-rules.test.js
 |   |   |-- enemy-state.test.js
+|   |   |-- enemy-spawn-runtime.test.js
 |   |   |-- enemy-types.test.js
 |   |   |-- explosion-settings.test.js
 |   |   |-- fixed-frame-audio-state.test.js
@@ -468,6 +471,8 @@ tank-defender-8/
 `panel-diagnostics.js` 通过同一套保留接收者的作用域接管连续的两个敌人计数和生命计数面板探针，且不使用 `eval`。其单元测试锁定输入规范化、绑定优先级、方法顺序和输出投影；浏览器集成测试验证模块注册、原公开索引 135-136 以及重构前 133 字节输出的 SHA-256。
 
 `power-up-runtime.js` 接管从 `src/game.js` 抽出的实时道具边界：携带者释放与清除、刷新点校验与轮换、TTL 推进、拾取计分以及效果副作用。模块通过显式回调接入游戏设置、地形、碰撞、音频、计分和敌人摧毁逻辑，并注册保持不变的 `state.fn` 接口。其单元测试覆盖初始化校验、函数注册、刷新轮换、拾取、星星升级、携带者释放和瞬态状态清理；现有浏览器道具测试继续覆盖真实游戏路径。
+
+`enemy-spawn-runtime.js` 接管从 `src/game.js` 抽出的实时敌人生成边界：活动槽位容量、出生点占用重试时序、携带者清理、敌人实体创建以及按玩家数缩放的固定帧生成节奏。其单元测试锁定 `state.fn` 注册、序列上限、显式延迟、默认节奏、出生点占用重试和携带者回调；现有浏览器敌人诊断继续验证真实关卡流程。
 
 `public-api-adapters.js` 接管四组有序的公开入口：关卡包加载/校验、精灵与当前关卡包投影、`debugSnapshot()` 以及 `stagePackSchema()`。保留接收者的绑定让状态所有的加载器和依赖所有的投影保持显式，同时薄组合继续保持原公开索引 0-2、34-35、50 和 158。其单元测试锁定分组顺序、接收者优先级、校验和输出路由；浏览器集成测试验证公开位置，并移除原先动态适配器函数体。最终 `debug-api.js` 为 77 个物理行，且不再包含 `eval`。
 

@@ -108,6 +108,7 @@ node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
 node --check src/runtime/power-up-runtime.js
+node --check src/runtime/enemy-spawn-runtime.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -216,6 +217,7 @@ tank-defender-8/
 |   |-- runtime/
 |   |   |-- shared-state.js
 |   |   |-- power-up-runtime.js
+|   |   |-- enemy-spawn-runtime.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -344,6 +346,7 @@ tank-defender-8/
 |   |   |-- enemy-spawn-settings.test.js
 |   |   |-- enemy-spawn-rules.test.js
 |   |   |-- enemy-state.test.js
+|   |   |-- enemy-spawn-runtime.test.js
 |   |   |-- enemy-types.test.js
 |   |   |-- explosion-settings.test.js
 |   |   |-- fixed-frame-audio-state.test.js
@@ -468,6 +471,8 @@ The enemy diagnostics module also exposes `createEnemySpawnOverlapDiagnostics` f
 `panel-diagnostics.js` binds the two contiguous enemy-counter and life-counter panel probes through the same receiver-preserving scope without `eval`. Its unit suite locks input normalization, binding precedence, method order, and output projection; browser integration verifies module registration, the original public indices 135-136, and the pre-refactor 133-byte output SHA-256.
 
 `power-up-runtime.js` owns the live power-up boundary extracted from `src/game.js`: carrier release and clearing, spawn-point validation and rotation, TTL advancement, collection scoring, and effect side effects. The module receives explicit callbacks for game settings, terrain, collision, audio, score, and enemy destruction, then registers the unchanged `state.fn` surface. Its unit test covers setup validation, registration, spawn rotation, collection, star upgrades, carrier release, and transient-state cleanup; the existing browser power-up suites continue to exercise the real game path.
+
+`enemy-spawn-runtime.js` owns the live enemy creation boundary extracted from `src/game.js`: active-slot capacity, occupied-spawn retry timing, carrier cleanup, enemy construction, and player-scaled fixed-frame spawn pacing. Its unit test locks the state.fn registration, sequence limits, explicit delays, default pacing, occupied-point retries, and carrier callback; existing browser enemy diagnostics continue to verify the real stage flow.
 
 `public-api-adapters.js` owns the four ordered public-entry groups for pack loading/validation, sprite and current-pack projections, `debugSnapshot()`, and `stagePackSchema()`. Receiver-preserving binding keeps state-owned loaders and dependency-owned projections explicit, while the thin composition preserves the original public indices 0-2, 34-35, 50, and 158. Its unit suite locks group order, receiver precedence, validation, and output routing; browser integration verifies the public positions and removes the former dynamic adapter bodies. The resulting `debug-api.js` is 77 physical lines and contains no `eval`.
 

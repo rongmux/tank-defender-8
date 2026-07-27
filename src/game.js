@@ -331,7 +331,6 @@
   var BRICK_QUARTER_FRAGMENT_MASKS = deps.BRICK_QUARTER_FRAGMENT_MASKS;
   var CARRIER_FLASH_COLOR = deps.CARRIER_FLASH_COLOR;
   var CARRIER_FLASH_PHASE_FRAMES = deps.CARRIER_FLASH_PHASE_FRAMES;
-  var DEFAULT_ENEMY_SPAWN_PACING = deps.DEFAULT_ENEMY_SPAWN_PACING;
   var DEFAULT_ENEMY_TOTAL = deps.DEFAULT_ENEMY_TOTAL;
   var DEFAULT_ENEMY_TYPES = deps.DEFAULT_ENEMY_TYPES;
   var DEFAULT_EXPLOSION_CORE_COLOR = deps.DEFAULT_EXPLOSION_CORE_COLOR;
@@ -346,7 +345,6 @@
   var EMPTY = deps.EMPTY;
   var ENEMY_DESTRUCTION_SCORE_TICKS = deps.ENEMY_DESTRUCTION_SCORE_TICKS;
   var ENEMY_FIRE_CHANCE = deps.ENEMY_FIRE_CHANCE;
-  var ENEMY_MOVE_SPEED = deps.ENEMY_MOVE_SPEED;
   var FIXED_FRAME_AUDIO_UPDATE_MODE = deps.FIXED_FRAME_AUDIO_UPDATE_MODE;
   var FOREST = deps.FOREST;
   var FREE_AUDIO_MANIFEST = deps.FREE_AUDIO_MANIFEST;
@@ -368,7 +366,6 @@
   var UP = deps.UP;
   var WALL_FRAGMENT = deps.WALL_FRAGMENT;
   var WATER = deps.WATER;
-  var activeEnemyCount = deps.activeEnemyCount;
   var addScorePoints = deps.addScorePoints;
   var advanceBattleRandom = deps.advanceBattleRandom;
   var advanceEnemyDestructionState = deps.advanceEnemyDestructionState;
@@ -384,7 +381,6 @@
   var brickFragmentsFromQuarterMask = deps.brickFragmentsFromQuarterMask;
   var buildBaseWall = deps.buildBaseWall;
   var bulletHitsTankByCenter = deps.bulletHitsTankByCenter;
-  var calculateEnemySpawnDelay = deps.calculateEnemySpawnDelay;
   var canPlayerCollectPowerUp = deps.canPlayerCollectPowerUp;
   var canTankOccupyRect = deps.canTankOccupyRect;
   var clamp = deps.clamp;
@@ -401,7 +397,6 @@
   var compactGameOverGlyph = deps.compactGameOverGlyph;
   var createBuiltInStagePack = deps.createBuiltInStagePack;
   var createEditorStagePack = deps.createEditorStagePack;
-  var createEnemyState = deps.createEnemyState;
   var createExplosionState = deps.createExplosionState;
   var createFixedFrameAudioState = deps.createFixedFrameAudioState;
   var createPlayerState = deps.createPlayerState;
@@ -425,7 +420,6 @@
   var entityRect = deps.entityRect;
   // (explosionPresentation — local wrapper, not deps alias)
   var filterActiveTankCollisionPeers = deps.filterActiveTankCollisionPeers;
-  var findAvailableEnemySlot = deps.findAvailableEnemySlot;
   var fixedFrameAudioPresentation = deps.fixedFrameAudioPresentation;
   var fixedFrameAudioUpdateMode = deps.fixedFrameAudioUpdateMode;
   var fixedFrameVoiceDuration = deps.fixedFrameVoiceDuration;
@@ -439,7 +433,6 @@
   var isEditorDirectionCode = deps.isEditorDirectionCode;
   var isEnemyAtTurnIntersection = deps.isEnemyAtTurnIntersection;
   var isEnemyMovementFrame = deps.isEnemyMovementFrame;
-  var isEnemySpawnPointOccupied = deps.isEnemySpawnPointOccupied;
   var isMovementAudioBlocked = deps.isMovementAudioBlocked;
   var isPlayerShieldVisible = deps.isPlayerShieldVisible;
   var isPlayerTankVisible = deps.isPlayerTankVisible;
@@ -485,9 +478,7 @@
   var resolveMovementAudioMode = deps.resolveMovementAudioMode;
   var resolvePlayerDeathState = deps.resolvePlayerDeathState;
   var rightAlignedPixelTextX = deps.rightAlignedPixelTextX;
-  var scaleEnemySpawnDelay = deps.scaleEnemySpawnDelay;
   // (scorePopupPresentation — local wrapper, not deps alias)
-  var selectEnemySpawnIndex = deps.selectEnemySpawnIndex;
   var selectEnemyTargetPlayer = deps.selectEnemyTargetPlayer;
   var selectStageClearBonusRecipients = deps.selectStageClearBonusRecipients;
   var serializeEditorStage = deps.serializeEditorStage;
@@ -556,6 +547,19 @@
     randomByte: randomByte,
     rectHitsSolidTerrain: rectHitsSolidTerrain,
     stageSettings: stageSettings
+  });
+  deps.requireRuntimeModule("enemySpawnRuntime").setupEnemySpawnRuntime(state, deps, {
+    clearPowerUpForCarrierSpawn: function (carrier) {
+      return fn.clearPowerUpForCarrierSpawn(carrier);
+    },
+    enemyTypeDefinitions: enemyTypeDefinitions,
+    enemySpawnPoint: enemySpawnPoint,
+    enemyTotal: enemyTotal,
+    gameSettings: gameSettings,
+    getEnemySpec: getEnemySpec,
+    isExtendedLoopStage: isExtendedLoopStage,
+    maxActiveEnemies: maxActiveEnemies,
+    stageCycleLimit: stageCycleLimit
   });
 
   function handleAction(action) {
@@ -1074,7 +1078,7 @@
     updateScorePopups();
     fn.updatePowerUp();
     updatePlayerGameOverMessage();
-    if (shouldSpawnEnemies()) spawnEnemies();
+    if (shouldSpawnEnemies()) fn.spawnEnemies();
     if (checkEnding) checkEndState();
     syncMovementAudio();
   }
@@ -1415,7 +1419,7 @@
   }
 
   function enemyAiPhase(stage, frameHigh) {
-    const interval = scaleEnemySpawnDelayForPlayers(defaultEnemySpawnDelay(stage), game.playerCount);
+    const interval = fn.scaleEnemySpawnDelayForPlayers(fn.defaultEnemySpawnDelay(stage), game.playerCount);
     return enemyAiPhaseForInterval(interval, frameHigh);
   }
 
@@ -1464,7 +1468,7 @@
     if (address === 0x7f) return Math.max(0, enemyTotal() - game.enemySpawned);
     if (address === 0x82) return game.nextSpawn;
     if (address === 0x84) {
-      return scaleEnemySpawnDelayForPlayers(defaultEnemySpawnDelay(game.stage), game.playerCount);
+      return fn.scaleEnemySpawnDelayForPlayers(fn.defaultEnemySpawnDelay(game.stage), game.playerCount);
     }
     if (address >= 0x90 && address <= 0x97) {
       return tankRandomMemoryByte(address - 0x90, "x");
@@ -1713,62 +1717,6 @@
       }
     }
     if (message.timer >= PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD) message.x += message.dx;
-  }
-
-  function spawnEnemies() {
-    if (game.enemySpawned >= enemyTotal()) return;
-    const capacity = maxActiveEnemies();
-    if (activeEnemyCount(game.enemies) >= capacity) return;
-    if (game.nextSpawn > 0) {
-      game.nextSpawn -= 1;
-      return;
-    }
-    const enemySpec = getEnemySpec(game.stage, game.enemySpawned);
-    const spawnIndex = selectEnemySpawnIndex(enemySpec, game.enemySpawned);
-    const point = enemySpawnPoint(spawnIndex);
-    const typeIndex = enemySpec.typeIndex;
-    const type = enemyTypeDefinitions()[typeIndex] || enemyTypeDefinitions()[0];
-    const carrier = enemySpec.carrier;
-    const slotIndex = findAvailableEnemySlot(game.enemies, capacity);
-    if (slotIndex === null) return;
-    if (isEnemySpawnPointOccupied(point, game.players, game.enemies)) {
-      game.nextSpawn = gameSettings().timings.enemySpawnRetry;
-      return;
-    }
-    fn.clearPowerUpForCarrierSpawn(carrier);
-    game.enemies.push(createEnemyState({
-      id: 100 + game.enemySpawned,
-      slotIndex,
-      spawn: point,
-      direction: DOWN,
-      type,
-      typeIndex,
-      spec: enemySpec,
-      settings: gameSettings(),
-      normalMoveSpeed: ENEMY_MOVE_SPEED.normal
-    }));
-    game.enemySpawned += 1;
-    game.nextSpawn = enemySpawnDelay(game.stage, game.enemySpawned);
-  }
-
-  function enemySpawnDelay(stage, index) {
-    if (index >= enemyTotal(stage)) return 0;
-    const spec = getEnemySpec(stage, index);
-    if (spec && spec.spawnDelay !== null && spec.spawnDelay !== undefined) return spec.spawnDelay;
-    const pacing = gameSettings().enemySpawnPacing || DEFAULT_ENEMY_SPAWN_PACING;
-    return scaleEnemySpawnDelayForPlayers(index === 0 ? pacing.firstDelay : defaultEnemySpawnDelay(stage));
-  }
-
-  function defaultEnemySpawnDelay(stage) {
-    const pacing = gameSettings().enemySpawnPacing || DEFAULT_ENEMY_SPAWN_PACING;
-    const stageValue = Math.max(1, Math.floor(Number(stage) || game.stage || 1));
-    return calculateEnemySpawnDelay(pacing, stageValue, stageCycleLimit(), isExtendedLoopStage(stageValue));
-  }
-
-  function scaleEnemySpawnDelayForPlayers(delay, players) {
-    const pacing = gameSettings().enemySpawnPacing || DEFAULT_ENEMY_SPAWN_PACING;
-    const playerCount = Math.max(1, Math.floor(Number(players) || game.playerCount || 1));
-    return scaleEnemySpawnDelay(delay, playerCount, pacing);
   }
 
   function shoot(tank) {
@@ -3168,10 +3116,6 @@
   state.fn.startPlayerGameOverMessage = startPlayerGameOverMessage;
   state.fn.playerGameOverMessageActive = playerGameOverMessageActive;
   state.fn.updatePlayerGameOverMessage = updatePlayerGameOverMessage;
-  state.fn.spawnEnemies = spawnEnemies;
-  state.fn.enemySpawnDelay = enemySpawnDelay;
-  state.fn.defaultEnemySpawnDelay = defaultEnemySpawnDelay;
-  state.fn.scaleEnemySpawnDelayForPlayers = scaleEnemySpawnDelayForPlayers;
   state.fn.shoot = shoot;
   state.fn.createBullet = createBullet;
   state.fn.playerUpgradeRule = playerUpgradeRule;
