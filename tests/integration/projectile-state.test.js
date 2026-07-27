@@ -11,6 +11,8 @@ const schema = JSON.parse(JSON.stringify(api.stagePackSchema()));
 assert(modules.directions, "directions module should register before game.js");
 assert(modules.projectileState, "projectile state module should register before game.js");
 assert.equal(Object.isFrozen(modules.projectileState), true);
+assert(modules.projectileRuntime, "projectile runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.projectileRuntime), true);
 
 const defaultProjectile = JSON.parse(JSON.stringify(api.debugProjectileRuleProbe()));
 assert.deepEqual(defaultProjectile, {

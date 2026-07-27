@@ -395,7 +395,6 @@
   var createEditorStagePack = deps.createEditorStagePack;
   var createFixedFrameAudioState = deps.createFixedFrameAudioState;
   var createPlayerState = deps.createPlayerState;
-  var createProjectileState = deps.createProjectileState;
   var createStagePackSchema = deps.createStagePackSchema;
   var createStageResultPresentation = deps.createStageResultPresentation;
   var createStageRuntime = deps.createStageRuntime;
@@ -522,11 +521,14 @@
   var selectPlayerGameOverMessagePresentation = deps.playerGameOverMessagePresentation;
   var selectEditorCursorMove = deps.moveEditorCursor;
   var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
-  var defaultPlayerUpgradeRules = deps.DEFAULT_PLAYER_UPGRADE_RULES;
 
   deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
   deps.requireRuntimeModule("transientEffectsRuntime").setupTransientEffectsRuntime(state, deps, {
     gameSettings: gameSettings
+  });
+  deps.requireRuntimeModule("projectileRuntime").setupProjectileRuntime(state, deps, {
+    gameSettings: gameSettings,
+    playSound: playSound
   });
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
     addPlayerScore: addPlayerScore,
@@ -1155,7 +1157,7 @@
         }
       }
 
-      if (firePressed) shoot(player);
+      if (firePressed) fn.shoot(player);
     }
   }
 
@@ -1184,7 +1186,7 @@
           updatePlayerMovement(player, control.direction);
         }
       }
-      if (control.fire) shoot(player);
+      if (control.fire) fn.shoot(player);
     }
   }
 
@@ -1298,7 +1300,7 @@
       if (enemyTimeFrozen) continue;
       if (enemy.reload > 0) enemy.reload -= 1;
       updateEnemyMovement(enemy);
-      if (enemy.reload <= 0 && shouldEnemyFire(enemy)) shoot(enemy);
+      if (enemy.reload <= 0 && shouldEnemyFire(enemy)) fn.shoot(enemy);
     }
   }
 
@@ -1709,33 +1711,6 @@
       }
     }
     if (message.timer >= PLAYER_GAME_OVER_MESSAGE_MOVE_THRESHOLD) message.x += message.dx;
-  }
-
-  function shoot(tank) {
-    if (!tank.alive || tank.destroying || tank.reload > 0 || tank.spawnFlash > 0) return;
-    const key = `${tank.kind}:${tank.id}`;
-    const upgrade = tank.kind === "player" ? playerUpgradeRule(tank.level) : null;
-    const maxBullets = upgrade ? upgrade.maxBullets : 1;
-    const active = game.bullets.filter((bullet) => bullet.ownerKey === key).length;
-    if (active >= maxBullets) return;
-
-    game.bullets.push(createBullet(tank, key, upgrade));
-    tank.reload = upgrade ? upgrade.reload : tank.reloadBase;
-    if (tank.kind === "player") playSound("playerShoot");
-  }
-
-  function createBullet(tank, key, upgrade) {
-    return createProjectileState({
-      tank,
-      ownerKey: key,
-      upgrade,
-      rules: gameSettings().projectileRules
-    });
-  }
-
-  function playerUpgradeRule(level) {
-    const rules = gameSettings().playerUpgradeRules || defaultPlayerUpgradeRules;
-    return rules[clamp(Math.floor(level || 0), 0, rules.length - 1)];
   }
 
   /** Runs before bullet collision so a newly hit base retains its full loaded $27 counter for the hit frame. */
@@ -2996,9 +2971,6 @@
   state.fn.startPlayerGameOverMessage = startPlayerGameOverMessage;
   state.fn.playerGameOverMessageActive = playerGameOverMessageActive;
   state.fn.updatePlayerGameOverMessage = updatePlayerGameOverMessage;
-  state.fn.shoot = shoot;
-  state.fn.createBullet = createBullet;
-  state.fn.playerUpgradeRule = playerUpgradeRule;
   state.fn.updateBaseDestructionTimer = updateBaseDestructionTimer;
   state.fn.stageEnemiesCleared = stageEnemiesCleared;
   state.fn.checkEndState = checkEndState;
