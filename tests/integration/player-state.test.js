@@ -23,6 +23,8 @@ function startFromToolbar(action) {
 
 assert(modules.playerState, "player state module should register before game.js");
 assert.equal(Object.isFrozen(modules.playerState), true);
+assert(modules.playerUpdateRuntime, "player update runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.playerUpdateRuntime), true);
 
 const defaultRespawn = JSON.parse(JSON.stringify(api.debugPlayerDeathRespawnProbe()));
 assert.equal(defaultRespawn.deathTicks, 24);

@@ -110,6 +110,7 @@ node --check src/runtime/shared-state.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
+node --check src/runtime/player-update-runtime.js
 node --check src/runtime/projectile-target-runtime.js
 node --check src/runtime/projectile-resolution-runtime.js
 node --check src/runtime/projectile-motion-runtime.js
@@ -228,6 +229,7 @@ tank-defender-8/
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
+|   |   |-- player-update-runtime.js
 |   |   |-- projectile-target-runtime.js
 |   |   |-- projectile-resolution-runtime.js
 |   |   |-- projectile-motion-runtime.js
@@ -384,6 +386,7 @@ tank-defender-8/
 |   |   |-- projectile-impact-rules.test.js
 |   |   |-- projectile-state.test.js
 |   |   |-- projectile-runtime.test.js
+|   |   |-- player-update-runtime.test.js
 |   |   |-- projectile-target-runtime.test.js
 |   |   |-- projectile-resolution-runtime.test.js
 |   |   |-- projectile-motion-runtime.test.js
@@ -601,6 +604,8 @@ The migration order is core timing/random/geometry, configuration and stage pack
 - Stage intro and the original-timed per-stage result count-up table, used after both a cleared stage and game over. Each stage starts a free procedural pulse-triangle-pulse fanfare whose three voices follow the original 264-fixed-frame lifetime: it spans the 95-frame intro and the first 169 battle frames, suppresses the movement pulse channel until completion, and mutes and freezes in place while paused. Result rows increment both players together every nine frames, play one free one-frame pulse-two and short-noise replacement pair on each update frame (one pair even when both players advance together), and extend the result duration from the actual per-type kill counts. A strict two-player kill leader receives the original 1000-point award together with a free 28-frame pulse-two replacement cue; ties and game-over results do not trigger it. A simultaneous extra-life cue retains the higher-priority pulse channel while the result bonus cue advances silently. In two-player results, each centered enemy icon uses the original arrow columns with a clear pixel on both sides, so the replacement sprite cannot merge into the right arrow. The in-field GAME OVER text moves upward one pixel on each of 127 active battle frames, then remains at Y 113 for 129 more active frames; player input is cleared while tanks, bullets, spawns, terrain timers, and power-ups continue updating. The game-over route then shows the current-stage result table without the two-player kill-leader bonus, updates the next-stage index, and finally enters the separate black full-screen `GAME OVER` presentation. Its lettering starts at the original coordinates and advances each replacement glyph by 32 pixels. The screen now waits for a free pulse-one, pulse-two, and triangle replacement fanfare with the original 108-fixed-frame lifetime: each voice uses two 6-frame notes, one 24-frame note, six 8-frame notes, and a final 24-frame note. Frame 108 ends the interstitial with the first voice, while keyboard Start/Select can stop all three voices and skip only this full-screen segment. Score, persistent high score with the original 20000-point floor, reserve-life display, reserve enemy counter, and pause are also implemented.
 - Post-game high-score celebration when either player's final score strictly exceeds the record that existed when the run began; tying the record does not trigger it. The screen keeps up to seven score digits and cycles four lettering palettes every frame. Its free pulse-one, pulse-two, and triangle replacement fanfare follows the original fixed-frame sequence: both pulse voices last 460 frames, triangle ends on frame 380, pulse one retains an 80-frame muted interval, and triangle retains its initial 130-frame disabled interval. The screen waits for pulse one and returns to a fresh title cycle on frame 460.
 - Original-style Construction mode with a 16px tank cursor, 14-pattern A/B block cycle, stage-1 replacement and normal stage-2 continuation, plus optional 8px mouse editing and save/load/export extensions.
+
+`src/runtime/player-update-runtime.js` owns fixed-frame player input and Demo updates. It keeps the original Arrow/WASD bindings, one-shot fire presses, movement cadence, spawn protection, respawn timing, power-up-first Demo targeting, and enemy slot priority behind a frozen runtime API. Its unit suite covers the keyboard matrix, firing, recovery, and target selection; browser integration verifies module registration through the real game harness.
 
 ## Stage Pack Format
 

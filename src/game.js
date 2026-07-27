@@ -334,7 +334,6 @@
   var DEFAULT_ENEMY_TYPES = deps.DEFAULT_ENEMY_TYPES;
   var DEFAULT_EXPLOSION_CORE_COLOR = deps.DEFAULT_EXPLOSION_CORE_COLOR;
   var DEFAULT_ORIGINAL_STAGE_COUNT = deps.DEFAULT_ORIGINAL_STAGE_COUNT;
-  var DEFAULT_PLAYER_MOVEMENT = deps.DEFAULT_PLAYER_MOVEMENT;
   var DEFAULT_PLAYER_UPGRADE_RULES = deps.DEFAULT_PLAYER_UPGRADE_RULES;
   var DIR_X = deps.DIR_X;
   var DIR_Y = deps.DIR_Y;
@@ -367,7 +366,6 @@
   var advanceBattleRandom = deps.advanceBattleRandom;
   var advanceFixedFrameAudioState = deps.advanceFixedFrameAudioState;
   var advanceFrameCounter = deps.advanceFrameCounter;
-  var advancePlayerDestructionState = deps.advancePlayerDestructionState;
   var awardBonusLives = deps.awardBonusLives;
   // (baseDestructionPresentation — local wrapper, not deps alias)
   var beginFixedFrameAudioState = deps.beginFixedFrameAudioState;
@@ -511,6 +509,13 @@
   deps.requireRuntimeModule("projectileRuntime").setupProjectileRuntime(state, deps, {
     gameSettings: gameSettings,
     playSound: playSound
+  });
+  deps.requireRuntimeModule("playerUpdateRuntime").setupPlayerUpdateRuntime(state, deps, {
+    directionTowardTarget: directionTowardTarget,
+    finishPlayerDeath: finishPlayerDeath,
+    gameSettings: gameSettings,
+    shoot: fn.shoot,
+    updatePlayerMovement: updatePlayerMovement
   });
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
     addPlayerScore: addPlayerScore,
@@ -1090,7 +1095,7 @@
     game.tick += 1;
     updateFreezeTimer();
 
-    updatePlayers(playerInputEnabled);
+    fn.updatePlayers(playerInputEnabled);
     fn.updateEnemies();
     updateShovelTimer();
     updatePlayerInvulnerabilityTimers();
@@ -1147,121 +1152,6 @@
     return "empty";
   }
 
-  function updatePlayers(inputEnabled) {
-    if (game.demoMode) {
-      updateDemoPlayers();
-      return;
-    }
-    const controlsEnabled = inputEnabled !== false;
-    const firePresses = controlsEnabled ? new Set(pendingFirePresses) : new Set();
-    const movementFrame = isPlayerMovementFrame(game.frameLow);
-    pendingFirePresses.clear();
-    for (const player of game.players) {
-      const control = getPlayerControl(player.id);
-      const firePressed = controlsEnabled && hasControlKey(control.fire, firePresses);
-      if (player.respawn > 0) {
-        if (advancePlayerDestructionState(player, movementFrame)) finishPlayerDeath(player);
-        continue;
-      }
-      if (!player.alive) continue;
-
-      if (player.reload > 0) player.reload -= 1;
-      if (player.spawnFlash > 0) {
-        player.spawnFlash -= 1;
-        if (player.spawnFlash === 0) player.invuln = gameSettings().timings.playerInvulnerability;
-        continue;
-      }
-      if (movementFrame) {
-        if (player.stun > 0) {
-          player.stun -= 1;
-          updatePlayerMovement(player, -1, true);
-        } else {
-          let desiredDir = -1;
-          if (controlsEnabled && hasControlKey(control.up)) desiredDir = UP;
-          else if (controlsEnabled && hasControlKey(control.right)) desiredDir = RIGHT;
-          else if (controlsEnabled && hasControlKey(control.down)) desiredDir = DOWN;
-          else if (controlsEnabled && hasControlKey(control.left)) desiredDir = LEFT;
-          updatePlayerMovement(player, desiredDir);
-        }
-      }
-
-      if (firePressed) fn.shoot(player);
-    }
-  }
-
-  function updateDemoPlayers() {
-    pendingFirePresses.clear();
-    for (const player of game.players) {
-      const movementFrame = isPlayerMovementFrame(game.frameLow);
-      if (player.respawn > 0) {
-        if (advancePlayerDestructionState(player, movementFrame)) finishPlayerDeath(player);
-        continue;
-      }
-      if (!player.alive) continue;
-      if (player.reload > 0) player.reload -= 1;
-      if (player.spawnFlash > 0) {
-        player.spawnFlash -= 1;
-        if (player.spawnFlash === 0) player.invuln = gameSettings().timings.playerInvulnerability;
-        continue;
-      }
-
-      const control = demoControlForPlayer(player);
-      if (movementFrame) {
-        if (player.stun > 0) {
-          player.stun -= 1;
-          updatePlayerMovement(player, -1, true);
-        } else {
-          updatePlayerMovement(player, control.direction);
-        }
-      }
-      if (control.fire) fn.shoot(player);
-    }
-  }
-
-  function demoControlForPlayer(player) {
-    const target = demoTargetForPlayer(player);
-    if (!target) return { direction: -1, fire: false, targetKind: "none", targetId: null };
-    const horizontalFirst = ((((player.id - 1) << 1) ^ game.frameHigh) & 2) !== 0;
-    return {
-      direction: directionTowardTarget(player, target, horizontalFirst),
-      fire: player.y < FIELD_H - 32,
-      targetKind: target.kind,
-      targetId: target.id === undefined ? null : target.id
-    };
-  }
-
-  function demoTargetForPlayer(player) {
-    if (game.powerUp) {
-      return {
-        kind: "powerUp",
-        id: game.powerUp.type,
-        x: game.powerUp.x + game.powerUp.w / 2,
-        y: game.powerUp.y + game.powerUp.h / 2
-      };
-    }
-    const slotOrder = player.id === 2 ? [3, 5, 4] : [2, 4, 3];
-    for (const slotIndex of slotOrder) {
-      const enemy = game.enemies.find((candidate) =>
-        candidate.alive && !candidate.destroying && candidate.spawnFlash <= 0 && candidate.slotIndex === slotIndex
-      );
-      if (enemy) {
-        return {
-          kind: "enemy",
-          id: enemy.id,
-          x: enemy.x + enemy.w / 2,
-          y: enemy.y + enemy.h / 2
-        };
-      }
-    }
-    return null;
-  }
-
-  function isPlayerMovementFrame(tick) {
-    const cadence = gameSettings().playerMovement.frameCadence || DEFAULT_PLAYER_MOVEMENT.frameCadence;
-    const frame = Math.max(0, Math.floor(Number(tick) || 0));
-    return cadence[frame % cadence.length];
-  }
-
   function updatePlayerMovement(player, desiredDir, stunned) {
     if (player.stun > 0 && !stunned) return;
     const onIce = fn.isTankOnIce(player);
@@ -1290,26 +1180,6 @@
       );
       fn.advanceTankTracks(player);
     }
-  }
-
-  function getPlayerControl(id) {
-    if (id === 1) {
-      const control = { up: "ArrowUp", right: "ArrowRight", down: "ArrowDown", left: "ArrowLeft", fire: "Space" };
-      if (game.playerCount < 2) {
-        control.up = ["ArrowUp", "KeyW"];
-        control.right = ["ArrowRight", "KeyD"];
-        control.down = ["ArrowDown", "KeyS"];
-        control.left = ["ArrowLeft", "KeyA"];
-      }
-      return control;
-    }
-    return { up: "KeyW", right: "KeyD", down: "KeyS", left: "KeyA", fire: "KeyF" };
-  }
-
-  function hasControlKey(binding, source) {
-    const pressed = source || keys;
-    if (Array.isArray(binding)) return binding.some((key) => pressed.has(key));
-    return pressed.has(binding);
   }
 
   function shouldSpawnEnemies() {
@@ -2693,14 +2563,7 @@
   state.fn.updateShovelTimer = updateShovelTimer;
   state.fn.updatePlayerInvulnerabilityTimers = updatePlayerInvulnerabilityTimers;
   state.fn.tileTypeName = tileTypeName;
-  state.fn.updatePlayers = updatePlayers;
-  state.fn.updateDemoPlayers = updateDemoPlayers;
-  state.fn.demoControlForPlayer = demoControlForPlayer;
-  state.fn.demoTargetForPlayer = demoTargetForPlayer;
-  state.fn.isPlayerMovementFrame = isPlayerMovementFrame;
   state.fn.updatePlayerMovement = updatePlayerMovement;
-  state.fn.getPlayerControl = getPlayerControl;
-  state.fn.hasControlKey = hasControlKey;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
   state.fn.randomByte = randomByte;
   state.fn.nextBattleRandomByte = nextBattleRandomByte;
