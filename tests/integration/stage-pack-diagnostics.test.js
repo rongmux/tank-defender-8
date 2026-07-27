@@ -33,7 +33,12 @@ assert.notEqual(second.enemySequence[0].typeIndex, -1);
 
 const debugSource = fs.readFileSync(path.join(root, "src/runtime/debug-api.js"), "utf8");
 const snapshotSource = fs.readFileSync(path.join(root, "src/runtime/debug-snapshot.js"), "utf8");
-assert(debugSource.includes("createCurrentPackInfo(game, state.stageRuntime)"));
+const publicAdaptersSource = fs.readFileSync(
+  path.join(root, "src/runtime/public-api-adapters.js"),
+  "utf8"
+);
+assert(debugSource.includes("...publicAdapters.packInfo,"));
+assert(publicAdaptersSource.includes("return createCurrentPackInfo(game, stageRuntime);"));
 assert(snapshotSource.includes("...createDebugPackInfo(game, stageRuntime)"));
 assert.equal((debugSource.match(/bonusLifeScores:/g) || []).length, 0);
 assert.equal((debugSource.match(/playerUpgradeRules:/g) || []).length, 0);

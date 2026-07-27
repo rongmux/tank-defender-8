@@ -41,16 +41,11 @@ assert.equal(second.editorCursor.qc, -1);
 assert.notEqual(second.enemyTypes[0].hp, -1);
 
 const debugSource = fs.readFileSync(path.join(root, "src/runtime/debug-api.js"), "utf8");
-const adapterStart = debugSource.indexOf("        debugSnapshot() {");
-const adapterEnd = debugSource.indexOf(
-  "        ...createWallDiagnostics(state, deps),",
-  adapterStart
-);
-assert.notEqual(adapterStart, -1);
-assert.notEqual(adapterEnd, -1);
-const adapterSource = debugSource.slice(adapterStart, adapterEnd);
-assert(debugSource.includes("return createDebugSnapshot(state);"));
-assert.equal((adapterSource.match(/movementAudioMode:/g) || []).length, 0);
-assert.equal((adapterSource.match(/battleQuadrants:/g) || []).length, 0);
+assert(debugSource.includes("var publicAdapters = createPublicApiAdapters(state, deps);"));
+assert(debugSource.includes("...publicAdapters.snapshot,"));
+assert.equal(debugSource.includes("debugSnapshot() {"), false);
+assert.equal(debugSource.includes("return createDebugSnapshot(state);"), false);
+assert.equal(debugSource.includes("movementAudioMode:"), false);
+assert.equal(debugSource.includes("battleQuadrants:"), false);
 
 console.log("debug-snapshot integration test passed");

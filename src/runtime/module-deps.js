@@ -95,6 +95,7 @@
   var playerLifecycleDiagnostics = requireRuntimeModule("playerLifecycleDiagnostics");
   var effectDiagnostics = requireRuntimeModule("effectDiagnostics");
   var panelDiagnostics = requireRuntimeModule("panelDiagnostics");
+  var publicApiAdapters = requireRuntimeModule("publicApiAdapters");
   var debugSnapshot = requireRuntimeModule("debugSnapshot");
 
   // ── Presentation ───────────────────────────────────────────────────────────
@@ -303,6 +304,7 @@
     createPlayerLifecycleDiagnostics: playerLifecycleDiagnostics.createPlayerLifecycleDiagnostics,
     createEffectDiagnostics: effectDiagnostics.createEffectDiagnostics,
     createPanelDiagnostics: panelDiagnostics.createPanelDiagnostics,
+    createPublicApiAdapters: publicApiAdapters.createPublicApiAdapters,
     createDebugSnapshot: debugSnapshot.createDebugSnapshot,
 
     // Presentation

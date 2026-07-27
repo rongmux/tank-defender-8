@@ -77,6 +77,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/player-lifecycle-diagnostics.js",
   "src/runtime/effect-diagnostics.js",
   "src/runtime/panel-diagnostics.js",
+  "src/runtime/public-api-adapters.js",
   "src/runtime/debug-snapshot.js",
   "src/runtime/module-deps.js",
   "src/runtime/game-lifecycle.js",
