@@ -366,7 +366,6 @@
   var WATER = deps.WATER;
   var addScorePoints = deps.addScorePoints;
   var advanceBattleRandom = deps.advanceBattleRandom;
-  var advanceEnemyDestructionState = deps.advanceEnemyDestructionState;
   var advanceFixedFrameAudioState = deps.advanceFixedFrameAudioState;
   var advanceFrameCounter = deps.advanceFrameCounter;
   var advancePlayerDestructionState = deps.advancePlayerDestructionState;
@@ -544,6 +543,13 @@
     isExtendedLoopStage: isExtendedLoopStage,
     maxActiveEnemies: maxActiveEnemies,
     stageCycleLimit: stageCycleLimit
+  });
+  deps.requireRuntimeModule("enemyUpdateRuntime").setupEnemyUpdateRuntime(state, deps, {
+    explosionRule: fn.explosionRule,
+    gameSettings: gameSettings,
+    shoot: fn.shoot,
+    shouldEnemyFire: shouldEnemyFire,
+    updateEnemyMovement: updateEnemyMovement
   });
   deps.requireRuntimeModule("projectileTargetRuntime").setupProjectileTargetRuntime(state, deps, {
     addRuleExplosion: fn.addRuleExplosion,
@@ -1073,7 +1079,7 @@
     updateFreezeTimer();
 
     updatePlayers(playerInputEnabled);
-    updateEnemies();
+    fn.updateEnemies();
     updateShovelTimer();
     updatePlayerInvulnerabilityTimers();
     fn.updateExplosions();
@@ -1292,40 +1298,6 @@
     const pressed = source || keys;
     if (Array.isArray(binding)) return binding.some((key) => pressed.has(key));
     return pressed.has(binding);
-  }
-
-  function updateEnemies() {
-    const enemyTimeFrozen = isEnemyTimeFrozen();
-
-    for (const enemy of game.enemies) {
-      if (!enemy.alive) continue;
-      if (enemy.destroying) {
-        updateEnemyDestruction(enemy);
-        continue;
-      }
-      if (enemy.spawnFlash > 0) {
-        enemy.spawnFlash -= 1;
-        continue;
-      }
-      if (enemyTimeFrozen) continue;
-      if (enemy.reload > 0) enemy.reload -= 1;
-      updateEnemyMovement(enemy);
-      if (enemy.reload <= 0 && shouldEnemyFire(enemy)) fn.shoot(enemy);
-    }
-  }
-
-  function isEnemyTimeFrozen() {
-    return game.freezeTimer > 0 && gameSettings().timerFreezesEnemyTime;
-  }
-
-  /** Advances the original $73 enemy explosion timer on that tank's movement cadence. */
-  function updateEnemyDestruction(enemy) {
-    const released = advanceEnemyDestructionState(
-      enemy,
-      isEnemyMovementFrame(enemy, game.frameLow),
-      fn.explosionRule("enemyDestroy").ttl
-    );
-    if (released) game.enemyKilled += 1;
   }
 
   function shouldSpawnEnemies() {
@@ -2820,9 +2792,6 @@
   state.fn.updatePlayerMovement = updatePlayerMovement;
   state.fn.getPlayerControl = getPlayerControl;
   state.fn.hasControlKey = hasControlKey;
-  state.fn.updateEnemies = updateEnemies;
-  state.fn.isEnemyTimeFrozen = isEnemyTimeFrozen;
-  state.fn.updateEnemyDestruction = updateEnemyDestruction;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
   state.fn.updateEnemyMovement = updateEnemyMovement;
   state.fn.recoverEnemyTankOverlap = recoverEnemyTankOverlap;

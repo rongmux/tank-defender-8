@@ -115,6 +115,7 @@ node --check src/runtime/projectile-resolution-runtime.js
 node --check src/runtime/projectile-motion-runtime.js
 node --check src/runtime/power-up-runtime.js
 node --check src/runtime/enemy-spawn-runtime.js
+node --check src/runtime/enemy-update-runtime.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -230,6 +231,7 @@ tank-defender-8/
 |   |   |-- projectile-motion-runtime.js
 |   |   |-- power-up-runtime.js
 |   |   |-- enemy-spawn-runtime.js
+|   |   |-- enemy-update-runtime.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -359,6 +361,7 @@ tank-defender-8/
 |   |   |-- enemy-spawn-rules.test.js
 |   |   |-- enemy-state.test.js
 |   |   |-- enemy-spawn-runtime.test.js
+|   |   |-- enemy-update-runtime.test.js
 |   |   |-- enemy-types.test.js
 |   |   |-- explosion-settings.test.js
 |   |   |-- fixed-frame-audio-state.test.js
@@ -491,6 +494,8 @@ tank-defender-8/
 `power-up-runtime.js` 接管从 `src/game.js` 抽出的实时道具边界：携带者释放与清除、刷新点校验与轮换、TTL 推进、拾取计分以及效果副作用。模块通过显式回调接入游戏设置、地形、碰撞、音频、计分和敌人摧毁逻辑，并注册保持不变的 `state.fn` 接口。其单元测试覆盖初始化校验、函数注册、刷新轮换、拾取、星星升级、携带者释放和瞬态状态清理；现有浏览器道具测试继续覆盖真实游戏路径。
 
 `enemy-spawn-runtime.js` 接管从 `src/game.js` 抽出的实时敌人生成边界：活动槽位容量、出生点占用重试时序、携带者清理、敌人实体创建以及按玩家数缩放的固定帧生成节奏。其单元测试锁定 `state.fn` 注册、序列上限、显式延迟、默认节奏、出生点占用重试和携带者回调；现有浏览器敌人诊断继续验证真实关卡流程。
+
+`enemy-update-runtime.js` 接管从 `src/game.js` 抽出的固定帧敌人更新边界：摧毁动画释放、定时器冻结敌人、出生动画推进、重载递减、移动分派和开火调度。其单元测试锁定冻结中的敌人仍会完成出生动画、但不会移动、重载或射击；现有定时器、敌人状态、战斗和分数浏览器探针继续覆盖真实路径。
 
 `tank-movement-runtime.js` 接管从 `src/game.js` 抽出的固定帧坦克移动边界：碰撞 peer 过滤、地形/基地占位、重叠面积恢复支持、冰面识别、转向对齐、履带相位切换和垂直转向判断。其单元测试锁定移动阻挡、活动 peer 选择、地形投影、冰面识别、履带相位和对齐行为；现有浏览器地形与玩家移动诊断继续覆盖真实路径。
 
