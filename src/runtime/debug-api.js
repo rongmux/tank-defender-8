@@ -76,8 +76,6 @@
     function drawBrickCell() { return state.fn.drawBrickCell.apply(state.fn, arguments); }
     function drawTank() { return state.fn.drawTank.apply(state.fn, arguments); }
     function scorePopupPresentation() { return state.fn.scorePopupPresentation.apply(state.fn, arguments); }
-    function panelEnemyCounterRemaining() { return state.fn.panelEnemyCounterRemaining.apply(state.fn, arguments); }
-    function panelLifeCount() { return state.fn.panelLifeCount.apply(state.fn, arguments); }
       window.TankDefender8 = {
         loadStagePack(pack) {
           return loadStagePackObject(pack).ok;
@@ -113,23 +111,7 @@
         ...createPlayerMovementDiagnostics(state, deps),
         ...createTerrainDiagnostics(state, deps),
         ...createEffectDiagnostics(state, deps),
-        debugEnemyPanelCounterProbe(spawned, killed, total) {
-          const spawnedCount = Math.max(0, Math.floor(Number(spawned) || 0));
-          const killedCount = Math.max(0, Math.floor(Number(killed) || 0));
-          const totalCount = total === undefined ? DEFAULT_ENEMY_TOTAL : Math.max(0, Math.floor(Number(total) || 0));
-          return {
-            spawned: spawnedCount,
-            killed: killedCount,
-            remaining: panelEnemyCounterRemaining(totalCount, spawnedCount)
-          };
-        },
-        debugPanelLifeCountProbe(lives) {
-          const internalLives = Math.max(0, Math.floor(Number(lives) || 0));
-          return {
-            internalLives,
-            panelLives: panelLifeCount({ lives: internalLives })
-          };
-        },
+        ...createPanelDiagnostics(state, deps),
         ...createStageFlowDiagnostics(state, deps),
         ...createStageResultDiagnostics({
           getGameSettings: gameSettings,

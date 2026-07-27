@@ -124,6 +124,7 @@ node --check src/runtime/player-movement-diagnostics.js
 node --check src/runtime/terrain-diagnostics.js
 node --check src/runtime/player-lifecycle-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
+node --check src/runtime/panel-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
@@ -229,6 +230,7 @@ tank-defender-8/
 |   |   |-- terrain-diagnostics.js
 |   |   |-- player-lifecycle-diagnostics.js
 |   |   |-- effect-diagnostics.js
+|   |   |-- panel-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
@@ -253,6 +255,7 @@ tank-defender-8/
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
+|   |   |-- panel-diagnostics.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
 |   |   |-- enemy-ai-rules.test.js
@@ -326,6 +329,7 @@ tank-defender-8/
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
+|   |   |-- panel-diagnostics.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
 |   |   |-- enemy-ai-rules.test.js
@@ -452,7 +456,9 @@ tank-defender-8/
 
 `score-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 4 个手雷计分、手雷出生保护、分数提示和暂停时分数提示探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 488 行降至 218 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 90-93 依次执行全部 4 个探针，并保持重构前 1,095 字节输出的 SHA-256。
 
-敌人诊断模块还公开 `createEnemySpawnOverlapDiagnostics` 工厂，承载原本位于计时器诊断之后的敌人出生重叠探针。状态构造已移出 `debug-api.js`，同时保持原公开 API 位置不变；当前适配器为 148 个物理行。
+敌人诊断模块还公开 `createEnemySpawnOverlapDiagnostics` 工厂，承载原本位于计时器诊断之后的敌人出生重叠探针。状态构造已移出 `debug-api.js`，同时保持原公开 API 位置不变；当前适配器为 130 个物理行。
+
+`panel-diagnostics.js` 通过同一套保留接收者的作用域接管连续的两个敌人计数和生命计数面板探针，且不使用 `eval`。其单元测试锁定输入规范化、绑定优先级、方法顺序和输出投影；浏览器集成测试验证模块注册、原公开索引 135-136 以及重构前 133 字节输出的 SHA-256。将其移出后，当前 `debug-api.js` 保留 130 个物理行。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 

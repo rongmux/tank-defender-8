@@ -124,6 +124,7 @@ node --check src/runtime/player-movement-diagnostics.js
 node --check src/runtime/terrain-diagnostics.js
 node --check src/runtime/player-lifecycle-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
+node --check src/runtime/panel-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
@@ -229,6 +230,7 @@ tank-defender-8/
 |   |   |-- terrain-diagnostics.js
 |   |   |-- player-lifecycle-diagnostics.js
 |   |   |-- effect-diagnostics.js
+|   |   |-- panel-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
@@ -253,6 +255,7 @@ tank-defender-8/
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
+|   |   |-- panel-diagnostics.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
 |   |   |-- enemy-ai-rules.test.js
@@ -326,6 +329,7 @@ tank-defender-8/
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
+|   |   |-- panel-diagnostics.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
 |   |   |-- enemy-ai-rules.test.js
@@ -452,7 +456,9 @@ tank-defender-8/
 
 `score-diagnostics.js` binds the four contiguous grenade-score, grenade-spawn-protection, score-popup, and paused-score-popup probes through an explicit receiver-preserving state/audio scope without `eval`. The extraction and dead-adapter cleanup reduce `debug-api.js` from 488 to 218 physical lines. Its unit suite locks input validation, exact method order, receiver binding, and state restoration; browser integration executes all four probes at their original public indices 90-93 and preserves the pre-refactor 1,095-byte output SHA-256.
 
-The enemy diagnostics module also exposes `createEnemySpawnOverlapDiagnostics` for the existing post-timer spawn-overlap probe. Its state setup now lives outside `debug-api.js`, while the adapter remains at its original public API position; the current adapter is 148 physical lines.
+The enemy diagnostics module also exposes `createEnemySpawnOverlapDiagnostics` for the existing post-timer spawn-overlap probe. Its state setup now lives outside `debug-api.js`, while the adapter remains at its original public API position; the current adapter is 130 physical lines.
+
+`panel-diagnostics.js` binds the two contiguous enemy-counter and life-counter panel probes through the same receiver-preserving scope without `eval`. Its unit suite locks input normalization, binding precedence, method order, and output projection; browser integration verifies module registration, the original public indices 135-136, and the pre-refactor 133-byte output SHA-256. Moving them out leaves the current `debug-api.js` at 130 physical lines.
 
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 

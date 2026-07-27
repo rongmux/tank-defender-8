@@ -94,6 +94,7 @@
   var terrainDiagnostics = requireRuntimeModule("terrainDiagnostics");
   var playerLifecycleDiagnostics = requireRuntimeModule("playerLifecycleDiagnostics");
   var effectDiagnostics = requireRuntimeModule("effectDiagnostics");
+  var panelDiagnostics = requireRuntimeModule("panelDiagnostics");
   var debugSnapshot = requireRuntimeModule("debugSnapshot");
 
   // ── Presentation ───────────────────────────────────────────────────────────
@@ -301,6 +302,7 @@
     createTerrainDiagnostics: terrainDiagnostics.createTerrainDiagnostics,
     createPlayerLifecycleDiagnostics: playerLifecycleDiagnostics.createPlayerLifecycleDiagnostics,
     createEffectDiagnostics: effectDiagnostics.createEffectDiagnostics,
+    createPanelDiagnostics: panelDiagnostics.createPanelDiagnostics,
     createDebugSnapshot: debugSnapshot.createDebugSnapshot,
 
     // Presentation
