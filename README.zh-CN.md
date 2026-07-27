@@ -22,6 +22,8 @@
 
 计时诊断现通过同一套显式且保留接收者的边界，隔离了全局倒计时节奏、暂停时的护盾可见性、定时器道具冻结、最后一个冻结帧和冻结期间的敌人生成。
 
+道具诊断现通过显式状态/音频边界，隔离了类型选择、共享随机消耗、可见性与暂停行为、TTL 与拾取、拾取渲染与清除、地形影响、可达出生点轮换和携带者触发清除。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -99,6 +101,7 @@ node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
 node --check src/runtime/timer-diagnostics.js
+node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
@@ -196,6 +199,7 @@ tank-defender-8/
 |   |   |-- wall-diagnostics.js
 |   |   |-- enemy-diagnostics.js
 |   |   |-- timer-diagnostics.js
+|   |   |-- power-up-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
@@ -246,6 +250,7 @@ tank-defender-8/
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
+|   |   |-- power-up-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -312,9 +317,11 @@ tank-defender-8/
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
+|   |   |-- power-up-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
+|   |   |-- readme-tree.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- screen-flow-diagnostics.test.js
 |   |   |-- screen-presentation.test.js
@@ -387,6 +394,8 @@ tank-defender-8/
 
 `timer-diagnostics.js` 通过保留接收者的函数绑定和 18 个显式解构的运行时符号，接管连续的 7 个定时器规则、全局倒计时、护盾节奏/暂停、冻结行为、最后冻结帧和冻结期间生成探针，且不使用 `eval`。抽离并移除 3 个死适配器后，`debug-api.js` 保留 3,557 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和状态恢复；浏览器集成测试在原公开索引 67-73 依次执行全部 7 个探针，并保持重构前 2,184 字节输出的 SHA-256。
 
+`power-up-diagnostics.js` 通过保留接收者的函数绑定和 54 个显式解构的运行时符号（包括实时拾取音频记录及映射后的道具类型/随机表别名），接管连续的 15 个类型池/共享随机、可见性/暂停、TTL/拾取、拾取渲染/足迹、地形变更、出生筛选/轮换和携带者清除探针，且不使用 `eval`。抽离并移除 13 个死适配器后，`debug-api.js` 保留 3,042 个物理行。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 75-89 依次执行全部 15 个探针，并保持重构前 7,420 字节输出的 SHA-256。
+
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 
 `src/presentation/pixel-font.js` 接管冻结的 41 字形 5x7 字体、七个 3x5 紧凑 GAME OVER 字形、未知字符回退和右对齐几何。`src/game.js` 仅保留 Canvas 矩形提交、裁剪和条纹调色板绘制。单元测试锁定每个字形的行宽、二进制像素行以及缩放/步进对齐；浏览器集成测试验证标题/全屏条纹文字、普通 PAUSE 文字和双人淘汰紧凑文字全部使用整数矩形绘制，绝不调用抗锯齿 `fillText`。
@@ -412,6 +421,8 @@ tank-defender-8/
 `src/rules/power-up-spawn-rules.js` 接管原版 8 项道具随机表、稳定坐标去重、16 位均匀候选选择，以及存在替代位置时排除上次位置。运行时代码仍先依据战场边界、当前基地、固体地形和坦克占位过滤配置/回退位置，再把可达候选交给该模块。
 
 `tests/helpers/test-file-discovery.js` 按稳定路径顺序递归发现 `*.test.js` 文件。`tests/run-tests.js` 使用它依次在隔离的 Node 进程中运行全部单元测试、全部集成测试，最后运行剩余 smoke 套件，因此新增功能测试不再需要手工维护运行器清单。
+
+`tests/unit/readme-tree.test.js` 校验 UTF-8 解码与代码围栏配对，要求英文和中文文件树完全一致，并在排除 Git、Codex 与 Reasonix 元数据目录后，将文档中的文件逐项对照实际工作区。
 
 `src/rules/projectile-collision-rules.js` 接管子弹中心距离判断，以及不同拥有者子弹的有序抵消。对应测试保留严格小于 6px 的边界、同拥有者排除、跳过已移除子弹、确定性配对顺序、高速交叉行为和无命中特效抵消。
 

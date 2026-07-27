@@ -22,6 +22,8 @@ Wall diagnostics now isolate steel damage, directional brick strips, brick-fragm
 
 Timer diagnostics now isolate global countdown cadence, shield visibility during pause, timer power-up freezing, the final frozen frame, and enemy spawning during a freeze behind the same explicit receiver-preserving boundary.
 
+Power-up diagnostics now isolate type selection, shared random consumption, visibility and pause behavior, TTL and collection, pickup rendering and clearing, terrain effects, reachable spawn rotation, and carrier-triggered clearing behind an explicit state/audio boundary.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder locally:
@@ -99,6 +101,7 @@ node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
 node --check src/runtime/timer-diagnostics.js
+node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
@@ -196,6 +199,7 @@ tank-defender-8/
 |   |   |-- wall-diagnostics.js
 |   |   |-- enemy-diagnostics.js
 |   |   |-- timer-diagnostics.js
+|   |   |-- power-up-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
@@ -246,6 +250,7 @@ tank-defender-8/
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
+|   |   |-- power-up-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -312,9 +317,11 @@ tank-defender-8/
 |   |   |-- power-up-state.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
+|   |   |-- power-up-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
+|   |   |-- readme-tree.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- screen-flow-diagnostics.test.js
 |   |   |-- screen-presentation.test.js
@@ -387,6 +394,8 @@ tank-defender-8/
 
 `timer-diagnostics.js` binds the seven contiguous timer-rule, global countdown, shield cadence/pause, freeze behavior, final frozen-frame, and spawn-during-freeze probes through 18 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and three dead-adapter removals leave `debug-api.js` at 3,557 physical lines. Its unit suite locks validation, exact method order, binding precedence, receiver identity, and state restoration; browser integration executes all seven probes at their original public indices 67-73 and preserves the pre-refactor 2,184-byte output SHA-256.
 
+`power-up-diagnostics.js` binds the 15 contiguous type-pool/shared-random, visibility/pause, TTL/collection, pickup-render/footprint, terrain-mutation, spawn-filter/rotation, and carrier-clear probes through 54 explicitly destructured runtime symbols, including the live pickup-audio record and mapped power-up type/random-table aliases, with receiver-preserving function binding and no `eval`. The extraction and 13 dead-adapter removals leave `debug-api.js` at 3,042 physical lines. Its unit suite locks state/audio validation, exact method order, binding precedence, and receiver identity; browser integration executes all 15 probes at their original public indices 75-89 and preserves the pre-refactor 7,420-byte output SHA-256.
+
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 
 `src/presentation/pixel-font.js` owns the frozen 41-glyph 5x7 font, the seven 3x5 compact GAME OVER glyphs, unknown-character fallback, and right-alignment geometry. `src/game.js` retains only Canvas rectangle submission, clipping, and striped palette drawing. Unit coverage locks every row width and binary pixel row plus scale/advance alignment; browser integration verifies title/full-screen striped text, ordinary PAUSE text, and compact two-player elimination text all render with integer rectangles and never use anti-aliased `fillText`.
@@ -412,6 +421,8 @@ tank-defender-8/
 `src/rules/power-up-spawn-rules.js` owns the original eight-entry power-up random table, stable coordinate deduplication, 16-bit uniform candidate selection, and exclusion of the previous position when alternatives exist. Runtime code still filters configured and fallback positions against battlefield bounds, the live base, solid terrain, and tank occupancy before passing reachable candidates to this module.
 
 `tests/helpers/test-file-discovery.js` recursively discovers only `*.test.js` files in stable path order. `tests/run-tests.js` uses it to execute all unit tests, then all integration tests in isolated Node processes, and finally the remaining smoke suite, so new feature tests no longer require a hand-maintained runner entry.
+
+`tests/unit/readme-tree.test.js` validates UTF-8 decoding and balanced code fences, requires the English and Chinese file-tree blocks to match exactly, and compares their documented files against the live workspace while excluding Git, Codex, and Reasonix metadata directories.
 
 `src/rules/projectile-collision-rules.js` owns center-distance checks and ordered cancellation of projectiles from different owners. Its tests preserve the strict below-6px boundary, same-owner exclusion, removed-projectile skipping, deterministic pair order, high-speed crossing behavior, and cancellation without impact explosions.
 
