@@ -12,6 +12,8 @@ assert(modules.enemyState, "enemy state module should register before game.js");
 assert.equal(Object.isFrozen(modules.enemyState), true);
 assert(modules.enemyUpdateRuntime, "enemy update runtime should register before game.js");
 assert.equal(Object.isFrozen(modules.enemyUpdateRuntime), true);
+assert(modules.enemyMovementRuntime, "enemy movement runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.enemyMovementRuntime), true);
 assert.equal(modules.enemyState.ENEMY_DESTRUCTION_SCORE_TICKS, 6);
 
 const destruction = JSON.parse(JSON.stringify(api.debugEnemyDestructionLifecycleProbe()));

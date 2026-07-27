@@ -115,6 +115,7 @@ node --check src/runtime/projectile-resolution-runtime.js
 node --check src/runtime/projectile-motion-runtime.js
 node --check src/runtime/power-up-runtime.js
 node --check src/runtime/enemy-spawn-runtime.js
+node --check src/runtime/enemy-movement-runtime.js
 node --check src/runtime/enemy-update-runtime.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
@@ -231,6 +232,7 @@ tank-defender-8/
 |   |   |-- projectile-motion-runtime.js
 |   |   |-- power-up-runtime.js
 |   |   |-- enemy-spawn-runtime.js
+|   |   |-- enemy-movement-runtime.js
 |   |   |-- enemy-update-runtime.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
@@ -361,6 +363,7 @@ tank-defender-8/
 |   |   |-- enemy-spawn-rules.test.js
 |   |   |-- enemy-state.test.js
 |   |   |-- enemy-spawn-runtime.test.js
+|   |   |-- enemy-movement-runtime.test.js
 |   |   |-- enemy-update-runtime.test.js
 |   |   |-- enemy-types.test.js
 |   |   |-- explosion-settings.test.js
@@ -494,6 +497,8 @@ The enemy diagnostics module also exposes `createEnemySpawnOverlapDiagnostics` f
 `power-up-runtime.js` owns the live power-up boundary extracted from `src/game.js`: carrier release and clearing, spawn-point validation and rotation, TTL advancement, collection scoring, and effect side effects. The module receives explicit callbacks for game settings, terrain, collision, audio, score, and enemy destruction, then registers the unchanged `state.fn` surface. Its unit test covers setup validation, registration, spawn rotation, collection, star upgrades, carrier release, and transient-state cleanup; the existing browser power-up suites continue to exercise the real game path.
 
 `enemy-spawn-runtime.js` owns the live enemy creation boundary extracted from `src/game.js`: active-slot capacity, occupied-spawn retry timing, carrier cleanup, enemy construction, and player-scaled fixed-frame spawn pacing. Its unit test locks the state.fn registration, sequence limits, explicit delays, default pacing, occupied-point retries, and carrier callback; existing browser enemy diagnostics continue to verify the real stage flow.
+
+`enemy-movement-runtime.js` owns enemy movement extracted from `src/game.js`: alternate-movement cadence, overlap recovery, blocked retries, pending turns, intersection routing, direction reversal, and track-phase advancement. Its unit test locks cadence skips, strict overlap reduction, retry timing, and turn decisions; existing enemy, terrain, and player-movement browser diagnostics continue to exercise the live path.
 
 `enemy-update-runtime.js` owns the fixed-frame enemy update boundary extracted from `src/game.js`: destruction animation release, timer-based enemy freeze, spawn-animation advancement, reload decrement, movement dispatch, and fire scheduling. Its unit test locks the rule that frozen enemies still finish spawning but do not move, reload, or shoot; existing timer, enemy-state, combat, and score browser probes continue to exercise the live path.
 

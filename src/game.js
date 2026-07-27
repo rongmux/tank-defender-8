@@ -407,7 +407,6 @@
   var enemyAiSettings = deps.enemyAiSettings;
   var enemyColor = deps.enemyColor;
   // (enemyDestructionPresentation — local wrapper, not deps alias)
-  var entityRect = deps.entityRect;
   // (explosionPresentation — local wrapper, not deps alias)
   var fixedFrameAudioPresentation = deps.fixedFrameAudioPresentation;
   var fixedFrameAudioUpdateMode = deps.fixedFrameAudioUpdateMode;
@@ -421,7 +420,6 @@
   // (highScorePresentation — local wrapper, not deps alias)
   var isEditorDirectionCode = deps.isEditorDirectionCode;
   var isEnemyAtTurnIntersection = deps.isEnemyAtTurnIntersection;
-  var isEnemyMovementFrame = deps.isEnemyMovementFrame;
   var isMovementAudioBlocked = deps.isMovementAudioBlocked;
   var isPlayerShieldVisible = deps.isPlayerShieldVisible;
   var isPlayerTankVisible = deps.isPlayerTankVisible;
@@ -544,12 +542,23 @@
     maxActiveEnemies: maxActiveEnemies,
     stageCycleLimit: stageCycleLimit
   });
+  deps.requireRuntimeModule("enemyMovementRuntime").setupEnemyMovementRuntime(state, deps, {
+    advanceTankTracks: fn.advanceTankTracks,
+    aiRoll: aiRoll,
+    canTankOccupy: fn.canTankOccupy,
+    chooseEnemyDirectionByPhase: chooseEnemyDirectionByPhase,
+    gameSettings: gameSettings,
+    isEnemyAtTurnIntersection: isEnemyAtTurnIntersection,
+    moveTank: fn.moveTank,
+    randomByte: randomByte,
+    totalTankOverlapArea: fn.totalTankOverlapArea
+  });
   deps.requireRuntimeModule("enemyUpdateRuntime").setupEnemyUpdateRuntime(state, deps, {
     explosionRule: fn.explosionRule,
     gameSettings: gameSettings,
     shoot: fn.shoot,
     shouldEnemyFire: shouldEnemyFire,
-    updateEnemyMovement: updateEnemyMovement
+    updateEnemyMovement: fn.updateEnemyMovement
   });
   deps.requireRuntimeModule("projectileTargetRuntime").setupProjectileTargetRuntime(state, deps, {
     addRuleExplosion: fn.addRuleExplosion,
@@ -1301,78 +1310,6 @@
   }
 
   function shouldSpawnEnemies() {
-    return true;
-  }
-
-  function updateEnemyMovement(enemy, random) {
-    const nextRandom = typeof random === "function" ? random : undefined;
-    if (!isEnemyMovementFrame(enemy, game.frameLow)) return;
-
-    if (recoverEnemyTankOverlap(enemy)) return;
-
-    if (enemy.blockedPauseTicks > 0) {
-      enemy.blockedPauseTicks -= 1;
-      return;
-    }
-
-    if (enemy.pendingTurn) {
-      enemy.pendingTurn = false;
-      if ((randomByte(nextRandom) & 1) === 0) {
-        chooseEnemyDirectionByPhase(enemy, nextRandom);
-      } else {
-        enemy.dir = (enemy.dir + ((randomByte(nextRandom) & 1) === 0 ? 3 : 1)) & 3;
-      }
-      return;
-    }
-
-    const ai = gameSettings().enemyAi;
-    if (isEnemyAtTurnIntersection(enemy) && aiRoll(ai.intersectionTurnChance, nextRandom)) {
-      chooseEnemyDirectionByPhase(enemy, nextRandom);
-      return;
-    }
-
-    const distance = enemy.alternateMovement ? 1 : enemy.speed;
-    const moved = fn.moveTank(enemy, DIR_X[enemy.dir] * distance, DIR_Y[enemy.dir] * distance);
-    fn.advanceTankTracks(enemy);
-    if (moved) return;
-
-    if (aiRoll(ai.blockedRetryChance, nextRandom)) {
-      enemy.blockedPauseTicks = ai.blockedRetryTicks;
-      return;
-    }
-
-    if (isEnemyAtTurnIntersection(enemy)) enemy.pendingTurn = true;
-    enemy.dir ^= 2;
-  }
-
-  /**
-   * Moves an enemy out of an invalid tank overlap before normal blocked-state
-   * handling can keep both tanks trapped inside each other's collision boxes.
-   */
-  function recoverEnemyTankOverlap(enemy) {
-    const currentRect = entityRect(enemy);
-    const currentArea = fn.totalTankOverlapArea(enemy, currentRect);
-    if (currentArea <= 0) return false;
-
-    const distance = enemy.alternateMovement ? 1 : Math.max(1, Number(enemy.speed) || 1);
-    const directions = [enemy.dir, enemy.dir ^ 2, (enemy.dir + 1) & 3, (enemy.dir + 3) & 3];
-    let best = null;
-    for (const dir of directions) {
-      const x = enemy.x + DIR_X[dir] * distance;
-      const y = enemy.y + DIR_Y[dir] * distance;
-      if (!fn.canTankOccupy(enemy, x, y)) continue;
-      const area = fn.totalTankOverlapArea(enemy, { x, y, w: enemy.w, h: enemy.h });
-      if (area >= currentArea || (best && area >= best.area)) continue;
-      best = { x, y, dir, area };
-    }
-    if (!best) return false;
-
-    enemy.x = best.x;
-    enemy.y = best.y;
-    enemy.dir = best.dir;
-    enemy.blockedPauseTicks = 0;
-    enemy.pendingTurn = false;
-    fn.advanceTankTracks(enemy);
     return true;
   }
 
@@ -2793,8 +2730,6 @@
   state.fn.getPlayerControl = getPlayerControl;
   state.fn.hasControlKey = hasControlKey;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
-  state.fn.updateEnemyMovement = updateEnemyMovement;
-  state.fn.recoverEnemyTankOverlap = recoverEnemyTankOverlap;
   state.fn.chooseEnemyDirectionByPhase = chooseEnemyDirectionByPhase;
   state.fn.enemyAiPhase = enemyAiPhase;
   state.fn.shouldEnemyFire = shouldEnemyFire;
