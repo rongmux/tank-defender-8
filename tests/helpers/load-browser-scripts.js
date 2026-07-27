@@ -62,6 +62,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/audio-diagnostics.js",
   "src/runtime/stage-pack-diagnostics.js",
   "src/runtime/stage-result-diagnostics.js",
+  "src/runtime/pause-diagnostics.js",
   "src/runtime/stage-flow-diagnostics.js",
   "src/runtime/screen-flow-diagnostics.js",
   "src/runtime/wall-diagnostics.js",

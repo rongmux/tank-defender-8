@@ -34,6 +34,8 @@ Player-movement diagnostics now isolate fixed-loop cadence, tread animation, fri
 
 Player-lifecycle diagnostics now isolate death/respawn timing, two-player Game Over messaging, message rendering, and bonus-life progression behind the same explicit state/audio boundary.
 
+Pause diagnostics now isolate pause toggling, pause-safe stage completion, and pause-frame rendering behind the same explicit state/audio boundary.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder locally:
@@ -106,6 +108,7 @@ node --check src/runtime/shared-state.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
+node --check src/runtime/pause-diagnostics.js
 node --check src/runtime/stage-flow-diagnostics.js
 node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
@@ -209,6 +212,7 @@ tank-defender-8/
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
+|   |   |-- pause-diagnostics.js
 |   |   |-- stage-flow-diagnostics.js
 |   |   |-- screen-flow-diagnostics.js
 |   |   |-- wall-diagnostics.js
@@ -276,6 +280,7 @@ tank-defender-8/
 |   |   |-- player-movement-diagnostics.test.js
 |   |   |-- terrain-diagnostics.test.js
 |   |   |-- player-lifecycle-diagnostics.test.js
+|   |   |-- pause-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -348,6 +353,7 @@ tank-defender-8/
 |   |   |-- player-movement-diagnostics.test.js
 |   |   |-- terrain-diagnostics.test.js
 |   |   |-- player-lifecycle-diagnostics.test.js
+|   |   |-- pause-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -435,6 +441,8 @@ tank-defender-8/
 `terrain-diagnostics.js` binds the six contiguous terrain-surface, base-wall-priority, base-destruction-timing/render, tank-occupancy, and enemy-overlap-recovery probes through 40 explicitly destructured runtime symbols plus three live audio records, with receiver-preserving function binding and no `eval`. The extraction and 18 dead-adapter removals leave `debug-api.js` at 1,068 physical lines. Its unit suite locks state/keys/pending-fire/audio validation, exact method order, binding precedence, and collision output scope; browser integration executes all six probes at their original public indices 124-129 and preserves the pre-refactor 6,225-byte output SHA-256.
 
 `player-lifecycle-diagnostics.js` binds the four contiguous death/respawn, two-player Game Over message, message-rendering, and bonus-life probes through an explicit receiver-preserving state/audio scope without `eval`. The extraction and dead-adapter cleanup reduce `debug-api.js` from 1,068 to 638 physical lines. Its unit suite locks input validation, exact method order, receiver binding, and state restoration; browser integration executes all four probes at their original public indices 97-100 and preserves the pre-refactor 5,172-byte output SHA-256.
+
+`pause-diagnostics.js` binds the three contiguous pause-toggle, pause-safe stage-completion, and pause-frame-rendering probes through an explicit receiver-preserving state/audio scope without `eval`. The extraction and dead-adapter cleanup reduce `debug-api.js` from 638 to 488 physical lines. Its unit suite locks input validation, exact method order, receiver binding, and state restoration; browser integration executes all three probes at their original public indices 36-38 and preserves the pre-refactor 973-byte output SHA-256.
 
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 

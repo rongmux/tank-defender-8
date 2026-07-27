@@ -14,11 +14,9 @@
   function setupDebugApi(state, deps) {
     // State aliases
     var game = state.game;
-    var pendingFirePresses = state.pendingFirePresses;
 
     // Audio state aliases
     var enemyDestroyAudio = state.audio.enemyDestroy;
-    var pauseAudio = state.audio.pause;
 
     // Deps aliases (all non-function properties from module-deps)
     var depsAliases = '';
@@ -71,11 +69,8 @@
     function enemyTypeDefinitions() { return state.fn.enemyTypeDefinitions.apply(state.fn, arguments); }
     function makeGrid() { return state.fn.makeGrid.apply(state.fn, arguments); }
     function cloneGrid() { return state.fn.cloneGrid.apply(state.fn, arguments); }
-    function syncMovementAudio() { return state.fn.syncMovementAudio.apply(state.fn, arguments); }
     function stopEnemyDestroyAudio() { return state.fn.stopEnemyDestroyAudio.apply(state.fn, arguments); }
     function syncEnemyDestroyAudioNodes() { return state.fn.syncEnemyDestroyAudioNodes.apply(state.fn, arguments); }
-    function stopPauseAudio() { return state.fn.stopPauseAudio.apply(state.fn, arguments); }
-    function syncPauseAudioNodes() { return state.fn.syncPauseAudioNodes.apply(state.fn, arguments); }
     function loadStagePackJsonText() { return state.fn.loadStagePackJsonText.apply(state.fn, arguments); }
     function loadStagePackObject() { return state.fn.loadStagePackObject.apply(state.fn, arguments); }
     function updateEnemies() { return state.fn.updateEnemies.apply(state.fn, arguments); }
@@ -93,11 +88,7 @@
     function scorePopupPresentation() { return state.fn.scorePopupPresentation.apply(state.fn, arguments); }
     function panelEnemyCounterRemaining() { return state.fn.panelEnemyCounterRemaining.apply(state.fn, arguments); }
     function panelLifeCount() { return state.fn.panelLifeCount.apply(state.fn, arguments); }
-    function renderPause() { return state.fn.renderPause.apply(state.fn, arguments); }
-    function pausePresentation() { return state.fn.pausePresentation.apply(state.fn, arguments); }
     function preparePausedDebugBattle() { return state.fn.preparePausedDebugBattle.apply(state.fn, arguments); }
-    function isPauseInputCode() { return state.fn.isPauseInputCode.apply(state.fn, arguments); }
-    function togglePause() { return state.fn.togglePause.apply(state.fn, arguments); }
       window.TankDefender8 = {
         loadStagePack(pack) {
           return loadStagePackObject(pack).ok;
@@ -116,148 +107,7 @@
         currentPackInfo() {
           return createCurrentPackInfo(game, state.stageRuntime);
         },
-        debugPauseBehaviorProbe() {
-          const previous = { ...game };
-          const previousFirePresses = Array.from(pendingFirePresses);
-          const previousPause = { active: pauseAudio.active, frame: pauseAudio.frame };
-          try {
-            stopPauseAudio();
-            game.screen = "playing";
-            game.demoMode = false;
-            game.paused = false;
-            game.pauseElapsed = 99;
-            game.tick = 15;
-            game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
-            game.players = [{ alive: true, lives: 1, respawn: 0 }];
-            game.enemies = [];
-            game.enemySpawned = 0;
-            game.clearPendingTimer = 0;
-            game.scorePopups = [];
-            pendingFirePresses.clear();
-            pendingFirePresses.add("Space");
-    
-            const entered = togglePause();
-            const entry = {
-              paused: game.paused,
-              pauseElapsed: game.pauseElapsed,
-              pendingFirePresses: pendingFirePresses.size,
-              pauseAudioActive: pauseAudio.active,
-              pauseAudioFrame: pauseAudio.frame
-            };
-            update();
-            const pausedUpdate = {
-              tick: game.tick,
-              pauseElapsed: game.pauseElapsed,
-              pauseAudioFrame: pauseAudio.frame
-            };
-            const exited = togglePause();
-            const exit = {
-              paused: game.paused,
-              pauseAudioActive: pauseAudio.active,
-              pauseAudioFrame: pauseAudio.frame
-            };
-    
-            game.screen = "stageIntro";
-            game.paused = false;
-            game.demoMode = false;
-            const stageIntroAccepted = togglePause();
-            game.screen = "playing";
-            game.demoMode = true;
-            const demoAccepted = togglePause();
-    
-            return {
-              entered,
-              exited,
-              entry,
-              exit,
-              pausedUpdate,
-              stageIntroAccepted,
-              demoAccepted,
-              inputs: ["Enter", "KeyP", "Escape"].map((code) => ({ code, accepted: isPauseInputCode(code) })),
-              frames: [15, 16, 31, 32].map(pausePresentation)
-            };
-          } finally {
-            stopPauseAudio();
-            pendingFirePresses.clear();
-            for (const code of previousFirePresses) pendingFirePresses.add(code);
-            Object.assign(game, previous);
-            pauseAudio.active = previousPause.active;
-            pauseAudio.frame = previousPause.frame;
-            syncPauseAudioNodes();
-            syncMovementAudio();
-          }
-        },
-        debugPausedStageEndProbe() {
-          const previous = { ...game };
-          const total = enemyTotal();
-          const player = { alive: true, lives: 1, respawn: 0 };
-          try {
-            game.screen = "playing";
-            game.demoMode = false;
-            game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
-            game.players = [player];
-            game.enemies = [];
-            game.enemySpawned = Math.max(0, total - 1);
-            game.clearPendingTimer = 0;
-            game.paused = true;
-            game.pauseElapsed = 0;
-            game.tick = 41;
-            game.scorePopups = [];
-            update();
-            const incomplete = {
-              screen: game.screen,
-              paused: game.paused,
-              pauseElapsed: game.pauseElapsed,
-              tick: game.tick
-            };
-    
-            game.screen = "playing";
-            game.enemies = [{ alive: false }];
-            game.enemySpawned = total;
-            game.clearPendingTimer = 0;
-            game.paused = true;
-            game.pauseElapsed = 0;
-            game.tick = 41;
-            game.scorePopups = [];
-            update();
-            const detected = {
-              screen: game.screen,
-              paused: game.paused,
-              pauseElapsed: game.pauseElapsed,
-              tick: game.tick,
-              enemyCount: game.enemies.length,
-              clearPendingTimer: game.clearPendingTimer
-            };
-            const pauseAcceptedDuringDelay = togglePause();
-            return {
-              delay: gameSettings().timings.stageClearDelay,
-              incomplete,
-              detected,
-              pauseAcceptedDuringDelay
-            };
-          } finally {
-            Object.assign(game, previous);
-          }
-        },
-        debugRenderPauseFrame(frame) {
-          const previous = {
-            paused: game.paused,
-            pauseElapsed: game.pauseElapsed,
-            tick: game.tick,
-            frameLow: game.frameLow,
-            frameHigh: game.frameHigh
-          };
-          try {
-            game.paused = true;
-            game.pauseElapsed = 0;
-            game.tick = Math.max(0, Math.floor(Number(frame) || 0));
-            game.frameLow = game.tick & 0xff;
-            renderPause();
-            return pausePresentation(game.frameLow);
-          } finally {
-            Object.assign(game, previous);
-          }
-        },
+        ...createPauseDiagnostics(state, deps),
         ...createScreenFlowDiagnostics(state, deps),
         debugSnapshot() {
           return createDebugSnapshot(state);

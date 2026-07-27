@@ -34,6 +34,8 @@
 
 玩家生命周期诊断现通过同一套显式状态/音频边界，隔离了死亡/重生时序、双人 Game Over 信息、信息渲染和奖励生命推进。
 
+暂停诊断现通过同一套显式状态/音频边界，隔离了暂停切换、暂停期间的关卡完成检测和暂停帧渲染。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -106,6 +108,7 @@ node --check src/runtime/shared-state.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
+node --check src/runtime/pause-diagnostics.js
 node --check src/runtime/stage-flow-diagnostics.js
 node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
@@ -209,6 +212,7 @@ tank-defender-8/
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
+|   |   |-- pause-diagnostics.js
 |   |   |-- stage-flow-diagnostics.js
 |   |   |-- screen-flow-diagnostics.js
 |   |   |-- wall-diagnostics.js
@@ -276,6 +280,7 @@ tank-defender-8/
 |   |   |-- player-movement-diagnostics.test.js
 |   |   |-- terrain-diagnostics.test.js
 |   |   |-- player-lifecycle-diagnostics.test.js
+|   |   |-- pause-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -348,6 +353,7 @@ tank-defender-8/
 |   |   |-- player-movement-diagnostics.test.js
 |   |   |-- terrain-diagnostics.test.js
 |   |   |-- player-lifecycle-diagnostics.test.js
+|   |   |-- pause-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
 |   |   |-- power-up-spawn-rules.test.js
 |   |   |-- procedural-stage.test.js
@@ -435,6 +441,8 @@ tank-defender-8/
 `terrain-diagnostics.js` 通过保留接收者的函数绑定、40 个显式解构的运行时符号和 3 个实时音频记录，接管连续的 6 个地形表面、基地围墙优先级、基地摧毁时序/渲染、坦克占位和敌方重叠恢复探针，且不使用 `eval`。抽离并移除 18 个死适配器后，`debug-api.js` 保留 1,068 个物理行。其单元测试锁定状态/按键/待发射/音频校验、精确方法顺序、绑定优先级和碰撞输出作用域；浏览器集成测试在原公开索引 124-129 依次执行全部 6 个探针，并保持重构前 6,225 字节输出的 SHA-256。
 
 `player-lifecycle-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 4 个死亡/重生、双人 Game Over 信息、信息渲染和奖励生命探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 1,068 行降至 638 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 97-100 依次执行全部 4 个探针，并保持重构前 5,172 字节输出的 SHA-256。
+
+`pause-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 3 个暂停切换、暂停期间关卡完成检测和暂停帧渲染探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 638 行降至 488 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 36-38 依次执行全部 3 个探针，并保持重构前 973 字节输出的 SHA-256。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 
