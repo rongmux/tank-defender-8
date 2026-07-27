@@ -79,6 +79,9 @@ const state = {
 const api = diagnostics.createEnemyDiagnostics(state, deps);
 assert.equal(Object.isFrozen(api), true);
 assert.deepEqual(Object.keys(api), ENEMY_DIAGNOSTIC_METHODS);
+const spawnOverlapApi = diagnostics.createEnemySpawnOverlapDiagnostics(state, deps);
+assert.equal(Object.isFrozen(spawnOverlapApi), true);
+assert.deepEqual(Object.keys(spawnOverlapApi), ["debugEnemySpawnOverlapProbe"]);
 assert.deepEqual(api.debugCarrierReleaseProbe(4), {
   rule: "firstHit",
   clearUncollectedOnCarrierSpawn: true,

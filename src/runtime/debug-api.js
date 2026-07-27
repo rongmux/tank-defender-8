@@ -104,77 +104,7 @@
         ...createWallDiagnostics(state, deps),
         ...createEnemyDiagnostics(state, deps),
         ...createTimerDiagnostics(state, deps),
-        debugEnemySpawnOverlapProbe() {
-          const previous = {
-            stage: game.stage,
-            playerCount: game.playerCount,
-            grid: game.grid,
-            base: game.base,
-            players: game.players,
-            enemies: game.enemies,
-            bullets: game.bullets,
-            explosions: game.explosions,
-            powerUp: game.powerUp,
-            enemySpawned: game.enemySpawned,
-            nextSpawn: game.nextSpawn
-          };
-          try {
-            game.stage = 1;
-            game.playerCount = 1;
-            game.grid = makeGrid();
-            game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
-            const spec = getEnemySpec(game.stage, 0);
-            const point = enemySpawnPoint(spec.spawnIndex);
-            const blocker = {
-              kind: "enemy",
-              id: 200,
-              slotIndex: 2,
-              x: point.x,
-              y: point.y,
-              w: 14,
-              h: 14,
-              alive: true,
-              respawn: 0,
-              spawnFlash: gameSettings().timings.enemySpawnFlash
-            };
-            game.players = [];
-            game.enemies = [blocker];
-            game.bullets = [];
-            game.explosions = [];
-            game.powerUp = null;
-            game.enemySpawned = 0;
-            game.nextSpawn = 0;
-            spawnEnemies();
-            const blocked = {
-              enemyCount: game.enemies.length,
-              enemySpawned: game.enemySpawned,
-              retry: game.nextSpawn
-            };
-            blocker.x = HALF * 2;
-            blocker.y = HALF * 2;
-            for (let frame = 0; frame < gameSettings().timings.enemySpawnRetry; frame += 1) spawnEnemies();
-            const beforeRetry = {
-              enemyCount: game.enemies.length,
-              enemySpawned: game.enemySpawned,
-              retry: game.nextSpawn
-            };
-            spawnEnemies();
-            const spawnedEnemy = game.enemies.find((enemy) => enemy !== blocker);
-            return {
-              blocked,
-              beforeRetry,
-              afterRetry: {
-                enemyCount: game.enemies.length,
-                enemySpawned: game.enemySpawned,
-                enemyOverlap: Boolean(spawnedEnemy && rectsOverlap(blocker, spawnedEnemy))
-              },
-              spawnIndex: spec.spawnIndex,
-              enemyPosition: spawnedEnemy ? { x: spawnedEnemy.x, y: spawnedEnemy.y } : null
-            };
-          } finally {
-            Object.assign(game, previous);
-          }
-        },
+        ...createEnemySpawnOverlapDiagnostics(state, deps),
         ...createPowerUpDiagnostics(state, deps),
         ...createScoreDiagnostics(state, deps),
         ...createUpgradeDiagnostics(state, deps),

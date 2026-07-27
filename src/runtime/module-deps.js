@@ -291,6 +291,7 @@
     createScreenFlowDiagnostics: screenFlowDiagnostics.createScreenFlowDiagnostics,
     createWallDiagnostics: wallDiagnostics.createWallDiagnostics,
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
+    createEnemySpawnOverlapDiagnostics: enemyDiagnostics.createEnemySpawnOverlapDiagnostics,
     createTimerDiagnostics: timerDiagnostics.createTimerDiagnostics,
     createPowerUpDiagnostics: powerUpDiagnostics.createPowerUpDiagnostics,
     createScoreDiagnostics: scoreDiagnostics.createScoreDiagnostics,
