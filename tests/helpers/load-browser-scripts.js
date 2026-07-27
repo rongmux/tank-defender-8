@@ -69,6 +69,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/enemy-diagnostics.js",
   "src/runtime/timer-diagnostics.js",
   "src/runtime/power-up-diagnostics.js",
+  "src/runtime/score-diagnostics.js",
   "src/runtime/upgrade-diagnostics.js",
   "src/runtime/combat-diagnostics.js",
   "src/runtime/player-movement-diagnostics.js",

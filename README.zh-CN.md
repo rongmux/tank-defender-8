@@ -36,6 +36,8 @@
 
 暂停诊断现通过同一套显式状态/音频边界，隔离了暂停切换、暂停期间的关卡完成检测和暂停帧渲染。
 
+分数诊断现通过同一套显式状态/音频边界，隔离了手雷计分、敌人出生保护、分数提示创建和暂停时的分数提示生命周期。
+
 ## 运行
 
 在浏览器中打开 `index.html`，或在本地托管该文件夹：
@@ -115,6 +117,7 @@ node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
 node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/power-up-diagnostics.js
+node --check src/runtime/score-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
 node --check src/runtime/combat-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
@@ -219,6 +222,7 @@ tank-defender-8/
 |   |   |-- enemy-diagnostics.js
 |   |   |-- timer-diagnostics.js
 |   |   |-- power-up-diagnostics.js
+|   |   |-- score-diagnostics.js
 |   |   |-- upgrade-diagnostics.js
 |   |   |-- combat-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
@@ -275,6 +279,7 @@ tank-defender-8/
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-diagnostics.test.js
+|   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
@@ -348,6 +353,7 @@ tank-defender-8/
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-diagnostics.test.js
+|   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
@@ -443,6 +449,8 @@ tank-defender-8/
 `player-lifecycle-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 4 个死亡/重生、双人 Game Over 信息、信息渲染和奖励生命探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 1,068 行降至 638 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 97-100 依次执行全部 4 个探针，并保持重构前 5,172 字节输出的 SHA-256。
 
 `pause-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 3 个暂停切换、暂停期间关卡完成检测和暂停帧渲染探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 638 行降至 488 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 36-38 依次执行全部 3 个探针，并保持重构前 973 字节输出的 SHA-256。
+
+`score-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 4 个手雷计分、手雷出生保护、分数提示和暂停时分数提示探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 488 行降至 218 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 90-93 依次执行全部 4 个探针，并保持重构前 1,095 字节输出的 SHA-256。
 
 `src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
 

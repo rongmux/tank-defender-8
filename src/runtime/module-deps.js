@@ -87,6 +87,7 @@
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
   var timerDiagnostics = requireRuntimeModule("timerDiagnostics");
   var powerUpDiagnostics = requireRuntimeModule("powerUpDiagnostics");
+  var scoreDiagnostics = requireRuntimeModule("scoreDiagnostics");
   var upgradeDiagnostics = requireRuntimeModule("upgradeDiagnostics");
   var combatDiagnostics = requireRuntimeModule("combatDiagnostics");
   var playerMovementDiagnostics = requireRuntimeModule("playerMovementDiagnostics");
@@ -292,6 +293,7 @@
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
     createTimerDiagnostics: timerDiagnostics.createTimerDiagnostics,
     createPowerUpDiagnostics: powerUpDiagnostics.createPowerUpDiagnostics,
+    createScoreDiagnostics: scoreDiagnostics.createScoreDiagnostics,
     createUpgradeDiagnostics: upgradeDiagnostics.createUpgradeDiagnostics,
     createCombatDiagnostics: combatDiagnostics.createCombatDiagnostics,
     createPlayerMovementDiagnostics: playerMovementDiagnostics.createPlayerMovementDiagnostics,

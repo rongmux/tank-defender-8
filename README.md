@@ -36,6 +36,8 @@ Player-lifecycle diagnostics now isolate death/respawn timing, two-player Game O
 
 Pause diagnostics now isolate pause toggling, pause-safe stage completion, and pause-frame rendering behind the same explicit state/audio boundary.
 
+Score diagnostics now isolate grenade scoring, spawn-protection behavior, score-popup creation, and paused score-popup lifecycle behind the same explicit state/audio boundary.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder locally:
@@ -115,6 +117,7 @@ node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
 node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/power-up-diagnostics.js
+node --check src/runtime/score-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
 node --check src/runtime/combat-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
@@ -219,6 +222,7 @@ tank-defender-8/
 |   |   |-- enemy-diagnostics.js
 |   |   |-- timer-diagnostics.js
 |   |   |-- power-up-diagnostics.js
+|   |   |-- score-diagnostics.js
 |   |   |-- upgrade-diagnostics.js
 |   |   |-- combat-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
@@ -275,6 +279,7 @@ tank-defender-8/
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-diagnostics.test.js
+|   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
@@ -348,6 +353,7 @@ tank-defender-8/
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-diagnostics.test.js
+|   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
@@ -443,6 +449,8 @@ tank-defender-8/
 `player-lifecycle-diagnostics.js` binds the four contiguous death/respawn, two-player Game Over message, message-rendering, and bonus-life probes through an explicit receiver-preserving state/audio scope without `eval`. The extraction and dead-adapter cleanup reduce `debug-api.js` from 1,068 to 638 physical lines. Its unit suite locks input validation, exact method order, receiver binding, and state restoration; browser integration executes all four probes at their original public indices 97-100 and preserves the pre-refactor 5,172-byte output SHA-256.
 
 `pause-diagnostics.js` binds the three contiguous pause-toggle, pause-safe stage-completion, and pause-frame-rendering probes through an explicit receiver-preserving state/audio scope without `eval`. The extraction and dead-adapter cleanup reduce `debug-api.js` from 638 to 488 physical lines. Its unit suite locks input validation, exact method order, receiver binding, and state restoration; browser integration executes all three probes at their original public indices 36-38 and preserves the pre-refactor 973-byte output SHA-256.
+
+`score-diagnostics.js` binds the four contiguous grenade-score, grenade-spawn-protection, score-popup, and paused-score-popup probes through an explicit receiver-preserving state/audio scope without `eval`. The extraction and dead-adapter cleanup reduce `debug-api.js` from 488 to 218 physical lines. Its unit suite locks input validation, exact method order, receiver binding, and state restoration; browser integration executes all four probes at their original public indices 90-93 and preserves the pre-refactor 1,095-byte output SHA-256.
 
 `src/presentation/free-sprite-manifest.js` owns the deeply frozen browser module copy of `data/free-sprite-manifest.json` and the independent deep-clone API exposed by the runtime. Unit coverage compares all 14 sprite groups against the JSON source and locks tread animation phases, six outlined power-ups, star geometry, steel bolts, water animation, hidden-drop phases, destruction phases, and clone isolation. Browser integration verifies registration and confirms public clones cannot mutate the frozen internal replacement geometry.
 
