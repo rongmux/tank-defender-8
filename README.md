@@ -108,6 +108,7 @@ node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
 node --check src/runtime/tank-movement-runtime.js
+node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/power-up-runtime.js
 node --check src/runtime/enemy-spawn-runtime.js
 node --check src/runtime/audio-diagnostics.js
@@ -218,6 +219,7 @@ tank-defender-8/
 |   |-- runtime/
 |   |   |-- shared-state.js
 |   |   |-- tank-movement-runtime.js
+|   |   |-- transient-effects-runtime.js
 |   |   |-- power-up-runtime.js
 |   |   |-- enemy-spawn-runtime.js
 |   |   |-- audio-diagnostics.js
@@ -402,6 +404,7 @@ tank-defender-8/
 |   |   |-- timer-diagnostics.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
+|   |   |-- transient-effects-runtime.test.js
 |   |   |-- value-normalization.test.js
 |   |   |-- wall-damage-rules.test.js
 |   |   `-- wall-diagnostics.test.js
@@ -478,6 +481,8 @@ The enemy diagnostics module also exposes `createEnemySpawnOverlapDiagnostics` f
 `enemy-spawn-runtime.js` owns the live enemy creation boundary extracted from `src/game.js`: active-slot capacity, occupied-spawn retry timing, carrier cleanup, enemy construction, and player-scaled fixed-frame spawn pacing. Its unit test locks the state.fn registration, sequence limits, explicit delays, default pacing, occupied-point retries, and carrier callback; existing browser enemy diagnostics continue to verify the real stage flow.
 
 `tank-movement-runtime.js` owns the fixed-frame tank movement boundary extracted from `src/game.js`: collision-peer filtering, terrain/base occupancy, overlap-area recovery support, ice detection, turn snapping, track-phase toggling, and perpendicular-turn classification. Its unit test locks movement blocking, active-peer selection, terrain projection, ice recognition, track phase, and alignment behavior; existing terrain and player-movement browser diagnostics continue to exercise the live path.
+
+`transient-effects-runtime.js` owns the live explosion and score-popup boundary extracted from `src/game.js`: explosion-rule fallback, impact/destruction style selection, base-destruction duration, queue insertion, and fixed-frame TTL advancement. Canvas rendering remains in `src/game.js`; its unit test locks explicit setup dependencies, rule fallback, style selection, default popup coordinates, TTL progression, and survivor identity, while the browser transient-effect integration test verifies registration and the unchanged public behavior.
 
 `public-api-adapters.js` owns the four ordered public-entry groups for pack loading/validation, sprite and current-pack projections, `debugSnapshot()`, and `stagePackSchema()`. Receiver-preserving binding keeps state-owned loaders and dependency-owned projections explicit, while the thin composition preserves the original public indices 0-2, 34-35, 50, and 158. Its unit suite locks group order, receiver precedence, validation, and output routing; browser integration verifies the public positions and removes the former dynamic adapter bodies. The resulting `debug-api.js` is 77 physical lines and contains no `eval`.
 

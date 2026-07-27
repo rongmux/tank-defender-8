@@ -10,6 +10,8 @@ const schema = JSON.parse(JSON.stringify(api.stagePackSchema()));
 
 assert(modules.transientEffectState, "transient effect state module should register before game.js");
 assert.equal(Object.isFrozen(modules.transientEffectState), true);
+assert(modules.transientEffectsRuntime, "transient effects runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.transientEffectsRuntime), true);
 
 const defaultImpact = JSON.parse(JSON.stringify(api.debugBulletImpactExplosionProbe()));
 assert.equal(defaultImpact.beforePause, schema.gameSettings.explosionRules.brickHit.ttl);

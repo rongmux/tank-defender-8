@@ -108,6 +108,7 @@ node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
 node --check src/runtime/tank-movement-runtime.js
+node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/power-up-runtime.js
 node --check src/runtime/enemy-spawn-runtime.js
 node --check src/runtime/audio-diagnostics.js
@@ -218,6 +219,7 @@ tank-defender-8/
 |   |-- runtime/
 |   |   |-- shared-state.js
 |   |   |-- tank-movement-runtime.js
+|   |   |-- transient-effects-runtime.js
 |   |   |-- power-up-runtime.js
 |   |   |-- enemy-spawn-runtime.js
 |   |   |-- audio-diagnostics.js
@@ -402,6 +404,7 @@ tank-defender-8/
 |   |   |-- timer-diagnostics.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
+|   |   |-- transient-effects-runtime.test.js
 |   |   |-- value-normalization.test.js
 |   |   |-- wall-damage-rules.test.js
 |   |   `-- wall-diagnostics.test.js
@@ -478,6 +481,8 @@ tank-defender-8/
 `enemy-spawn-runtime.js` 接管从 `src/game.js` 抽出的实时敌人生成边界：活动槽位容量、出生点占用重试时序、携带者清理、敌人实体创建以及按玩家数缩放的固定帧生成节奏。其单元测试锁定 `state.fn` 注册、序列上限、显式延迟、默认节奏、出生点占用重试和携带者回调；现有浏览器敌人诊断继续验证真实关卡流程。
 
 `tank-movement-runtime.js` 接管从 `src/game.js` 抽出的固定帧坦克移动边界：碰撞 peer 过滤、地形/基地占位、重叠面积恢复支持、冰面识别、转向对齐、履带相位切换和垂直转向判断。其单元测试锁定移动阻挡、活动 peer 选择、地形投影、冰面识别、履带相位和对齐行为；现有浏览器地形与玩家移动诊断继续覆盖真实路径。
+
+`transient-effects-runtime.js` 接管从 `src/game.js` 抽出的爆炸与分数提示运行时边界：爆炸规则回退、命中/摧毁样式选择、基地摧毁持续时间、队列写入和固定帧 TTL 推进。Canvas 渲染仍保留在 `src/game.js`；其单元测试锁定显式依赖校验、规则回退、样式选择、提示默认坐标、TTL 推进和存活对象标识，现有浏览器瞬态效果集成测试则验证模块注册与公开行为不变。
 
 `public-api-adapters.js` 接管四组有序的公开入口：关卡包加载/校验、精灵与当前关卡包投影、`debugSnapshot()` 以及 `stagePackSchema()`。保留接收者的绑定让状态所有的加载器和依赖所有的投影保持显式，同时薄组合继续保持原公开索引 0-2、34-35、50 和 158。其单元测试锁定分组顺序、接收者优先级、校验和输出路由；浏览器集成测试验证公开位置，并移除原先动态适配器函数体。最终 `debug-api.js` 为 77 个物理行，且不再包含 `eval`。
 

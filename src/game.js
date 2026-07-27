@@ -43,7 +43,6 @@
   var STAGE_MAP_DRAW_FRAMES = sh.STAGE_MAP_DRAW_FRAMES;
   var STAGE_ATTRIBUTE_COPY_FRAMES = sh.STAGE_ATTRIBUTE_COPY_FRAMES;
   var STAGE_RESULT_ROW_LAYOUT = sh.STAGE_RESULT_ROW_LAYOUT;
-  var BULLET_IMPACT_EXPLOSION_RULES = sh.BULLET_IMPACT_EXPLOSION_RULES;
   var TITLE_MENU_ITEMS = sh.TITLE_MENU_ITEMS;
   var EDITOR_STORAGE_KEY = sh.EDITOR_STORAGE_KEY;
   var HIGH_SCORE_STORAGE_KEY = sh.HIGH_SCORE_STORAGE_KEY;
@@ -334,7 +333,6 @@
   var DEFAULT_ENEMY_TOTAL = deps.DEFAULT_ENEMY_TOTAL;
   var DEFAULT_ENEMY_TYPES = deps.DEFAULT_ENEMY_TYPES;
   var DEFAULT_EXPLOSION_CORE_COLOR = deps.DEFAULT_EXPLOSION_CORE_COLOR;
-  var DEFAULT_EXPLOSION_RULES = deps.DEFAULT_EXPLOSION_RULES;
   var DEFAULT_ORIGINAL_STAGE_COUNT = deps.DEFAULT_ORIGINAL_STAGE_COUNT;
   var DEFAULT_PLAYER_MOVEMENT = deps.DEFAULT_PLAYER_MOVEMENT;
   var DEFAULT_PLAYER_UPGRADE_RULES = deps.DEFAULT_PLAYER_UPGRADE_RULES;
@@ -372,7 +370,6 @@
   var advanceFixedFrameAudioState = deps.advanceFixedFrameAudioState;
   var advanceFrameCounter = deps.advanceFrameCounter;
   var advancePlayerDestructionState = deps.advancePlayerDestructionState;
-  var advanceTimedStates = deps.advanceTimedStates;
   var awardBonusLives = deps.awardBonusLives;
   // (baseDestructionPresentation — local wrapper, not deps alias)
   var beginFixedFrameAudioState = deps.beginFixedFrameAudioState;
@@ -396,11 +393,9 @@
   var compactGameOverGlyph = deps.compactGameOverGlyph;
   var createBuiltInStagePack = deps.createBuiltInStagePack;
   var createEditorStagePack = deps.createEditorStagePack;
-  var createExplosionState = deps.createExplosionState;
   var createFixedFrameAudioState = deps.createFixedFrameAudioState;
   var createPlayerState = deps.createPlayerState;
   var createProjectileState = deps.createProjectileState;
-  var createScorePopupState = deps.createScorePopupState;
   var createStagePackSchema = deps.createStagePackSchema;
   var createStageResultPresentation = deps.createStageResultPresentation;
   var createStageRuntime = deps.createStageRuntime;
@@ -530,9 +525,12 @@
   var defaultPlayerUpgradeRules = deps.DEFAULT_PLAYER_UPGRADE_RULES;
 
   deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
+  deps.requireRuntimeModule("transientEffectsRuntime").setupTransientEffectsRuntime(state, deps, {
+    gameSettings: gameSettings
+  });
   deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
     addPlayerScore: addPlayerScore,
-    addScorePopup: addScorePopup,
+    addScorePopup: fn.addScorePopup,
     buildBaseWall: buildBaseWall,
     canTankOccupy: fn.canTankOccupy,
     destroyEnemy: destroyEnemy,
@@ -996,8 +994,8 @@
         awardPendingStageClearBonus();
       }
       game.transitionTimer -= 1;
-      updateExplosions();
-      updateScorePopups();
+      fn.updateExplosions();
+      fn.updateScorePopups();
       if (game.transitionTimer <= 0) finishStageResult();
       return;
     }
@@ -1020,7 +1018,7 @@
     if (game.screen !== "playing") return;
     if (game.paused) {
       game.pauseElapsed += 1;
-      updateScorePopups();
+      fn.updateScorePopups();
       checkEndState();
       syncMovementAudio();
       return;
@@ -1066,10 +1064,10 @@
     updateEnemies();
     updateShovelTimer();
     updatePlayerInvulnerabilityTimers();
-    updateExplosions();
+    fn.updateExplosions();
     updateBaseDestructionTimer();
     updateBullets();
-    updateScorePopups();
+    fn.updateScorePopups();
     fn.updatePowerUp();
     updatePlayerGameOverMessage();
     if (shouldSpawnEnemies()) fn.spawnEnemies();
@@ -1313,7 +1311,7 @@
     const released = advanceEnemyDestructionState(
       enemy,
       isEnemyMovementFrame(enemy, game.frameLow),
-      explosionRule("enemyDestroy").ttl
+      fn.explosionRule("enemyDestroy").ttl
     );
     if (released) game.enemyKilled += 1;
   }
@@ -1523,7 +1521,7 @@
     if (projectileOutsideField(bullet, FIELD_W, FIELD_H, padding)) {
       const impact = projectileBoundaryImpactPoint(bullet, FIELD_W, FIELD_H);
       bullet.remove = true;
-      addRuleExplosion("steelBlocked", impact.x, impact.y);
+      fn.addRuleExplosion("steelBlocked", impact.x, impact.y);
       const sound = wallHitSoundName(bullet, true, false);
       if (sound) playSound(sound);
       return;
@@ -1538,7 +1536,7 @@
     if (!game.base.alive) return false;
     if (!rectsOverlap(entityRect(bullet), game.base)) return false;
     game.base.alive = false;
-    game.baseDestroyTimer = game.demoMode ? 0 : baseDestructionDuration();
+    game.baseDestroyTimer = game.demoMode ? 0 : fn.baseDestructionDuration();
     bullet.remove = true;
     playSound("baseHit");
     playSound("playerDestroy");
@@ -1564,9 +1562,9 @@
         let damaged = false;
         if (cell.type === BRICK || bullet.power >= 3) {
           damaged = damageWall(cell, c, r, bullet, hitMask);
-          addRuleExplosion(damaged ? (wasSteel ? "steelHit" : "brickHit") : "steelBlocked", bullet.x, bullet.y);
+          fn.addRuleExplosion(damaged ? (wasSteel ? "steelHit" : "brickHit") : "steelBlocked", bullet.x, bullet.y);
         } else {
-          addRuleExplosion("steelBlocked", bullet.x, bullet.y);
+          fn.addRuleExplosion("steelBlocked", bullet.x, bullet.y);
         }
         bullet.remove = true;
         const sound = wallHitSoundName(bullet, wasSteel, damaged);
@@ -1585,7 +1583,7 @@
           const wasCarrier = enemy.carrier;
           enemy.hp -= 1;
           bullet.remove = true;
-          addRuleExplosion("enemyHit", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
+          fn.addRuleExplosion("enemyHit", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
           playSound(enemy.hp <= 0 ? "enemyDestroy" : "enemyHit");
           if (shouldReleaseCarrierPowerUp(
             wasCarrier,
@@ -1606,7 +1604,7 @@
           }
           if (gameSettings().friendlyFire.enabled && player.stun <= 0) player.stun = gameSettings().friendlyFire.stunFrames;
           bullet.remove = true;
-          addRuleExplosion("playerStun", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
+          fn.addRuleExplosion("playerStun", bullet.x + bullet.w / 2, bullet.y + bullet.h / 2);
           return true;
         }
       }
@@ -1619,7 +1617,7 @@
             return true;
           }
           bullet.remove = true;
-          addRuleExplosion(
+          fn.addRuleExplosion(
             "steelBlocked",
             bullet.x + bullet.w / 2,
             bullet.y + bullet.h / 2
@@ -1639,7 +1637,7 @@
     const trackKill = !game.demoMode && opts.trackKill !== false;
     enemy.destroying = true;
     enemy.destroyTicks = 0;
-    enemy.destroyExplosionTicks = explosionRule("enemyDestroy").ttl;
+    enemy.destroyExplosionTicks = fn.explosionRule("enemyDestroy").ttl;
     enemy.destroyShowScore = opts.showScore !== false;
     const player = game.players.find((candidate) => candidate.id === ownerId);
     if (player) {
@@ -1664,7 +1662,7 @@
   function killPlayer(player) {
     const started = beginPlayerDestructionState(player, {
       deathPowerLevel: gameSettings().deathPowerLevel,
-      explosionTicks: explosionRule("playerDestroy").ttl,
+      explosionTicks: fn.explosionRule("playerDestroy").ttl,
       respawnTicks: gameSettings().timings.playerRespawn
     });
     if (!started) return;
@@ -1740,62 +1738,9 @@
     return rules[clamp(Math.floor(level || 0), 0, rules.length - 1)];
   }
 
-  function addRuleExplosion(ruleName, x, y) {
-    const rule = explosionRule(ruleName);
-    const style = BULLET_IMPACT_EXPLOSION_RULES.has(ruleName)
-      ? "bulletImpact"
-      : (isTankDestructionStyle(ruleName) ? ruleName : "default");
-    addExplosion(
-      x,
-      y,
-      rule.ttl,
-      rule.color,
-      rule.coreColor,
-      style
-    );
-  }
-
-  function explosionRule(ruleName) {
-    const rules = gameSettings().explosionRules || DEFAULT_EXPLOSION_RULES;
-    return rules[ruleName] || DEFAULT_EXPLOSION_RULES[ruleName] || DEFAULT_EXPLOSION_RULES.enemyHit;
-  }
-
-  function baseDestructionDuration() {
-    return explosionRule("baseDestroy").ttl + BASE_DESTRUCTION_TAIL_FRAMES;
-  }
-
-  function addExplosion(x, y, ttl, color, coreColor, style) {
-    game.explosions.push(createExplosionState({
-      x,
-      y,
-      ttl,
-      color,
-      coreColor,
-      defaultCoreColor: DEFAULT_EXPLOSION_CORE_COLOR,
-      style
-    }));
-  }
-
-  function updateExplosions() {
-    game.explosions = advanceTimedStates(game.explosions);
-  }
-
   /** Runs before bullet collision so a newly hit base retains its full loaded $27 counter for the hit frame. */
   function updateBaseDestructionTimer() {
     if (game.baseDestroyTimer > 0) game.baseDestroyTimer -= 1;
-  }
-
-  function addScorePopup(points, x, y, options) {
-    const popup = createScorePopupState(points, x, y, {
-      ...(options || {}),
-      defaultX: FIELD_W / 2,
-      defaultY: FIELD_H / 2
-    });
-    if (popup) game.scorePopups.push(popup);
-  }
-
-  function updateScorePopups() {
-    game.scorePopups = advanceTimedStates(game.scorePopups);
   }
 
   function stageEnemiesCleared() {
@@ -2557,7 +2502,7 @@
   }
 
   function renderPlayerDestructions() {
-    const rule = explosionRule("playerDestroy");
+    const rule = fn.explosionRule("playerDestroy");
     for (const player of game.players) {
       if (!player.destroying || player.respawn <= 0) continue;
       const presentation = playerDestructionPresentation(player);
@@ -2572,12 +2517,12 @@
     return selectPlayerDestructionPresentation(player, {
       layout: BATTLE_PRESENTATION_LAYOUT,
       totalTicks: gameSettings().timings.playerRespawn,
-      explosionTicks: explosionRule("playerDestroy").ttl
+      explosionTicks: fn.explosionRule("playerDestroy").ttl
     });
   }
 
   function renderEnemyDestructions() {
-    const rule = explosionRule("enemyDestroy");
+    const rule = fn.explosionRule("enemyDestroy");
     for (const enemy of game.enemies) {
       if (!enemy.alive || !enemy.destroying) continue;
       const presentation = enemyDestructionPresentation(enemy);
@@ -2595,7 +2540,7 @@
   function enemyDestructionPresentation(enemy) {
     return selectEnemyDestructionPresentation(enemy, {
       layout: BATTLE_PRESENTATION_LAYOUT,
-      explosionTicks: explosionRule("enemyDestroy").ttl,
+      explosionTicks: fn.explosionRule("enemyDestroy").ttl,
       scoreTicks: ENEMY_DESTRUCTION_SCORE_TICKS
     });
   }
@@ -2603,7 +2548,7 @@
   function renderBaseDestruction() {
     const presentation = baseDestructionPresentation(game.baseDestroyTimer);
     if (!presentation) return;
-    const rule = explosionRule("baseDestroy");
+    const rule = fn.explosionRule("baseDestroy");
     drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
       primary: rule.color,
       core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
@@ -2613,7 +2558,7 @@
   function baseDestructionPresentation(timer) {
     return selectBaseDestructionPresentation(timer, game.base, {
       layout: BATTLE_PRESENTATION_LAYOUT,
-      visibleFrames: explosionRule("baseDestroy").ttl,
+      visibleFrames: fn.explosionRule("baseDestroy").ttl,
       tailFrames: BASE_DESTRUCTION_TAIL_FRAMES
     });
   }
@@ -3054,14 +2999,7 @@
   state.fn.shoot = shoot;
   state.fn.createBullet = createBullet;
   state.fn.playerUpgradeRule = playerUpgradeRule;
-  state.fn.addRuleExplosion = addRuleExplosion;
-  state.fn.explosionRule = explosionRule;
-  state.fn.baseDestructionDuration = baseDestructionDuration;
-  state.fn.addExplosion = addExplosion;
-  state.fn.updateExplosions = updateExplosions;
   state.fn.updateBaseDestructionTimer = updateBaseDestructionTimer;
-  state.fn.addScorePopup = addScorePopup;
-  state.fn.updateScorePopups = updateScorePopups;
   state.fn.stageEnemiesCleared = stageEnemiesCleared;
   state.fn.checkEndState = checkEndState;
   state.fn.enterStageClear = enterStageClear;
