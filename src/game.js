@@ -792,6 +792,9 @@
     battleDisplayFrame: battleDisplayFrame,
     drawManifestSprite: drawManifestSprite
   });
+  var projectileRenderRuntime = deps.requireRuntimeModule("projectileRenderRuntime").setupProjectileRenderRuntime(state, deps, {
+    drawScaledManifestSprite: drawScaledManifestSprite
+  });
 
   function handleAction(action) {
     initAudio();
@@ -1297,11 +1300,7 @@
   }
 
   function drawBullet(bullet) {
-    const sprite = FREE_SPRITE_MANIFEST.sprites.bullet;
-    const scale = bullet.w / (sprite && sprite.size ? sprite.size : bullet.w);
-    drawScaledManifestSprite("bullet", "default", Math.round(FIELD_X + bullet.x), Math.round(FIELD_Y + bullet.y), scale, {
-      primary: bullet.ownerKind === "player" ? "#f8e08b" : "#f7f1c6"
-    });
+    return projectileRenderRuntime.drawBullet(bullet);
   }
 
   function drawPowerUp(power) {

@@ -120,6 +120,7 @@ node --check src/runtime/terrain-render-runtime.js
 node --check src/runtime/tank-render-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/power-up-render-runtime.js
+node --check src/runtime/projectile-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/battle-combat-runtime.js
@@ -255,6 +256,7 @@ tank-defender-8/
 |   |   |-- tank-render-runtime.js
 |   |   |-- tank-movement-runtime.js
 |   |   |-- power-up-render-runtime.js
+|   |   |-- projectile-render-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
@@ -399,6 +401,7 @@ tank-defender-8/
 |   |   |-- tank-render-runtime.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- power-up-render-runtime.test.js
+|   |   |-- projectile-render-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -533,6 +536,8 @@ tank-defender-8/
 `src/runtime/tank-render-runtime.js` owns tank body/tracks, player star-upgrade overlays, shield rendering, and player/enemy spawn animation. It preserves directional geometry, carrier/upgrade color callbacks, pause-safe shield phase, configured spawn durations, and the existing Canvas sprite order; direct tests cover player overlays, exact field offsets, shield colors, and player spawn sizing.
 
 `src/runtime/power-up-render-runtime.js` owns power-up visibility cadence, sprite-size centering, framed background drawing, and manifest icon submission for all six power-up types, including the star icon. It keeps display timing based on the independent frame phase used during pause and preserves the existing 12px-to-manifest-size geometry; direct tests cover blink boundaries, exact centering, icon palette, and hidden frames.
+
+`src/runtime/projectile-render-runtime.js` owns bullet sprite submission: manifest-size scaling, battlefield offset, and the distinct player/enemy bullet palettes. It leaves movement, limits, collision, and impact resolution in their existing gameplay modules; direct tests cover scaled player bullets, native-size enemy bullets, and exact integer placement.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
 
