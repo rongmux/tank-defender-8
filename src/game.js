@@ -414,7 +414,6 @@
   var ICE = deps.ICE;
   var LEFT = deps.LEFT;
   var ORIGINAL_EDITOR_PATTERNS = deps.ORIGINAL_EDITOR_PATTERNS;
-  var POWERUP_SIZE = deps.POWER_UP_SIZE;
   var QUAD_GRID = deps.QUAD_GRID;
   var RIGHT = deps.RIGHT;
   var STAGE_CURTAIN_CLOSE_FRAMES = deps.STAGE_CURTAIN_CLOSE_FRAMES;
@@ -788,6 +787,10 @@
     spawnAnimationPresentation: spawnAnimationPresentation,
     tankPrimaryColor: tankPrimaryColor,
     tankTrackFrameName: tankTrackFrameName
+  });
+  var powerUpRenderRuntime = deps.requireRuntimeModule("powerUpRenderRuntime").setupPowerUpRenderRuntime(state, deps, {
+    battleDisplayFrame: battleDisplayFrame,
+    drawManifestSprite: drawManifestSprite
   });
 
   function handleAction(action) {
@@ -1302,26 +1305,11 @@
   }
 
   function drawPowerUp(power) {
-    if (!isPowerUpVisible(battleDisplayFrame())) return;
-    const visual = powerUpVisualRect(power);
-    const x = visual.x;
-    const y = visual.y;
-    ctx.fillStyle = "#102748";
-    ctx.fillRect(x, y, visual.w, visual.h);
-    ctx.fillStyle = "#aab4c2";
-    ctx.fillRect(x + 2, y + 2, visual.w - 4, visual.h - 4);
-    ctx.fillStyle = "#dbe1e8";
-    ctx.fillRect(x + 3, y + 3, visual.w - 6, 1);
-    drawManifestSprite("powerUp", power.type, x, y, {
-      outline: "#102748",
-      primary: "#f3f0d4",
-      shade: "#77869a",
-      cutout: "#aab4c2"
-    });
+    return powerUpRenderRuntime.drawPowerUp(power);
   }
 
   function isPowerUpVisible(tick) {
-    return (Math.max(0, Math.floor(Number(tick) || 0)) & 8) !== 0;
+    return powerUpRenderRuntime.isPowerUpVisible(tick);
   }
 
   /**
@@ -1333,15 +1321,7 @@
   }
 
   function powerUpVisualRect(power) {
-    const sprite = FREE_SPRITE_MANIFEST.sprites.powerUp;
-    const size = sprite && sprite.size ? sprite.size : POWERUP_SIZE;
-    const inset = (size - power.w) / 2;
-    return {
-      x: FIELD_X + power.x - inset,
-      y: FIELD_Y + power.y - inset,
-      w: size,
-      h: size
-    };
+    return powerUpRenderRuntime.powerUpVisualRect(power);
   }
 
   function drawManifestSprite(spriteName, frameName, x, y, palette) {
