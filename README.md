@@ -119,6 +119,7 @@ node --check src/runtime/title-render-runtime.js
 node --check src/runtime/terrain-render-runtime.js
 node --check src/runtime/tank-render-runtime.js
 node --check src/runtime/tank-movement-runtime.js
+node --check src/runtime/player-movement-runtime.js
 node --check src/runtime/power-up-render-runtime.js
 node --check src/runtime/projectile-render-runtime.js
 node --check src/runtime/effect-render-runtime.js
@@ -264,6 +265,7 @@ tank-defender-8/
 |   |   |-- terrain-render-runtime.js
 |   |   |-- tank-render-runtime.js
 |   |   |-- tank-movement-runtime.js
+|   |   |-- player-movement-runtime.js
 |   |   |-- power-up-render-runtime.js
 |   |   |-- projectile-render-runtime.js
 |   |   |-- effect-render-runtime.js
@@ -500,6 +502,7 @@ tank-defender-8/
 |   |   |-- stage-runtime.test.js
 |   |   |-- tank-collision-rules.test.js
 |   |   |-- tank-movement-runtime.test.js
+|   |   |-- player-movement-runtime.test.js
 |   |   |-- tank-presentation.test.js
 |   |   |-- terrain-collision-rules.test.js
 |   |   |-- test-file-discovery.test.js
@@ -634,6 +637,8 @@ The enemy diagnostics module also exposes `createEnemySpawnOverlapDiagnostics` f
 
 `tank-movement-runtime.js` owns the fixed-frame tank movement boundary extracted from `src/game.js`: collision-peer filtering, terrain/base occupancy, overlap-area recovery support, ice detection, turn snapping, track-phase toggling, and perpendicular-turn classification. Its unit test locks movement blocking, active-peer selection, terrain projection, ice recognition, track phase, and alignment behavior; existing terrain and player-movement browser diagnostics continue to exercise the live path.
 
+`src/runtime/player-movement-runtime.js` owns the fixed-frame player movement boundary: configured speed application, ice-slide start/continuation, perpendicular-turn snapping, stun gating, and track-phase updates. It receives terrain movement and audio through explicit callbacks, preserves the original two-read settings access on slide movement, and is directly tested for normal turns, sliding, locked ice movement, stun blocking, and track updates.
+
 `transient-effects-runtime.js` owns the live explosion and score-popup boundary extracted from `src/game.js`: explosion-rule fallback, impact/destruction style selection, base-destruction duration, queue insertion, and fixed-frame TTL advancement. Canvas rendering remains in `src/game.js`; its unit test locks explicit setup dependencies, rule fallback, style selection, default popup coordinates, TTL progression, and survivor identity, while the browser transient-effect integration test verifies registration and the unchanged public behavior.
 
 `projectile-runtime.js` owns the fixed-frame firing boundary extracted from `src/game.js`: player upgrade-tier lookup, active-bullet limits per tank, projectile creation from current pack geometry, reload timing, and player-only shooting audio. Collision and movement resolution remain separate runtime boundaries; its unit test locks upgrade clamping, one/two-bullet limits, speed and power propagation, enemy silence, and reload behavior, while the browser projectile integration test verifies registration and pack overrides.
@@ -728,6 +733,8 @@ The migration order is core timing/random/geometry, configuration and stage pack
 - Original-style Construction mode with a 16px tank cursor, 14-pattern A/B block cycle, stage-1 replacement and normal stage-2 continuation, plus optional 8px mouse editing and save/load/export extensions.
 
 `src/runtime/player-update-runtime.js` owns fixed-frame player input and Demo updates. It keeps the original Arrow/WASD bindings, one-shot fire presses, movement cadence, spawn protection, respawn timing, power-up-first Demo targeting, and enemy slot priority behind a frozen runtime API. Its unit suite covers the keyboard matrix, firing, recovery, and target selection; browser integration verifies module registration through the real game harness.
+
+`src/runtime/player-movement-runtime.js` owns the movement operation consumed by player input and Demo updates, keeping ice sliding, turn snapping, stun gating, and track animation out of the input scheduler.
 
 `src/runtime/battle-timing-runtime.js` owns the fixed-frame global timer boundary: freeze countdown, shovel-wall restoration/flash timing, player invulnerability countdown, base-destruction countdown, and the exact stage-cleared predicate. Its unit suite locks the 64-frame timer cadence, wall transitions, and enemy-count boundary; browser integration verifies registration without changing the public API order.
 

@@ -531,6 +531,15 @@
     renderTerrain: renderTerrain
   });
   deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
+  deps.requireRuntimeModule("playerMovementRuntime").setupPlayerMovementRuntime(state, deps, {
+    advanceTankTracks: fn.advanceTankTracks,
+    gameSettings: gameSettings,
+    isPerpendicularTurn: fn.isPerpendicularTurn,
+    isTankOnIce: fn.isTankOnIce,
+    moveTank: fn.moveTank,
+    playSound: playSound,
+    snapForDirection: fn.snapForDirection
+  });
   deps.requireRuntimeModule("transientEffectsRuntime").setupTransientEffectsRuntime(state, deps, {
     gameSettings: gameSettings
   });
@@ -604,7 +613,7 @@
     finishPlayerDeath: fn.finishPlayerDeath,
     gameSettings: gameSettings,
     shoot: fn.shoot,
-    updatePlayerMovement: updatePlayerMovement
+    updatePlayerMovement: fn.updatePlayerMovement
   });
   deps.requireRuntimeModule("battleTimingRuntime").setupBattleTimingRuntime(state, deps, {
     enemyTotal: enemyTotal,
@@ -914,36 +923,6 @@
     if (type === FOREST) return "forest";
     if (type === ICE) return "ice";
     return "empty";
-  }
-
-  function updatePlayerMovement(player, desiredDir, stunned) {
-    if (player.stun > 0 && !stunned) return;
-    const onIce = fn.isTankOnIce(player);
-    const inputDir = stunned || (onIce && (player.slide & 16) !== 0) ? -1 : desiredDir;
-    if (inputDir !== -1) {
-      if (onIce && (player.slide & 31) === 0) {
-        player.slide = gameSettings().playerMovement.iceSlideFrames;
-        playSound("movementIce");
-      }
-      if (player.dir !== inputDir) {
-        player.pendingSnap = fn.isPerpendicularTurn(player.dir, inputDir);
-        player.dir = inputDir;
-      }
-      if (player.pendingSnap) {
-        fn.snapForDirection(player);
-        player.pendingSnap = false;
-      }
-      fn.moveTank(player, DIR_X[player.dir] * player.speed, DIR_Y[player.dir] * player.speed);
-      fn.advanceTankTracks(player);
-    } else if (player.slide > 0 && onIce) {
-      player.slide -= 1;
-      fn.moveTank(
-        player,
-        DIR_X[player.dir] * gameSettings().playerMovement.iceSlideSpeed,
-        DIR_Y[player.dir] * gameSettings().playerMovement.iceSlideSpeed
-      );
-      fn.advanceTankTracks(player);
-    }
   }
 
   function shouldSpawnEnemies() {
@@ -1328,7 +1307,6 @@
   state.fn.update = update;
   state.fn.render = render;
   state.fn.tileTypeName = tileTypeName;
-  state.fn.updatePlayerMovement = updatePlayerMovement;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
   state.fn.enterGameOver = enterGameOver;
   state.fn.renderTitle = renderTitle;
