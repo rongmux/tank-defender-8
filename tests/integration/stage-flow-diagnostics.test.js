@@ -61,10 +61,10 @@ const outputs = {
   debugGameOverStageResultProbe: api.debugGameOverStageResultProbe()
 };
 const json = JSON.stringify(outputs);
-assert.equal(Buffer.byteLength(json), 13047);
+assert.equal(Buffer.byteLength(json), 32122);
 assert.equal(
   crypto.createHash("sha256").update(json).digest("hex"),
-  "83f90600e215f08a1a2cc31a42e4f3665888885221709550607102ec917fb9c2"
+  "4636a26be196825867b711d51ffec3cc957ecaf47af0097ec5e797ba0062cc1d"
 );
 
 const debugSource = fs.readFileSync(path.join(root, "src/runtime/debug-api.js"), "utf8");

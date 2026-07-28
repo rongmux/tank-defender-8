@@ -686,7 +686,7 @@ byAction.next.click();
 snapshot = context.window.TankDefender8.debugSnapshot();
 counts = enemyTypeCounts(snapshot.enemySequence);
 assert(snapshot.stage === 2, "next should select stage 2");
-assert(counts.join(",") === "14,4,0,2", "built-in stage 2 enemy groups should be 14 basic, 4 fast, and 2 armor");
+assert(counts.join(",") === "14,0,4,2", "built-in stage 2 enemy groups should be 14 basic, 4 power, and 2 armor");
 assert(carrierNumbers(snapshot.enemySequence) === "4,11,18", "built-in stage 2 carriers should be enemies 4, 11, and 18");
 byAction.prev.click();
 byAction.prev.click();

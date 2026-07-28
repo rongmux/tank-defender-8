@@ -3,53 +3,60 @@ const {
   BONUS_ENEMY_INDICES,
   DEFAULT_ENEMY_TOTAL,
   DEFAULT_ORIGINAL_STAGE_COUNT,
+  ORIGINAL_STAGE_ENEMY_TYPES,
   ORIGINAL_STYLE_ENEMY_GROUPS,
   buildEnemySequenceFromGroups,
   buildOriginalStyleEnemySequences,
   summarizeEnemySequences
 } = require("../../src/stages/enemy-sequences");
 
-// Independent fixture for the 35-stage tank-group table used by the original-style pack.
-const EXPECTED_ORIGINAL_ENEMY_GROUPS = [
-  [[18, 0], [2, 1]],
-  [[2, 3], [4, 1], [14, 0]],
-  [[14, 0], [4, 1], [2, 3]],
-  [[10, 2], [5, 1], [2, 0], [3, 3]],
-  [[5, 2], [2, 3], [8, 0], [5, 1]],
-  [[7, 2], [2, 1], [9, 0], [2, 3]],
-  [[3, 0], [4, 1], [6, 2], [7, 0]],
-  [[7, 2], [2, 3], [4, 1], [7, 0]],
-  [[6, 0], [4, 1], [7, 2], [3, 3]],
-  [[12, 0], [2, 1], [4, 2], [2, 3]],
-  [[5, 1], [6, 3], [4, 2], [5, 1]],
-  [[8, 2], [6, 1], [6, 3]],
-  [[8, 2], [8, 1], [4, 3]],
-  [[10, 2], [4, 1], [6, 3]],
-  [[2, 0], [10, 1], [8, 3]],
-  [[16, 0], [2, 1], [2, 3]],
-  [[2, 3], [2, 1], [8, 3], [8, 0]],
-  [[4, 3], [2, 0], [6, 2], [8, 1]],
-  [[4, 1], [8, 3], [4, 0], [4, 2]],
-  [[8, 1], [2, 0], [2, 2], [8, 3]],
-  [[8, 2], [2, 1], [6, 0], [4, 3]],
-  [[8, 1], [6, 0], [2, 2], [4, 3]],
-  [[6, 3], [4, 2], [10, 1]],
-  [[4, 2], [2, 3], [4, 1], [10, 0]],
-  [[2, 2], [8, 1], [10, 3]],
-  [[6, 1], [6, 3], [4, 0], [4, 2]],
-  [[2, 2], [8, 3], [8, 1], [2, 0]],
-  [[2, 1], [1, 3], [15, 0], [2, 2]],
-  [[10, 2], [4, 1], [6, 3]],
-  [[4, 0], [8, 1], [4, 2], [4, 3]],
-  [[3, 2], [8, 1], [6, 3], [3, 2]],
-  [[8, 3], [6, 0], [2, 2], [4, 1]],
-  [[4, 1], [8, 3], [4, 2], [4, 1]],
-  [[4, 2], [10, 1], [6, 3]],
-  [[4, 2], [6, 1], [10, 3]]
+// Independent fixture for the 35-stage, 20-tank order in the public NpcStages table.
+const EXPECTED_ORIGINAL_ENEMY_TYPES = [
+  [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0],
+  [0,0,0,2,0,3,0,0,0,2,2,0,0,0,0,3,0,2,0,0],
+  [0,0,0,2,0,3,0,0,2,0,2,0,0,0,0,0,3,2,0,0],
+  [0,0,2,1,1,3,1,2,1,2,1,3,1,2,1,3,1,2,1,1],
+  [0,1,0,1,0,2,0,1,3,0,1,0,2,1,0,3,1,1,0,0],
+  [0,2,0,2,0,0,2,0,1,0,2,3,2,1,0,2,0,2,3,0],
+  [0,0,0,2,1,0,2,0,2,0,1,0,2,0,1,2,0,1,2,0],
+  [0,2,0,2,1,0,1,2,0,3,2,0,2,3,0,1,2,1,0,2],
+  [0,2,0,2,1,0,3,1,0,2,2,3,0,2,0,1,2,1,3,2],
+  [0,0,0,1,0,2,0,2,0,0,2,3,0,1,0,3,0,2,0,0],
+  [1,2,1,3,1,2,1,3,1,3,1,3,1,2,1,3,2,1,3,1],
+  [2,1,3,2,1,3,2,1,3,2,1,3,2,1,2,3,1,2,3,2],
+  [1,2,1,2,3,1,2,3,1,2,3,1,2,1,2,1,3,2,1,2],
+  [2,1,2,2,3,1,2,3,2,3,2,3,1,2,2,3,2,1,3,2],
+  [0,1,0,1,3,1,3,1,3,1,1,3,3,1,3,1,3,1,3,1],
+  [0,0,0,1,0,0,0,3,0,0,1,0,0,0,0,3,0,0,0,0],
+  [0,2,0,2,0,1,2,0,2,3,2,0,0,2,0,1,2,2,3,0],
+  [0,0,1,2,1,2,1,3,2,1,2,3,1,1,3,2,1,2,3,1],
+  [0,1,0,1,3,0,3,2,0,3,2,3,1,3,1,3,2,2,3,3],
+  [0,0,1,1,3,3,1,3,1,3,2,1,3,1,3,1,3,2,1,3],
+  [2,0,2,1,0,3,2,0,2,3,1,0,2,0,3,2,0,2,3,2],
+  [1,0,1,1,0,3,0,2,1,0,1,3,3,0,1,0,1,2,3,1],
+  [1,3,1,2,1,3,1,2,3,1,1,3,2,3,1,1,2,1,3,1],
+  [0,2,0,1,0,0,2,3,0,1,2,0,2,0,3,0,0,1,0,1],
+  [3,3,3,1,3,1,2,1,3,1,1,3,3,1,1,3,1,2,3,3],
+  [1,0,1,2,3,1,2,0,3,1,2,0,3,1,3,0,3,2,1,3],
+  [0,3,1,2,1,3,1,3,1,3,1,3,0,1,3,2,3,1,1,3],
+  [0,0,0,1,0,0,0,3,0,0,1,0,0,2,0,0,0,2,0,0],
+  [1,2,3,2,2,3,1,2,2,3,2,2,3,1,1,2,3,2,2,3],
+  [0,2,1,2,1,3,0,1,2,3,1,0,1,2,3,1,0,1,3,1],
+  [1,1,3,2,1,2,3,1,3,2,1,3,2,1,3,2,1,2,3,1],
+  [0,1,3,2,3,0,2,3,0,3,1,0,1,3,0,0,3,1,3,3],
+  [1,3,1,2,3,1,3,1,3,2,2,1,3,1,3,1,3,2,1,3],
+  [1,1,1,2,1,3,1,3,1,2,1,3,1,3,2,1,3,2,3,1],
+  [3,3,1,1,3,2,3,1,3,2,1,3,3,2,3,1,3,2,1,3]
 ];
 
-function expandedTypes(groups) {
-  return groups.flatMap(([count, typeIndex]) => Array(count).fill(typeIndex));
+function compressTypes(types) {
+  const groups = [];
+  for (const typeIndex of types) {
+    const last = groups[groups.length - 1];
+    if (last && last[1] === typeIndex) last[0] += 1;
+    else groups.push([1, typeIndex]);
+  }
+  return groups;
 }
 
 function namedGroups(groups, names) {
@@ -64,9 +71,15 @@ function groupCounts(groups, typeCount) {
 }
 
 assert.equal(DEFAULT_ENEMY_TOTAL, 20);
-assert.equal(DEFAULT_ORIGINAL_STAGE_COUNT, EXPECTED_ORIGINAL_ENEMY_GROUPS.length);
+assert.equal(DEFAULT_ORIGINAL_STAGE_COUNT, EXPECTED_ORIGINAL_ENEMY_TYPES.length);
 assert.deepEqual(BONUS_ENEMY_INDICES, [3, 10, 17]);
-assert.deepEqual(ORIGINAL_STYLE_ENEMY_GROUPS, EXPECTED_ORIGINAL_ENEMY_GROUPS);
+assert.deepEqual(ORIGINAL_STAGE_ENEMY_TYPES, EXPECTED_ORIGINAL_ENEMY_TYPES);
+assert(Object.isFrozen(ORIGINAL_STAGE_ENEMY_TYPES));
+assert(ORIGINAL_STAGE_ENEMY_TYPES.every(Object.isFrozen));
+assert.deepEqual(
+  ORIGINAL_STYLE_ENEMY_GROUPS,
+  EXPECTED_ORIGINAL_ENEMY_TYPES.map(compressTypes)
+);
 assert(Object.isFrozen(ORIGINAL_STYLE_ENEMY_GROUPS));
 assert(ORIGINAL_STYLE_ENEMY_GROUPS.every((groups) =>
   Object.isFrozen(groups) && groups.every(Object.isFrozen)
@@ -76,12 +89,14 @@ const sequences = buildOriginalStyleEnemySequences();
 assert.equal(sequences.length, DEFAULT_ORIGINAL_STAGE_COUNT);
 for (let stageIndex = 0; stageIndex < sequences.length; stageIndex += 1) {
   const sequence = sequences[stageIndex];
+  const expectedGroups = compressTypes(EXPECTED_ORIGINAL_ENEMY_TYPES[stageIndex]);
   assert.equal(sequence.length, DEFAULT_ENEMY_TOTAL);
-  assert.deepEqual(sequence.map((enemy) => enemy.typeIndex), expandedTypes(EXPECTED_ORIGINAL_ENEMY_GROUPS[stageIndex]));
+  assert.deepEqual(sequence.map((enemy) => enemy.typeIndex), EXPECTED_ORIGINAL_ENEMY_TYPES[stageIndex]);
   assert.deepEqual(sequence.flatMap((enemy, index) => enemy.carrier ? [index] : []), BONUS_ENEMY_INDICES);
   assert.deepEqual(sequence.map((enemy) => enemy.spawnIndex),
     Array.from({ length: DEFAULT_ENEMY_TOTAL }, (_, index) => (index + 1) % 3));
   assert(sequence.every((enemy) => enemy.powerUpType === null && enemy.spawnDelay === null));
+  assert.deepEqual(ORIGINAL_STYLE_ENEMY_GROUPS[stageIndex], expectedGroups);
 }
 
 sequences[0][0].typeIndex = 3;
@@ -101,7 +116,7 @@ assert.throws(
 const names = ["basic", "fast", "power", "armor"];
 const summaries = summarizeEnemySequences(buildOriginalStyleEnemySequences(), names);
 for (let stageIndex = 0; stageIndex < summaries.length; stageIndex += 1) {
-  const expectedGroups = EXPECTED_ORIGINAL_ENEMY_GROUPS[stageIndex];
+  const expectedGroups = compressTypes(EXPECTED_ORIGINAL_ENEMY_TYPES[stageIndex]);
   assert.deepEqual(summaries[stageIndex], {
     stage: stageIndex + 1,
     total: DEFAULT_ENEMY_TOTAL,

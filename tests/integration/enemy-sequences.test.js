@@ -20,8 +20,11 @@ assert.deepEqual(probe[0], {
   stage: 1,
   total: 20,
   groups: [
-    { count: 18, typeIndex: 0, type: "basic" },
-    { count: 2, typeIndex: 1, type: "fast" }
+    { count: 10, typeIndex: 0, type: "basic" },
+    { count: 1, typeIndex: 1, type: "fast" },
+    { count: 6, typeIndex: 0, type: "basic" },
+    { count: 1, typeIndex: 1, type: "fast" },
+    { count: 2, typeIndex: 0, type: "basic" }
   ],
   counts: [18, 2, 0, 0],
   carriers: [4, 11, 18]
@@ -30,9 +33,23 @@ assert.deepEqual(probe[34], {
   stage: 35,
   total: 20,
   groups: [
-    { count: 4, typeIndex: 2, type: "power" },
-    { count: 6, typeIndex: 1, type: "fast" },
-    { count: 10, typeIndex: 3, type: "armor" }
+    { count: 2, typeIndex: 3, type: "armor" },
+    { count: 2, typeIndex: 1, type: "fast" },
+    { count: 1, typeIndex: 3, type: "armor" },
+    { count: 1, typeIndex: 2, type: "power" },
+    { count: 1, typeIndex: 3, type: "armor" },
+    { count: 1, typeIndex: 1, type: "fast" },
+    { count: 1, typeIndex: 3, type: "armor" },
+    { count: 1, typeIndex: 2, type: "power" },
+    { count: 1, typeIndex: 1, type: "fast" },
+    { count: 2, typeIndex: 3, type: "armor" },
+    { count: 1, typeIndex: 2, type: "power" },
+    { count: 1, typeIndex: 3, type: "armor" },
+    { count: 1, typeIndex: 1, type: "fast" },
+    { count: 1, typeIndex: 3, type: "armor" },
+    { count: 1, typeIndex: 2, type: "power" },
+    { count: 1, typeIndex: 1, type: "fast" },
+    { count: 1, typeIndex: 3, type: "armor" }
   ],
   counts: [0, 6, 4, 10],
   carriers: [4, 11, 18]
