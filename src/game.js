@@ -506,8 +506,6 @@
   var selectMovementAudioMode = deps.resolveMovementAudioMode;
   var selectFullGameOverPresentation = deps.fullGameOverPresentation;
   var selectHighScorePresentation = deps.highScorePresentation;
-  var selectStageIntroCurtainState = deps.stageIntroCurtainState;
-  var selectStageSelectCurtainState = deps.stageSelectCurtainState;
   var selectTitleScoreLayout = deps.titleScoreLayout;
   var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
 
@@ -799,6 +797,14 @@
     drawWater: drawWater,
     renderBase: renderBase,
     renderTerrain: renderTerrain
+  });
+  var screenTransitionRenderRuntime = deps.requireRuntimeModule("screenTransitionRenderRuntime").setupScreenTransitionRenderRuntime(state, deps, {
+    drawText: drawText,
+    drawTextClipped: drawTextClipped,
+    gameSettings: gameSettings,
+    renderBase: renderBase,
+    renderGameBackdrop: renderGameBackdrop,
+    renderTitle: renderTitle
   });
 
   function handleAction(action) {
@@ -1195,15 +1201,11 @@
   }
 
   function renderStageSelect() {
-    ctx.fillStyle = "#6b6f78";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    drawText("STAGE", 96, 112, 1, "#15161a");
-    drawText(String(game.stage), 152, 112, 1, "#15161a");
+    return screenTransitionRenderRuntime.renderStageSelect();
   }
 
   function renderStageSelectClosing() {
-    renderTitle();
-    renderCurtain(stageSelectCurtainState());
+    return screenTransitionRenderRuntime.renderStageSelectClosing();
   }
 
   function renderGame() {
@@ -1439,37 +1441,19 @@
   }
 
   function renderStageIntro() {
-    renderGameBackdrop(game.grid);
-    renderBase();
-    const curtain = stageIntroCurtainState();
-    renderCurtain(curtain);
-    const clips = [curtain.top, curtain.bottom].filter((rect) => rect.h > 0);
-    drawTextClipped("STAGE", 96, 112, 1, "#15161a", clips);
-    drawTextClipped(String(game.stage), 152, 112, 1, "#15161a", clips);
+    return screenTransitionRenderRuntime.renderStageIntro();
   }
 
   function renderCurtain(curtain) {
-    ctx.fillStyle = "#6b6f78";
-    if (curtain.top.h > 0) ctx.fillRect(curtain.top.x, curtain.top.y, curtain.top.w, curtain.top.h);
-    if (curtain.bottom.h > 0) ctx.fillRect(curtain.bottom.x, curtain.bottom.y, curtain.bottom.w, curtain.bottom.h);
+    return screenTransitionRenderRuntime.renderCurtain(curtain);
   }
 
   function stageSelectCurtainState(timer) {
-    const remaining = timer === undefined ? game.transitionTimer : timer;
-    return selectStageSelectCurtainState(remaining, {
-      screenWidth: SCREEN_W,
-      screenHeight: SCREEN_H
-    });
+    return screenTransitionRenderRuntime.stageSelectCurtainState(timer);
   }
 
   function stageIntroCurtainState(timer) {
-    const duration = Math.max(1, gameSettings().timings.stageIntro);
-    const remaining = timer === undefined ? game.transitionTimer : timer;
-    return selectStageIntroCurtainState(remaining, game.stage, {
-      duration,
-      screenWidth: SCREEN_W,
-      screenHeight: SCREEN_H
-    });
+    return screenTransitionRenderRuntime.stageIntroCurtainState(timer);
   }
 
   function renderStageClear() {
