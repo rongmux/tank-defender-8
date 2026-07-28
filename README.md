@@ -110,6 +110,7 @@ node --check src/runtime/shared-state.js
 node --check src/runtime/editor-input-runtime.js
 node --check src/runtime/stage-select-runtime.js
 node --check src/runtime/post-game-runtime.js
+node --check src/runtime/stage-flow-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
@@ -236,6 +237,7 @@ tank-defender-8/
 |   |   |-- editor-input-runtime.js
 |   |   |-- stage-select-runtime.js
 |   |   |-- post-game-runtime.js
+|   |   |-- stage-flow-runtime.js
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
@@ -371,6 +373,7 @@ tank-defender-8/
 |   |   |-- editor-input-runtime.test.js
 |   |   |-- stage-select-runtime.test.js
 |   |   |-- post-game-runtime.test.js
+|   |   |-- stage-flow-runtime.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
@@ -488,6 +491,8 @@ tank-defender-8/
 `src/runtime/stage-select-runtime.js` owns the fixed-frame stage-selection A/B input cadence: one-shot presses are consumed before held-key repeats, repeats occur on the original eight-frame boundary, and A retains priority when both buttons arrive together. The stage mapping and screen transition remain explicit callbacks from `src/game.js`.
 
 `src/runtime/post-game-runtime.js` owns the fixed-frame full GAME OVER and high-score screen lifecycle: audio handoff, timed completion, Start/Escape skip behavior, high-score branching, and title-state reset. The existing score comparison and stage-result transition remain outside it and are supplied through explicit callbacks.
+
+`src/runtime/stage-flow-runtime.js` owns stage-result screen transitions: entering clear/game-over results, selecting the next-stage or stop route, closing the stage curtain, launching the next stage, and computing the in-field GAME OVER duration. `src/runtime/stage-result-runtime.js` remains responsible for result projections and bonus side effects; audio cleanup and lifecycle entry points are explicit callbacks.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
 

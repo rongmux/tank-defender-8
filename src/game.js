@@ -233,6 +233,12 @@
   function startHighScoreScreen() { return fn.startHighScoreScreen(); }
   function updateHighScoreScreen() { return fn.updateHighScoreScreen(); }
   function returnToTitleAfterGame() { return fn.returnToTitleAfterGame(); }
+  function enterStageClear() { return fn.enterStageClear(); }
+  function enterStageResult(reason) { return fn.enterStageResult(reason); }
+  function finishStageResult() { return fn.finishStageResult(); }
+  function finishStageClearClosing() { return fn.finishStageClearClosing(); }
+  function finishGameOverScreen() { return fn.finishGameOverScreen(); }
+  function gameOverFieldDuration() { return fn.gameOverFieldDuration(); }
 
   // Audio function aliases
   function initAudio() { return fn.initAudio(); }
@@ -563,6 +569,39 @@
     mapDataStage: mapDataStage,
     playSound: playSound,
     stageCycleLimit: stageCycleLimit
+  });
+  deps.requireRuntimeModule("stageFlowRuntime").setupStageFlowRuntime(state, deps, {
+    awardPendingStageClearBonus: fn.awardPendingStageClearBonus,
+    gameSettings: gameSettings,
+    resetTitleIdleTimer: resetTitleIdleTimer,
+    stageAdvanceResult: fn.stageAdvanceResult,
+    stageClearBonusRecipients: fn.stageClearBonusRecipients,
+    stageCurtainCloseFrames: function () { return STAGE_CURTAIN_CLOSE_FRAMES; },
+    stageResultDuration: fn.stageResultDuration,
+    startFullGameOverScreen: startFullGameOverScreen,
+    startStage: startStage,
+    stopGameplayAudioBeforeResult: function () {
+      stopMovementAudio();
+      stopStageStartAudio();
+      stopBonusLifeAudio();
+      stopPowerUpPickupAudio();
+      stopPowerUpAppearAudio();
+      stopPauseAudio();
+      stopBrickHitAudio();
+      stopEnemyHitAudio();
+      stopBaseHitAudio();
+      stopEnemyDestroyAudio();
+      stopPlayerDestroyAudio();
+      stopSteelHitAudio();
+      stopPlayerShootAudio();
+      stopMovementIceAudio();
+      stopScoreCountAudio();
+      stopStageBonusAudio();
+    },
+    stopStageResultAudio: function () {
+      stopScoreCountAudio();
+      stopStageBonusAudio();
+    }
   });
   deps.requireRuntimeModule("playerUpdateRuntime").setupPlayerUpdateRuntime(state, deps, {
     directionTowardTarget: directionTowardTarget,
@@ -1130,70 +1169,6 @@
     }
   }
 
-  function enterStageClear() {
-    enterStageResult("clear");
-  }
-
-  /**
-   * Starts the shared result count-up while preserving the distinct clear and game-over exits.
-   * @param {"clear" | "gameOver"} reason
-   */
-  function enterStageResult(reason) {
-    stopMovementAudio();
-    stopStageStartAudio();
-    stopBonusLifeAudio();
-    stopPowerUpPickupAudio();
-    stopPowerUpAppearAudio();
-    stopPauseAudio();
-    stopBrickHitAudio();
-    stopEnemyHitAudio();
-    stopBaseHitAudio();
-    stopEnemyDestroyAudio();
-    stopPlayerDestroyAudio();
-    stopSteelHitAudio();
-    stopPlayerShootAudio();
-    stopMovementIceAudio();
-    stopScoreCountAudio();
-    stopStageBonusAudio();
-    const resultReason = reason === "gameOver" ? "gameOver" : "clear";
-    game.clearPendingTimer = 0;
-    game.playerGameOverMessage = null;
-    game.stageResultReason = resultReason;
-    game.stageClearElapsed = 0;
-    game.stageClearBonusPlayerIds = resultReason === "clear"
-      ? fn.stageClearBonusRecipients(game.players).map((player) => player.id)
-      : [];
-    game.stageClearBonusAwarded = false;
-    game.screen = "stageClear";
-    game.transitionTimer = fn.stageResultDuration(game.players);
-  }
-
-  function finishStageResult() {
-    stopScoreCountAudio();
-    stopStageBonusAudio();
-    if (game.stageResultReason === "gameOver") {
-      const advance = fn.stageAdvanceResult(game.stage);
-      if (!game.customGrid && !advance.stops) game.stage = advance.stage;
-      startFullGameOverScreen();
-      return;
-    }
-    fn.awardPendingStageClearBonus();
-    const advance = fn.stageAdvanceResult(game.stage);
-    if (!game.customGrid && advance.stops) {
-      game.screen = "title";
-      resetTitleIdleTimer();
-      return;
-    }
-    game.constructionStageActive = false;
-    game.screen = "stageClearClosing";
-    game.transitionTimer = STAGE_CURTAIN_CLOSE_FRAMES;
-  }
-
-  function finishStageClearClosing() {
-    if (!game.customGrid) game.stage = fn.stageAdvanceResult(game.stage).stage;
-    startStage(game.stage);
-  }
-
   function enterGameOver() {
     if (game.demoMode) {
       endTitleDemo();
@@ -1223,15 +1198,6 @@
     game.playerGameOverMessage = null;
     game.newHighScoreAtGameOver = game.players.some((player) => player.score > game.runHighScoreBaseline);
     game.gameOverTimer = gameOverFieldDuration();
-  }
-
-  function gameOverFieldDuration() {
-    const timings = gameSettings().timings;
-    return timings.gameOverSlide + timings.gameOverHold;
-  }
-
-  function finishGameOverScreen() {
-    enterStageResult("gameOver");
   }
 
   function render() {
@@ -2139,13 +2105,7 @@
   state.fn.updatePlayerMovement = updatePlayerMovement;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
   state.fn.checkEndState = checkEndState;
-  state.fn.enterStageClear = enterStageClear;
-  state.fn.enterStageResult = enterStageResult;
-  state.fn.finishStageResult = finishStageResult;
-  state.fn.finishStageClearClosing = finishStageClearClosing;
   state.fn.enterGameOver = enterGameOver;
-  state.fn.gameOverFieldDuration = gameOverFieldDuration;
-  state.fn.finishGameOverScreen = finishGameOverScreen;
   state.fn.renderTitle = renderTitle;
   state.fn.renderHiddenMessage = renderHiddenMessage;
   state.fn.renderHighScore = renderHighScore;

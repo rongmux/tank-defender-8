@@ -31,6 +31,8 @@ const api = context.window.TankDefender8;
 
 assert(modules.stageFlowDiagnostics, "stage-flow diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.stageFlowDiagnostics), true);
+assert(modules.stageFlowRuntime, "stage flow runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.stageFlowRuntime), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(137, 154))),
   STAGE_FLOW_DIAGNOSTIC_METHODS
