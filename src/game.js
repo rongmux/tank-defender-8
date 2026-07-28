@@ -836,6 +836,21 @@
     renderGameBackdrop: renderGameBackdrop,
     renderTitle: renderTitle
   });
+  var screenRenderRuntime = deps.requireRuntimeModule("screenRenderRuntime").setupScreenRenderRuntime(state, deps, {
+    renderEditor: renderEditor,
+    renderFullGameOver: renderFullGameOver,
+    renderGame: renderGame,
+    renderGameOver: renderGameOver,
+    renderHighScore: renderHighScore,
+    renderHiddenMessage: renderHiddenMessage,
+    renderPause: renderPause,
+    renderStageClear: renderStageClear,
+    renderStageClearClosing: renderStageClearClosing,
+    renderStageIntro: renderStageIntro,
+    renderStageSelect: renderStageSelect,
+    renderStageSelectClosing: renderStageSelectClosing,
+    renderTitle: renderTitle
+  });
 
   deps.requireRuntimeModule("inputRuntime").setupInputRuntime(state, {
     dom: { document: document, window: window },
@@ -961,25 +976,7 @@
   }
 
   function render() {
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-
-    if (game.screen === "title") renderTitle();
-    else if (game.screen === "hiddenMessage") renderHiddenMessage();
-    else if (game.screen === "highScore") renderHighScore();
-    else if (game.screen === "fullGameOver") renderFullGameOver();
-    else if (game.screen === "stageSelectClosing") renderStageSelectClosing();
-    else if (game.screen === "stageSelect") renderStageSelect();
-    else if (game.screen === "editor") renderEditor();
-    else if (game.screen === "stageClear") renderStageClear();
-    else if (game.screen === "stageClearClosing") renderStageClearClosing();
-    else if (game.screen === "stageIntro") renderStageIntro();
-    else {
-      renderGame();
-      if (game.screen === "gameOver") renderGameOver();
-      if (game.paused) renderPause();
-    }
+    return screenRenderRuntime.render();
   }
 
   function renderTitle() {

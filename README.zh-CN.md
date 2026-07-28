@@ -131,6 +131,7 @@ node --check src/runtime/text-render-runtime.js
 node --check src/runtime/sprite-render-runtime.js
 node --check src/runtime/battle-scene-render-runtime.js
 node --check src/runtime/input-runtime.js
+node --check src/runtime/screen-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/battle-combat-runtime.js
@@ -277,6 +278,7 @@ tank-defender-8/
 |   |   |-- sprite-render-runtime.js
 |   |   |-- battle-scene-render-runtime.js
 |   |   |-- input-runtime.js
+|   |   |-- screen-render-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
@@ -431,6 +433,7 @@ tank-defender-8/
 |   |   |-- sprite-render-runtime.test.js
 |   |   |-- battle-scene-render-runtime.test.js
 |   |   |-- input-runtime.test.js
+|   |   |-- screen-render-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -586,6 +589,8 @@ tank-defender-8/
 `src/runtime/sprite-render-runtime.js` 接管免费精灵清单帧查找，以及原尺寸/缩放 Canvas 矩形提交。它保留角色调色板优先级、部件颜色回退、填充/描边操作和小数缩放几何；直接测试覆盖原尺寸帧、缩放帧、回退颜色、缺失帧和模块注册。
 
 `src/runtime/battle-scene-render-runtime.js` 接管战斗场景 Canvas 组合顺序：背景、战场、地形、基地、玩家、敌人、子弹、子弹遮罩、上层地形、道具、爆炸、摧毁覆盖层、分数提示、玩家 GAME OVER 文字和右侧栏。它保留出生/死亡过滤、暂停护盾可见性、显示帧读取和所有遮挡边界；直接测试锁定完整回调序列。
+
+`src/runtime/screen-render-runtime.js` 接管顶层 Canvas 屏幕路由：黑底清屏、标题/隐藏信息/最高分/全屏 GAME OVER、选关、Construction、开场/结算、活动战斗，以及最终 GAME OVER/暂停覆盖层顺序。各屏幕的具体绘制仍由专用渲染器负责；直接测试覆盖全部路由和 Game Over/暂停组合。
 
 `src/stages/battlefield-grid.js` 统一程序化生成、Construction、关卡启动和铲子道具共享的战场几何。它冻结五个围墙格、基地格和六个标准清理矩形，保留更宽的程序化地图保留区，初始化空白 Construction 战场，在保留定制出生区域编辑的同时打开基地格，并在配置的铲子闪烁窗口中选择砖墙/钢墙。直接单元测试锁定所有坐标与修改边界；浏览器集成测试验证真实编辑器围墙，并接管原先位于 smoke 中的铲子围墙断言。
 
@@ -747,6 +752,8 @@ tank-defender-8/
 `src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，`src/game.js` 只保留 Canvas 坐标换算与 DOM 事件接线；直接测试覆盖原版图案掩码、边界安全编辑、画笔选择和 20 帧重复节奏。
 
 `src/runtime/input-runtime.js` 接管工具栏动作、键盘屏幕分派、暂停交接、关卡包导入和 Construction 鼠标编辑等浏览器输入路由。它将浏览器事件时序置于固定帧模拟之外，并通过显式回调提交状态变化；直接测试锁定输入契约，不重复实现游戏规则。
+
+`src/runtime/screen-render-runtime.js` 接管顶层屏幕分派与覆盖层顺序，各专用渲染运行时继续负责具体像素绘制。
 
 `src/runtime/stage-select-runtime.js` 接管关卡选择页的固定帧 A/B 输入节奏：先消费一次性按键，再处理长按重复；重复发生在原版八帧边界；A/B 同时到达时保留 A 优先级。关卡映射和屏幕状态转换仍通过 `src/game.js` 的显式回调执行。
 

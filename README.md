@@ -131,6 +131,7 @@ node --check src/runtime/text-render-runtime.js
 node --check src/runtime/sprite-render-runtime.js
 node --check src/runtime/battle-scene-render-runtime.js
 node --check src/runtime/input-runtime.js
+node --check src/runtime/screen-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/battle-combat-runtime.js
@@ -277,6 +278,7 @@ tank-defender-8/
 |   |   |-- sprite-render-runtime.js
 |   |   |-- battle-scene-render-runtime.js
 |   |   |-- input-runtime.js
+|   |   |-- screen-render-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
@@ -431,6 +433,7 @@ tank-defender-8/
 |   |   |-- sprite-render-runtime.test.js
 |   |   |-- battle-scene-render-runtime.test.js
 |   |   |-- input-runtime.test.js
+|   |   |-- screen-render-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -586,6 +589,8 @@ tank-defender-8/
 `src/runtime/sprite-render-runtime.js` owns free sprite-manifest frame lookup plus native and scaled Canvas rectangle submission. It preserves role-first palette fallback, part colors, fill/stroke operations, and fractional scaling geometry; direct tests cover native frames, scaled frames, fallback colors, missing frames, and registration.
 
 `src/runtime/battle-scene-render-runtime.js` owns the active-battle Canvas composition order: background, field, terrain, base, players, enemies, bullets, projectile cover, top terrain, power-up, explosions, destruction overlays, score popups, player GAME OVER text, and side panel. It preserves spawn/death filtering, paused shield visibility, display-frame reads, and every occlusion boundary; direct tests lock the complete callback sequence.
+
+`src/runtime/screen-render-runtime.js` owns the top-level Canvas screen route: black clearing, title/hidden/high-score/full GAME OVER, stage selection, Construction, intro/result screens, active battle, and the final GAME OVER/pause overlay order. It leaves each screen's drawing details in its specialized renderer and directly tests every route plus the game-over/pause composition.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
 
@@ -747,6 +752,8 @@ The migration order is core timing/random/geometry, configuration and stage pack
 `src/runtime/editor-input-runtime.js` owns the fixed-frame Construction input orchestration: cursor movement, original A/B pattern cycling, full-cell and quadrant painting, brush selection, tile cycling, and held-direction repeat. It keeps mutations and sounds as explicit callbacks while `src/game.js` retains Canvas coordinate conversion and DOM event wiring; direct tests cover the original pattern masks, boundary-safe edits, brush selection, and 20-frame repeat cadence.
 
 `src/runtime/input-runtime.js` owns browser input routing for toolbar actions, keyboard screen dispatch, pause handoff, stage-pack imports, and Construction mouse editing. It keeps browser event timing outside the fixed-frame simulation and delegates state changes through explicit callbacks; its direct tests lock the input contract without duplicating gameplay rules.
+
+`src/runtime/screen-render-runtime.js` owns the top-level screen dispatch and overlay order, while specialized render runtimes own the pixels for each screen.
 
 `src/runtime/stage-select-runtime.js` owns the fixed-frame stage-selection A/B input cadence: one-shot presses are consumed before held-key repeats, repeats occur on the original eight-frame boundary, and A retains priority when both buttons arrive together. The stage mapping and screen transition remain explicit callbacks from `src/game.js`.
 
