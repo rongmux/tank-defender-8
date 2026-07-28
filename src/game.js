@@ -16,7 +16,6 @@
   var FIELD_W = sh.FIELD_W;
   var FIELD_H = sh.FIELD_H;
   var PANEL_X = sh.PANEL_X;
-  var BATTLE_PRESENTATION_LAYOUT = sh.BATTLE_PRESENTATION_LAYOUT;
   var STEP_MS = sh.STEP_MS;
   var DEFAULT_HIGH_SCORE = sh.DEFAULT_HIGH_SCORE;
   var TITLE_DEMO_IDLE_FRAMES = sh.TITLE_DEMO_IDLE_FRAMES;
@@ -389,13 +388,11 @@
 
 
   // Deps module aliases
-  var BASE_DESTRUCTION_TAIL_FRAMES = deps.BASE_DESTRUCTION_TAIL_FRAMES;
   var BRICK = deps.BRICK;
   var CARRIER_FLASH_COLOR = deps.CARRIER_FLASH_COLOR;
   var CARRIER_FLASH_PHASE_FRAMES = deps.CARRIER_FLASH_PHASE_FRAMES;
   var DEFAULT_ENEMY_TOTAL = deps.DEFAULT_ENEMY_TOTAL;
   var DEFAULT_ENEMY_TYPES = deps.DEFAULT_ENEMY_TYPES;
-  var DEFAULT_EXPLOSION_CORE_COLOR = deps.DEFAULT_EXPLOSION_CORE_COLOR;
   var DEFAULT_ORIGINAL_STAGE_COUNT = deps.DEFAULT_ORIGINAL_STAGE_COUNT;
   var DEFAULT_PLAYER_UPGRADE_RULES = deps.DEFAULT_PLAYER_UPGRADE_RULES;
   var DIR_X = deps.DIR_X;
@@ -403,7 +400,6 @@
   var DOWN = deps.DOWN;
   var EDITOR_TILE_TYPES = deps.EDITOR_TILE_TYPES;
   var EMPTY = deps.EMPTY;
-  var ENEMY_DESTRUCTION_SCORE_TICKS = deps.ENEMY_DESTRUCTION_SCORE_TICKS;
   var FIXED_FRAME_AUDIO_UPDATE_MODE = deps.FIXED_FRAME_AUDIO_UPDATE_MODE;
   var FOREST = deps.FOREST;
   var FREE_AUDIO_MANIFEST = deps.FREE_AUDIO_MANIFEST;
@@ -467,7 +463,6 @@
   var isMovementAudioBlocked = deps.isMovementAudioBlocked;
   var isPlayerShieldVisible = deps.isPlayerShieldVisible;
   var isPlayerTankVisible = deps.isPlayerTankVisible;
-  var isTankDestructionStyle = deps.isTankDestructionStyle;
   var makeCell = deps.makeCell;
   var makeGrid = deps.makeGrid;
   var makeOriginalConstructionGrid = deps.makeOriginalConstructionGrid;
@@ -523,12 +518,6 @@
   var selectMovementAudioPresentation = deps.movementAudioPresentation;
   var selectAudioAudibility = deps.resolveAudioAudibility;
   var selectMovementAudioMode = deps.resolveMovementAudioMode;
-  var selectBaseDestructionPresentation = deps.baseDestructionPresentation;
-  var selectEnemyDestructionPresentation = deps.enemyDestructionPresentation;
-  var selectExplosionPresentation = deps.explosionPresentation;
-  var selectPlayerDestructionPresentation = deps.playerDestructionPresentation;
-  var selectScorePopupPresentation = deps.scorePopupPresentation;
-  var selectTankDestructionPresentation = deps.tankDestructionPresentation;
   var selectFullGameOverPresentation = deps.fullGameOverPresentation;
   var selectHighScorePresentation = deps.highScorePresentation;
   var selectStageIntroCurtainState = deps.stageIntroCurtainState;
@@ -794,6 +783,13 @@
   });
   var projectileRenderRuntime = deps.requireRuntimeModule("projectileRenderRuntime").setupProjectileRenderRuntime(state, deps, {
     drawScaledManifestSprite: drawScaledManifestSprite
+  });
+  var effectRenderRuntime = deps.requireRuntimeModule("effectRenderRuntime").setupEffectRenderRuntime(state, deps, {
+    drawManifestSprite: drawManifestSprite,
+    drawScaledManifestSprite: drawScaledManifestSprite,
+    drawText: drawText,
+    explosionRule: fn.explosionRule,
+    gameSettings: gameSettings
   });
 
   function handleAction(action) {
@@ -1362,107 +1358,51 @@
   }
 
   function renderExplosions() {
-    for (const explosion of game.explosions) {
-      if (isTankDestructionStyle(explosion.style)) {
-        drawTankDestructionExplosion(explosion);
-        continue;
-      }
-      const presentation = explosionPresentation(explosion);
-      drawScaledManifestSprite("explosion", "burst", presentation.x, presentation.y, presentation.size / 16, {
-        primary: explosion.color,
-        core: explosion.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
-      });
-    }
+    return effectRenderRuntime.renderExplosions();
   }
 
   function drawTankDestructionExplosion(explosion) {
-    const presentation = tankDestructionPresentation(explosion);
-    drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
-      primary: explosion.color,
-      core: explosion.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
-    });
-    return presentation;
+    return effectRenderRuntime.drawTankDestructionExplosion(explosion);
   }
 
   function renderPlayerDestructions() {
-    const rule = fn.explosionRule("playerDestroy");
-    for (const player of game.players) {
-      if (!player.destroying || player.respawn <= 0) continue;
-      const presentation = playerDestructionPresentation(player);
-      drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
-        primary: rule.color,
-        core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
-      });
-    }
+    return effectRenderRuntime.renderPlayerDestructions();
   }
 
   function playerDestructionPresentation(player) {
-    return selectPlayerDestructionPresentation(player, {
-      layout: BATTLE_PRESENTATION_LAYOUT,
-      totalTicks: gameSettings().timings.playerRespawn,
-      explosionTicks: fn.explosionRule("playerDestroy").ttl
-    });
+    return effectRenderRuntime.playerDestructionPresentation(player);
   }
 
   function renderEnemyDestructions() {
-    const rule = fn.explosionRule("enemyDestroy");
-    for (const enemy of game.enemies) {
-      if (!enemy.alive || !enemy.destroying) continue;
-      const presentation = enemyDestructionPresentation(enemy);
-      if (presentation.kind === "score") {
-        drawText(presentation.text, presentation.x, presentation.y, 1, DEFAULT_EXPLOSION_CORE_COLOR, 5);
-        continue;
-      }
-      drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
-        primary: rule.color,
-        core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
-      });
-    }
+    return effectRenderRuntime.renderEnemyDestructions();
   }
 
   function enemyDestructionPresentation(enemy) {
-    return selectEnemyDestructionPresentation(enemy, {
-      layout: BATTLE_PRESENTATION_LAYOUT,
-      explosionTicks: fn.explosionRule("enemyDestroy").ttl,
-      scoreTicks: ENEMY_DESTRUCTION_SCORE_TICKS
-    });
+    return effectRenderRuntime.enemyDestructionPresentation(enemy);
   }
 
   function renderBaseDestruction() {
-    const presentation = baseDestructionPresentation(game.baseDestroyTimer);
-    if (!presentation) return;
-    const rule = fn.explosionRule("baseDestroy");
-    drawManifestSprite("destructionExplosion", presentation.frameName, presentation.spriteX, presentation.spriteY, {
-      primary: rule.color,
-      core: rule.coreColor || DEFAULT_EXPLOSION_CORE_COLOR
-    });
+    return effectRenderRuntime.renderBaseDestruction();
   }
 
   function baseDestructionPresentation(timer) {
-    return selectBaseDestructionPresentation(timer, game.base, {
-      layout: BATTLE_PRESENTATION_LAYOUT,
-      visibleFrames: fn.explosionRule("baseDestroy").ttl,
-      tailFrames: BASE_DESTRUCTION_TAIL_FRAMES
-    });
+    return effectRenderRuntime.baseDestructionPresentation(timer);
   }
 
   function tankDestructionPresentation(explosion) {
-    return selectTankDestructionPresentation(explosion, BATTLE_PRESENTATION_LAYOUT);
+    return effectRenderRuntime.tankDestructionPresentation(explosion);
   }
 
   function explosionPresentation(explosion) {
-    return selectExplosionPresentation(explosion, BATTLE_PRESENTATION_LAYOUT);
+    return effectRenderRuntime.explosionPresentation(explosion);
   }
 
   function renderScorePopups() {
-    for (const popup of game.scorePopups) {
-      const presentation = scorePopupPresentation(popup);
-      drawText(presentation.text, presentation.x, presentation.y, 1, presentation.color, presentation.advance);
-    }
+    return effectRenderRuntime.renderScorePopups();
   }
 
   function scorePopupPresentation(popup) {
-    return selectScorePopupPresentation(popup, BATTLE_PRESENTATION_LAYOUT);
+    return effectRenderRuntime.scorePopupPresentation(popup);
   }
 
   function renderPanel() {
