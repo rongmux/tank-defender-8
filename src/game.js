@@ -239,6 +239,7 @@
   function finishStageClearClosing() { return fn.finishStageClearClosing(); }
   function finishGameOverScreen() { return fn.finishGameOverScreen(); }
   function gameOverFieldDuration() { return fn.gameOverFieldDuration(); }
+  function checkEndState() { return fn.checkEndState(); }
 
   // Audio function aliases
   function initAudio() { return fn.initAudio(); }
@@ -602,6 +603,17 @@
       stopScoreCountAudio();
       stopStageBonusAudio();
     }
+  });
+  deps.requireRuntimeModule("battleOutcomeRuntime").setupBattleOutcomeRuntime(state, deps, {
+    endTitleDemo: endTitleDemo,
+    enterGameOver: enterGameOver,
+    enterStageClear: enterStageClear,
+    extendedStageEndFrameHigh: function () { return EXTENDED_STAGE_END_FRAME_HIGH; },
+    gameSettings: gameSettings,
+    playerGameOverMessageActive: function () { return fn.playerGameOverMessageActive(); },
+    playerGameOverStageEndDelay: function () { return PLAYER_GAME_OVER_STAGE_END_DELAY; },
+    resetFrameCounters: resetFrameCounters,
+    stageEnemiesCleared: function () { return fn.stageEnemiesCleared(); }
   });
   deps.requireRuntimeModule("playerUpdateRuntime").setupPlayerUpdateRuntime(state, deps, {
     directionTowardTarget: directionTowardTarget,
@@ -1128,45 +1140,6 @@
 
   function shouldSpawnEnemies() {
     return true;
-  }
-
-  function checkEndState() {
-    game.enemies = game.enemies.filter((enemy) => enemy.alive);
-    if (game.demoMode) {
-      const demoPlayersDone = game.players.every((player) => !player.alive && player.respawn <= 0 && player.lives <= 0);
-      if (!game.base.alive || demoPlayersDone || fn.stageEnemiesCleared()) endTitleDemo();
-      return;
-    }
-    if (!game.base.alive) {
-      if (game.baseDestroyTimer > 0) return;
-      enterGameOver();
-      return;
-    }
-    const playersDone = game.players.every((player) => !player.alive && player.respawn <= 0 && player.lives <= 0);
-    if (playersDone) {
-      enterGameOver();
-      return;
-    }
-    if (fn.stageEnemiesCleared()) {
-      game.paused = false;
-      game.pauseElapsed = 0;
-      if (game.clearPendingTimer <= 0) {
-        const extendedStageEnd = fn.playerGameOverMessageActive();
-        game.clearPendingTimer = Math.max(
-          gameSettings().timings.stageClearDelay,
-          extendedStageEnd ? PLAYER_GAME_OVER_STAGE_END_DELAY : 0
-        );
-        game.tick = 0;
-        resetFrameCounters();
-        if (extendedStageEnd) game.frameHigh = EXTENDED_STAGE_END_FRAME_HIGH;
-        if (game.clearPendingTimer > 0) return;
-      }
-      if (game.clearPendingTimer > 0) {
-        game.clearPendingTimer -= 1;
-        if (game.clearPendingTimer > 0) return;
-      }
-      enterStageClear();
-    }
   }
 
   function enterGameOver() {
@@ -2104,7 +2077,6 @@
   state.fn.tileTypeName = tileTypeName;
   state.fn.updatePlayerMovement = updatePlayerMovement;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
-  state.fn.checkEndState = checkEndState;
   state.fn.enterGameOver = enterGameOver;
   state.fn.renderTitle = renderTitle;
   state.fn.renderHiddenMessage = renderHiddenMessage;

@@ -111,6 +111,7 @@ node --check src/runtime/editor-input-runtime.js
 node --check src/runtime/stage-select-runtime.js
 node --check src/runtime/post-game-runtime.js
 node --check src/runtime/stage-flow-runtime.js
+node --check src/runtime/battle-outcome-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
@@ -238,6 +239,7 @@ tank-defender-8/
 |   |   |-- stage-select-runtime.js
 |   |   |-- post-game-runtime.js
 |   |   |-- stage-flow-runtime.js
+|   |   |-- battle-outcome-runtime.js
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
@@ -374,6 +376,7 @@ tank-defender-8/
 |   |   |-- stage-select-runtime.test.js
 |   |   |-- post-game-runtime.test.js
 |   |   |-- stage-flow-runtime.test.js
+|   |   |-- battle-outcome-runtime.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
@@ -493,6 +496,8 @@ tank-defender-8/
 `src/runtime/post-game-runtime.js` 接管固定帧全屏 GAME OVER 与最高分屏幕生命周期：音频交接、定时结束、Start/Escape 跳过、高分分支和标题状态复位。现有最高分比较与阶段结算转换仍保留在模块外，并通过显式回调接入。
 
 `src/runtime/stage-flow-runtime.js` 接管关卡结算屏幕转换：进入通关/游戏结束结算、选择下一关或停止路线、关闭关卡幕布、启动下一关以及计算场内 GAME OVER 时长。`src/runtime/stage-result-runtime.js` 继续负责结算投影和奖励副作用，音频清理与生命周期入口通过显式回调接入。
+
+`src/runtime/battle-outcome-runtime.js` 接管固定帧战斗结束判定：演示模式结束、基地/玩家 GAME OVER 触发、敌人清空后的延迟、玩家 GAME OVER 延长、帧计数器复位以及进入关卡结算转换。实际屏幕转换通过回调交给 `stage-flow-runtime`，原版 60 Hz 边界行为可以单独测试。
 
 `src/stages/battlefield-grid.js` 统一程序化生成、Construction、关卡启动和铲子道具共享的战场几何。它冻结五个围墙格、基地格和六个标准清理矩形，保留更宽的程序化地图保留区，初始化空白 Construction 战场，在保留定制出生区域编辑的同时打开基地格，并在配置的铲子闪烁窗口中选择砖墙/钢墙。直接单元测试锁定所有坐标与修改边界；浏览器集成测试验证真实编辑器围墙，并接管原先位于 smoke 中的铲子围墙断言。
 
