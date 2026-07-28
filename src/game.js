@@ -726,6 +726,47 @@
     stepMs: function () { return sh.STEP_MS; },
     update: update
   });
+  var screenUpdateRuntime = deps.requireRuntimeModule("screenUpdateRuntime").setupScreenUpdateRuntime(state, deps, {
+    advanceFrameCounters: advanceFrameCounters,
+    awardPendingStageClearBonus: fn.awardPendingStageClearBonus,
+    checkEndState: checkEndState,
+    finishGameOverScreen: finishGameOverScreen,
+    finishStageClearClosing: finishStageClearClosing,
+    finishStageResult: finishStageResult,
+    playSound: playSound,
+    resetFrameCounterHigh: resetFrameCounterHigh,
+    stageClearPresentation: fn.stageClearPresentation,
+    stageResultVisibleKillCount: stageResultVisibleKillCount,
+    syncMovementAudio: syncMovementAudio,
+    updateAudio: function () {
+      updateStageStartAudio();
+      updateBonusLifeAudio();
+      updatePowerUpPickupAudio();
+      updatePowerUpAppearAudio();
+      updateBrickHitAudio();
+      updateBaseHitAudio();
+      updateSteelHitAudio();
+      updateEnemyHitAudio();
+      updateEnemyDestroyAudio();
+      updatePlayerDestroyAudio();
+      updatePlayerShootAudio();
+      updateMovementIceAudio();
+      updatePauseAudio();
+      updateScoreCountAudio();
+      updateStageBonusAudio();
+      updateGameOverAudio();
+      updateHighScoreAudio();
+    },
+    updateBattle: updateBattle,
+    updateEditorControls: updateEditorControls,
+    updateExplosions: fn.updateExplosions,
+    updateFullGameOverScreen: updateFullGameOverScreen,
+    updateHighScoreScreen: updateHighScoreScreen,
+    updateHiddenMessage: updateHiddenMessage,
+    updateScorePopups: fn.updateScorePopups,
+    updateStageSelectControls: updateStageSelectControls,
+    updateTitleIdle: updateTitleIdle
+  });
 
   function handleAction(action) {
     initAudio();
@@ -963,117 +1004,7 @@
   }
 
   function update() {
-    advanceFrameCounters();
-    if (game.editorMessageTimer > 0) game.editorMessageTimer -= 1;
-    updateStageStartAudio();
-    updateBonusLifeAudio();
-    updatePowerUpPickupAudio();
-    updatePowerUpAppearAudio();
-    updateBrickHitAudio();
-    updateBaseHitAudio();
-    updateSteelHitAudio();
-    updateEnemyHitAudio();
-    updateEnemyDestroyAudio();
-    updatePlayerDestroyAudio();
-    updatePlayerShootAudio();
-    updateMovementIceAudio();
-    updatePauseAudio();
-    updateScoreCountAudio();
-    updateStageBonusAudio();
-    updateGameOverAudio();
-    updateHighScoreAudio();
-
-    if (game.screen === "title") {
-      updateTitleIdle();
-      return;
-    }
-
-    if (game.screen === "hiddenMessage") {
-      updateHiddenMessage();
-      return;
-    }
-
-    if (game.screen === "highScore") {
-      updateHighScoreScreen();
-      return;
-    }
-
-    if (game.screen === "fullGameOver") {
-      updateFullGameOverScreen();
-      return;
-    }
-
-    if (game.screen === "stageSelectClosing") {
-      game.transitionTimer -= 1;
-      if (game.transitionTimer <= 0) game.screen = "stageSelect";
-      return;
-    }
-
-    if (game.screen === "stageSelect") {
-      updateStageSelectControls();
-      return;
-    }
-
-    if (game.screen === "stageClearClosing") {
-      game.transitionTimer -= 1;
-      if (game.transitionTimer <= 0) finishStageClearClosing();
-      return;
-    }
-
-    if (game.screen === "stageIntro") {
-      game.transitionTimer -= 1;
-      if (game.transitionTimer <= 0) {
-        game.screen = "playing";
-        resetFrameCounterHigh();
-        syncMovementAudio();
-      }
-      return;
-    }
-
-    if (game.screen === "stageClear") {
-      const previousVisibleKills = stageResultVisibleKillCount(fn.stageClearPresentation());
-      game.stageClearElapsed += 1;
-      const presentation = fn.stageClearPresentation();
-      if (stageResultVisibleKillCount(presentation) > previousVisibleKills) playSound("scoreCount");
-      if (
-        game.stageResultReason === "clear" &&
-        !game.stageClearBonusAwarded &&
-        game.stageClearElapsed >= presentation.bonusRevealFrame
-      ) {
-        fn.awardPendingStageClearBonus();
-      }
-      game.transitionTimer -= 1;
-      fn.updateExplosions();
-      fn.updateScorePopups();
-      if (game.transitionTimer <= 0) finishStageResult();
-      return;
-    }
-
-    if (game.screen === "gameOver") {
-      if (game.gameOverTimer <= 0) {
-        finishGameOverScreen();
-        return;
-      }
-      updateBattle({ playerInputEnabled: false, checkEnding: false });
-      game.gameOverTimer -= 1;
-      return;
-    }
-
-    if (game.screen === "editor") {
-      updateEditorControls();
-      return;
-    }
-
-    if (game.screen !== "playing") return;
-    if (game.paused) {
-      game.pauseElapsed += 1;
-      fn.updateScorePopups();
-      checkEndState();
-      syncMovementAudio();
-      return;
-    }
-
-    updateBattle();
+    return screenUpdateRuntime.updateFrame();
   }
 
   function advanceFrameCounters() {
