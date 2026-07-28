@@ -122,6 +122,7 @@ node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/power-up-render-runtime.js
 node --check src/runtime/projectile-render-runtime.js
 node --check src/runtime/effect-render-runtime.js
+node --check src/runtime/stage-result-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/battle-combat-runtime.js
@@ -259,6 +260,7 @@ tank-defender-8/
 |   |   |-- power-up-render-runtime.js
 |   |   |-- projectile-render-runtime.js
 |   |   |-- effect-render-runtime.js
+|   |   |-- stage-result-render-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
@@ -405,6 +407,7 @@ tank-defender-8/
 |   |   |-- power-up-render-runtime.test.js
 |   |   |-- projectile-render-runtime.test.js
 |   |   |-- effect-render-runtime.test.js
+|   |   |-- stage-result-render-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -543,6 +546,8 @@ tank-defender-8/
 `src/runtime/projectile-render-runtime.js` 接管子弹精灵提交：清单尺寸缩放、战场偏移以及玩家/敌方子弹的不同调色板。移动、数量上限、碰撞和命中解析仍由原有战斗模块负责；直接测试覆盖玩家缩放子弹、敌方原尺寸子弹和精确整数坐标。
 
 `src/runtime/effect-render-runtime.js` 接管瞬态爆炸、玩家/敌人摧毁序列、基地摧毁和分数提示的 Canvas 绘制。它保留现有表现投影、配置的爆炸颜色、摧毁帧顺序与战场偏移，并通过显式回调提交精灵/文字；直接测试覆盖绘制顺序、分数态文字、摧毁调色板和模块注册。
+
+`src/runtime/stage-result-render-runtime.js` 接管关卡完成结算页：分数标题、单人/双人结算行、居中的坦克图标、方向箭头、奖励行、总计、分数格式化和关闭幕布。它保留原有 256x240 整数几何，并通过兼容 API 暴露结算辅助函数；直接测试锁定双人结算行坐标，防止中间坦克图标与箭头再次重叠。
 
 `src/stages/battlefield-grid.js` 统一程序化生成、Construction、关卡启动和铲子道具共享的战场几何。它冻结五个围墙格、基地格和六个标准清理矩形，保留更宽的程序化地图保留区，初始化空白 Construction 战场，在保留定制出生区域编辑的同时打开基地格，并在配置的铲子闪烁窗口中选择砖墙/钢墙。直接单元测试锁定所有坐标与修改边界；浏览器集成测试验证真实编辑器围墙，并接管原先位于 smoke 中的铲子围墙断言。
 

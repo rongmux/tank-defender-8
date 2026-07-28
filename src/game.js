@@ -36,7 +36,6 @@
   var DEMO_INITIAL_FRAME_LOW = sh.DEMO_INITIAL_FRAME_LOW;
   var STAGE_MAP_DRAW_FRAMES = sh.STAGE_MAP_DRAW_FRAMES;
   var STAGE_ATTRIBUTE_COPY_FRAMES = sh.STAGE_ATTRIBUTE_COPY_FRAMES;
-  var STAGE_RESULT_ROW_LAYOUT = sh.STAGE_RESULT_ROW_LAYOUT;
   var TITLE_MENU_ITEMS = sh.TITLE_MENU_ITEMS;
   var EDITOR_STORAGE_KEY = sh.EDITOR_STORAGE_KEY;
   var HIGH_SCORE_STORAGE_KEY = sh.HIGH_SCORE_STORAGE_KEY;
@@ -791,6 +790,15 @@
     explosionRule: fn.explosionRule,
     gameSettings: gameSettings
   });
+  var stageResultRenderRuntime = deps.requireRuntimeModule("stageResultRenderRuntime").setupStageResultRenderRuntime(state, deps, {
+    drawMiniTank: drawMiniTank,
+    drawText: drawText,
+    drawTextRight: drawTextRight,
+    gameSettings: gameSettings,
+    renderCurtain: renderCurtain,
+    stageClearPresentation: fn.stageClearPresentation,
+    stageSelectCurtainState: stageSelectCurtainState
+  });
 
   function handleAction(action) {
     initAudio();
@@ -1452,11 +1460,11 @@
   }
 
   function drawSmallScore(score, x, y, color) {
-    drawText(formatScore5(score), x, y, 1, color);
+    return stageResultRenderRuntime.drawSmallScore(score, x, y, color);
   }
 
   function formatScore5(score) {
-    return String(Math.min(99999, Math.max(0, Math.floor(score || 0)))).padStart(5, "0");
+    return stageResultRenderRuntime.formatScore5(score);
   }
 
   function renderStageIntro() {
@@ -1494,81 +1502,19 @@
   }
 
   function renderStageClear() {
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    const presentation = fn.stageClearPresentation();
-    const result = presentation.result;
-    const p1 = result.p1;
-    const p2 = result.p2;
-
-    drawText("HI-SCORE", 64, 24, 1, "#f05a42");
-    drawText(formatScore5(game.highScore), 152, 24, 1, "#f05a42");
-    drawText("STAGE", 96, 40, 1, "#f3f0d4");
-    drawText(String(game.stage), 152, 40, 1, "#f3f0d4");
-    drawText("I-PLAYER", 24, 56, 1, "#f05a42");
-    drawTextRight(String(p1.score || 0), 88, 72, 1, "#d08b52");
-    if (game.playerCount > 1) {
-      drawText("II-PLAYER", 168, 56, 1, "#f05a42");
-      drawTextRight(String(p2.score || 0), 232, 72, 1, "#d08b52");
-    }
-
-    for (const row of presentation.rows) {
-      const y = 96 + row.typeIndex * 24;
-      drawTextRight(String(row.p1VisiblePoints), 56, y, 1, "#f3f0d4");
-      drawText("PTS", 64, y, 1, "#f3f0d4");
-      drawTextRight(String(row.p1VisibleKills), STAGE_RESULT_ROW_LAYOUT.p1KillsRightX, y, 1, "#f3f0d4");
-      drawResultArrow(STAGE_RESULT_ROW_LAYOUT.leftArrowX, y + 2, -1);
-      drawMiniTank(STAGE_RESULT_ROW_LAYOUT.miniTankX, y - 3, row.color);
-      if (game.playerCount > 1) {
-        drawResultArrow(STAGE_RESULT_ROW_LAYOUT.rightArrowX, y + 2, 1);
-        drawText(String(row.p2VisibleKills), STAGE_RESULT_ROW_LAYOUT.p2KillsX, y, 1, "#f3f0d4");
-        drawTextRight(String(row.p2VisiblePoints), 200, y, 1, "#f3f0d4");
-        drawText("PTS", 208, y, 1, "#f3f0d4");
-      }
-    }
-
-    ctx.fillStyle = "#f3f0d4";
-    ctx.fillRect(96, 180, 64, 1);
-    drawText("TOTAL", 48, 184, 1, "#f3f0d4");
-    if (presentation.showTotals) {
-      drawTextRight(String(totalStageKills(p1)), 104, 184, 1, "#f3f0d4");
-      if (game.playerCount > 1) drawText(String(totalStageKills(p2)), 152, 184, 1, "#f3f0d4");
-    }
-
-    if (presentation.showBonus && game.stageClearBonusPlayerIds.includes(1)) {
-      drawText("BONUS!", 24, 200, 1, "#f05a42");
-      drawTextRight(String(gameSettings().stageClearBonus.points), 56, 208, 1, "#f3f0d4");
-      drawText("PTS", 64, 208, 1, "#f3f0d4");
-    }
-    if (presentation.showBonus && game.stageClearBonusPlayerIds.includes(2)) {
-      drawText("BONUS!", 176, 200, 1, "#f05a42");
-      drawTextRight(String(gameSettings().stageClearBonus.points), 200, 208, 1, "#f3f0d4");
-      drawText("PTS", 216, 208, 1, "#f3f0d4");
-    }
+    return stageResultRenderRuntime.renderStageClear();
   }
 
   function renderStageClearClosing() {
-    renderStageClear();
-    renderCurtain(stageSelectCurtainState());
+    return stageResultRenderRuntime.renderStageClearClosing();
   }
 
   function totalStageKills(player) {
-    return player && Array.isArray(player.stageKills)
-      ? player.stageKills.reduce((sum, value) => sum + Math.max(0, Math.floor(Number(value) || 0)), 0)
-      : 0;
+    return stageResultRenderRuntime.totalStageKills(player);
   }
 
   function drawResultArrow(x, y, direction) {
-    ctx.fillStyle = "#f3f0d4";
-    if (direction < 0) {
-      ctx.fillRect(x, y + 2, 8, 1);
-      ctx.fillRect(x, y + 1, 2, 3);
-      ctx.fillRect(x + 2, y, 2, 5);
-    } else {
-      ctx.fillRect(x, y + 2, 8, 1);
-      ctx.fillRect(x + 6, y + 1, 2, 3);
-      ctx.fillRect(x + 4, y, 2, 5);
-    }
+    return stageResultRenderRuntime.drawResultArrow(x, y, direction);
   }
 
   function drawMiniTank(x, y, color) {
