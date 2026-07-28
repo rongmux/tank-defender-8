@@ -3,7 +3,7 @@ const builtInStagePack = require("../../src/stages/built-in-stage-pack");
 const { DEFAULT_ENEMY_TYPES, cloneEnemyTypes } = require("../../src/config/enemy-types");
 const { normalizeGameSettings } = require("../../src/stages/stage-pack");
 const { buildOriginalStyleEnemySequences } = require("../../src/stages/enemy-sequences");
-const { buildProceduralStage } = require("../../src/stages/procedural-stage");
+const { buildOriginalStageGrid } = require("../../src/stages/original-stage-data");
 const { gridToRows } = require("../../src/stages/stage-grid");
 
 const {
@@ -60,11 +60,11 @@ assert.deepEqual(pack.enemyAt(35, 19), {
   spawnDelay: null
 });
 
-assert.deepEqual(gridToRows(pack.createGrid(1)), gridToRows(buildProceduralStage(1)));
-const customRows = Array.from({ length: 13 }, () => ".............");
-customRows[0] = "B............";
-pack.maps[1] = customRows;
-assert.deepEqual(gridToRows(pack.createGrid(2)), customRows);
+assert.deepEqual(gridToRows(pack.createGrid(1)), gridToRows(buildOriginalStageGrid(1)));
+assert.deepEqual(gridToRows(pack.createGrid(35)), gridToRows(buildOriginalStageGrid(35)));
+const mapBeforeMutation = gridToRows(pack.createGrid(2));
+pack.maps.push(Array.from({ length: 13 }, () => "B".repeat(13)));
+assert.deepEqual(gridToRows(pack.createGrid(2)), mapBeforeMutation);
 
 assert.deepEqual(
   Array.from({ length: 20 }, (_, index) => pickFallbackEnemyType(1, index)),

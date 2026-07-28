@@ -8,7 +8,7 @@
     enemyTypes: isCommonJs ? require("../config/enemy-types") : modules.enemyTypes,
     stagePack: isCommonJs ? require("./stage-pack") : modules.stagePack,
     stageGrid: isCommonJs ? require("./stage-grid") : modules.stageGrid,
-    proceduralStage: isCommonJs ? require("./procedural-stage") : modules.proceduralStage,
+    originalStageData: isCommonJs ? require("./original-stage-data") : modules.originalStageData,
     enemySequences: isCommonJs ? require("./enemy-sequences") : modules.enemySequences
   };
 
@@ -30,8 +30,7 @@
   const { clamp } = dependencies.geometry;
   const { DEFAULT_ENEMY_TYPES, cloneEnemyTypes } = dependencies.enemyTypes;
   const { normalizeGameSettings } = dependencies.stagePack;
-  const { parseStageRows } = dependencies.stageGrid;
-  const { buildProceduralStage } = dependencies.proceduralStage;
+  const { buildOriginalStageGrid } = dependencies.originalStageData;
   const {
     BONUS_ENEMY_INDICES,
     DEFAULT_ENEMY_TOTAL,
@@ -63,8 +62,7 @@
       maps: [],
       enemies: buildOriginalStyleEnemySequences(),
       createGrid(stage) {
-        const rows = this.maps[stage - 1];
-        return rows ? parseStageRows(rows) : buildProceduralStage(stage);
+        return buildOriginalStageGrid(stage);
       },
       enemyAt(stage, index) {
         const sequence = this.enemies[stage - 1];

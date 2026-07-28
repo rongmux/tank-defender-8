@@ -28,9 +28,11 @@ listeners.keydown({ code: "Enter", repeat: false, shiftKey: false, preventDefaul
 listeners.keyup({ code: "Enter" });
 const snapshot = JSON.parse(JSON.stringify(api.debugSnapshot()));
 assert.equal(snapshot.screen, "stageIntro");
+const preparedGrid = modules.stageGrid.cloneGrid(pack.createGrid(1));
+modules.battlefieldGrid.prepareBattleGrid(preparedGrid);
 assert.deepEqual(
   snapshot.battleQuadrants,
-  JSON.parse(JSON.stringify(modules.stageGrid.gridToQuadrants(pack.createGrid(1))))
+  JSON.parse(JSON.stringify(modules.stageGrid.gridToQuadrants(preparedGrid)))
 );
 
 assert(source.includes('builtInStagePack'));
