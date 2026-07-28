@@ -395,7 +395,6 @@
   var DOWN = deps.DOWN;
   var FIXED_FRAME_AUDIO_UPDATE_MODE = deps.FIXED_FRAME_AUDIO_UPDATE_MODE;
   var FREE_AUDIO_MANIFEST = deps.FREE_AUDIO_MANIFEST;
-  var FREE_SPRITE_MANIFEST = deps.FREE_SPRITE_MANIFEST;
   var FULL_BRICK_FRAGMENT_MASK = deps.FULL_BRICK_FRAGMENT_MASK;
   var FULL_GAME_OVER_SCREEN_FRAMES = deps.FULL_GAME_OVER_SCREEN_FRAMES;
   var HIGH_SCORE_SCREEN_FRAMES = deps.HIGH_SCORE_SCREEN_FRAMES;
@@ -509,6 +508,7 @@
   var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
 
   var textRenderRuntime = deps.requireRuntimeModule("textRenderRuntime").setupTextRenderRuntime(state, deps);
+  var spriteRenderRuntime = deps.requireRuntimeModule("spriteRenderRuntime").setupSpriteRenderRuntime(state, deps);
   deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
   deps.requireRuntimeModule("transientEffectsRuntime").setupTransientEffectsRuntime(state, deps, {
     gameSettings: gameSettings
@@ -1331,41 +1331,11 @@
   }
 
   function drawManifestSprite(spriteName, frameName, x, y, palette) {
-    const sprite = FREE_SPRITE_MANIFEST.sprites[spriteName];
-    const frame = sprite && sprite.frames[frameName];
-    if (!frame) return;
-    for (const part of frame) {
-      const rect = part.rect;
-      const color = palette[part.role] || part.color || "#ffffff";
-      if (part.op === "stroke") {
-        ctx.strokeStyle = color;
-        ctx.strokeRect(x + rect[0], y + rect[1], rect[2], rect[3]);
-      } else {
-        ctx.fillStyle = color;
-        ctx.fillRect(x + rect[0], y + rect[1], rect[2], rect[3]);
-      }
-    }
+    return spriteRenderRuntime.drawManifestSprite(spriteName, frameName, x, y, palette);
   }
 
   function drawScaledManifestSprite(spriteName, frameName, x, y, scale, palette) {
-    const sprite = FREE_SPRITE_MANIFEST.sprites[spriteName];
-    const frame = sprite && sprite.frames[frameName];
-    if (!frame) return;
-    for (const part of frame) {
-      const rect = part.rect;
-      const color = palette[part.role] || part.color || "#ffffff";
-      const rx = x + rect[0] * scale;
-      const ry = y + rect[1] * scale;
-      const rw = rect[2] * scale;
-      const rh = rect[3] * scale;
-      if (part.op === "stroke") {
-        ctx.strokeStyle = color;
-        ctx.strokeRect(rx, ry, rw, rh);
-      } else {
-        ctx.fillStyle = color;
-        ctx.fillRect(rx, ry, rw, rh);
-      }
-    }
+    return spriteRenderRuntime.drawScaledManifestSprite(spriteName, frameName, x, y, scale, palette);
   }
 
   function renderExplosions() {
