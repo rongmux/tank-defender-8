@@ -128,6 +128,7 @@ node --check src/runtime/editor-render-runtime.js
 node --check src/runtime/screen-transition-render-runtime.js
 node --check src/runtime/text-render-runtime.js
 node --check src/runtime/sprite-render-runtime.js
+node --check src/runtime/battle-scene-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/battle-combat-runtime.js
@@ -271,6 +272,7 @@ tank-defender-8/
 |   |   |-- screen-transition-render-runtime.js
 |   |   |-- text-render-runtime.js
 |   |   |-- sprite-render-runtime.js
+|   |   |-- battle-scene-render-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
@@ -423,6 +425,7 @@ tank-defender-8/
 |   |   |-- screen-transition-render-runtime.test.js
 |   |   |-- text-render-runtime.test.js
 |   |   |-- sprite-render-runtime.test.js
+|   |   |-- battle-scene-render-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -573,6 +576,8 @@ tank-defender-8/
 `src/runtime/text-render-runtime.js` owns the shared integer pixel-font submission path for normal, clipped, and right-aligned text. It preserves uppercase glyph lookup, rounded integer origins, scale/advance defaults, clip intersection, and right-edge alignment; direct tests cover exact glyph rectangles, clipping, empty clips, and right-aligned call flow.
 
 `src/runtime/sprite-render-runtime.js` owns free sprite-manifest frame lookup plus native and scaled Canvas rectangle submission. It preserves role-first palette fallback, part colors, fill/stroke operations, and fractional scaling geometry; direct tests cover native frames, scaled frames, fallback colors, missing frames, and registration.
+
+`src/runtime/battle-scene-render-runtime.js` owns the active-battle Canvas composition order: background, field, terrain, base, players, enemies, bullets, projectile cover, top terrain, power-up, explosions, destruction overlays, score popups, player GAME OVER text, and side panel. It preserves spawn/death filtering, paused shield visibility, display-frame reads, and every occlusion boundary; direct tests lock the complete callback sequence.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
 

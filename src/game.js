@@ -509,6 +509,27 @@
 
   var textRenderRuntime = deps.requireRuntimeModule("textRenderRuntime").setupTextRenderRuntime(state, deps);
   var spriteRenderRuntime = deps.requireRuntimeModule("spriteRenderRuntime").setupSpriteRenderRuntime(state, deps);
+  var battleSceneRenderRuntime = deps.requireRuntimeModule("battleSceneRenderRuntime").setupBattleSceneRenderRuntime(state, deps, {
+    battleDisplayFrame: battleDisplayFrame,
+    drawBullet: drawBullet,
+    drawPowerUp: drawPowerUp,
+    drawShield: drawShield,
+    drawSpawn: drawSpawn,
+    drawTank: drawTank,
+    enemyColor: enemyColor,
+    isPlayerShieldVisible: isPlayerShieldVisible,
+    isPlayerTankVisible: isPlayerTankVisible,
+    renderBase: renderBase,
+    renderBaseDestruction: renderBaseDestruction,
+    renderEnemyDestructions: renderEnemyDestructions,
+    renderExplosions: renderExplosions,
+    renderPanel: renderPanel,
+    renderPlayerDestructions: renderPlayerDestructions,
+    renderPlayerGameOverMessage: renderPlayerGameOverMessage,
+    renderProjectileTerrainCover: renderProjectileTerrainCover,
+    renderScorePopups: renderScorePopups,
+    renderTerrain: renderTerrain
+  });
   deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
   deps.requireRuntimeModule("transientEffectsRuntime").setupTransientEffectsRuntime(state, deps, {
     gameSettings: gameSettings
@@ -1209,41 +1230,7 @@
   }
 
   function renderGame() {
-    ctx.fillStyle = "#6b6f78";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(FIELD_X, FIELD_Y, FIELD_W, FIELD_H);
-    renderTerrain(false, game.grid);
-    renderBase();
-
-    for (const player of game.players) {
-      if (!player.alive || player.respawn > 0) continue;
-      if (player.spawnFlash > 0) {
-        drawSpawn(player);
-      } else {
-        if (isPlayerShieldVisible(player, game.paused)) drawShield(player);
-        if (isPlayerTankVisible(player, battleDisplayFrame())) drawTank(player, player.color, player.accent);
-      }
-    }
-
-    for (const enemy of game.enemies) {
-      if (!enemy.alive) continue;
-      if (enemy.destroying) continue;
-      if (enemy.spawnFlash > 0) drawSpawn(enemy);
-      else drawTank(enemy, enemyColor(enemy), enemy.accent);
-    }
-
-    for (const bullet of game.bullets) drawBullet(bullet);
-    renderProjectileTerrainCover(game.grid);
-    renderTerrain(true, game.grid);
-    if (game.powerUp) drawPowerUp(game.powerUp);
-    renderExplosions();
-    renderPlayerDestructions();
-    renderEnemyDestructions();
-    renderBaseDestruction();
-    renderScorePopups();
-    renderPlayerGameOverMessage();
-    renderPanel();
+    return battleSceneRenderRuntime.renderGame();
   }
 
   function renderGameBackdrop(grid) {
