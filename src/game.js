@@ -767,6 +767,16 @@
     updateStageSelectControls: updateStageSelectControls,
     updateTitleIdle: updateTitleIdle
   });
+  var titleRenderRuntime = deps.requireRuntimeModule("titleRenderRuntime").setupTitleRenderRuntime(state, deps, {
+    drawManifestSprite: drawManifestSprite,
+    drawMiniTank: drawMiniTank,
+    drawText: drawText,
+    fullGameOverPresentation: fullGameOverPresentation,
+    highScorePresentation: highScorePresentation,
+    hiddenMessagePresentation: hiddenMessagePresentation,
+    pixelGlyph: pixelGlyph,
+    titleScoreLayout: titleScoreLayout
+  });
 
   function handleAction(action) {
     initAudio();
@@ -1125,71 +1135,19 @@
   }
 
   function renderTitle() {
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    for (const item of titleScoreLayout()) drawText(item.text, item.x, item.y, 1, "#f05a42");
-    drawStripedTitleText("TANK", 68, 46, 5);
-    drawStripedTitleText("DEFENDER", 56, 86, 3);
-    for (let i = 0; i < TITLE_MENU_ITEMS.length; i += 1) {
-      const item = TITLE_MENU_ITEMS[i];
-      if (i === game.titleMenu) drawTitleMenuCursor(item);
-      drawText(item.label, item.x, item.y, 1, item.color);
-    }
-    drawText("PIXEL LAB", 88, 184, 1, "#f05a42");
-    drawText("2026 OPEN PIXEL LAB", 32, 200, 1, "#f3f0d4");
-    drawText("ALL RIGHTS RESERVED", 48, 216, 1, "#f3f0d4");
+    return titleRenderRuntime.renderTitle();
   }
 
   function renderHiddenMessage() {
-    const presentation = hiddenMessagePresentation(game.hiddenMessageElapsed);
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    for (let index = 0; index < presentation.visibleLines.length; index += 1) {
-      drawText(presentation.visibleLines[index], 64, 64 + index * 16, 1, "#f3f0d4");
-    }
-    if (presentation.dots > 0) drawText(".".repeat(presentation.dots), 64, 128, 1, "#f3f0d4");
-    if (presentation.drop) {
-      drawManifestSprite("hiddenDrop", presentation.drop.frame, presentation.drop.x, presentation.drop.y, {
-        primary: "#55b96a",
-        light: "#b7ffbd",
-        shadow: "#245c33"
-      });
-    }
+    return titleRenderRuntime.renderHiddenMessage();
   }
 
   function renderHighScore() {
-    const presentation = highScorePresentation(game.highScoreScreenElapsed, game.highScore);
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    const palette = {
-      dark: "#1b1512",
-      primary: presentation.color,
-      highlight: "#f7f1c6"
-    };
-    drawStripedTitleText("HISCORE", 23, 50, 5, palette);
-    drawStripedTitleText(presentation.scoreText, presentation.scoreX, 100, 5, palette);
+    return titleRenderRuntime.renderHighScore();
   }
 
   function renderFullGameOver() {
-    const presentation = fullGameOverPresentation(game.fullGameOverElapsed);
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    for (let index = 0; index < presentation.gameText.length; index += 1) {
-      drawStripedTitleText(
-        presentation.gameText[index],
-        presentation.x + index * presentation.letterAdvance,
-        presentation.gameY,
-        presentation.scale
-      );
-    }
-    for (let index = 0; index < presentation.overText.length; index += 1) {
-      drawStripedTitleText(
-        presentation.overText[index],
-        presentation.x + index * presentation.letterAdvance,
-        presentation.overY,
-        presentation.scale
-      );
-    }
+    return titleRenderRuntime.renderFullGameOver();
   }
 
   function fullGameOverPresentation(elapsed) {
@@ -1206,31 +1164,11 @@
   }
 
   function drawStripedTitleText(text, x, y, scale, palette) {
-    const size = Math.max(2, Math.floor(scale || 2));
-    const colors = palette || { dark: "#a8322c", primary: "#f05a42", highlight: "#f3f0d4" };
-    let cursorX = Math.round(x);
-    const top = Math.round(y);
-    for (const ch of String(text).toUpperCase()) {
-      const glyph = pixelGlyph(ch);
-      for (let row = 0; row < glyph.length; row += 1) {
-        for (let col = 0; col < glyph[row].length; col += 1) {
-          if (glyph[row][col] !== "1") continue;
-          const px = cursorX + col * size;
-          const py = top + row * size;
-          ctx.fillStyle = colors.dark;
-          ctx.fillRect(px, py, size, size);
-          ctx.fillStyle = colors.primary;
-          ctx.fillRect(px, py, size, Math.max(1, size - 1));
-          ctx.fillStyle = colors.highlight;
-          ctx.fillRect(px, py + Math.floor(size / 2), size, 1);
-        }
-      }
-      cursorX += 6 * size;
-    }
+    return titleRenderRuntime.drawStripedTitleText(text, x, y, scale, palette);
   }
 
   function drawTitleMenuCursor(item) {
-    drawMiniTank(item.x - 20, item.y - 4, "#e3c64e");
+    return titleRenderRuntime.drawTitleMenuCursor(item);
   }
 
   function renderStageSelect() {
