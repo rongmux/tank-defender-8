@@ -96,6 +96,9 @@
     showEditorMessage: showEditorMessage,
     tileTypeName: tileTypeName
   });
+  deps.requireRuntimeModule("stageSelectRuntime").setupStageSelectRuntime(state, deps, {
+    changeStageSelection: changeStageSelection
+  });
 
   // ── Stage runtime ──────────────────────────────────────────────────────
 
@@ -189,6 +192,9 @@
   function cycleEditorCell(c, r) { return fn.cycleEditorCell(c, r); }
   function cycleEditorQuadrant(qc, qr) { return fn.cycleEditorQuadrant(qc, qr); }
   function updateEditorControls() { return fn.updateEditorControls(); }
+  function stageSelectAHeld(input) { return fn.stageSelectAHeld(input); }
+  function stageSelectBHeld(input) { return fn.stageSelectBHeld(input); }
+  function updateStageSelectControls() { return fn.updateStageSelectControls(); }
 
   // Audio function aliases
   function initAudio() { return fn.initAudio(); }
@@ -840,26 +846,6 @@
       x: ((event.clientX - rect.left) / rect.width) * SCREEN_W,
       y: ((event.clientY - rect.top) / rect.height) * SCREEN_H
     };
-  }
-
-  function stageSelectAHeld(input) {
-    return input.has("Space") || input.has("KeyZ");
-  }
-
-  function stageSelectBHeld(input) {
-    return input.has("KeyF") || input.has("KeyX");
-  }
-
-  function updateStageSelectControls() {
-    const aPressed = stageSelectAHeld(pendingStageSelectPresses);
-    const bPressed = stageSelectBHeld(pendingStageSelectPresses);
-    pendingStageSelectPresses.clear();
-    const repeatFrame = (game.frameLow & 0x07) === 0;
-    if (aPressed || (repeatFrame && stageSelectAHeld(keys))) {
-      changeStageSelection(1);
-      return;
-    }
-    if (bPressed || (repeatFrame && stageSelectBHeld(keys))) changeStageSelection(-1);
   }
 
   function update() {
@@ -2184,9 +2170,6 @@
   state.fn.isPauseInputCode = isPauseInputCode;
   state.fn.togglePause = togglePause;
   state.fn.canvasToGame = canvasToGame;
-  state.fn.stageSelectAHeld = stageSelectAHeld;
-  state.fn.stageSelectBHeld = stageSelectBHeld;
-  state.fn.updateStageSelectControls = updateStageSelectControls;
   state.fn.updateBattle = updateBattle;
   state.fn.tileTypeName = tileTypeName;
   state.fn.updatePlayerMovement = updatePlayerMovement;

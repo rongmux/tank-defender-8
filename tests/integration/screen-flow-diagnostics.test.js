@@ -25,6 +25,8 @@ const api = context.window.TankDefender8;
 
 assert(modules.screenFlowDiagnostics, "screen-flow diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.screenFlowDiagnostics), true);
+assert(modules.stageSelectRuntime, "stage select runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.stageSelectRuntime), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(39, 50))),
   SCREEN_FLOW_DIAGNOSTIC_METHODS
