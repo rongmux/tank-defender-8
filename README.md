@@ -117,6 +117,7 @@ node --check src/runtime/frame-loop-runtime.js
 node --check src/runtime/screen-update-runtime.js
 node --check src/runtime/title-render-runtime.js
 node --check src/runtime/terrain-render-runtime.js
+node --check src/runtime/tank-render-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
@@ -250,6 +251,7 @@ tank-defender-8/
 |   |   |-- screen-update-runtime.js
 |   |   |-- title-render-runtime.js
 |   |   |-- terrain-render-runtime.js
+|   |   |-- tank-render-runtime.js
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
@@ -392,6 +394,7 @@ tank-defender-8/
 |   |   |-- screen-update-runtime.test.js
 |   |   |-- title-render-runtime.test.js
 |   |   |-- terrain-render-runtime.test.js
+|   |   |-- tank-render-runtime.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
@@ -523,6 +526,8 @@ tank-defender-8/
 `src/runtime/title-render-runtime.js` owns pixel Canvas rendering for the title menu, hidden message, high-score screen, and full GAME OVER screen. It preserves the existing pixel-font geometry, title-menu cursor, palette, drop sprite, and terminal-screen timelines while receiving text/sprite submission through explicit callbacks; direct tests cover screen backgrounds, score/menu layout, hidden-message content, and terminal presentation calls.
 
 `src/runtime/terrain-render-runtime.js` owns battlefield terrain layers, brick fragments, steel quarters, water/ice/forest tiles, the eagle base, and the ice projectile cover. It preserves the original draw order, 4px fragment geometry, 8px quarter masks, water phase, and base palette while using the shared sprite-submission callback; direct tests cover layer selection, terrain animation, exact cover coordinates, backdrop geometry, and base state.
+
+`src/runtime/tank-render-runtime.js` owns tank body/tracks, player star-upgrade overlays, shield rendering, and player/enemy spawn animation. It preserves directional geometry, carrier/upgrade color callbacks, pause-safe shield phase, configured spawn durations, and the existing Canvas sprite order; direct tests cover player overlays, exact field offsets, shield colors, and player spawn sizing.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
 

@@ -414,7 +414,6 @@
   var ICE = deps.ICE;
   var LEFT = deps.LEFT;
   var ORIGINAL_EDITOR_PATTERNS = deps.ORIGINAL_EDITOR_PATTERNS;
-  var PLAYER_UPGRADE_OVERLAY_COLORS = deps.PLAYER_UPGRADE_OVERLAY_COLORS;
   var POWERUP_SIZE = deps.POWER_UP_SIZE;
   var QUAD_GRID = deps.QUAD_GRID;
   var RIGHT = deps.RIGHT;
@@ -777,6 +776,18 @@
     drawManifestSprite: drawManifestSprite,
     normalizeBrickFragmentMask: normalizeBrickFragmentMask,
     quarterMaskFromBrickFragments: quarterMaskFromBrickFragments
+  });
+  var tankRenderRuntime = deps.requireRuntimeModule("tankRenderRuntime").setupTankRenderRuntime(state, deps, {
+    battleDisplayFrame: battleDisplayFrame,
+    directionName: directionName,
+    drawManifestSprite: drawManifestSprite,
+    drawScaledManifestSprite: drawScaledManifestSprite,
+    gameSettings: gameSettings,
+    playerUpgradeOverlayParts: playerUpgradeOverlayParts,
+    shieldColorForTick: shieldColorForTick,
+    spawnAnimationPresentation: spawnAnimationPresentation,
+    tankPrimaryColor: tankPrimaryColor,
+    tankTrackFrameName: tankTrackFrameName
   });
 
   function handleAction(action) {
@@ -1267,61 +1278,19 @@
   }
 
   function drawTank(tank, color, accent) {
-    const x = Math.round(FIELD_X + tank.x);
-    const y = Math.round(FIELD_Y + tank.y);
-    const primary = tankPrimaryColor(tank, color, battleDisplayFrame());
-    drawManifestSprite("tank", directionName(tank.dir), x, y, {
-      primary,
-      accent,
-      shadow: "#111111"
-    });
-    drawManifestSprite("tankTracks", tankTrackFrameName(tank), x, y, {
-      primary,
-      shadow: "#111111"
-    });
-    if (tank.kind === "player") drawPlayerUpgradeOverlay(tank, x, y, accent);
+    return tankRenderRuntime.drawTank(tank, color, accent);
   }
 
   function drawPlayerUpgradeOverlay(tank, x, y, accent) {
-    const parts = playerUpgradeOverlayParts(tank.level, tank.dir);
-    if (!parts.length) return;
-    const palette = {
-      level1: accent || PLAYER_UPGRADE_OVERLAY_COLORS.level1,
-      level2: PLAYER_UPGRADE_OVERLAY_COLORS.level2,
-      level3: PLAYER_UPGRADE_OVERLAY_COLORS.level3
-    };
-    for (const part of parts) {
-      const rect = part.rect;
-      ctx.fillStyle = palette[part.role] || PLAYER_UPGRADE_OVERLAY_COLORS.level1;
-      ctx.fillRect(x + rect[0], y + rect[1], rect[2], rect[3]);
-    }
+    return tankRenderRuntime.drawPlayerUpgradeOverlay(tank, x, y, accent);
   }
 
   function drawShield(tank) {
-    const x = Math.round(FIELD_X + tank.x - 2);
-    const y = Math.round(FIELD_Y + tank.y - 2);
-    ctx.lineWidth = 1;
-    drawManifestSprite("shield", "box", x, y, {
-      primary: shieldColorForTick(game.frameLow)
-    });
+    return tankRenderRuntime.drawShield(tank);
   }
 
   function drawSpawn(tank) {
-    const x = Math.round(FIELD_X + tank.x + 7);
-    const y = Math.round(FIELD_Y + tank.y + 7);
-    const total = tank.kind === "player"
-      ? gameSettings().timings.playerSpawnFlash
-      : gameSettings().timings.enemySpawnFlash;
-    const presentation = spawnAnimationPresentation(tank.spawnFlash, total);
-    const scale = presentation.size / 14;
-    drawScaledManifestSprite(
-      "spawn",
-      "box",
-      x - presentation.size / 2,
-      y - presentation.size / 2,
-      scale,
-      { primary: "#f3f0d4" }
-    );
+    return tankRenderRuntime.drawSpawn(tank);
   }
 
   function drawBullet(bullet) {
