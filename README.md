@@ -129,6 +129,7 @@ node --check src/runtime/screen-transition-render-runtime.js
 node --check src/runtime/text-render-runtime.js
 node --check src/runtime/sprite-render-runtime.js
 node --check src/runtime/battle-scene-render-runtime.js
+node --check src/runtime/input-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/battle-combat-runtime.js
@@ -273,6 +274,7 @@ tank-defender-8/
 |   |   |-- text-render-runtime.js
 |   |   |-- sprite-render-runtime.js
 |   |   |-- battle-scene-render-runtime.js
+|   |   |-- input-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
@@ -426,6 +428,7 @@ tank-defender-8/
 |   |   |-- text-render-runtime.test.js
 |   |   |-- sprite-render-runtime.test.js
 |   |   |-- battle-scene-render-runtime.test.js
+|   |   |-- input-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -538,6 +541,8 @@ tank-defender-8/
 `src/editor/editor-rules.js` owns the six-terrain browser palette, the 14-step original Construction block sequence, Arrow/WASD direction mapping and hold priority, full-cell cursor clamping, panel swatch hit testing, tile cycling, cursor-to-cell conversion, and exact brick-fragment/steel-quarter edits. `src/editor/editor-stage-format.js` owns compact version-2 local-save serialization, compatible loading of the legacy 13x13 `rows` format and current 26x26 `quadrants` format, reusable JSON parse results, default one-stage export/test pack composition, and pretty export serialization. `src/game.js` now retains only editor screen state, local-storage/clipboard/file side effects, messages, sounds, and event wiring. Unit coverage locks both save encodings, malformed JSON versus structurally invalid saves, independent default pack records, spawn coordinates, enemy composition, and serialized output; browser integration owns the complete save, clear, load, export, file import, constructed-stage install, immediate test, and reset workflow formerly held by smoke.
 
 `src/runtime/editor-input-runtime.js` owns the fixed-frame Construction input orchestration: cursor movement, original A/B pattern cycling, full-cell and quadrant painting, brush selection, tile cycling, and held-direction repeat. It keeps mutations and sounds as explicit callbacks while `src/game.js` retains Canvas coordinate conversion and DOM event wiring; direct tests cover the original pattern masks, boundary-safe edits, brush selection, and 20-frame repeat cadence.
+
+`src/runtime/input-runtime.js` owns browser input routing: toolbar actions, keyboard screen dispatch, one-shot fire/stage-selection presses, pause audio handoff, stage-pack file import, and Construction mouse editing. It preserves the Arrow/WASD mappings, demo escape path, hidden-message input reservation, editor shortcuts, coordinate conversion, and pause gating while `src/game.js` supplies only explicit callbacks; direct tests lock registration, action dispatch, pause synchronization order, keyboard routing, and mouse coordinates.
 
 `src/runtime/stage-select-runtime.js` owns the fixed-frame stage-selection A/B input cadence: one-shot presses are consumed before held-key repeats, repeats occur on the original eight-frame boundary, and A retains priority when both buttons arrive together. The stage mapping and screen transition remain explicit callbacks from `src/game.js`.
 
@@ -733,6 +738,8 @@ The migration order is core timing/random/geometry, configuration and stage pack
 `src/runtime/stage-result-runtime.js` owns stage-advance projections, result-table timing, clear-bonus recipient selection, and one-shot clear-bonus side effects. Screen transitions remain in `src/game.js`, while diagnostics and the stage-clear renderer use the same frozen runtime API.
 
 `src/runtime/editor-input-runtime.js` owns the fixed-frame Construction input orchestration: cursor movement, original A/B pattern cycling, full-cell and quadrant painting, brush selection, tile cycling, and held-direction repeat. It keeps mutations and sounds as explicit callbacks while `src/game.js` retains Canvas coordinate conversion and DOM event wiring; direct tests cover the original pattern masks, boundary-safe edits, brush selection, and 20-frame repeat cadence.
+
+`src/runtime/input-runtime.js` owns browser input routing for toolbar actions, keyboard screen dispatch, pause handoff, stage-pack imports, and Construction mouse editing. It keeps browser event timing outside the fixed-frame simulation and delegates state changes through explicit callbacks; its direct tests lock the input contract without duplicating gameplay rules.
 
 `src/runtime/stage-select-runtime.js` owns the fixed-frame stage-selection A/B input cadence: one-shot presses are consumed before held-key repeats, repeats occur on the original eight-frame boundary, and A retains priority when both buttons arrive together. The stage mapping and screen transition remain explicit callbacks from `src/game.js`.
 

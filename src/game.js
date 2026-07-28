@@ -828,240 +828,59 @@
     renderTitle: renderTitle
   });
 
-  function handleAction(action) {
-    initAudio();
-    if (action === "one") {
-      setTitleMenu(0);
-      beginStageSelect(1);
-    } else if (action === "two") {
-      setTitleMenu(1);
-      beginStageSelect(2);
-    }
-    else if (action === "prev") nextStage(-1);
-    else if (action === "next") nextStage(1);
-    else if (action === "edit") {
-      setTitleMenu(2);
-      enterEditor();
-    }
-    else if (action === "test" && game.screen === "editor") testEditorStage();
-    else if (action === "save" && game.screen === "editor") saveEditorStage();
-    else if (action === "load" && game.screen === "editor") loadEditorStage();
-    else if (action === "clear" && game.screen === "editor") clearEditorStage();
-    else if (action === "export" && game.screen === "editor") exportEditorStage();
-    else if (action === "import") importStagePackFile();
-    else if (action === "pause") togglePause();
-    else if (action === "reset") {
-      restoreBuiltInStagePack();
-    }
-  }
-
-  function isPauseInputCode(code) {
-    return code === "Enter" || code === "KeyP";
-  }
-
-  /**
-   * Toggles the active battle pause state. The original pause sound is triggered only on entry.
-   * @returns {boolean} Whether an active battle accepted the pause input.
-   */
-  function togglePause() {
-    if (
-      game.screen !== "playing" ||
-      game.demoMode ||
-      game.clearPendingTimer > 0 ||
-      game.baseDestroyTimer > 0 ||
-      fn.stageEnemiesCleared()
-    ) return false;
-    game.paused = !game.paused;
-    game.pauseElapsed = 0;
-    pendingFirePresses.clear();
-    syncStageStartAudioNodes();
-    syncBonusLifeAudioNodes();
-    syncPowerUpPickupAudioNodes();
-    syncPowerUpAppearAudioNodes();
-    syncBrickHitAudioNodes();
-    syncBaseHitAudioNodes();
-    syncSteelHitAudioNodes();
-    syncEnemyHitAudioNodes();
-    syncEnemyDestroyAudioNodes();
-    syncPlayerDestroyAudioNodes();
-    syncPlayerShootAudioNodes();
-    syncMovementIceAudioNodes();
-    syncPauseAudioNodes();
-    syncMovementAudio();
-    if (game.paused) {
-      playSound("pause");
-    }
-    return true;
-  }
-
-  document.querySelectorAll("[data-action]").forEach((button) => {
-    button.addEventListener("click", () => handleAction(button.dataset.action));
+  deps.requireRuntimeModule("inputRuntime").setupInputRuntime(state, {
+    dom: { document: document, window: window },
+    isEditorDirectionCode: isEditorDirectionCode,
+    sharedState: sh
+  }, {
+    activateTitleMenu: activateTitleMenu,
+    beginStageSelect: beginStageSelect,
+    clearEditorStage: clearEditorStage,
+    cycleEditorCell: cycleEditorCell,
+    cycleEditorQuadrant: cycleEditorQuadrant,
+    endTitleDemo: endTitleDemo,
+    enterEditor: enterEditor,
+    exitEditorToTitle: exitEditorToTitle,
+    exportEditorStage: exportEditorStage,
+    handleFullGameOverInput: handleFullGameOverInput,
+    hiddenMessageTriggerReady: hiddenMessageTriggerReady,
+    importStagePackFile: importStagePackFile,
+    initAudio: initAudio,
+    loadEditorStage: loadEditorStage,
+    loadStagePackJsonText: loadStagePackJsonText,
+    moveEditorFromCode: moveEditorFromCode,
+    moveTitleMenu: moveTitleMenu,
+    nextStage: nextStage,
+    paintEditorCell: paintEditorCell,
+    paintEditorQuadrant: paintEditorQuadrant,
+    playSound: playSound,
+    recordHiddenTitleInput: recordHiddenTitleInput,
+    reserveTitleDirectionForHiddenInput: reserveTitleDirectionForHiddenInput,
+    restoreBuiltInStagePack: restoreBuiltInStagePack,
+    saveEditorStage: saveEditorStage,
+    selectEditorBrush: selectEditorBrush,
+    setTitleMenu: setTitleMenu,
+    showEditorMessage: showEditorMessage,
+    stageEnemiesCleared: function () { return fn.stageEnemiesCleared(); },
+    startHiddenMessage: startHiddenMessage,
+    startSelectedGame: startSelectedGame,
+    syncBaseHitAudioNodes: syncBaseHitAudioNodes,
+    syncBonusLifeAudioNodes: syncBonusLifeAudioNodes,
+    syncBrickHitAudioNodes: syncBrickHitAudioNodes,
+    syncEnemyDestroyAudioNodes: syncEnemyDestroyAudioNodes,
+    syncEnemyHitAudioNodes: syncEnemyHitAudioNodes,
+    syncMovementAudio: syncMovementAudio,
+    syncMovementIceAudioNodes: syncMovementIceAudioNodes,
+    syncPauseAudioNodes: syncPauseAudioNodes,
+    syncPlayerDestroyAudioNodes: syncPlayerDestroyAudioNodes,
+    syncPlayerShootAudioNodes: syncPlayerShootAudioNodes,
+    syncPowerUpAppearAudioNodes: syncPowerUpAppearAudioNodes,
+    syncPowerUpPickupAudioNodes: syncPowerUpPickupAudioNodes,
+    syncStageStartAudioNodes: syncStageStartAudioNodes,
+    syncSteelHitAudioNodes: syncSteelHitAudioNodes,
+    testEditorStage: testEditorStage,
+    useOriginalEditorButton: useOriginalEditorButton
   });
-
-  if (packFileInput) {
-    packFileInput.addEventListener("change", async () => {
-      const file = packFileInput.files && packFileInput.files[0];
-      if (!file) return;
-      try {
-        const result = loadStagePackJsonText(await file.text());
-        showEditorMessage(result.ok ? "IMPORTED" : "BAD");
-        if (!result.ok) console.warn(result.error);
-      } catch (error) {
-        showEditorMessage("ERR");
-        console.warn(error);
-      } finally {
-        packFileInput.value = "";
-      }
-    });
-  }
-
-  window.addEventListener("keydown", (event) => {
-    const wasHeld = keys.has(event.code);
-    keys.add(event.code);
-    const handledCodes = [
-      "ArrowUp",
-      "ArrowDown",
-      "ArrowLeft",
-      "ArrowRight",
-      "Space",
-      "Enter",
-      "KeyW",
-      "KeyA",
-      "KeyS",
-      "KeyD",
-      "KeyF",
-      "KeyG",
-      "KeyZ",
-      "Digit1",
-      "Digit2",
-      "KeyC",
-      "KeyE",
-      "KeyL",
-      "KeyP",
-      "KeyR",
-      "KeyX",
-      "Digit0",
-      "Digit3",
-      "Digit4",
-      "Digit5",
-      "Escape"
-    ];
-    if (handledCodes.includes(event.code)) event.preventDefault();
-    if (event.repeat || wasHeld) return;
-
-    if (game.demoMode && (event.code === "Enter" || event.code === "Space" || event.code === "Escape")) {
-      keys.delete(event.code);
-      endTitleDemo();
-      return;
-    }
-    initAudio();
-
-    if (game.screen === "playing" && !game.paused) pendingFirePresses.add(event.code);
-
-    if (game.screen === "title") {
-      if (recordHiddenTitleInput(event.code)) return;
-      if (event.code === "Enter" && hiddenMessageTriggerReady()) startHiddenMessage();
-      else if (event.code === "Enter" || event.code === "Space") activateTitleMenu();
-      else if (event.code === "Digit1") {
-        setTitleMenu(0);
-        beginStageSelect(1);
-      } else if (event.code === "Digit2") {
-        setTitleMenu(1);
-        beginStageSelect(2);
-      }
-      else if (event.code === "ArrowUp" || event.code === "KeyW") moveTitleMenu(-1);
-      else if (event.code === "ArrowDown" || event.code === "KeyS") {
-        if (!reserveTitleDirectionForHiddenInput(event.code)) moveTitleMenu(1);
-      }
-      else if (event.code === "KeyC" || event.code === "KeyE") {
-        setTitleMenu(2);
-        enterEditor();
-      }
-    } else if (game.screen === "stageSelect") {
-      if (event.code === "Enter") startSelectedGame();
-      else if (event.code === "Space" || event.code === "KeyZ") {
-        pendingStageSelectPresses.add(event.code);
-      } else if (event.code === "KeyF" || event.code === "KeyX") {
-        pendingStageSelectPresses.add(event.code);
-      } else if (event.code === "Escape") {
-        pendingStageSelectPresses.clear();
-        game.screen = "title";
-        game.stage = 1;
-      }
-    } else if (game.screen === "editor") {
-      if (event.ctrlKey && event.code === "KeyS") {
-        keys.delete(event.code);
-        saveEditorStage();
-      } else if (event.ctrlKey && event.code === "KeyX") {
-        keys.delete(event.code);
-        exportEditorStage();
-      } else if (isEditorDirectionCode(event.code)) {
-        moveEditorFromCode(event.code);
-      } else if (event.code === "Space" || event.code === "KeyZ") useOriginalEditorButton(1);
-      else if (event.code === "KeyF" || event.code === "KeyX") useOriginalEditorButton(-1);
-      else if (event.code === "Enter") exitEditorToTitle();
-      else if (event.code === "KeyE") testEditorStage();
-      else if (event.code === "KeyL") loadEditorStage();
-      else if (event.code === "KeyR") clearEditorStage();
-      else if (/^Digit[0-5]$/.test(event.code)) selectEditorBrush(Number(event.code.slice(-1)));
-      else if (event.code === "Escape") exitEditorToTitle();
-    } else if (game.screen === "gameOver") {
-      return;
-    } else if (game.screen === "fullGameOver") {
-      handleFullGameOverInput(event.code);
-    } else if (game.screen === "highScore" || game.screen === "hiddenMessage") {
-      return;
-    } else if (game.screen === "stageClear" || game.screen === "stageClearClosing") {
-      return;
-    } else if (isPauseInputCode(event.code)) {
-      togglePause();
-    }
-  });
-
-  window.addEventListener("keyup", (event) => {
-    keys.delete(event.code);
-  });
-
-  canvas.addEventListener("mousemove", (event) => {
-    if (game.screen !== "editor") return;
-    const pos = canvasToGame(event);
-    game.editorCursor = {
-      qc: Math.floor((pos.x - FIELD_X) / HALF),
-      qr: Math.floor((pos.y - FIELD_Y) / HALF)
-    };
-  });
-
-  canvas.addEventListener("mouseleave", () => {
-    game.editorCursor = { qc: -1, qr: -1 };
-  });
-
-  canvas.addEventListener("click", (event) => {
-    if (game.screen !== "editor") return;
-    initAudio();
-    const pos = canvasToGame(event);
-    if (pos.x >= PANEL_X) {
-      return;
-    }
-    if (event.shiftKey) {
-      if (event.altKey) {
-        cycleEditorCell(Math.floor((pos.x - FIELD_X) / TILE), Math.floor((pos.y - FIELD_Y) / TILE));
-      } else {
-        paintEditorCell(Math.floor((pos.x - FIELD_X) / TILE), Math.floor((pos.y - FIELD_Y) / TILE));
-      }
-    } else if (event.altKey) {
-      cycleEditorQuadrant(Math.floor((pos.x - FIELD_X) / HALF), Math.floor((pos.y - FIELD_Y) / HALF));
-    } else {
-      paintEditorQuadrant(Math.floor((pos.x - FIELD_X) / HALF), Math.floor((pos.y - FIELD_Y) / HALF));
-    }
-  });
-
-  function canvasToGame(event) {
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: ((event.clientX - rect.left) / rect.width) * SCREEN_W,
-      y: ((event.clientY - rect.top) / rect.height) * SCREEN_H
-    };
-  }
 
   function update() {
     return screenUpdateRuntime.updateFrame();
@@ -1508,10 +1327,6 @@
   // ── Register local functions on state.fn (for debug-api access) ──────
   state.fn.update = update;
   state.fn.render = render;
-  state.fn.handleAction = handleAction;
-  state.fn.isPauseInputCode = isPauseInputCode;
-  state.fn.togglePause = togglePause;
-  state.fn.canvasToGame = canvasToGame;
   state.fn.tileTypeName = tileTypeName;
   state.fn.updatePlayerMovement = updatePlayerMovement;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
