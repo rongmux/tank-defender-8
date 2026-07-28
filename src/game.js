@@ -91,6 +91,11 @@
   // ── Setup runtime modules ──────────────────────────────────────────────
   deps.requireRuntimeModule("gameLifecycle").setupGameLifecycle(state, deps);
   deps.requireRuntimeModule("audioBridge").setupAudioBridge(state, deps);
+  deps.requireRuntimeModule("editorInputRuntime").setupEditorInputRuntime(state, deps, {
+    playSound: playSound,
+    showEditorMessage: showEditorMessage,
+    tileTypeName: tileTypeName
+  });
 
   // ── Stage runtime ──────────────────────────────────────────────────────
 
@@ -172,6 +177,18 @@
   function restoreBuiltInStagePack() { return fn.restoreBuiltInStagePack(); }
   function showEditorMessage(m) { return fn.showEditorMessage(m); }
   function nextStage(d) { return fn.nextStage(d); }
+  function moveEditorFromCode(c) { return fn.moveEditorFromCode(c); }
+  function moveEditorCursor(dx, dy) { return fn.moveEditorCursor(dx, dy); }
+  function useOriginalEditorButton(d) { return fn.useOriginalEditorButton(d); }
+  function pasteOriginalEditorPattern() { return fn.pasteOriginalEditorPattern(); }
+  function editAtEditorCursor(fullTile) { return fn.editAtEditorCursor(fullTile); }
+  function paintEditorCell(c, r) { return fn.paintEditorCell(c, r); }
+  function paintEditorQuadrant(qc, qr) { return fn.paintEditorQuadrant(qc, qr); }
+  function selectEditorBrush(type) { return fn.selectEditorBrush(type); }
+  function selectEditorBrushFromPanel(x, y) { return fn.selectEditorBrushFromPanel(x, y); }
+  function cycleEditorCell(c, r) { return fn.cycleEditorCell(c, r); }
+  function cycleEditorQuadrant(qc, qr) { return fn.cycleEditorQuadrant(qc, qr); }
+  function updateEditorControls() { return fn.updateEditorControls(); }
 
   // Audio function aliases
   function initAudio() { return fn.initAudio(); }
@@ -386,10 +403,6 @@
   var createStageRuntime = deps.createStageRuntime;
   var directionName = deps.directionName;
   var directionTowardTarget = deps.directionTowardTarget;
-  var editorBrushAt = deps.editorBrushAt;
-  var editorCellForCursor = deps.editorCellForCursor;
-  var editorDirectionForCode = deps.editorDirectionForCode;
-  var editorPatternAt = deps.editorPatternAt;
   var enemyAiSettings = deps.enemyAiSettings;
   var enemyColor = deps.enemyColor;
   // (enemyDestructionPresentation — local wrapper, not deps alias)
@@ -402,7 +415,6 @@
   var gameOverBannerPresentation = deps.gameOverBannerPresentation;
   var gameSessionSettings = deps.gameSessionSettings;
   var gridToQuadrants = deps.gridToQuadrants;
-  var heldEditorDirection = deps.heldEditorDirection;
   // (highScorePresentation — local wrapper, not deps alias)
   var isEditorDirectionCode = deps.isEditorDirectionCode;
   var isEnemyAtTurnIntersection = deps.isEnemyAtTurnIntersection;
@@ -415,10 +427,7 @@
   var makeOriginalConstructionGrid = deps.makeOriginalConstructionGrid;
   // (moveEditorCursor — local wrapper, not deps alias)
   var movementAudioPresentation = deps.movementAudioPresentation;
-  var nextEditorPatternIndex = deps.nextEditorPatternIndex;
-  var nextEditorTileType = deps.nextEditorTileType;
   var normalizeBrickFragmentMask = deps.normalizeBrickFragmentMask;
-  var originalEditorButtonHeld = deps.originalEditorButtonHeld;
   // (panelEnemyCounterRemaining — local wrapper, not deps alias)
   // (panelLifeCount — local wrapper, not deps alias)
   var parseEditorStageText = deps.parseEditorStageText;
@@ -433,7 +442,6 @@
   var prepareBattleGrid = deps.prepareBattleGrid;
   var prepareConstructedBattleGrid = deps.prepareConstructedBattleGrid;
   var proceduralStage = deps.proceduralStage;
-  var quadrantType = deps.quadrantType;
   var quarterMaskFromBrickFragments = deps.quarterMaskFromBrickFragments;
   var quarterRect = deps.quarterRect;
   var rectOverlapArea = deps.rectOverlapArea;
@@ -446,8 +454,6 @@
   // (scorePopupPresentation — local wrapper, not deps alias)
   var serializeEditorStage = deps.serializeEditorStage;
   var serializeEditorStagePack = deps.serializeEditorStagePack;
-  var setEditorQuadrant = deps.setEditorQuadrant;
-  var setTile = deps.setTile;
   var sharedState = deps.sharedState;
   var shieldColorForTick = deps.shieldColorForTick;
   var spawnAnimationPresentation = deps.spawnAnimationPresentation;
@@ -487,7 +493,6 @@
   var selectPanelLifeCount = deps.panelLifeCount;
   var selectPausePresentation = deps.pausePresentation;
   var selectPlayerGameOverMessagePresentation = deps.playerGameOverMessagePresentation;
-  var selectEditorCursorMove = deps.moveEditorCursor;
   var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
 
   deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
@@ -835,110 +840,6 @@
       x: ((event.clientX - rect.left) / rect.width) * SCREEN_W,
       y: ((event.clientY - rect.top) / rect.height) * SCREEN_H
     };
-  }
-
-  function moveEditorFromCode(code) {
-    const direction = editorDirectionForCode(code);
-    if (!direction) return;
-    game.editorMoveHoldTimer = 0;
-    moveEditorCursor(direction.dx, direction.dy);
-    if (originalEditorButtonHeld(keys)) pasteOriginalEditorPattern();
-  }
-
-  function moveEditorCursor(dx, dy) {
-    if (game.screen !== "editor") return;
-    game.editorCursor = selectEditorCursorMove(game.editorCursor, dx, dy);
-    game.editorPatternArmed = false;
-  }
-
-  function useOriginalEditorButton(delta) {
-    if (!game.editorGrid) return;
-    if (game.editorPatternArmed) {
-      game.editorPattern = nextEditorPatternIndex(game.editorPattern, delta);
-    } else {
-      game.editorPatternArmed = true;
-    }
-    const pattern = editorPatternAt(game.editorPattern);
-    game.editorBrush = pattern.type;
-    pasteOriginalEditorPattern();
-  }
-
-  function pasteOriginalEditorPattern() {
-    if (!game.editorGrid) return;
-    const cell = editorCellForCursor(game.editorCursor);
-    if (!cell) return;
-    const pattern = editorPatternAt(game.editorPattern);
-    setTile(game.editorGrid, cell.c, cell.r, pattern.type, pattern.mask);
-    playSound("editorPaint", { brush: pattern.type });
-  }
-
-  function editAtEditorCursor(fullTile) {
-    const cursor = game.editorCursor;
-    if (cursor.qc < 0 || cursor.qr < 0) return;
-    if (fullTile) {
-      paintEditorCell(Math.floor(cursor.qc / 2), Math.floor(cursor.qr / 2));
-    } else {
-      paintEditorQuadrant(cursor.qc, cursor.qr);
-    }
-  }
-
-  function paintEditorCell(c, r) {
-    if (!game.editorGrid || c < 0 || c >= GRID || r < 0 || r >= GRID) return;
-    setTile(game.editorGrid, c, r, game.editorBrush, 15);
-    playSound("editorPaint", { brush: game.editorBrush });
-  }
-
-  function paintEditorQuadrant(qc, qr) {
-    if (!game.editorGrid || qc < 0 || qc >= QUAD_GRID || qr < 0 || qr >= QUAD_GRID) return;
-    setEditorQuadrant(game.editorGrid, qc, qr, game.editorBrush);
-    playSound("editorPaintSubtile", { brush: game.editorBrush });
-  }
-
-  function selectEditorBrush(type) {
-    if (!EDITOR_TILE_TYPES.includes(type)) return;
-    game.editorBrush = type;
-    showEditorMessage(tileTypeName(type).toUpperCase().slice(0, 6));
-    playSound("editorBrush", { brush: type });
-  }
-
-  function selectEditorBrushFromPanel(x, y) {
-    const type = editorBrushAt(x, y, PANEL_X + 12, 176);
-    if (type !== null) selectEditorBrush(type);
-  }
-
-  function cycleEditorCell(c, r) {
-    if (!game.editorGrid || c < 0 || c >= GRID || r < 0 || r >= GRID) return;
-    const current = game.editorGrid[r][c].type;
-    const nextType = nextEditorTileType(current);
-    setTile(game.editorGrid, c, r, nextType, 15);
-    playSound("editorPaint", { brush: nextType });
-  }
-
-  function cycleEditorQuadrant(qc, qr) {
-    if (!game.editorGrid || qc < 0 || qc >= QUAD_GRID || qr < 0 || qr >= QUAD_GRID) return;
-    const c = Math.floor(qc / 2);
-    const r = Math.floor(qr / 2);
-    const q = (qr % 2) * 2 + (qc % 2);
-    const cell = game.editorGrid[r][c];
-    const current = quadrantType(cell, q);
-    const nextType = nextEditorTileType(current);
-    setEditorQuadrant(game.editorGrid, qc, qr, nextType);
-    playSound("editorPaintSubtile", { brush: nextType });
-  }
-
-  function updateEditorControls() {
-    game.editorTick += 1;
-    const direction = heldEditorDirection(keys);
-    if (!direction) {
-      game.editorMoveHoldTimer = 0;
-      return;
-    }
-    game.editorPatternArmed = false;
-    game.editorMoveHoldTimer += 1;
-    if (game.editorMoveHoldTimer < 20) return;
-    game.editorMoveHoldTimer = 15;
-    moveEditorCursor(direction.dx, direction.dy);
-    if (originalEditorButtonHeld(keys)) pasteOriginalEditorPattern();
   }
 
   function stageSelectAHeld(input) {
@@ -2283,18 +2184,6 @@
   state.fn.isPauseInputCode = isPauseInputCode;
   state.fn.togglePause = togglePause;
   state.fn.canvasToGame = canvasToGame;
-  state.fn.moveEditorFromCode = moveEditorFromCode;
-  state.fn.moveEditorCursor = moveEditorCursor;
-  state.fn.useOriginalEditorButton = useOriginalEditorButton;
-  state.fn.pasteOriginalEditorPattern = pasteOriginalEditorPattern;
-  state.fn.editAtEditorCursor = editAtEditorCursor;
-  state.fn.paintEditorCell = paintEditorCell;
-  state.fn.paintEditorQuadrant = paintEditorQuadrant;
-  state.fn.selectEditorBrush = selectEditorBrush;
-  state.fn.selectEditorBrushFromPanel = selectEditorBrushFromPanel;
-  state.fn.cycleEditorCell = cycleEditorCell;
-  state.fn.cycleEditorQuadrant = cycleEditorQuadrant;
-  state.fn.updateEditorControls = updateEditorControls;
   state.fn.stageSelectAHeld = stageSelectAHeld;
   state.fn.stageSelectBHeld = stageSelectBHeld;
   state.fn.updateStageSelectControls = updateStageSelectControls;

@@ -107,6 +107,7 @@ node --check src/stages/stage-pack-schema.js
 node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
+node --check src/runtime/editor-input-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
@@ -230,6 +231,7 @@ tank-defender-8/
 |   |   `-- stage-runtime.js
 |   |-- runtime/
 |   |   |-- shared-state.js
+|   |   |-- editor-input-runtime.js
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
@@ -362,6 +364,7 @@ tank-defender-8/
 |   |   |-- debug-snapshot.test.js
 |   |   |-- directions.test.js
 |   |   |-- editor-rules.test.js
+|   |   |-- editor-input-runtime.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
@@ -473,6 +476,8 @@ tank-defender-8/
 `src/audio/free-audio-manifest.js` owns the deeply frozen browser module copy of `data/free-audio-manifest.json` and the independent deep-clone API consumed by the runtime. Unit coverage compares every event against the JSON source, locks all retained durations/channel layouts and intentional silent enemy shooting, and proves nested clone isolation. Browser integration verifies module registration and confirms each public runtime clone remains equal to the JSON source without exposing the frozen internal object.
 
 `src/editor/editor-rules.js` owns the six-terrain browser palette, the 14-step original Construction block sequence, Arrow/WASD direction mapping and hold priority, full-cell cursor clamping, panel swatch hit testing, tile cycling, cursor-to-cell conversion, and exact brick-fragment/steel-quarter edits. `src/editor/editor-stage-format.js` owns compact version-2 local-save serialization, compatible loading of the legacy 13x13 `rows` format and current 26x26 `quadrants` format, reusable JSON parse results, default one-stage export/test pack composition, and pretty export serialization. `src/game.js` now retains only editor screen state, local-storage/clipboard/file side effects, messages, sounds, and event wiring. Unit coverage locks both save encodings, malformed JSON versus structurally invalid saves, independent default pack records, spawn coordinates, enemy composition, and serialized output; browser integration owns the complete save, clear, load, export, file import, constructed-stage install, immediate test, and reset workflow formerly held by smoke.
+
+`src/runtime/editor-input-runtime.js` owns the fixed-frame Construction input orchestration: cursor movement, original A/B pattern cycling, full-cell and quadrant painting, brush selection, tile cycling, and held-direction repeat. It keeps mutations and sounds as explicit callbacks while `src/game.js` retains Canvas coordinate conversion and DOM event wiring; direct tests cover the original pattern masks, boundary-safe edits, brush selection, and 20-frame repeat cadence.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
 
@@ -626,6 +631,8 @@ The migration order is core timing/random/geometry, configuration and stage pack
 `src/runtime/battle-combat-runtime.js` owns enemy destruction scoring, bonus-life thresholds, player hit/death transitions, respawn reset, and the two-player GAME OVER message timing. It keeps audio and high-score persistence as explicit callbacks, while projectile, power-up, and player-update runtimes consume the same `state.fn` API.
 
 `src/runtime/stage-result-runtime.js` owns stage-advance projections, result-table timing, clear-bonus recipient selection, and one-shot clear-bonus side effects. Screen transitions remain in `src/game.js`, while diagnostics and the stage-clear renderer use the same frozen runtime API.
+
+`src/runtime/editor-input-runtime.js` owns the fixed-frame Construction input orchestration: cursor movement, original A/B pattern cycling, full-cell and quadrant painting, brush selection, tile cycling, and held-direction repeat. It keeps mutations and sounds as explicit callbacks while `src/game.js` retains Canvas coordinate conversion and DOM event wiring; direct tests cover the original pattern masks, boundary-safe edits, brush selection, and 20-frame repeat cadence.
 
 ## Stage Pack Format
 

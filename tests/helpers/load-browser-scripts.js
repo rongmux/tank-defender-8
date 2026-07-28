@@ -59,6 +59,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/stages/stage-pack-schema.js",
   "src/editor/editor-stage-format.js",
   "src/runtime/shared-state.js",
+  "src/runtime/editor-input-runtime.js",
   "src/runtime/tank-movement-runtime.js",
   "src/runtime/transient-effects-runtime.js",
   "src/runtime/projectile-runtime.js",

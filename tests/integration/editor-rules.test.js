@@ -20,6 +20,8 @@ function keyPress(code) {
 
 assert(modules.editorRules, "editor rules module should register before game.js");
 assert.equal(Object.isFrozen(modules.editorRules), true);
+assert(modules.editorInputRuntime, "editor input runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.editorInputRuntime), true);
 
 action("edit").click();
 action("clear").click();

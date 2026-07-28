@@ -107,6 +107,7 @@ node --check src/stages/stage-pack-schema.js
 node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
+node --check src/runtime/editor-input-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
@@ -230,6 +231,7 @@ tank-defender-8/
 |   |   `-- stage-runtime.js
 |   |-- runtime/
 |   |   |-- shared-state.js
+|   |   |-- editor-input-runtime.js
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
@@ -362,6 +364,7 @@ tank-defender-8/
 |   |   |-- debug-snapshot.test.js
 |   |   |-- directions.test.js
 |   |   |-- editor-rules.test.js
+|   |   |-- editor-input-runtime.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
@@ -473,6 +476,8 @@ tank-defender-8/
 `src/audio/free-audio-manifest.js` 接管 `data/free-audio-manifest.json` 的深冻结浏览器模块副本，以及运行时使用的独立深克隆 API。单元测试逐事件对照 JSON 数据源，锁定全部保留时长/声道布局、敌方射击保持静音，以及嵌套克隆隔离；浏览器集成测试验证模块注册，并确认每次公开运行时克隆都与 JSON 数据源一致，同时不会暴露内部冻结对象。
 
 `src/editor/editor-rules.js` 接管六种地形的浏览器调色板、14 步原版 Construction 块序列、方向键/WASD 映射与按住优先级、整格光标钳位、面板色块命中测试、图块循环、光标到单元格转换，以及精确的砖块碎片/钢墙象限编辑。`src/editor/editor-stage-format.js` 接管紧凑的版本 2 本地存档序列化、旧版 13x13 `rows` 与当前 26x26 `quadrants` 格式的兼容加载、可复用的 JSON 解析结果、默认单关导出/测试关卡包组装，以及带缩进的导出序列化。`src/game.js` 现在只保留编辑器屏幕状态、本地存储/剪贴板/文件副作用、消息、音效和事件接线。单元测试锁定两种存档编码、JSON 语法错误与存档结构错误的区分、相互独立的默认关卡包记录、出生点、敌人构成和序列化输出；浏览器集成测试接管原先位于 smoke 中的完整保存、清空、加载、导出、文件导入、Construction 关卡安装、即时测试和复位流程。
+
+`src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，`src/game.js` 只保留 Canvas 坐标换算与 DOM 事件接线；直接测试覆盖原版图案掩码、边界安全编辑、画笔选择和 20 帧重复节奏。
 
 `src/stages/battlefield-grid.js` 统一程序化生成、Construction、关卡启动和铲子道具共享的战场几何。它冻结五个围墙格、基地格和六个标准清理矩形，保留更宽的程序化地图保留区，初始化空白 Construction 战场，在保留定制出生区域编辑的同时打开基地格，并在配置的铲子闪烁窗口中选择砖墙/钢墙。直接单元测试锁定所有坐标与修改边界；浏览器集成测试验证真实编辑器围墙，并接管原先位于 smoke 中的铲子围墙断言。
 
@@ -626,6 +631,8 @@ tank-defender-8/
 `src/runtime/battle-combat-runtime.js` 接管敌人摧毁计分、奖励生命阈值、玩家受击/死亡转换、重生恢复以及双人 GAME OVER 横幅时序。音频和最高分持久化作为显式回调保留，投射物、道具和玩家更新运行时继续使用相同的 `state.fn` API。
 
 `src/runtime/stage-result-runtime.js` 接管关卡推进投影、结算表时序、通关奖励领取者选择以及一次性通关奖励副作用。屏幕状态转换仍保留在 `src/game.js`，诊断接口和关卡结算渲染使用同一个冻结运行时 API。
+
+`src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，`src/game.js` 只保留 Canvas 坐标换算与 DOM 事件接线；直接测试覆盖原版图案掩码、边界安全编辑、画笔选择和 20 帧重复节奏。
 
 ## 关卡包格式
 
