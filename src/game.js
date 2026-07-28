@@ -531,6 +531,7 @@
     renderTerrain: renderTerrain
   });
   deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
+  var frameCounterRuntime = deps.requireRuntimeModule("frameCounterRuntime").setupFrameCounterRuntime(state, deps);
   deps.requireRuntimeModule("playerMovementRuntime").setupPlayerMovementRuntime(state, deps, {
     advanceTankTracks: fn.advanceTankTracks,
     gameSettings: gameSettings,
@@ -551,7 +552,7 @@
     explosionRule: fn.explosionRule,
     gameSettings: gameSettings,
     playSound: playSound,
-    resetFrameCounterLow: resetFrameCounterLow,
+    resetFrameCounterLow: frameCounterRuntime.resetFrameCounterLow,
     resetPlayerPosition: resetPlayerPosition,
     updateHighScore: updateHighScore
   });
@@ -601,7 +602,7 @@
     endTitleDemo: endTitleDemo,
     extendedStageEndFrameHigh: function () { return EXTENDED_STAGE_END_FRAME_HIGH; },
     gameOverFieldDuration: gameOverFieldDuration,
-    resetFrameCounters: resetFrameCounters,
+    resetFrameCounters: frameCounterRuntime.resetFrameCounters,
     stopBonusLifeAudio: stopBonusLifeAudio,
     stopBrickHitAudio: stopBrickHitAudio,
     stopEnemyDestroyAudio: stopEnemyDestroyAudio,
@@ -625,7 +626,7 @@
     gameSettings: gameSettings,
     playerGameOverMessageActive: function () { return fn.playerGameOverMessageActive(); },
     playerGameOverStageEndDelay: function () { return PLAYER_GAME_OVER_STAGE_END_DELAY; },
-    resetFrameCounters: resetFrameCounters,
+    resetFrameCounters: frameCounterRuntime.resetFrameCounters,
     stageEnemiesCleared: function () { return fn.stageEnemiesCleared(); }
   });
   deps.requireRuntimeModule("playerUpdateRuntime").setupPlayerUpdateRuntime(state, deps, {
@@ -739,14 +740,14 @@
     update: update
   });
   var screenUpdateRuntime = deps.requireRuntimeModule("screenUpdateRuntime").setupScreenUpdateRuntime(state, deps, {
-    advanceFrameCounters: advanceFrameCounters,
+    advanceFrameCounters: frameCounterRuntime.advanceFrameCounters,
     awardPendingStageClearBonus: fn.awardPendingStageClearBonus,
     checkEndState: checkEndState,
     finishGameOverScreen: finishGameOverScreen,
     finishStageClearClosing: finishStageClearClosing,
     finishStageResult: finishStageResult,
     playSound: playSound,
-    resetFrameCounterHigh: resetFrameCounterHigh,
+    resetFrameCounterHigh: frameCounterRuntime.resetFrameCounterHigh,
     stageClearPresentation: fn.stageClearPresentation,
     stageResultVisibleKillCount: stageResultVisibleKillCount,
     syncMovementAudio: syncMovementAudio,
@@ -928,27 +929,6 @@
 
   function update() {
     return screenUpdateRuntime.updateFrame();
-  }
-
-  function advanceFrameCounters() {
-    applyFrameCounter(advanceFrameCounter(game));
-  }
-
-  function resetFrameCounterLow() {
-    applyFrameCounter(resetFrameCounter(game, true, false));
-  }
-
-  function resetFrameCounterHigh() {
-    applyFrameCounter(resetFrameCounter(game, false, true));
-  }
-
-  function resetFrameCounters() {
-    applyFrameCounter(resetFrameCounter(game));
-  }
-
-  function applyFrameCounter(counter) {
-    game.frameLow = counter.frameLow;
-    game.frameHigh = counter.frameHigh;
   }
 
   function tileTypeName(type) {
@@ -1369,11 +1349,6 @@
   state.fn.drawTextRight = drawTextRight;
   state.fn.pad2 = pad2;
   state.fn.preparePausedDebugBattle = preparePausedDebugBattle;
-  state.fn.advanceFrameCounters = advanceFrameCounters;
-  state.fn.resetFrameCounterLow = resetFrameCounterLow;
-  state.fn.resetFrameCounterHigh = resetFrameCounterHigh;
-  state.fn.resetFrameCounters = resetFrameCounters;
-  state.fn.applyFrameCounter = applyFrameCounter;
 
   // Stage-runtime functions (used by debug-api)
   state.fn.gameSettings = gameSettings;

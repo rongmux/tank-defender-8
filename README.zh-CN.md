@@ -121,6 +121,7 @@ node --check src/runtime/tank-render-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/player-movement-runtime.js
 node --check src/runtime/game-over-entry-runtime.js
+node --check src/runtime/frame-counter-runtime.js
 node --check src/runtime/power-up-render-runtime.js
 node --check src/runtime/projectile-render-runtime.js
 node --check src/runtime/effect-render-runtime.js
@@ -269,6 +270,7 @@ tank-defender-8/
 |   |   |-- tank-movement-runtime.js
 |   |   |-- player-movement-runtime.js
 |   |   |-- game-over-entry-runtime.js
+|   |   |-- frame-counter-runtime.js
 |   |   |-- power-up-render-runtime.js
 |   |   |-- projectile-render-runtime.js
 |   |   |-- effect-render-runtime.js
@@ -437,6 +439,7 @@ tank-defender-8/
 |   |   |-- input-runtime.test.js
 |   |   |-- screen-render-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
+|   |   |-- frame-counter-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -649,6 +652,8 @@ tank-defender-8/
 
 `src/runtime/game-over-entry-runtime.js` 接管进入场内 GAME OVER 状态：精确的 14 路音频停止顺序、演示结束、重复进入保护、固定计数器复位、扩展高字节、基地/提示清理、高分比较和场内计时器初始化。直接测试同时保留原有未停止的音频通道、实际清理调用和状态转换细节。
 
+`src/runtime/frame-counter-runtime.js` 接管 `src/core/frame-counter.js` 到实时状态的适配：低/高字节推进、单独复位、整体复位以及写回共享游戏状态。它不复制纯计数规则，保留原有 64 帧高字节边界；直接测试锁定溢出、独立复位、整体复位和模块注册。
+
 `transient-effects-runtime.js` 接管从 `src/game.js` 抽出的爆炸与分数提示运行时边界：爆炸规则回退、命中/摧毁样式选择、基地摧毁持续时间、队列写入和固定帧 TTL 推进。Canvas 渲染仍保留在 `src/game.js`；其单元测试锁定显式依赖校验、规则回退、样式选择、提示默认坐标、TTL 推进和存活对象标识，现有浏览器瞬态效果集成测试则验证模块注册与公开行为不变。
 
 `projectile-runtime.js` 接管从 `src/game.js` 抽出的固定帧射击边界：玩家升级档位查询、每辆坦克的活动子弹上限、按当前关卡包几何创建子弹、重载时序和仅玩家射击音效。碰撞与移动解析仍保持独立运行时边界；其单元测试锁定升级档位钳位、单/双子弹上限、速度与破墙等级传递、敌人静音和重载行为，浏览器子弹集成测试则验证模块注册与关卡包覆盖。
@@ -747,6 +752,8 @@ tank-defender-8/
 `src/runtime/player-movement-runtime.js` 接管玩家输入与演示更新调用的实际移动操作，将冰面滑行、转向对齐、受击停顿和履带动画从输入调度器中分离出来。
 
 `src/runtime/game-over-entry-runtime.js` 接管场内 GAME OVER 的进入副作用和计时器初始化，将音频清理与高分标记从战斗结束判定中分离出来。
+
+`src/runtime/frame-counter-runtime.js` 接管纯 60 Hz 计数结果写入共享状态的实时适配，让各生命周期模块共享同一个推进/复位边界。
 
 `src/runtime/battle-timing-runtime.js` 接管固定帧全局计时边界：暂停倒计时、铁锹墙恢复/闪烁时序、玩家无敌倒计时、基地摧毁倒计时以及精确的关卡清空判定。其单元测试锁定 64 帧计时节奏、墙体转换和敌人数量边界；浏览器集成测试验证模块注册，同时不改变公开 API 顺序。
 
