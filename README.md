@@ -112,6 +112,7 @@ node --check src/runtime/stage-select-runtime.js
 node --check src/runtime/post-game-runtime.js
 node --check src/runtime/stage-flow-runtime.js
 node --check src/runtime/battle-outcome-runtime.js
+node --check src/runtime/battle-loop-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
@@ -240,6 +241,7 @@ tank-defender-8/
 |   |   |-- post-game-runtime.js
 |   |   |-- stage-flow-runtime.js
 |   |   |-- battle-outcome-runtime.js
+|   |   |-- battle-loop-runtime.js
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
@@ -377,6 +379,7 @@ tank-defender-8/
 |   |   |-- post-game-runtime.test.js
 |   |   |-- stage-flow-runtime.test.js
 |   |   |-- battle-outcome-runtime.test.js
+|   |   |-- battle-loop-runtime.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
@@ -498,6 +501,8 @@ tank-defender-8/
 `src/runtime/stage-flow-runtime.js` owns stage-result screen transitions: entering clear/game-over results, selecting the next-stage or stop route, closing the stage curtain, launching the next stage, and computing the in-field GAME OVER duration. `src/runtime/stage-result-runtime.js` remains responsible for result projections and bonus side effects; audio cleanup and lifecycle entry points are explicit callbacks.
 
 `src/runtime/battle-outcome-runtime.js` owns the fixed-frame battle end predicate: demo termination, base/player GAME OVER triggers, enemy-clear delay, player GAME OVER extension, frame-counter reset, and entry into the stage-clear transition. It leaves actual screen transitions as callbacks into `stage-flow-runtime` and keeps the original 60 Hz boundary behavior testable in isolation.
+
+`src/runtime/battle-loop-runtime.js` owns the fixed-frame battle update order: freeze and entity timers, player/enemy updates, terrain effects, projectiles, score popups, power-ups, player GAME OVER messaging, enemy spawning, end checks, and movement-audio synchronization. Post-game field frames use the same API with input and end-check options disabled.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
 

@@ -240,6 +240,7 @@
   function finishGameOverScreen() { return fn.finishGameOverScreen(); }
   function gameOverFieldDuration() { return fn.gameOverFieldDuration(); }
   function checkEndState() { return fn.checkEndState(); }
+  function updateBattle(options) { return fn.updateBattle(options); }
 
   // Audio function aliases
   function initAudio() { return fn.initAudio(); }
@@ -701,6 +702,23 @@
   deps.requireRuntimeModule("projectileMotionRuntime").setupProjectileMotionRuntime(state, deps, {
     resolveBullet: fn.resolveBullet
   });
+  deps.requireRuntimeModule("battleLoopRuntime").setupBattleLoopRuntime(state, deps, {
+    checkEndState: checkEndState,
+    spawnEnemies: fn.spawnEnemies,
+    shouldSpawnEnemies: shouldSpawnEnemies,
+    syncMovementAudio: syncMovementAudio,
+    updateBaseDestructionTimer: fn.updateBaseDestructionTimer,
+    updateBullets: fn.updateBullets,
+    updateEnemies: fn.updateEnemies,
+    updateExplosions: fn.updateExplosions,
+    updateFreezeTimer: fn.updateFreezeTimer,
+    updatePlayerGameOverMessage: fn.updatePlayerGameOverMessage,
+    updatePlayerInvulnerabilityTimers: fn.updatePlayerInvulnerabilityTimers,
+    updatePlayers: fn.updatePlayers,
+    updatePowerUp: fn.updatePowerUp,
+    updateScorePopups: fn.updateScorePopups,
+    updateShovelTimer: fn.updateShovelTimer
+  });
 
   function handleAction(action) {
     initAudio();
@@ -1070,33 +1088,6 @@
   function applyFrameCounter(counter) {
     game.frameLow = counter.frameLow;
     game.frameHigh = counter.frameHigh;
-  }
-
-  /**
-   * Advances one active battle frame. Post-game field frames use the same
-   * simulation with controller input cleared and end detection disabled.
-   * @param {{playerInputEnabled?: boolean, checkEnding?: boolean}} [options]
-   */
-  function updateBattle(options) {
-    const opts = options || {};
-    const playerInputEnabled = opts.playerInputEnabled !== false && game.baseDestroyTimer <= 0;
-    const checkEnding = opts.checkEnding !== false;
-    game.tick += 1;
-    fn.updateFreezeTimer();
-
-    fn.updatePlayers(playerInputEnabled);
-    fn.updateEnemies();
-    fn.updateShovelTimer();
-    fn.updatePlayerInvulnerabilityTimers();
-    fn.updateExplosions();
-    fn.updateBaseDestructionTimer();
-    fn.updateBullets();
-    fn.updateScorePopups();
-    fn.updatePowerUp();
-    fn.updatePlayerGameOverMessage();
-    if (shouldSpawnEnemies()) fn.spawnEnemies();
-    if (checkEnding) checkEndState();
-    syncMovementAudio();
   }
 
   function tileTypeName(type) {
@@ -2073,7 +2064,6 @@
   state.fn.isPauseInputCode = isPauseInputCode;
   state.fn.togglePause = togglePause;
   state.fn.canvasToGame = canvasToGame;
-  state.fn.updateBattle = updateBattle;
   state.fn.tileTypeName = tileTypeName;
   state.fn.updatePlayerMovement = updatePlayerMovement;
   state.fn.shouldSpawnEnemies = shouldSpawnEnemies;

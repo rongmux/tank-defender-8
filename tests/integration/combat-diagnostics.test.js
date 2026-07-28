@@ -26,6 +26,8 @@ const api = context.window.TankDefender8;
 
 assert(modules.combatDiagnostics, "combat diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.combatDiagnostics), true);
+assert(modules.battleLoopRuntime, "battle loop runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.battleLoopRuntime), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(101, 113))),
   COMBAT_DIAGNOSTIC_METHODS
