@@ -719,6 +719,13 @@
     updateScorePopups: fn.updateScorePopups,
     updateShovelTimer: fn.updateShovelTimer
   });
+  var frameLoopRuntime = deps.requireRuntimeModule("frameLoopRuntime").setupFrameLoopRuntime(state, deps, {
+    now: function () { return performance.now(); },
+    render: render,
+    requestAnimationFrame: function (callback) { return requestAnimationFrame(callback); },
+    stepMs: function () { return sh.STEP_MS; },
+    update: update
+  });
 
   function handleAction(action) {
     initAudio();
@@ -2174,22 +2181,7 @@
   deps.requireRuntimeModule("debugApi").setupDebugApi(state, deps);
 
   // ── Main loop ──────────────────────────────────────────────────────────
-  var last = performance.now();
-  var accumulator = 0;
-
-  function frame(now) {
-    var elapsed = Math.min(80, now - last);
-    last = now;
-    accumulator += elapsed;
-    while (accumulator >= sh.STEP_MS) {
-      update();
-      accumulator -= sh.STEP_MS;
-    }
-    render();
-    requestAnimationFrame(frame);
-  }
-
   loadHighScore();
   state.game.grid = createStageGrid(state.game.stage);
-  requestAnimationFrame(frame);
+  frameLoopRuntime.start();
 })();

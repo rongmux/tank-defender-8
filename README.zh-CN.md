@@ -113,6 +113,7 @@ node --check src/runtime/post-game-runtime.js
 node --check src/runtime/stage-flow-runtime.js
 node --check src/runtime/battle-outcome-runtime.js
 node --check src/runtime/battle-loop-runtime.js
+node --check src/runtime/frame-loop-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
@@ -242,6 +243,7 @@ tank-defender-8/
 |   |   |-- stage-flow-runtime.js
 |   |   |-- battle-outcome-runtime.js
 |   |   |-- battle-loop-runtime.js
+|   |   |-- frame-loop-runtime.js
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
@@ -380,6 +382,7 @@ tank-defender-8/
 |   |   |-- stage-flow-runtime.test.js
 |   |   |-- battle-outcome-runtime.test.js
 |   |   |-- battle-loop-runtime.test.js
+|   |   |-- frame-loop-runtime.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
@@ -503,6 +506,8 @@ tank-defender-8/
 `src/runtime/battle-outcome-runtime.js` 接管固定帧战斗结束判定：演示模式结束、基地/玩家 GAME OVER 触发、敌人清空后的延迟、玩家 GAME OVER 延长、帧计数器复位以及进入关卡结算转换。实际屏幕转换通过回调交给 `stage-flow-runtime`，原版 60 Hz 边界行为可以单独测试。
 
 `src/runtime/battle-loop-runtime.js` 接管固定帧战斗更新顺序：冻结与实体计时器、玩家/敌人更新、地形效果、投射物、分数提示、道具、玩家 GAME OVER 文本、敌人生成、结束判定和移动音频同步。游戏结束后的场内帧通过同一个 API 关闭输入和结束检查。
+
+`src/runtime/frame-loop-runtime.js` 接管固定 60 Hz 累积器、每个 RAF 的渲染调度和 80ms 长间隔上限。渲染回调仍在每个浏览器帧执行，而逻辑更新只按固定步长推进，因此高刷新率显示器不会改变游戏时序；直接测试覆盖半步节奏、补帧和长间隔边界。
 
 `src/stages/battlefield-grid.js` 统一程序化生成、Construction、关卡启动和铲子道具共享的战场几何。它冻结五个围墙格、基地格和六个标准清理矩形，保留更宽的程序化地图保留区，初始化空白 Construction 战场，在保留定制出生区域编辑的同时打开基地格，并在配置的铲子闪烁窗口中选择砖墙/钢墙。直接单元测试锁定所有坐标与修改边界；浏览器集成测试验证真实编辑器围墙，并接管原先位于 smoke 中的铲子围墙断言。
 
