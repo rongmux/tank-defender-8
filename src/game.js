@@ -30,7 +30,6 @@
   var HIDDEN_MESSAGE_DROP_MORPH_FRAMES = sh.HIDDEN_MESSAGE_DROP_MORPH_FRAMES;
   var HIDDEN_MESSAGE_DROP_FALL_FRAMES = sh.HIDDEN_MESSAGE_DROP_FALL_FRAMES;
   var HIDDEN_MESSAGE_END_FRAME = sh.HIDDEN_MESSAGE_END_FRAME;
-  var GAME_OVER_TEXT = sh.GAME_OVER_TEXT;
   var PLAYER_GAME_OVER_STAGE_END_DELAY = sh.PLAYER_GAME_OVER_STAGE_END_DELAY;
   var EXTENDED_STAGE_END_FRAME_HIGH = sh.EXTENDED_STAGE_END_FRAME_HIGH;
   var DEMO_INITIAL_FRAME_LOW = sh.DEMO_INITIAL_FRAME_LOW;
@@ -435,7 +434,6 @@
   var cloneSpriteManifest = deps.cloneSpriteManifest;
   var cloneWallRules = deps.cloneWallRules;
   var combatSettings = deps.combatSettings;
-  var compactGameOverGlyph = deps.compactGameOverGlyph;
   var createBuiltInStagePack = deps.createBuiltInStagePack;
   var createEditorStagePack = deps.createEditorStagePack;
   var createFixedFrameAudioState = deps.createFixedFrameAudioState;
@@ -522,11 +520,6 @@
   var selectStageIntroCurtainState = deps.stageIntroCurtainState;
   var selectStageSelectCurtainState = deps.stageSelectCurtainState;
   var selectTitleScoreLayout = deps.titleScoreLayout;
-  var selectGameOverBannerPresentation = deps.gameOverBannerPresentation;
-  var selectPanelEnemyCounterRemaining = deps.panelEnemyCounterRemaining;
-  var selectPanelLifeCount = deps.panelLifeCount;
-  var selectPausePresentation = deps.pausePresentation;
-  var selectPlayerGameOverMessagePresentation = deps.playerGameOverMessagePresentation;
   var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
 
   deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
@@ -798,6 +791,14 @@
     renderCurtain: renderCurtain,
     stageClearPresentation: fn.stageClearPresentation,
     stageSelectCurtainState: stageSelectCurtainState
+  });
+  var battleHudRenderRuntime = deps.requireRuntimeModule("battleHudRenderRuntime").setupBattleHudRenderRuntime(state, deps, {
+    battleDisplayFrame: battleDisplayFrame,
+    drawManifestSprite: drawManifestSprite,
+    drawScaledManifestSprite: drawScaledManifestSprite,
+    drawText: drawText,
+    enemyTotal: enemyTotal,
+    gameSettings: gameSettings
   });
 
   function handleAction(action) {
@@ -1414,49 +1415,19 @@
   }
 
   function renderPanel() {
-    const count = panelEnemyCounterRemaining();
-    for (let i = 0; i < enemyTotal(); i += 1) {
-      const x = PANEL_X + 8 + (i % 2) * 8;
-      const y = 24 + Math.floor(i / 2) * 8;
-      drawManifestSprite("enemyCounter", i < count ? "remaining" : "cleared", x, y, {
-        primary: i < count ? "#15161a" : "#686c75"
-      });
-    }
-    drawText("1P", PANEL_X + 8, 112, 1, "#15161a");
-    drawScaledManifestSprite("miniTank", "up", PANEL_X + 8, 124, 0.57, {
-      primary: "#15161a",
-      shadow: "#6b6f78"
-    });
-    drawText(String(panelLifeCount(game.players[0])), PANEL_X + 20, 125, 1, "#15161a");
-    if (game.playerCount > 1) {
-      drawText("2P", PANEL_X + 8, 144, 1, "#15161a");
-      drawScaledManifestSprite("miniTank", "up", PANEL_X + 8, 156, 0.57, {
-        primary: "#15161a",
-        shadow: "#6b6f78"
-      });
-      drawText(String(panelLifeCount(game.players[1])), PANEL_X + 20, 157, 1, "#15161a");
-    }
-    drawStageFlag(PANEL_X + 8, 192);
-    drawText(pad2(game.stage), PANEL_X + 10, 211, 1, "#15161a");
-    if (game.freezeTimer > 0) drawText("TM", PANEL_X + 8, 176, 1, "#173b67");
+    return battleHudRenderRuntime.renderPanel();
   }
 
   function drawStageFlag(x, y) {
-    ctx.fillStyle = "#15161a";
-    ctx.fillRect(x, y, 2, 15);
-    ctx.fillRect(x + 2, y + 1, 10, 7);
-    ctx.fillStyle = "#6b6f78";
-    ctx.fillRect(x + 4, y + 3, 6, 3);
+    return battleHudRenderRuntime.drawStageFlag(x, y);
   }
 
   function panelEnemyCounterRemaining(total, spawned) {
-    const countTotal = total === undefined ? enemyTotal() : Math.max(0, Math.floor(Number(total) || 0));
-    const spawnedCount = spawned === undefined ? game.enemySpawned : Math.max(0, Math.floor(Number(spawned) || 0));
-    return selectPanelEnemyCounterRemaining(countTotal, spawnedCount);
+    return battleHudRenderRuntime.panelEnemyCounterRemaining(total, spawned);
   }
 
   function panelLifeCount(player) {
-    return selectPanelLifeCount(player);
+    return battleHudRenderRuntime.panelLifeCount(player);
   }
 
   function drawSmallScore(score, x, y, color) {
@@ -1525,56 +1496,31 @@
   }
 
   function renderGameOver() {
-    const y = gameOverBannerY(game.gameOverTimer);
-    const width = GAME_OVER_TEXT.length * 6 - 1;
-    drawText(GAME_OVER_TEXT, Math.round((SCREEN_W - width) / 2), y, 1, "#f05a42");
+    return battleHudRenderRuntime.renderGameOver();
   }
 
   function renderPlayerGameOverMessage() {
-    const presentation = playerGameOverMessagePresentation();
-    if (!presentation || !presentation.visible) return;
-    drawCompactGameOverWord("GAME", presentation.left, presentation.y + 1);
-    drawCompactGameOverWord("OVER", presentation.left + 16, presentation.y + 1);
+    return battleHudRenderRuntime.renderPlayerGameOverMessage();
   }
 
   function playerGameOverMessagePresentation() {
-    return selectPlayerGameOverMessagePresentation(game.playerGameOverMessage, {
-      paused: game.paused,
-      demoMode: game.demoMode
-    });
+    return battleHudRenderRuntime.playerGameOverMessagePresentation();
   }
 
   function drawCompactGameOverWord(word, x, y) {
-    ctx.fillStyle = "#f05a42";
-    let cursorX = Math.round(x);
-    const top = Math.round(y);
-    for (const char of word) {
-      const glyph = compactGameOverGlyph(char);
-      for (let row = 0; row < glyph.length; row += 1) {
-        for (let column = 0; column < glyph[row].length; column += 1) {
-          if (glyph[row][column] === "1") ctx.fillRect(cursorX + column, top + row, 1, 1);
-        }
-      }
-      cursorX += 4;
-    }
+    return battleHudRenderRuntime.drawCompactGameOverWord(word, x, y);
   }
 
   function gameOverBannerY(timer) {
-    const timings = gameSettings().timings;
-    return selectGameOverBannerPresentation(timer, {
-      slideFrames: timings.gameOverSlide,
-      holdFrames: timings.gameOverHold
-    }).y;
+    return battleHudRenderRuntime.gameOverBannerY(timer);
   }
 
   function renderPause() {
-    const presentation = pausePresentation(battleDisplayFrame());
-    if (!presentation.visible) return;
-    drawText(presentation.text, presentation.x, presentation.y, 1, "#f3f0d4");
+    return battleHudRenderRuntime.renderPause();
   }
 
   function pausePresentation(frame) {
-    return selectPausePresentation(frame);
+    return battleHudRenderRuntime.pausePresentation(frame);
   }
 
   function renderEditor() {
