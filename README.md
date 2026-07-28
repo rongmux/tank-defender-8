@@ -124,6 +124,7 @@ node --check src/runtime/projectile-render-runtime.js
 node --check src/runtime/effect-render-runtime.js
 node --check src/runtime/stage-result-render-runtime.js
 node --check src/runtime/battle-hud-render-runtime.js
+node --check src/runtime/editor-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/battle-combat-runtime.js
@@ -263,6 +264,7 @@ tank-defender-8/
 |   |   |-- effect-render-runtime.js
 |   |   |-- stage-result-render-runtime.js
 |   |   |-- battle-hud-render-runtime.js
+|   |   |-- editor-render-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
@@ -411,6 +413,7 @@ tank-defender-8/
 |   |   |-- effect-render-runtime.test.js
 |   |   |-- stage-result-render-runtime.test.js
 |   |   |-- battle-hud-render-runtime.test.js
+|   |   |-- editor-render-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -553,6 +556,8 @@ tank-defender-8/
 `src/runtime/stage-result-render-runtime.js` owns the stage-clear result screen: score headers, one/two-player result rows, centered tank icons, directional arrows, bonus rows, totals, score formatting, and the closing curtain. It preserves the original 256x240 integer geometry and exposes the result helpers through the compatibility API; direct tests lock the two-player row positions and prevent the center tank/arrow overlap regression.
 
 `src/runtime/battle-hud-render-runtime.js` owns the in-battle side panel, pause label, field GAME OVER banner, player GAME OVER message, and their layout helpers. It preserves the fixed pixel-font geometry, enemy counter/life count projection, pause blink phase, and compact two-player GAME OVER glyphs; direct tests cover panel coordinates, banner timing callbacks, pause visibility, and flag geometry.
+
+`src/runtime/editor-render-runtime.js` owns Construction battlefield rendering: the editable terrain layers, base, blinking cursor tank, and six-tile legend. It preserves the original 256x240 field geometry, 16px tile placement, 16-frame cursor blink, tile masks, and brush highlight while receiving terrain operations through explicit callbacks; direct tests cover fallback-grid creation, cursor visibility, legend coordinates, and each tile renderer.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
 

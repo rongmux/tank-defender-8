@@ -156,13 +156,11 @@
   var highScoreAudio = state.audio.highScore;
 
   // ── Tile type constants ────────────────────────────────────────────────
-  var TILE_TYPES = deps.TILE_TYPES;
-  var EMPTY = TILE_TYPES.EMPTY;
-  var BRICK = TILE_TYPES.BRICK;
-  var STEEL = TILE_TYPES.STEEL;
-  var WATER = TILE_TYPES.WATER;
-  var FOREST = TILE_TYPES.FOREST;
-  var ICE = TILE_TYPES.ICE;
+  var BRICK = deps.TILE_TYPES.BRICK;
+  var STEEL = deps.TILE_TYPES.STEEL;
+  var WATER = deps.TILE_TYPES.WATER;
+  var FOREST = deps.TILE_TYPES.FOREST;
+  var ICE = deps.TILE_TYPES.ICE;
 
   // ── Function aliases (delegate to state.fn for extracted modules) ──────
   var fn = state.fn;
@@ -386,7 +384,6 @@
 
 
   // Deps module aliases
-  var BRICK = deps.BRICK;
   var CARRIER_FLASH_COLOR = deps.CARRIER_FLASH_COLOR;
   var CARRIER_FLASH_PHASE_FRAMES = deps.CARRIER_FLASH_PHASE_FRAMES;
   var DEFAULT_ENEMY_TOTAL = deps.DEFAULT_ENEMY_TOTAL;
@@ -396,25 +393,17 @@
   var DIR_X = deps.DIR_X;
   var DIR_Y = deps.DIR_Y;
   var DOWN = deps.DOWN;
-  var EDITOR_TILE_TYPES = deps.EDITOR_TILE_TYPES;
-  var EMPTY = deps.EMPTY;
   var FIXED_FRAME_AUDIO_UPDATE_MODE = deps.FIXED_FRAME_AUDIO_UPDATE_MODE;
-  var FOREST = deps.FOREST;
   var FREE_AUDIO_MANIFEST = deps.FREE_AUDIO_MANIFEST;
   var FREE_SPRITE_MANIFEST = deps.FREE_SPRITE_MANIFEST;
   var FULL_BRICK_FRAGMENT_MASK = deps.FULL_BRICK_FRAGMENT_MASK;
   var FULL_GAME_OVER_SCREEN_FRAMES = deps.FULL_GAME_OVER_SCREEN_FRAMES;
   var HIGH_SCORE_SCREEN_FRAMES = deps.HIGH_SCORE_SCREEN_FRAMES;
-  var ICE = deps.ICE;
   var LEFT = deps.LEFT;
   var ORIGINAL_EDITOR_PATTERNS = deps.ORIGINAL_EDITOR_PATTERNS;
-  var QUAD_GRID = deps.QUAD_GRID;
   var RIGHT = deps.RIGHT;
   var STAGE_CURTAIN_CLOSE_FRAMES = deps.STAGE_CURTAIN_CLOSE_FRAMES;
-  var STEEL = deps.STEEL;
-  var TILE_TYPES = deps.TILE_TYPES;
   var UP = deps.UP;
-  var WATER = deps.WATER;
   var advanceFixedFrameAudioState = deps.advanceFixedFrameAudioState;
   var advanceFrameCounter = deps.advanceFrameCounter;
   // (baseDestructionPresentation — local wrapper, not deps alias)
@@ -799,6 +788,17 @@
     drawText: drawText,
     enemyTotal: enemyTotal,
     gameSettings: gameSettings
+  });
+  var editorRenderRuntime = deps.requireRuntimeModule("editorRenderRuntime").setupEditorRenderRuntime(state, deps, {
+    createStageGrid: createStageGrid,
+    drawBrickCell: drawBrickCell,
+    drawForest: drawForest,
+    drawIce: drawIce,
+    drawManifestSprite: drawManifestSprite,
+    drawWallCell: drawWallCell,
+    drawWater: drawWater,
+    renderBase: renderBase,
+    renderTerrain: renderTerrain
   });
 
   function handleAction(action) {
@@ -1524,52 +1524,11 @@
   }
 
   function renderEditor() {
-    const grid = game.editorGrid || createStageGrid(game.stage);
-    ctx.fillStyle = "#6b6f78";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    ctx.fillStyle = "#000";
-    ctx.fillRect(FIELD_X, FIELD_Y, FIELD_W, FIELD_H);
-    renderTerrain(false, grid);
-    renderBase();
-    renderTerrain(true, grid);
-
-    const cursor = game.editorCursor;
-    if (
-      cursor.qc >= 0 && cursor.qc < QUAD_GRID &&
-      cursor.qr >= 0 && cursor.qr < QUAD_GRID &&
-      Math.floor(game.editorTick / 16) % 2 === 0
-    ) {
-      const c = Math.floor(cursor.qc / 2);
-      const r = Math.floor(cursor.qr / 2);
-      drawManifestSprite("tank", "up", FIELD_X + c * TILE + 1, FIELD_Y + r * TILE + 1, {
-        primary: "#e3c64e",
-        accent: "#fff0a8",
-        shadow: "#111111"
-      });
-    }
+    return editorRenderRuntime.renderEditor();
   }
 
   function drawTileLegend(x, y) {
-    for (let i = 0; i < EDITOR_TILE_TYPES.length; i += 1) {
-      const px = x + (i % 2) * 14;
-      const py = y + Math.floor(i / 2) * 18;
-      ctx.fillStyle = "#000";
-      ctx.fillRect(px, py, 10, 10);
-      const cell = { type: EDITOR_TILE_TYPES[i], mask: 15 };
-      if (cell.type === BRICK) drawBrickCell(px, py, cell);
-      else if (cell.type === STEEL) drawWallCell(px, py, cell.mask, "#626a76", "#c9d0d9");
-      else if (cell.type === WATER) drawWater(px, py);
-      else if (cell.type === FOREST) drawForest(px, py);
-      else if (cell.type === ICE) drawIce(px, py);
-      else {
-        ctx.strokeStyle = "#575b64";
-        ctx.strokeRect(px, py, 10, 10);
-      }
-      if (cell.type === game.editorBrush) {
-        ctx.strokeStyle = "#e0b84b";
-        ctx.strokeRect(px, py, 10, 10);
-      }
-    }
+    return editorRenderRuntime.drawTileLegend(x, y);
   }
 
   function drawText(text, x, y, scale, color, advance) {
