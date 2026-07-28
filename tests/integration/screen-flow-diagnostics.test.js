@@ -27,6 +27,8 @@ assert(modules.screenFlowDiagnostics, "screen-flow diagnostics should register b
 assert.equal(Object.isFrozen(modules.screenFlowDiagnostics), true);
 assert(modules.stageSelectRuntime, "stage select runtime should register before game.js");
 assert.equal(Object.isFrozen(modules.stageSelectRuntime), true);
+assert(modules.postGameRuntime, "post-game runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.postGameRuntime), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(39, 50))),
   SCREEN_FLOW_DIAGNOSTIC_METHODS

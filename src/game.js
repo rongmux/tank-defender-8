@@ -99,6 +99,37 @@
   deps.requireRuntimeModule("stageSelectRuntime").setupStageSelectRuntime(state, deps, {
     changeStageSelection: changeStageSelection
   });
+  deps.requireRuntimeModule("postGameRuntime").setupPostGameRuntime(state, deps, {
+    fullGameOverScreenFrames: function () { return FULL_GAME_OVER_SCREEN_FRAMES; },
+    highScoreScreenFrames: function () { return HIGH_SCORE_SCREEN_FRAMES; },
+    playSound: playSound,
+    resetTitleIdleTimer: resetTitleIdleTimer,
+    stopAllAudio: function () {
+      stopMovementAudio();
+      stopStageStartAudio();
+      stopBonusLifeAudio();
+      stopPowerUpPickupAudio();
+      stopPowerUpAppearAudio();
+      stopPauseAudio();
+      stopBrickHitAudio();
+      stopEnemyHitAudio();
+      stopBaseHitAudio();
+      stopEnemyDestroyAudio();
+      stopPlayerDestroyAudio();
+      stopSteelHitAudio();
+      stopPlayerShootAudio();
+      stopMovementIceAudio();
+      stopScoreCountAudio();
+      stopStageBonusAudio();
+      stopGameOverAudio();
+      stopHighScoreAudio();
+    },
+    stopGameOverAudio: stopGameOverAudio,
+    stopStageResultAudio: function () {
+      stopScoreCountAudio();
+      stopStageBonusAudio();
+    }
+  });
 
   // ── Stage runtime ──────────────────────────────────────────────────────
 
@@ -195,6 +226,13 @@
   function stageSelectAHeld(input) { return fn.stageSelectAHeld(input); }
   function stageSelectBHeld(input) { return fn.stageSelectBHeld(input); }
   function updateStageSelectControls() { return fn.updateStageSelectControls(); }
+  function startFullGameOverScreen() { return fn.startFullGameOverScreen(); }
+  function updateFullGameOverScreen() { return fn.updateFullGameOverScreen(); }
+  function handleFullGameOverInput(code) { return fn.handleFullGameOverInput(code); }
+  function finishFullGameOverScreen() { return fn.finishFullGameOverScreen(); }
+  function startHighScoreScreen() { return fn.startHighScoreScreen(); }
+  function updateHighScoreScreen() { return fn.updateHighScoreScreen(); }
+  function returnToTitleAfterGame() { return fn.returnToTitleAfterGame(); }
 
   // Audio function aliases
   function initAudio() { return fn.initAudio(); }
@@ -1196,80 +1234,6 @@
     enterStageResult("gameOver");
   }
 
-  function startFullGameOverScreen() {
-    stopScoreCountAudio();
-    stopStageBonusAudio();
-    game.screen = "fullGameOver";
-    game.paused = false;
-    game.fullGameOverElapsed = 0;
-    playSound("gameOver");
-  }
-
-  function updateFullGameOverScreen() {
-    game.fullGameOverElapsed += 1;
-    if (game.fullGameOverElapsed < FULL_GAME_OVER_SCREEN_FRAMES) return;
-    finishFullGameOverScreen();
-  }
-
-  function handleFullGameOverInput(code) {
-    if (code !== "Enter" && code !== "Escape") return false;
-    finishFullGameOverScreen();
-    return true;
-  }
-
-  function finishFullGameOverScreen() {
-    stopGameOverAudio();
-    if (game.newHighScoreAtGameOver) {
-      startHighScoreScreen();
-      return;
-    }
-    returnToTitleAfterGame();
-  }
-
-  function startHighScoreScreen() {
-    game.screen = "highScore";
-    game.paused = false;
-    game.highScoreScreenElapsed = 0;
-    playSound("highScore");
-  }
-
-  function updateHighScoreScreen() {
-    game.highScoreScreenElapsed += 1;
-    if (game.highScoreScreenElapsed < HIGH_SCORE_SCREEN_FRAMES) return;
-    returnToTitleAfterGame();
-  }
-
-  function returnToTitleAfterGame() {
-    stopMovementAudio();
-    stopStageStartAudio();
-    stopBonusLifeAudio();
-    stopPowerUpPickupAudio();
-    stopPowerUpAppearAudio();
-    stopPauseAudio();
-    stopBrickHitAudio();
-    stopEnemyHitAudio();
-    stopBaseHitAudio();
-    stopEnemyDestroyAudio();
-    stopPlayerDestroyAudio();
-    stopSteelHitAudio();
-    stopPlayerShootAudio();
-    stopMovementIceAudio();
-    stopScoreCountAudio();
-    stopStageBonusAudio();
-    stopGameOverAudio();
-    stopHighScoreAudio();
-    game.screen = "title";
-    game.paused = false;
-    game.newHighScoreAtGameOver = false;
-    game.fullGameOverElapsed = 0;
-    game.highScoreScreenElapsed = 0;
-    game.stageResultReason = "clear";
-    game.constructionUsed = false;
-    game.constructionVisits = 0;
-    game.hiddenInputCount = 0;
-    resetTitleIdleTimer();
-  }
-
   function render() {
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = "#000000";
@@ -2182,13 +2146,6 @@
   state.fn.enterGameOver = enterGameOver;
   state.fn.gameOverFieldDuration = gameOverFieldDuration;
   state.fn.finishGameOverScreen = finishGameOverScreen;
-  state.fn.startFullGameOverScreen = startFullGameOverScreen;
-  state.fn.updateFullGameOverScreen = updateFullGameOverScreen;
-  state.fn.handleFullGameOverInput = handleFullGameOverInput;
-  state.fn.finishFullGameOverScreen = finishFullGameOverScreen;
-  state.fn.startHighScoreScreen = startHighScoreScreen;
-  state.fn.updateHighScoreScreen = updateHighScoreScreen;
-  state.fn.returnToTitleAfterGame = returnToTitleAfterGame;
   state.fn.renderTitle = renderTitle;
   state.fn.renderHiddenMessage = renderHiddenMessage;
   state.fn.renderHighScore = renderHighScore;
