@@ -11,7 +11,6 @@
   var SCREEN_H = sh.SCREEN_H;
   var TILE = sh.TILE;
   var HALF = sh.HALF;
-  var GRID = sh.GRID;
   var FIELD_X = sh.FIELD_X;
   var FIELD_Y = sh.FIELD_Y;
   var FIELD_W = sh.FIELD_W;
@@ -392,7 +391,6 @@
   // Deps module aliases
   var BASE_DESTRUCTION_TAIL_FRAMES = deps.BASE_DESTRUCTION_TAIL_FRAMES;
   var BRICK = deps.BRICK;
-  var BRICK_QUARTER_FRAGMENT_MASKS = deps.BRICK_QUARTER_FRAGMENT_MASKS;
   var CARRIER_FLASH_COLOR = deps.CARRIER_FLASH_COLOR;
   var CARRIER_FLASH_PHASE_FRAMES = deps.CARRIER_FLASH_PHASE_FRAMES;
   var DEFAULT_ENEMY_TOTAL = deps.DEFAULT_ENEMY_TOTAL;
@@ -412,7 +410,6 @@
   var FREE_SPRITE_MANIFEST = deps.FREE_SPRITE_MANIFEST;
   var FULL_BRICK_FRAGMENT_MASK = deps.FULL_BRICK_FRAGMENT_MASK;
   var FULL_GAME_OVER_SCREEN_FRAMES = deps.FULL_GAME_OVER_SCREEN_FRAMES;
-  var GRID = deps.GRID;
   var HIGH_SCORE_SCREEN_FRAMES = deps.HIGH_SCORE_SCREEN_FRAMES;
   var ICE = deps.ICE;
   var LEFT = deps.LEFT;
@@ -425,7 +422,6 @@
   var STEEL = deps.STEEL;
   var TILE_TYPES = deps.TILE_TYPES;
   var UP = deps.UP;
-  var WALL_FRAGMENT = deps.WALL_FRAGMENT;
   var WATER = deps.WATER;
   var advanceFixedFrameAudioState = deps.advanceFixedFrameAudioState;
   var advanceFrameCounter = deps.advanceFrameCounter;
@@ -776,6 +772,11 @@
     hiddenMessagePresentation: hiddenMessagePresentation,
     pixelGlyph: pixelGlyph,
     titleScoreLayout: titleScoreLayout
+  });
+  var terrainRenderRuntime = deps.requireRuntimeModule("terrainRenderRuntime").setupTerrainRenderRuntime(state, deps, {
+    drawManifestSprite: drawManifestSprite,
+    normalizeBrickFragmentMask: normalizeBrickFragmentMask,
+    quarterMaskFromBrickFragments: quarterMaskFromBrickFragments
   });
 
   function handleAction(action) {
@@ -1222,116 +1223,47 @@
   }
 
   function renderGameBackdrop(grid) {
-    ctx.fillStyle = "#6b6f78";
-    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    ctx.fillStyle = "#000";
-    ctx.fillRect(FIELD_X, FIELD_Y, FIELD_W, FIELD_H);
-    renderTerrain(false, grid);
-    renderTerrain(true, grid);
+    return terrainRenderRuntime.renderGameBackdrop(grid);
   }
 
   function renderTerrain(topLayer, grid) {
-    for (let r = 0; r < GRID; r += 1) {
-      for (let c = 0; c < GRID; c += 1) {
-        const cell = grid[r][c];
-        const x = FIELD_X + c * TILE;
-        const y = FIELD_Y + r * TILE;
-        if (topLayer) {
-          if (cell.type === FOREST) drawForest(x, y);
-          continue;
-        }
-        if (cell.type === BRICK) drawBrickCell(x, y, cell);
-        else if (cell.type === STEEL) drawWallCell(x, y, cell.mask, "#626a76", "#c9d0d9");
-        else if (cell.type === WATER) drawWater(x, y);
-        else if (cell.type === ICE) drawIce(x, y);
-      }
-    }
+    return terrainRenderRuntime.renderTerrain(topLayer, grid);
   }
 
   function drawWallCell(x, y, mask, dark, light) {
-    const frameName = dark === "#a24f32" ? "brick" : "steel";
-    for (let q = 0; q < 4; q += 1) {
-      if (!(mask & (1 << q))) continue;
-      const qx = x + (q % 2) * HALF;
-      const qy = y + (q >= 2 ? HALF : 0);
-      drawManifestSprite("wallQuarter", frameName, qx, qy, {
-        dark,
-        light,
-        seam: frameName === "steel" ? "#5a6370" : light,
-        bolt: frameName === "steel" ? "#333943" : dark,
-        shadow: "#1b1512"
-      });
-    }
+    return terrainRenderRuntime.drawWallCell(x, y, mask, dark, light);
   }
 
   function drawBrickCell(x, y, cell) {
-    const fragments = normalizeBrickFragmentMask(cell.brickMask, cell.mask);
-    drawWallCell(x, y, quarterMaskFromBrickFragments(fragments), "#a24f32", "#d38658");
-    ctx.fillStyle = "#000000";
-    for (let fragment = 0; fragment < 16; fragment += 1) {
-      const quarter = Math.floor(fragment / 8) * 2 + Math.floor((fragment % 4) / 2);
-      if (!(fragments & BRICK_QUARTER_FRAGMENT_MASKS[quarter])) continue;
-      if (fragments & (1 << fragment)) continue;
-      ctx.fillRect(
-        x + (fragment % 4) * WALL_FRAGMENT,
-        y + Math.floor(fragment / 4) * WALL_FRAGMENT,
-        WALL_FRAGMENT,
-        WALL_FRAGMENT
-      );
-    }
+    return terrainRenderRuntime.drawBrickCell(x, y, cell);
   }
 
   function drawWater(x, y) {
-    const frame = waterFrameName(game.frameLow);
-    drawManifestSprite("terrain", frame, x, y, {
-      base: "#173b67",
-      wave: frame === "waterA" ? "#56a6d5" : "#2d789e"
-    });
+    return terrainRenderRuntime.drawWater(x, y);
   }
 
   function waterFrameName(tick) {
-    return (Math.max(0, Math.floor(Number(tick) || 0)) & 32) === 0 ? "waterA" : "waterB";
+    return terrainRenderRuntime.waterFrameName(tick);
   }
 
   function drawIce(x, y) {
-    drawManifestSprite("terrain", "ice", x, y, {
-      base: "#b7c8d8",
-      highlight: "#f1f8ff",
-      shadow: "#7e96aa"
-    });
+    return terrainRenderRuntime.drawIce(x, y);
   }
 
   function renderProjectileTerrainCover(grid) {
-    for (let r = 0; r < GRID; r += 1) {
-      for (let c = 0; c < GRID; c += 1) {
-        if (grid[r][c].type === ICE) drawIceProjectileCover(FIELD_X + c * TILE, FIELD_Y + r * TILE);
-      }
-    }
+    return terrainRenderRuntime.renderProjectileTerrainCover(grid);
   }
 
   function drawIceProjectileCover(x, y) {
-    ctx.fillStyle = "rgba(241, 248, 255, 0.72)";
-    ctx.fillRect(x + 2, y + 2, 10, 1);
-    ctx.fillRect(x + 4, y + 7, 9, 1);
-    ctx.fillStyle = "rgba(126, 150, 170, 0.42)";
-    ctx.fillRect(x + 1, y + 14, 14, 1);
+    return terrainRenderRuntime.drawIceProjectileCover(x, y);
   }
 
   function drawForest(x, y) {
-    drawManifestSprite("terrain", "forest", x, y, {
-      base: "#315b34",
-      light: "#3f7f42",
-      dark: "#244327"
-    });
+    return terrainRenderRuntime.drawForest(x, y);
   }
 
   function renderBase() {
-    const x = FIELD_X + game.base.x;
-    const y = FIELD_Y + game.base.y;
-    drawManifestSprite("base", game.base.alive ? "alive" : "dead", x, y, {
-      primary: game.base.alive ? "#d8c17a" : "#5c514a",
-      shadow: game.base.alive ? "#181818" : "#2e2624"
-    });
+    return terrainRenderRuntime.renderBase();
   }
 
   function drawTank(tank, color, accent) {

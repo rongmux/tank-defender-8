@@ -116,6 +116,7 @@ node --check src/runtime/battle-loop-runtime.js
 node --check src/runtime/frame-loop-runtime.js
 node --check src/runtime/screen-update-runtime.js
 node --check src/runtime/title-render-runtime.js
+node --check src/runtime/terrain-render-runtime.js
 node --check src/runtime/tank-movement-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
@@ -248,6 +249,7 @@ tank-defender-8/
 |   |   |-- frame-loop-runtime.js
 |   |   |-- screen-update-runtime.js
 |   |   |-- title-render-runtime.js
+|   |   |-- terrain-render-runtime.js
 |   |   |-- tank-movement-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
@@ -389,6 +391,7 @@ tank-defender-8/
 |   |   |-- frame-loop-runtime.test.js
 |   |   |-- screen-update-runtime.test.js
 |   |   |-- title-render-runtime.test.js
+|   |   |-- terrain-render-runtime.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
@@ -518,6 +521,8 @@ tank-defender-8/
 `src/runtime/screen-update-runtime.js` 接管标题、隐藏信息、最高分、全屏 GAME OVER、选关、编辑器、关卡开场/结算、暂停和战斗结束场内帧的固定帧分派。它保留原有分支顺序，并通过显式回调注入音频、过渡、结算和战斗副作用；单元测试覆盖过渡边界、结算计数、Game Over、编辑器、暂停和活动战斗路由。
 
 `src/runtime/title-render-runtime.js` 接管标题菜单、隐藏信息、最高分和全屏 GAME OVER 的像素 Canvas 绘制。它保留现有像素字体几何、标题菜单光标、调色板、隐藏掉落精灵和终局画面时序，并通过显式回调提交文字/精灵；直接测试覆盖屏幕背景、计分/菜单布局、隐藏信息内容和终局表现调用。
+
+`src/runtime/terrain-render-runtime.js` 接管战场地形层、砖块碎片、钢墙象限、水/冰/森林图块、基地和冰面子弹遮罩。它保留原有绘制顺序、4px 碎片几何、8px 象限掩码、水面相位和基地调色板，并使用共享精灵提交回调；直接测试覆盖图层选择、地形动画、遮罩精确坐标、背景几何和基地状态。
 
 `src/stages/battlefield-grid.js` 统一程序化生成、Construction、关卡启动和铲子道具共享的战场几何。它冻结五个围墙格、基地格和六个标准清理矩形，保留更宽的程序化地图保留区，初始化空白 Construction 战场，在保留定制出生区域编辑的同时打开基地格，并在配置的铲子闪烁窗口中选择砖墙/钢墙。直接单元测试锁定所有坐标与修改边界；浏览器集成测试验证真实编辑器围墙，并接管原先位于 smoke 中的铲子围墙断言。
 
