@@ -477,7 +477,6 @@
   var resetPlayerState = deps.resetPlayerState;
   var resolveAudioAudibility = deps.resolveAudioAudibility;
   var resolveMovementAudioMode = deps.resolveMovementAudioMode;
-  var rightAlignedPixelTextX = deps.rightAlignedPixelTextX;
   // (scorePopupPresentation — local wrapper, not deps alias)
   var serializeEditorStage = deps.serializeEditorStage;
   var serializeEditorStagePack = deps.serializeEditorStagePack;
@@ -509,6 +508,7 @@
   var selectTitleScoreLayout = deps.titleScoreLayout;
   var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
 
+  var textRenderRuntime = deps.requireRuntimeModule("textRenderRuntime").setupTextRenderRuntime(state, deps);
   deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
   deps.requireRuntimeModule("transientEffectsRuntime").setupTransientEffectsRuntime(state, deps, {
     gameSettings: gameSettings
@@ -1516,55 +1516,15 @@
   }
 
   function drawText(text, x, y, scale, color, advance) {
-    ctx.fillStyle = color || "#ffffff";
-    const size = Math.max(1, Math.floor(scale || 1));
-    const glyphAdvance = Math.max(5, Math.floor(advance || 6));
-    let cursorX = Math.round(x);
-    const top = Math.round(y);
-    const value = String(text).toUpperCase();
-    for (const ch of value) {
-      const glyph = pixelGlyph(ch);
-      for (let row = 0; row < glyph.length; row += 1) {
-        for (let col = 0; col < glyph[row].length; col += 1) {
-          if (glyph[row][col] === "1") {
-            ctx.fillRect(cursorX + col * size, top + row * size, size, size);
-          }
-        }
-      }
-      cursorX += glyphAdvance * size;
-    }
+    return textRenderRuntime.drawText(text, x, y, scale, color, advance);
   }
 
   function drawTextClipped(text, x, y, scale, color, clips) {
-    if (!clips || !clips.length) return;
-    ctx.fillStyle = color || "#ffffff";
-    const size = Math.max(1, Math.floor(scale || 1));
-    let cursorX = Math.round(x);
-    const top = Math.round(y);
-    for (const ch of String(text).toUpperCase()) {
-      const glyph = pixelGlyph(ch);
-      for (let row = 0; row < glyph.length; row += 1) {
-        for (let col = 0; col < glyph[row].length; col += 1) {
-          if (glyph[row][col] !== "1") continue;
-          const px = cursorX + col * size;
-          const py = top + row * size;
-          for (const clip of clips) {
-            const left = Math.max(px, clip.x);
-            const right = Math.min(px + size, clip.x + clip.w);
-            const clipTop = Math.max(py, clip.y);
-            const bottom = Math.min(py + size, clip.y + clip.h);
-            if (right > left && bottom > clipTop) ctx.fillRect(left, clipTop, right - left, bottom - clipTop);
-          }
-        }
-      }
-      cursorX += 6 * size;
-    }
+    return textRenderRuntime.drawTextClipped(text, x, y, scale, color, clips);
   }
 
   function drawTextRight(text, right, y, scale, color) {
-    const value = String(text);
-    const size = Math.max(1, Math.floor(scale || 1));
-    drawText(value, rightAlignedPixelTextX(value, right, size), y, size, color);
+    return textRenderRuntime.drawTextRight(text, right, y, scale, color);
   }
 
   function pad2(value) {

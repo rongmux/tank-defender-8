@@ -126,6 +126,7 @@ node --check src/runtime/stage-result-render-runtime.js
 node --check src/runtime/battle-hud-render-runtime.js
 node --check src/runtime/editor-render-runtime.js
 node --check src/runtime/screen-transition-render-runtime.js
+node --check src/runtime/text-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
 node --check src/runtime/projectile-runtime.js
 node --check src/runtime/battle-combat-runtime.js
@@ -267,6 +268,7 @@ tank-defender-8/
 |   |   |-- battle-hud-render-runtime.js
 |   |   |-- editor-render-runtime.js
 |   |   |-- screen-transition-render-runtime.js
+|   |   |-- text-render-runtime.js
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
@@ -417,6 +419,7 @@ tank-defender-8/
 |   |   |-- battle-hud-render-runtime.test.js
 |   |   |-- editor-render-runtime.test.js
 |   |   |-- screen-transition-render-runtime.test.js
+|   |   |-- text-render-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -563,6 +566,8 @@ tank-defender-8/
 `src/runtime/editor-render-runtime.js` owns Construction battlefield rendering: the editable terrain layers, base, blinking cursor tank, and six-tile legend. It preserves the original 256x240 field geometry, 16px tile placement, 16-frame cursor blink, tile masks, and brush highlight while receiving terrain operations through explicit callbacks; direct tests cover fallback-grid creation, cursor visibility, legend coordinates, and each tile renderer.
 
 `src/runtime/screen-transition-render-runtime.js` owns stage-selection rendering, the stage-select closing curtain, stage-intro battlefield/curtain rendering, and curtain state adapters. It preserves the original 256x240 integer geometry, top/bottom cover rows, stage label clipping, configured intro duration, and transition timer source; direct tests cover selection text, closing fill order, intro clipping, and state options.
+
+`src/runtime/text-render-runtime.js` owns the shared integer pixel-font submission path for normal, clipped, and right-aligned text. It preserves uppercase glyph lookup, rounded integer origins, scale/advance defaults, clip intersection, and right-edge alignment; direct tests cover exact glyph rectangles, clipping, empty clips, and right-aligned call flow.
 
 `src/stages/battlefield-grid.js` centralizes the battlefield geometry shared by procedural generation, Construction, stage startup, and the shovel power-up. It freezes the five wall cells, eagle cell, and six standard cleanup rectangles; preserves the wider procedural reserved region; initializes the blank Construction field; leaves custom spawn-area edits intact while opening the eagle cell; and selects brick/steel during the configured shovel flash window. Direct unit coverage locks every coordinate and mutation boundary, while browser integration verifies the real editor enclosure and owns the shovel-wall assertions formerly held by smoke.
 
