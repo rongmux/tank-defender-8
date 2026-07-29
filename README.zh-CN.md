@@ -175,6 +175,7 @@ node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-bridge.js
 node --check src/runtime/debug-api.js
+node --check src/runtime/render-composition-runtime.js
 node --check src/game.js
 node --check tests/helpers/test-file-discovery.js
 node --check tools/build-free-stage-pack.js
@@ -325,7 +326,8 @@ tank-defender-8/
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
 |   |   |-- audio-bridge.js
-|   |   `-- debug-api.js
+|   |   |-- debug-api.js
+|   |   `-- render-composition-runtime.js
 |   `-- game.js
 |-- tests/
 |   |-- helpers/
@@ -444,6 +446,7 @@ tank-defender-8/
 |   |   |-- battle-scene-render-runtime.test.js
 |   |   |-- input-runtime.test.js
 |   |   |-- screen-render-runtime.test.js
+|   |   |-- render-composition-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
 |   |   |-- frame-counter-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
@@ -710,6 +713,8 @@ tank-defender-8/
 `src/rules/wall-damage-rules.js` 接管关卡包诊断使用的冻结墙体规则元数据与独立克隆 API，以及定向象限选择、普通子弹按 4px 深度剥离砖块条带、强化子弹移除 8px 砖块象限和最高火力破坏钢墙象限。专用单元测试锁定元数据并直接覆盖左下和右下碎片掩码；浏览器集成测试验证 schema/当前关卡包投影，并保留此前位于单体 smoke 测试中的运行时调试探针行为。
 
 迁移顺序依次为核心计时/随机/几何、配置与关卡包、游戏实体与规则、输入/编辑器、音频、渲染/画面、调试适配器，最后收敛应用启动入口。每次抽离都必须保留无需构建的静态启动方式，在同一提交中迁移对应测试，并在下一子系统开始前通过完整回归。重构和测试拆分全部完成前，暂停新增 1:1 游戏机制。
+
+`src/runtime/render-composition-runtime.js` 接管面向 Canvas 的 runtime 组装顺序：标题、地形、坦克、道具、子弹、效果、结算表、HUD、编辑器、转场和顶层屏幕渲染。它接收现有游戏回调，通过原有 runtime 模块注册相同的 `state.fn` 方法，将冻结的 runtime 句柄返回给组合入口，并把渲染依赖接线从 `src/game.js` 移出。单元测试锁定回调校验、组装顺序和句柄隔离；浏览器启动测试通过真实的无构建入口加载该脚本。
 
 ## 操作方式
 

@@ -780,87 +780,37 @@
     updateStageSelectControls: updateStageSelectControls,
     updateTitleIdle: updateTitleIdle
   });
-  var titleRenderRuntime = deps.requireRuntimeModule("titleRenderRuntime").setupTitleRenderRuntime(state, deps, {
-    drawManifestSprite: drawManifestSprite,
-    drawMiniTank: drawMiniTank,
-    drawText: drawText,
-    fullGameOverPresentation: fullGameOverPresentation,
-    highScorePresentation: highScorePresentation,
-    hiddenMessagePresentation: hiddenMessagePresentation,
-    pixelGlyph: pixelGlyph,
-    titleScoreLayout: titleScoreLayout
-  });
-  var terrainRenderRuntime = deps.requireRuntimeModule("terrainRenderRuntime").setupTerrainRenderRuntime(state, deps, {
-    drawManifestSprite: drawManifestSprite,
-    normalizeBrickFragmentMask: normalizeBrickFragmentMask,
-    quarterMaskFromBrickFragments: quarterMaskFromBrickFragments
-  });
-  var tankRenderRuntime = deps.requireRuntimeModule("tankRenderRuntime").setupTankRenderRuntime(state, deps, {
+  var renderCompositionRuntime = deps.requireRuntimeModule("renderCompositionRuntime").setupRenderCompositionRuntime(state, deps, {
     battleDisplayFrame: battleDisplayFrame,
-    directionName: directionName,
-    drawManifestSprite: drawManifestSprite,
-    drawScaledManifestSprite: drawScaledManifestSprite,
-    gameSettings: gameSettings,
-    playerUpgradeOverlayParts: playerUpgradeOverlayParts,
-    shieldColorForTick: shieldColorForTick,
-    spawnAnimationPresentation: spawnAnimationPresentation,
-    tankPrimaryColor: tankPrimaryColor,
-    tankTrackFrameName: tankTrackFrameName
-  });
-  var powerUpRenderRuntime = deps.requireRuntimeModule("powerUpRenderRuntime").setupPowerUpRenderRuntime(state, deps, {
-    battleDisplayFrame: battleDisplayFrame,
-    drawManifestSprite: drawManifestSprite
-  });
-  var projectileRenderRuntime = deps.requireRuntimeModule("projectileRenderRuntime").setupProjectileRenderRuntime(state, deps, {
-    drawScaledManifestSprite: drawScaledManifestSprite
-  });
-  var effectRenderRuntime = deps.requireRuntimeModule("effectRenderRuntime").setupEffectRenderRuntime(state, deps, {
-    drawManifestSprite: drawManifestSprite,
-    drawScaledManifestSprite: drawScaledManifestSprite,
-    drawText: drawText,
-    explosionRule: fn.explosionRule,
-    gameSettings: gameSettings
-  });
-  var stageResultRenderRuntime = deps.requireRuntimeModule("stageResultRenderRuntime").setupStageResultRenderRuntime(state, deps, {
-    drawMiniTank: drawMiniTank,
-    drawText: drawText,
-    drawTextRight: drawTextRight,
-    gameSettings: gameSettings,
-    renderCurtain: renderCurtain,
-    stageClearPresentation: fn.stageClearPresentation,
-    stageSelectCurtainState: stageSelectCurtainState
-  });
-  var battleHudRenderRuntime = deps.requireRuntimeModule("battleHudRenderRuntime").setupBattleHudRenderRuntime(state, deps, {
-    battleDisplayFrame: battleDisplayFrame,
-    drawManifestSprite: drawManifestSprite,
-    drawScaledManifestSprite: drawScaledManifestSprite,
-    drawText: drawText,
-    enemyTotal: enemyTotal,
-    gameSettings: gameSettings
-  });
-  var editorRenderRuntime = deps.requireRuntimeModule("editorRenderRuntime").setupEditorRenderRuntime(state, deps, {
     createStageGrid: createStageGrid,
+    directionName: directionName,
     drawBrickCell: drawBrickCell,
     drawForest: drawForest,
     drawIce: drawIce,
     drawManifestSprite: drawManifestSprite,
-    drawWallCell: drawWallCell,
-    drawWater: drawWater,
-    renderBase: renderBase,
-    renderTerrain: renderTerrain
-  });
-  var screenTransitionRenderRuntime = deps.requireRuntimeModule("screenTransitionRenderRuntime").setupScreenTransitionRenderRuntime(state, deps, {
+    drawMiniTank: drawMiniTank,
+    drawScaledManifestSprite: drawScaledManifestSprite,
     drawText: drawText,
     drawTextClipped: drawTextClipped,
+    drawTextRight: drawTextRight,
+    drawWallCell: drawWallCell,
+    drawWater: drawWater,
+    enemyTotal: enemyTotal,
+    explosionRule: fn.explosionRule,
+    fullGameOverPresentation: fullGameOverPresentation,
     gameSettings: gameSettings,
+    highScorePresentation: highScorePresentation,
+    hiddenMessagePresentation: hiddenMessagePresentation,
+    normalizeBrickFragmentMask: normalizeBrickFragmentMask,
+    pixelGlyph: pixelGlyph,
+    playerUpgradeOverlayParts: playerUpgradeOverlayParts,
+    quarterMaskFromBrickFragments: quarterMaskFromBrickFragments,
     renderBase: renderBase,
-    renderGameBackdrop: renderGameBackdrop,
-    renderTitle: renderTitle
-  });
-  var screenRenderRuntime = deps.requireRuntimeModule("screenRenderRuntime").setupScreenRenderRuntime(state, deps, {
+    renderCurtain: renderCurtain,
     renderEditor: renderEditor,
     renderFullGameOver: renderFullGameOver,
     renderGame: renderGame,
+    renderGameBackdrop: renderGameBackdrop,
     renderGameOver: renderGameOver,
     renderHighScore: renderHighScore,
     renderHiddenMessage: renderHiddenMessage,
@@ -870,8 +820,27 @@
     renderStageIntro: renderStageIntro,
     renderStageSelect: renderStageSelect,
     renderStageSelectClosing: renderStageSelectClosing,
-    renderTitle: renderTitle
+    renderTerrain: renderTerrain,
+    renderTitle: renderTitle,
+    shieldColorForTick: shieldColorForTick,
+    spawnAnimationPresentation: spawnAnimationPresentation,
+    stageClearPresentation: fn.stageClearPresentation,
+    stageSelectCurtainState: stageSelectCurtainState,
+    tankPrimaryColor: tankPrimaryColor,
+    tankTrackFrameName: tankTrackFrameName,
+    titleScoreLayout: titleScoreLayout
   });
+  var titleRenderRuntime = renderCompositionRuntime.titleRenderRuntime;
+  var terrainRenderRuntime = renderCompositionRuntime.terrainRenderRuntime;
+  var tankRenderRuntime = renderCompositionRuntime.tankRenderRuntime;
+  var powerUpRenderRuntime = renderCompositionRuntime.powerUpRenderRuntime;
+  var projectileRenderRuntime = renderCompositionRuntime.projectileRenderRuntime;
+  var effectRenderRuntime = renderCompositionRuntime.effectRenderRuntime;
+  var stageResultRenderRuntime = renderCompositionRuntime.stageResultRenderRuntime;
+  var battleHudRenderRuntime = renderCompositionRuntime.battleHudRenderRuntime;
+  var editorRenderRuntime = renderCompositionRuntime.editorRenderRuntime;
+  var screenTransitionRenderRuntime = renderCompositionRuntime.screenTransitionRenderRuntime;
+  var screenRenderRuntime = renderCompositionRuntime.screenRenderRuntime;
 
   deps.requireRuntimeModule("inputRuntime").setupInputRuntime(state, {
     dom: { document: document, window: window },
