@@ -100,6 +100,7 @@ node --check src/config/stage-settings.js
 node --check src/stages/battlefield-grid.js
 node --check src/stages/built-in-stage-pack.js
 node --check src/stages/enemy-sequences.js
+node --check src/stages/original-stage-source.js
 node --check src/stages/original-stage-data.js
 node --check src/stages/procedural-stage.js
 node --check src/stages/stage-grid.js
@@ -249,6 +250,7 @@ tank-defender-8/
 |   |   |-- battlefield-grid.js
 |   |   |-- built-in-stage-pack.js
 |   |   |-- enemy-sequences.js
+|   |   |-- original-stage-source.js
 |   |   |-- original-stage-data.js
 |   |   |-- procedural-stage.js
 |   |   |-- stage-grid.js
@@ -537,7 +539,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/stages/original-stage-data.js` 保存固定的 35 关公开源码推导地图数据，并以保留砖块碎片和钢墙象限的方式重建每个 13x13 网格。对于未提供地图数据的自定义关卡包，`procedural-stage.js` 仍作为确定性备用生成器。
+`src/stages/original-stage-source.js` 保存从公开 Battle City（日版）反汇编文件 `incbin/stages/stage_01.bin` 到 `stage_35.bin` 解码出的精确 35 关、13x13 图块 ID 行。`src/stages/original-stage-data.js` 按 NES 图块表解码这些 ID（`0x0-0x4` 为砖块形态、`0x5-0x9` 为铁墙形态、`0xA-0xD` 依次为水/森林/冰/空白），再叠加运行时固定的五格基地围墙，并重建部分砖块碎片和钢墙象限。对于未提供地图数据的自定义关卡包，`procedural-stage.js` 仍作为确定性备用生成器。
 
 `src/stages/enemy-sequences.js` 保存从公开的 Battle City（日版）反汇编转录出的固定 35 关敌人编组表（`tbl_E4EC_stage_enemies` 与 `tbl_E578_stage_enemies_type_counter`）。每个 `[count, typeIndex]` 编组会按原始顺序展开，同时保留原版运行时的携带者槽位和出生点轮转。每关内置序列严格包含 20 辆敌人。
 

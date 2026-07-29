@@ -100,6 +100,7 @@ node --check src/config/stage-settings.js
 node --check src/stages/battlefield-grid.js
 node --check src/stages/built-in-stage-pack.js
 node --check src/stages/enemy-sequences.js
+node --check src/stages/original-stage-source.js
 node --check src/stages/original-stage-data.js
 node --check src/stages/procedural-stage.js
 node --check src/stages/stage-grid.js
@@ -249,6 +250,7 @@ tank-defender-8/
 |   |   |-- battlefield-grid.js
 |   |   |-- built-in-stage-pack.js
 |   |   |-- enemy-sequences.js
+|   |   |-- original-stage-source.js
 |   |   |-- original-stage-data.js
 |   |   |-- procedural-stage.js
 |   |   |-- stage-grid.js
@@ -537,7 +539,7 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/stages/original-stage-data.js` stores the fixed 35-stage source-derived map dataset and reconstructs each 13x13 grid with partial brick fragments and steel quadrants. `procedural-stage.js` remains the deterministic fallback for custom packs that omit map data.
+`src/stages/original-stage-source.js` stores the exact 35-stage, 13x13 block-ID rows decoded from the public Battle City (J) disassembly files `incbin/stages/stage_01.bin` through `stage_35.bin`. `src/stages/original-stage-data.js` decodes the original IDs using the NES block table (`0x0-0x4` brick shapes, `0x5-0x9` steel shapes, `0xA-0xD` water/forest/ice/empty), then applies the fixed five-cell base enclosure used by the runtime and reconstructs partial brick fragments and steel quadrants. `procedural-stage.js` remains the deterministic fallback for custom packs that omit map data.
 
 `src/stages/enemy-sequences.js` stores the fixed 35-stage enemy group table transcribed from the public Battle City (J) disassembly (`tbl_E4EC_stage_enemies` plus `tbl_E578_stage_enemies_type_counter`). Each `[count, typeIndex]` group is expanded in source order, while carrier slots and spawn-point rotation retain the original runtime behavior. The built-in sequences contain exactly 20 enemies per stage.
 
