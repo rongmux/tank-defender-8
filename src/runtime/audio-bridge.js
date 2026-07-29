@@ -617,6 +617,71 @@
       var pitch = opts.brush === undefined ? 0 : Number(opts.brush) * (event.brushPitch || 0);
       fn.beep(event.freq + pitch, event.duration, event.gain, event.wave);
     };
+
+    var AUDIO_UPDATE_METHODS = Object.freeze([
+      "updateStageStartAudio",
+      "updateBonusLifeAudio",
+      "updatePowerUpPickupAudio",
+      "updatePowerUpAppearAudio",
+      "updateBrickHitAudio",
+      "updateBaseHitAudio",
+      "updateSteelHitAudio",
+      "updateEnemyHitAudio",
+      "updateEnemyDestroyAudio",
+      "updatePlayerDestroyAudio",
+      "updatePlayerShootAudio",
+      "updateMovementIceAudio",
+      "updatePauseAudio",
+      "updateScoreCountAudio",
+      "updateStageBonusAudio",
+      "updateGameOverAudio",
+      "updateHighScoreAudio"
+    ]);
+    var GAMEPLAY_STOP_METHODS = Object.freeze([
+      "stopMovementAudio",
+      "stopStageStartAudio",
+      "stopBonusLifeAudio",
+      "stopPowerUpPickupAudio",
+      "stopPowerUpAppearAudio",
+      "stopPauseAudio",
+      "stopBrickHitAudio",
+      "stopEnemyHitAudio",
+      "stopBaseHitAudio",
+      "stopEnemyDestroyAudio",
+      "stopPlayerDestroyAudio",
+      "stopSteelHitAudio",
+      "stopPlayerShootAudio",
+      "stopMovementIceAudio",
+      "stopScoreCountAudio",
+      "stopStageBonusAudio"
+    ]);
+    var ALL_STOP_METHODS = Object.freeze(GAMEPLAY_STOP_METHODS.concat([
+      "stopGameOverAudio",
+      "stopHighScoreAudio"
+    ]));
+
+    function callAudioMethods(methods) {
+      for (var index = 0; index < methods.length; index += 1) {
+        fn[methods[index]]();
+      }
+    }
+
+    fn.updateAllAudio = function () {
+      callAudioMethods(AUDIO_UPDATE_METHODS);
+    };
+
+    fn.stopGameplayAudioBeforeResult = function () {
+      callAudioMethods(GAMEPLAY_STOP_METHODS);
+    };
+
+    fn.stopStageResultAudio = function () {
+      fn.stopScoreCountAudio();
+      fn.stopStageBonusAudio();
+    };
+
+    fn.stopAllAudio = function () {
+      callAudioMethods(ALL_STOP_METHODS);
+    };
   }
 
   return { setupAudioBridge: setupAudioBridge };

@@ -52,6 +52,7 @@
     builtInStagePack: deps.createBuiltInStagePack()
   });
   state.fn = {};
+  var fn = state.fn;
 
   // ── Initialize game state ──────────────────────────────────────────────
   state.game.stagePack = state.builtInStagePack;
@@ -100,31 +101,9 @@
     highScoreScreenFrames: function () { return HIGH_SCORE_SCREEN_FRAMES; },
     playSound: playSound,
     resetTitleIdleTimer: resetTitleIdleTimer,
-    stopAllAudio: function () {
-      stopMovementAudio();
-      stopStageStartAudio();
-      stopBonusLifeAudio();
-      stopPowerUpPickupAudio();
-      stopPowerUpAppearAudio();
-      stopPauseAudio();
-      stopBrickHitAudio();
-      stopEnemyHitAudio();
-      stopBaseHitAudio();
-      stopEnemyDestroyAudio();
-      stopPlayerDestroyAudio();
-      stopSteelHitAudio();
-      stopPlayerShootAudio();
-      stopMovementIceAudio();
-      stopScoreCountAudio();
-      stopStageBonusAudio();
-      stopGameOverAudio();
-      stopHighScoreAudio();
-    },
+    stopAllAudio: fn.stopAllAudio,
     stopGameOverAudio: stopGameOverAudio,
-    stopStageResultAudio: function () {
-      stopScoreCountAudio();
-      stopStageBonusAudio();
-    }
+    stopStageResultAudio: fn.stopStageResultAudio
   });
 
   // ── Stage runtime ──────────────────────────────────────────────────────
@@ -163,7 +142,6 @@
   var ICE = deps.TILE_TYPES.ICE;
 
   // ── Function aliases (delegate to state.fn for extracted modules) ──────
-  var fn = state.fn;
   function loadHighScore() { return fn.loadHighScore(); }
   function saveHighScore() { return fn.saveHighScore(); }
   function updateHighScore(s) { return fn.updateHighScore(s); }
@@ -575,28 +553,8 @@
     stageResultDuration: fn.stageResultDuration,
     startFullGameOverScreen: startFullGameOverScreen,
     startStage: startStage,
-    stopGameplayAudioBeforeResult: function () {
-      stopMovementAudio();
-      stopStageStartAudio();
-      stopBonusLifeAudio();
-      stopPowerUpPickupAudio();
-      stopPowerUpAppearAudio();
-      stopPauseAudio();
-      stopBrickHitAudio();
-      stopEnemyHitAudio();
-      stopBaseHitAudio();
-      stopEnemyDestroyAudio();
-      stopPlayerDestroyAudio();
-      stopSteelHitAudio();
-      stopPlayerShootAudio();
-      stopMovementIceAudio();
-      stopScoreCountAudio();
-      stopStageBonusAudio();
-    },
-    stopStageResultAudio: function () {
-      stopScoreCountAudio();
-      stopStageBonusAudio();
-    }
+    stopGameplayAudioBeforeResult: fn.stopGameplayAudioBeforeResult,
+    stopStageResultAudio: fn.stopStageResultAudio
   });
   var gameOverEntryRuntime = deps.requireRuntimeModule("gameOverEntryRuntime").setupGameOverEntryRuntime(state, deps, {
     endTitleDemo: endTitleDemo,
@@ -751,25 +709,7 @@
     stageClearPresentation: fn.stageClearPresentation,
     stageResultVisibleKillCount: stageResultVisibleKillCount,
     syncMovementAudio: syncMovementAudio,
-    updateAudio: function () {
-      updateStageStartAudio();
-      updateBonusLifeAudio();
-      updatePowerUpPickupAudio();
-      updatePowerUpAppearAudio();
-      updateBrickHitAudio();
-      updateBaseHitAudio();
-      updateSteelHitAudio();
-      updateEnemyHitAudio();
-      updateEnemyDestroyAudio();
-      updatePlayerDestroyAudio();
-      updatePlayerShootAudio();
-      updateMovementIceAudio();
-      updatePauseAudio();
-      updateScoreCountAudio();
-      updateStageBonusAudio();
-      updateGameOverAudio();
-      updateHighScoreAudio();
-    },
+    updateAudio: fn.updateAllAudio,
     updateBattle: updateBattle,
     updateEditorControls: updateEditorControls,
     updateExplosions: fn.updateExplosions,

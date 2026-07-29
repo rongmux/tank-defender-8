@@ -409,6 +409,7 @@ tank-defender-8/
 |   |   |-- wall-damage-rules.test.js
 |   |   `-- wall-diagnostics.test.js
 |   |-- unit/
+|   |   |-- audio-bridge.test.js
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
@@ -715,6 +716,8 @@ tank-defender-8/
 迁移顺序依次为核心计时/随机/几何、配置与关卡包、游戏实体与规则、输入/编辑器、音频、渲染/画面、调试适配器，最后收敛应用启动入口。每次抽离都必须保留无需构建的静态启动方式，在同一提交中迁移对应测试，并在下一子系统开始前通过完整回归。重构和测试拆分全部完成前，暂停新增 1:1 游戏机制。
 
 `src/runtime/render-composition-runtime.js` 接管面向 Canvas 的 runtime 组装顺序：标题、地形、坦克、道具、子弹、效果、结算表、HUD、编辑器、转场和顶层屏幕渲染。它接收现有游戏回调，通过原有 runtime 模块注册相同的 `state.fn` 方法，将冻结的 runtime 句柄返回给组合入口，并把渲染依赖接线从 `src/game.js` 移出。单元测试锁定回调校验、组装顺序和句柄隔离；浏览器启动测试通过真实的无构建入口加载该脚本。
+
+`src/runtime/audio-bridge.js` 现在也接管交给组合入口的固定帧音频生命周期顺序：更新全部声部、结算前停止游戏声部、停止结算声部，以及完整退出时停止全部声部。单元测试锁定这四组顺序，避免后续音频修改静默改变声道清理或推进顺序。
 
 ## 操作方式
 
