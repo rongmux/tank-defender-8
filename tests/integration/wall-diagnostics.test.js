@@ -39,6 +39,26 @@ assert.equal(
 );
 
 const debugSource = fs.readFileSync(path.join(root, "src/runtime/debug-api.js"), "utf8");
+const detailedHarness = createBrowserGameHarness(root);
+const detailedApi = detailedHarness.context.window.TankDefender8;
+const detailedCanvasContext = detailedHarness.canvasContext;
+const detailedSchema = detailedApi.stagePackSchema();
+assert(detailedSchema.wallRules.brickSameSideHits === 4, "normal shots should need four same-side brick hits");
+assert(detailedSchema.wallRules.poweredBrickSameSideHits === 2, "powered shots should need two same-side brick hits");
+assert(detailedSchema.wallRules.brickFragmentSize === 4, "brick collision state should use original four-pixel fragments");
+assert(detailedSchema.wallRules.normalBrickStripLength === 8 && detailedSchema.wallRules.normalBrickStripDepth === 4, "normal bullets should peel one 8x4 brick strip per hit");
+assert(detailedSchema.wallRules.steelRequiredPower === 3, "steel should require max-power shots");
+assert(detailedSchema.wallRules.steelSameSideHits === 1, "max-power shots should remove one steel subtile on every hit");
+const brickPowerProbe = detailedApi.debugBrickWallPowerProbe();
+assert(brickPowerProbe.integration.hit && brickPowerProbe.integration.bulletRemoved, "the live terrain resolver should consume a bullet that hits a brick fragment");
+assert(brickPowerProbe.integration.mask === 15 && brickPowerProbe.integration.brickMask === 65518, "the live terrain resolver should remove one 4x8 strip without dropping the containing 8x8 subtile");
+assert(brickPowerProbe.integration.explosions === 1, "a live brick-fragment hit should create one impact explosion");
+detailedCanvasContext.resetPixels();
+const brickFragmentRenderProbe = detailedApi.debugBrickFragmentRenderProbe();
+const removedBrickPixels = detailedCanvasContext.pixelColors(brickFragmentRenderProbe.removed);
+const remainingBrickPixels = detailedCanvasContext.pixelColors(brickFragmentRenderProbe.remaining);
+assert(removedBrickPixels["#000000"] === 32, "the removed 4x8 brick strip should render entirely as battlefield background");
+assert(Object.keys(remainingBrickPixels).some((color) => color !== "#000000" && color !== "null"), "the adjacent 4x8 brick strip should remain visibly rendered");
 const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/wall-diagnostics.js"),
   "utf8"
