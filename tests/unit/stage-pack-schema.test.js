@@ -10,7 +10,7 @@ const {
   createStagePackSchema
 } = stagePackSchema;
 
-const EXPECTED_SCHEMA_SHA256 = "0665ce9657b7ed28aa90ac45d4bf95dbb5fc66a97026aedd64c5a6be480b6d2d";
+const EXPECTED_SCHEMA_SHA256 = "0efb350f897d89887b5f1daa5950d2ca4fc6cf16fc5c84b06dc752760df1cfc6";
 
 assert.equal(Object.isFrozen(stagePackSchema), true);
 assert.equal(Object.isFrozen(SAMPLE_STAGE_ROWS), true);

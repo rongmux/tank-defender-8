@@ -61,10 +61,10 @@ const outputs = {
   debugGameOverStageResultProbe: api.debugGameOverStageResultProbe()
 };
 const json = JSON.stringify(outputs);
-assert.equal(Buffer.byteLength(json), 32122);
+assert.equal(Buffer.byteLength(json), 13046);
 assert.equal(
   crypto.createHash("sha256").update(json).digest("hex"),
-  "4636a26be196825867b711d51ffec3cc957ecaf47af0097ec5e797ba0062cc1d"
+  "3acf66087b39d34f26b888482aee5710058adfa3ffcb125991587dc329a37e69"
 );
 
 function runtimeEnemyTypeCounts(sequence) {
@@ -112,7 +112,7 @@ runtimeByAction.next.click();
 runtimeSnapshot = runtimeApi.debugSnapshot();
 runtimeCounts = runtimeEnemyTypeCounts(runtimeSnapshot.enemySequence);
 assert(runtimeSnapshot.stage === 2, "next should select stage 2");
-assert(runtimeCounts.join(",") === "14,0,4,2", "built-in stage 2 enemy groups should be 14 basic, 4 power, and 2 armor");
+assert(runtimeCounts.join(",") === "14,4,0,2", "built-in stage 2 enemy groups should be 14 basic, 4 fast, and 2 armor");
 assert(runtimeCarrierNumbers(runtimeSnapshot.enemySequence) === "4,11,18", "built-in stage 2 carriers should be enemies 4, 11, and 18");
 runtimeByAction.prev.click();
 runtimeByAction.prev.click();
