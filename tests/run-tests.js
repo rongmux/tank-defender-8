@@ -5,8 +5,7 @@ const { discoverTestFiles } = require("./helpers/test-file-discovery");
 const root = path.resolve(__dirname, "..");
 const testFiles = [
   ...discoverTestFiles(root, path.join("tests", "unit")),
-  ...discoverTestFiles(root, path.join("tests", "integration")),
-  "tools/smoke-test.js"
+  ...discoverTestFiles(root, path.join("tests", "integration"))
 ];
 
 for (const testFile of testFiles) {
