@@ -54,6 +54,137 @@ assert.equal(
   "ddd9c8ea4b58435070c220d2437471a0e97992852c564fb3bf209f705220a37c"
 );
 
+const inputHarness = createBrowserGameHarness(root);
+const inputContext = inputHarness.context;
+const inputApi = inputContext.window.TankDefender8;
+const inputListeners = inputHarness.listeners;
+const inputButtons = inputHarness.buttons;
+const inputAnimationFrameCallback = inputHarness.animationFrameCallback;
+
+function inputKeyDown(code, options = {}) {
+  inputListeners.keydown({
+    code,
+    repeat: false,
+    shiftKey: false,
+    preventDefault() {},
+    ...options
+  });
+}
+
+function inputKeyUp(code) {
+  inputListeners.keyup({ code });
+}
+
+function inputKeyPress(code, options = {}) {
+  inputKeyDown(code, options);
+  inputKeyUp(code);
+}
+
+function finishInputStageSelectClosing() {
+  const snapshot = inputApi.debugSnapshot();
+  if (snapshot.screen === "stageSelectClosing") inputApi.debugAdvanceStageTransition(16);
+}
+
+assert(typeof inputAnimationFrameCallback === "function");
+inputHarness.canvasContext.calls.length = 0;
+inputAnimationFrameCallback(16);
+assert(inputHarness.canvasContext.calls.some((call) =>
+  call.op === "fillRect" && call.style === "#e3c64e" && call.w === 4 && call.h === 10
+), "title should render the menu tank cursor through the browser input harness");
+let inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.titleMenu === 0 && inputSnapshot.titleMenuAction === "one", "title menu should default to one-player through the browser input harness");
+inputKeyPress("ArrowDown");
+inputKeyPress("ArrowDown");
+for (let visit = 0; visit < 7; visit += 1) {
+  inputKeyPress("Enter");
+  inputKeyPress("Escape");
+}
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.screen === "title" && inputSnapshot.titleMenuAction === "construction" && inputSnapshot.constructionVisits === 7, "real title/editor key events should arm the seventh Construction exit");
+inputKeyDown("ArrowDown");
+for (let press = 0; press < 8; press += 1) inputKeyPress("KeyF");
+inputKeyUp("ArrowDown");
+inputKeyDown("ArrowRight");
+for (let press = 0; press < 12; press += 1) inputKeyPress("KeyG");
+inputKeyUp("ArrowRight");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.titleMenuAction === "construction" && inputSnapshot.hiddenInputCount === 0x74, "real two-controller key events should preserve the Construction selection and reach the hidden byte total");
+inputKeyPress("Enter");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.screen === "hiddenMessage" && inputSnapshot.hiddenMessageElapsed === 0, "Start should enter the hidden message through the real key listener");
+inputButtons.find((button) => button.dataset.action === "reset").click();
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.screen === "title" && inputSnapshot.constructionVisits === 0 && inputSnapshot.hiddenInputCount === 0, "reset should clear hidden-message progress after the end-to-end input test");
+inputKeyPress("ArrowDown");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.titleMenu === 1 && inputSnapshot.titleMenuAction === "two", "title menu down should select two-player");
+inputKeyPress("ArrowDown");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.titleMenu === 2 && inputSnapshot.titleMenuAction === "construction", "title menu down should select Construction");
+inputKeyPress("Enter");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.screen === "editor" && inputSnapshot.titleMenuAction === "construction", "title menu Construction should enter the editor on Enter");
+inputKeyPress("Escape");
+inputKeyPress("ArrowUp");
+inputKeyPress("ArrowUp");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.screen === "title" && inputSnapshot.titleMenu === 0 && inputSnapshot.titleMenuAction === "one", "title menu should return to one-player after navigating back up");
+inputKeyPress("Digit1");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.screen === "stageSelectClosing" && inputSnapshot.stageSelectPlayers === 1, "one-player shortcut should begin the original stage-selection curtain close");
+finishInputStageSelectClosing();
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.screen === "stageSelect", "the stage-selection screen should appear after the sixteen-frame curtain close");
+assert(inputSnapshot.stage === 1 && inputSnapshot.stageSelectLimit === 35, "stage selection should start at stage 1 and stop at the original stage 35 limit");
+inputKeyPress("Space");
+inputApi.debugAdvanceStageSelect(1);
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.stage === 2, "stage-selection A should increment the stage");
+inputKeyPress("KeyF");
+inputApi.debugAdvanceStageSelect(1);
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.stage === 1, "stage-selection B should decrement the stage");
+inputKeyPress("KeyF");
+inputApi.debugAdvanceStageSelect(1);
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.stage === 1, "stage-selection B should remain clamped at stage 1");
+const stageSelectInputCadenceProbe = inputApi.debugStageSelectInputCadenceProbe();
+assert(stageSelectInputCadenceProbe.initialPress.stage === 11 && stageSelectInputCadenceProbe.initialPress.frameLow === 0, "a fresh stage-selection press should apply on its first sampled frame and reset only the low frame counter");
+assert(stageSelectInputCadenceProbe.initialPress.frameHigh === 0x22, "stage-selection input must preserve the independent high frame counter");
+assert(stageSelectInputCadenceProbe.beforeHeldRepeat.stage === 11 && stageSelectInputCadenceProbe.beforeHeldRepeat.frameLow === 7, "a held stage-selection button should not repeat during the first seven frames after a change");
+assert(stageSelectInputCadenceProbe.heldRepeat.stage === 12 && stageSelectInputCadenceProbe.heldRepeat.frameLow === 0, "a held stage-selection button should repeat on the eighth low-counter frame and restart its cadence");
+assert(stageSelectInputCadenceProbe.upperBoundary.stage === 35 && stageSelectInputCadenceProbe.upperBoundary.frameLow === 0, "stage-selection A should clamp at stage 35 while still resetting the low frame counter");
+assert(stageSelectInputCadenceProbe.lowerBoundary.stage === 1 && stageSelectInputCadenceProbe.lowerBoundary.frameLow === 0, "stage-selection B should clamp at stage 1 while still resetting the low frame counter");
+assert(stageSelectInputCadenceProbe.heldBeforeBoundary.stage === 20 && stageSelectInputCadenceProbe.heldBeforeBoundary.frameLow === 7, "an already-held stage-selection button should wait for the next divisible-by-eight low-counter frame");
+assert(stageSelectInputCadenceProbe.heldAtBoundary.stage === 21 && stageSelectInputCadenceProbe.heldAtBoundary.frameLow === 0, "an already-held stage-selection button should trigger exactly at that low-counter boundary");
+assert(stageSelectInputCadenceProbe.simultaneousPress.stage === 21, "stage-selection A should retain priority when A and B are newly sampled together");
+assert(stageSelectInputCadenceProbe.heldAPriority.stage === 21, "an A hold repeat should retain priority over a fresh B press on the same low-counter boundary");
+assert(stageSelectInputCadenceProbe.freshBOutsideARepeat.stage === 19, "a fresh B press should be accepted while A is held outside its repeat boundary");
+inputKeyPress("Enter");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.screen === "stageIntro" && inputSnapshot.stage === 1 && inputSnapshot.paused === false, "stage-selection Start should begin the selected stage intro");
+assert(inputSnapshot.stageStartAudio.active === true && inputSnapshot.stageStartAudio.frame === 0, "starting a stage should trigger all stage-start voices at frame zero");
+assert(inputSnapshot.movementAudioMode === "none", "stage-start audio should initially suppress the movement pulse channel");
+inputKeyPress("Enter");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.screen === "stageIntro" && inputSnapshot.paused === false, "Start-equivalent Enter should not pause before active gameplay begins");
+const stageIntroBeforeFinalFrame = inputApi.debugAdvanceStageTransition(94);
+assert(stageIntroBeforeFinalFrame.screen === "stageIntro" && stageIntroBeforeFinalFrame.transitionTimer === 1, "stage intro should remain inactive through its first ninety-four frames");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.stageStartAudio.active === true && inputSnapshot.stageStartAudio.frame === 94, "stage-start audio should advance with each fixed stage-intro frame");
+const stageIntroAfterFinalFrame = inputApi.debugAdvanceStageTransition(1);
+assert(stageIntroAfterFinalFrame.screen === "playing" && stageIntroAfterFinalFrame.transitionTimer === 0, "the ninety-fifth stage-intro frame should prepare the active battle screen");
+inputSnapshot = inputApi.debugSnapshot();
+assert(inputSnapshot.stageStartAudio.active === true && inputSnapshot.stageStartAudio.frame === 95 && inputSnapshot.movementAudioMode === "none", "the stage fanfare should continue into battle and keep movement audio suppressed");
+inputKeyPress("Enter");
+const pausedStageStartAudio = inputApi.debugAdvanceStageStartAudio(10);
+assert(pausedStageStartAudio.paused === true && pausedStageStartAudio.frame === 95, "pause should mute and freeze the stage-start audio frame");
+inputKeyPress("Enter");
+const stageStartBeforeEnd = inputApi.debugAdvanceStageStartAudio(168);
+assert(stageStartBeforeEnd.active === true && stageStartBeforeEnd.frame === 263 && stageStartBeforeEnd.movementAudioMode === "none", "stage-start audio should span the first 169 battle frames and retain movement-channel priority through frame 263");
+const stageStartAfterEnd = inputApi.debugAdvanceStageStartAudio(1);
+assert(stageStartAfterEnd.active === false && stageStartAfterEnd.frame === 264 && stageStartAfterEnd.movementAudioMode === "enemy", "frame 264 should end the stage fanfare and restore the enemy movement loop");
+
 const titleDemoProbe = api.debugTitleDemoLifecycleProbe();
 assert(titleDemoProbe.timeoutFrames === 640, "title demo should use ten original 64-frame high-counter intervals");
 assert(titleDemoProbe.selectionReset.idleFrames === 0 && titleDemoProbe.selectionReset.frameLow === 0xab && titleDemoProbe.selectionReset.frameHigh === 0, "changing the title selection should clear only the high frame counter and preserve the full low-byte phase");
