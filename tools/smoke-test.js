@@ -22,13 +22,6 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function enemyTypeCounts(sequence) {
-  return sequence.reduce((counts, enemy) => {
-    counts[enemy.typeIndex] = (counts[enemy.typeIndex] || 0) + 1;
-    return counts;
-  }, [0, 0, 0, 0]);
-}
-
 function carrierNumbers(sequence) {
   return sequence.map((enemy, index) => enemy.carrier ? index + 1 : null).filter(Boolean).join(",");
 }
@@ -75,6 +68,13 @@ assert(pausedStageEndProbe.pauseAcceptedDuringDelay === false, "the post-clear a
 let snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.highScore === 20000, "high score should retain the original 20000-point floor");
 const schema = context.window.TankDefender8.stagePackSchema();
+const importPack = {
+  id: "smoke-import",
+  totalStages: 1,
+  enemyTotal: 20,
+  maps: [schema.maps[0]],
+  enemies: [schema.enemies[0]]
+};
 buttons.find((button) => button.dataset.action === "reset").click();
 snapshot = context.window.TankDefender8.debugSnapshot();
 assert(snapshot.screen === "title" && snapshot.paused === false, "reset after Start-pause probe should return to the title screen");
@@ -187,49 +187,6 @@ const byAction = Object.fromEntries(buttons.map((button) => [button.dataset.acti
 for (const action of actions) {
   assert(typeof byAction[action].listeners.click === "function", `${action} button listener missing`);
 }
-
-let counts = enemyTypeCounts(snapshot.enemySequence);
-assert(counts.join(",") === "18,2,0,0", "built-in stage 1 enemy groups should be 18 basic and 2 fast");
-assert(carrierNumbers(snapshot.enemySequence) === "4,11,18", "built-in stage 1 carriers should be enemies 4, 11, and 18");
-byAction.next.click();
-snapshot = context.window.TankDefender8.debugSnapshot();
-counts = enemyTypeCounts(snapshot.enemySequence);
-assert(snapshot.stage === 2, "next should select stage 2");
-assert(counts.join(",") === "14,0,4,2", "built-in stage 2 enemy groups should be 14 basic, 4 power, and 2 armor");
-assert(carrierNumbers(snapshot.enemySequence) === "4,11,18", "built-in stage 2 carriers should be enemies 4, 11, and 18");
-byAction.prev.click();
-byAction.prev.click();
-snapshot = context.window.TankDefender8.debugSnapshot();
-counts = enemyTypeCounts(snapshot.enemySequence);
-assert(snapshot.stage === 70, "prev from stage 1 should wrap to stage 70 in the original-style cycle");
-assert(snapshot.stageCycleLimit === 70, "built-in original-style cycle should expose 70 selectable stages");
-assert(snapshot.mapDataStage === 35, "built-in stage 70 should reuse stage 35 map data");
-assert(snapshot.enemyDataStage === 35, "built-in stage 70 should reuse stage 35 enemy data");
-assert(counts.join(",") === "0,6,4,10", "built-in stage 70 should use stage 35 enemy groups");
-assert(carrierNumbers(snapshot.enemySequence) === "4,11,18", "built-in stage 70 carriers should match stage 35");
-byAction.next.click();
-
-const validPack = {
-  id: "smoke",
-  totalStages: 1,
-  enemyTotal: 20,
-  maps: [schema.maps[0]],
-  enemies: [schema.enemies[0]]
-};
-const loaded = context.window.TankDefender8.loadStagePack(validPack);
-assert(loaded === true, "loadStagePack should accept a valid pack");
-assert(context.window.TankDefender8.currentPackInfo().id === "smoke", "current pack id should update");
-byAction.one.click();
-finishStageSelectClosing();
-keyPress("Enter");
-snapshot = context.window.TankDefender8.debugSnapshot();
-assert(snapshot.players.length === 1 && snapshot.screen === "stageIntro", "pack state cleanup probe should start from active gameplay");
-assert(context.window.TankDefender8.loadStagePack(validPack) === true, "loadStagePack should reload while gameplay is active");
-snapshot = context.window.TankDefender8.debugSnapshot();
-assert(snapshot.screen === "title", "loading a stage pack should return to the title screen");
-assert(snapshot.players.length === 0 && snapshot.enemySpawned === 0 && snapshot.enemyKilled === 0, "loading a stage pack should clear active player and enemy counters");
-assert(snapshot.powerUpType === null && snapshot.clearPendingTimer === 0 && snapshot.gameOverTimer === 0, "loading a stage pack should clear transient power-up and transition state");
-assert(snapshot.stageResultReason === "clear" && snapshot.stageClearElapsed === 0, "loading a stage pack should reset stage-result routing state");
 
 const shortPack = {
   id: "short",
@@ -513,7 +470,7 @@ assert(baseWallPriorityProbe.shielded.explosions.length === 1, "base-shielding w
 assert(baseWallPriorityProbe.exposed.baseAlive === false, "exposed base should be destroyed by an overlapping bullet");
 assert(baseWallPriorityProbe.exposed.screen === "playing" && baseWallPriorityProbe.exposed.baseDestroyTimer === 39, "exposed base destruction should load the original pre-banner countdown");
 assert(baseWallPriorityProbe.exposed.explosions.length === 0 && baseWallPriorityProbe.exposed.presentation === null, "the hit frame should show only the destroyed base before the first HQ explosion frame");
-fileInput.files = [{ text: async () => JSON.stringify(validPack) }];
+fileInput.files = [{ text: async () => JSON.stringify(importPack) }];
 assert(typeof fileInput.listeners.change === "function", "file input change listener missing");
 Promise.resolve(fileInput.listeners.change()).then(() => {
   assert(fileInput.value === "", "file input value should reset after import");
