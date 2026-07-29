@@ -56,7 +56,7 @@ const json = JSON.stringify(outputs);
 assert.equal(Buffer.byteLength(json), 61974);
 assert.equal(
   crypto.createHash("sha256").update(json).digest("hex"),
-  "ed849a9d7504e78d18db643d6cbfa1b0f3b6fd884aa1ed411d2ad538abc9c730"
+  "47c2c19c71776240ede8021c8e98db5e4b50e23c059f1e0dbeb441e728557154"
 );
 
 const firstManifest = api.audioManifest();

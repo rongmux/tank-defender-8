@@ -905,10 +905,10 @@ const pack = {
       playerSpawns: [{ x: 4, y: 12 }, { x: 8, y: 12 }],
       enemySpawns: [{ x: 0, y: 0 }, { x: 6, y: 0 }, { x: 12, y: 0 }],
       powerUpSpawns: [
-        { x: 1, y: 1 }, { x: 6, y: 1 }, { x: 11, y: 1 }, { x: 3, y: 2 },
-        { x: 9, y: 2 }, { x: 1, y: 5 }, { x: 5, y: 4 }, { x: 7, y: 4 },
-        { x: 11, y: 5 }, { x: 3, y: 7 }, { x: 9, y: 7 }, { x: 1, y: 10 },
-        { x: 5, y: 9 }, { x: 7, y: 9 }, { x: 11, y: 10 }, { x: 6, y: 11 }
+        { x: 2, y: 2 }, { x: 2, y: 5 }, { x: 2, y: 8 }, { x: 2, y: 11 },
+        { x: 5, y: 2 }, { x: 5, y: 5 }, { x: 5, y: 8 }, { x: 5, y: 11 },
+        { x: 8, y: 2 }, { x: 8, y: 5 }, { x: 8, y: 8 }, { x: 8, y: 11 },
+        { x: 11, y: 2 }, { x: 11, y: 5 }, { x: 11, y: 8 }, { x: 11, y: 11 }
       ]
     }
   ],
@@ -1031,7 +1031,7 @@ Each stage may set `stageSettings[index].maxActiveEnemies` and `maxActiveEnemies
 
 Each stage may also set `playerSpawns` and `enemySpawns` inside its stage settings. Spawn points use 13x13 tile coordinates, not pixels. `playerSpawns` must contain at least two points, and `enemySpawns` must contain at least three points. Enemy `spawnIndex` selects from `enemySpawns`.
 
-Each stage may also set `powerUpSpawns`, the fixed candidate locations used when a carrier releases a power-up. These also use 13x13 tile coordinates and must contain at least one point. If omitted, the engine uses a 16-point original-style default list. Spawn selection filters out blocked or unreachable candidates, then randomly picks a reachable candidate; when more than one reachable location exists, the immediately previous power-up location is avoided.
+Each stage may also set `powerUpSpawns`, the fixed candidate locations used when a carrier releases a power-up. These also use 13x13 tile coordinates and must contain at least one point. If omitted, the engine uses the original-style 4-by-4 Cartesian list at tile axes `2`, `5`, `8`, and `11`. For that built-in list, the runtime consumes one random byte for X and one for Y, uses each byte's low two bits, and then consumes the next byte's low three bits through the fixed eight-entry item table. Blocked or unreachable candidates are filtered before placement; if filtering reduces the original list, the same 4-by-4 sample is projected onto the remaining candidates. Custom lists retain the generic 16-bit sample and immediate-previous-location avoidance.
 
 Imported JSON packs are strict: either `maps.length` or `quadrants.length` must equal `totalStages`, but not both; every `maps` stage must be 13x13; every `quadrants` stage must be 26x26; `enemies.length` must equal `totalStages`; and every stage enemy sequence must contain at least one enemy. The runtime uses each stage's `enemies` array as the authoritative enemy order, including `typeIndex`, carrier flag, `powerUpType`, spawn point, and explicit spawn delay. `enemyTotal` is optional metadata/default compatibility; the active stage enemy count is derived from that stage's enemy sequence length.
 

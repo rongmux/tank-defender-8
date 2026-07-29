@@ -55,11 +55,17 @@ const deps = {
   dedupePowerUpSpots(spots) {
     return spots.filter((spot, index) => spots.findIndex((candidate) => candidate.x === spot.x && candidate.y === spot.y) === index);
   },
+  isOriginalPowerUpSpawnList() {
+    return false;
+  },
   powerUpSpawnKey(point) {
     return `${point.x},${point.y}`;
   },
   powerUpTypeForRandomByte(value) {
     return (value & 1) === 0 ? "grenade" : "star";
+  },
+  selectOriginalPowerUpSpawnSpot() {
+    throw new Error("unexpected original spawn selection");
   },
   selectPowerUpSpawnSpot(spots, sample, previous) {
     const pool = spots.filter((spot) => `${spot.x},${spot.y}` !== previous);
@@ -125,6 +131,18 @@ assert.deepEqual(Object.keys(api), [
   "applyPowerUp"
 ]);
 assert.equal(state.fn.spawnPowerUp, api.spawnPowerUp);
+
+const originalSpawnRules = require("../../src/rules/power-up-spawn-rules");
+const originalSpawns = require("../../src/config/stage-settings").DEFAULT_POWERUP_SPAWNS;
+deps.isOriginalPowerUpSpawnList = originalSpawnRules.isOriginalPowerUpSpawnList;
+deps.selectOriginalPowerUpSpawnSpot = originalSpawnRules.selectOriginalPowerUpSpawnSpot;
+deps.sharedState.FIELD_W = 208;
+deps.sharedState.FIELD_H = 208;
+randomBytes.splice(0, randomBytes.length, 1, 2);
+assert.deepEqual(api.pickPowerUpSpawnSpot(originalSpawns), { x: 82, y: 130 });
+assert.equal(randomBytes.length, 0, "original position sampling consumes exactly X and Y bytes");
+deps.sharedState.FIELD_W = 32;
+deps.sharedState.FIELD_H = 32;
 
 assert.equal(api.spawnPowerUp("star"), true);
 assert.deepEqual(state.game.powerUp, { type: "star", x: 2, y: 2, w: 12, h: 12, ttl: 9 });

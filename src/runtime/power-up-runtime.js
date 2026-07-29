@@ -101,10 +101,16 @@
     }
 
     function pickPowerUpSpawnSpot(spots, random) {
+      var originalStyle = deps.isOriginalPowerUpSpawnList(spots);
       var source = powerUpSpawnCandidates(spots);
       if (!source.length) return null;
-      var positionSample = (randomByte(random) << 8) | randomByte(random);
-      var picked = deps.selectPowerUpSpawnSpot(source, positionSample, game.lastPowerUpSpawn);
+      var picked = originalStyle
+        ? deps.selectOriginalPowerUpSpawnSpot(source, randomByte(random), randomByte(random))
+        : deps.selectPowerUpSpawnSpot(
+          source,
+          (randomByte(random) << 8) | randomByte(random),
+          game.lastPowerUpSpawn
+        );
       game.lastPowerUpSpawn = deps.powerUpSpawnKey(picked);
       return picked;
     }

@@ -19,8 +19,15 @@ assert.equal(DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER, 6);
 assert.deepEqual(DEFAULT_PLAYER_SPAWNS.map(pixelToTilePoint), [{ x: 4, y: 12 }, { x: 8, y: 12 }]);
 assert.deepEqual(DEFAULT_ENEMY_SPAWNS.map(pixelToTilePoint), [{ x: 0, y: 0 }, { x: 6, y: 0 }, { x: 12, y: 0 }]);
 assert.equal(DEFAULT_POWERUP_SPAWNS.length, 16);
-assert.deepEqual(DEFAULT_POWERUP_SPAWNS[0], { x: 18, y: 18 });
-assert.deepEqual(DEFAULT_POWERUP_SPAWNS[15], { x: 98, y: 178 });
+assert.deepEqual(DEFAULT_POWERUP_SPAWNS[0], { x: 34, y: 34 });
+assert.deepEqual(DEFAULT_POWERUP_SPAWNS[6], { x: 82, y: 130 });
+assert.deepEqual(DEFAULT_POWERUP_SPAWNS[15], { x: 178, y: 178 });
+assert.deepEqual(DEFAULT_POWERUP_SPAWNS.map(powerUpPixelToTilePoint), [
+  { x: 2, y: 2 }, { x: 2, y: 5 }, { x: 2, y: 8 }, { x: 2, y: 11 },
+  { x: 5, y: 2 }, { x: 5, y: 5 }, { x: 5, y: 8 }, { x: 5, y: 11 },
+  { x: 8, y: 2 }, { x: 8, y: 5 }, { x: 8, y: 8 }, { x: 8, y: 11 },
+  { x: 11, y: 2 }, { x: 11, y: 5 }, { x: 11, y: 8 }, { x: 11, y: 11 }
+]);
 assert(Object.isFrozen(DEFAULT_PLAYER_SPAWNS));
 assert(DEFAULT_PLAYER_SPAWNS.every(Object.isFrozen));
 

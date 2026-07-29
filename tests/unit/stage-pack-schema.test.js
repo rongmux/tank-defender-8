@@ -10,7 +10,7 @@ const {
   createStagePackSchema
 } = stagePackSchema;
 
-const EXPECTED_SCHEMA_SHA256 = "4f16cd90491048956afdca237aea047459cf8de3b171113c9d0795f829ef2707";
+const EXPECTED_SCHEMA_SHA256 = "0665ce9657b7ed28aa90ac45d4bf95dbb5fc66a97026aedd64c5a6be480b6d2d";
 
 assert.equal(Object.isFrozen(stagePackSchema), true);
 assert.equal(Object.isFrozen(SAMPLE_STAGE_ROWS), true);
@@ -96,7 +96,7 @@ assert.deepEqual(
 assert.deepEqual(schema.tileCodes, STAGE_PACK_TILE_CODES);
 
 const serialized = JSON.stringify(schema);
-assert.equal(serialized.length, 6498);
+assert.equal(serialized.length, 6500);
 assert.equal(crypto.createHash("sha256").update(serialized).digest("hex"), EXPECTED_SCHEMA_SHA256);
 
 const second = createStagePackSchema();

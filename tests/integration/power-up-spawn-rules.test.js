@@ -9,6 +9,19 @@ const api = context.window.TankDefender8;
 
 assert(modules.powerUpSpawnRules, "power-up spawn rules module should register before game.js");
 assert.equal(Object.isFrozen(modules.powerUpSpawnRules), true);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(modules.powerUpSpawnRules.ORIGINAL_POWER_UP_POSITION_AXIS)),
+  [34, 82, 130, 178]
+);
+assert.equal(modules.powerUpSpawnRules.ORIGINAL_POWER_UP_SPAWN_SPOTS.length, 16);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(modules.powerUpSpawnRules.selectOriginalPowerUpSpawnSpot(
+    modules.powerUpSpawnRules.ORIGINAL_POWER_UP_SPAWN_SPOTS,
+    1,
+    2
+  ))),
+  { x: 82, y: 130 }
+);
 
 const terrain = JSON.parse(JSON.stringify(api.debugPowerUpSpawnTerrainProbe()));
 assert.equal(terrain.openTiles.length, 1);

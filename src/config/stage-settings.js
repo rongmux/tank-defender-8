@@ -5,9 +5,13 @@
   const stageGrid = isCommonJs
     ? require("../stages/stage-grid")
     : (root.TankDefender8Modules || {}).stageGrid;
+  const powerUpSpawnRules = isCommonJs
+    ? require("../rules/power-up-spawn-rules")
+    : (root.TankDefender8Modules || {}).powerUpSpawnRules;
   if (!stageGrid) throw new Error("stageGrid module must load before stage-settings.js");
+  if (!powerUpSpawnRules) throw new Error("powerUpSpawnRules module must load before stage-settings.js");
 
-  const api = factory(stageGrid);
+  const api = factory(stageGrid, powerUpSpawnRules);
   if (isCommonJs) {
     module.exports = api;
     return;
@@ -15,10 +19,11 @@
 
   const modules = root.TankDefender8Modules || (root.TankDefender8Modules = {});
   modules.stageSettings = api;
-})(typeof window !== "undefined" ? window : globalThis, function (stageGrid) {
+})(typeof window !== "undefined" ? window : globalThis, function (stageGrid, powerUpSpawnRules) {
   "use strict";
 
   const { GRID } = stageGrid;
+  const { ORIGINAL_POWER_UP_SPAWN_SPOTS } = powerUpSpawnRules;
   const TILE_SIZE = 16;
   const DEFAULT_MAX_ACTIVE_ENEMIES = 4;
   const DEFAULT_MAX_ACTIVE_ENEMIES_TWO_PLAYER = 6;
@@ -31,24 +36,7 @@
     { x: 6 * TILE_SIZE + 1, y: 0 * TILE_SIZE + 1 },
     { x: 12 * TILE_SIZE + 1, y: 0 * TILE_SIZE + 1 }
   ]);
-  const DEFAULT_POWERUP_SPAWNS = freezePoints([
-    { x: 1 * TILE_SIZE + 2, y: 1 * TILE_SIZE + 2 },
-    { x: 6 * TILE_SIZE + 2, y: 1 * TILE_SIZE + 2 },
-    { x: 11 * TILE_SIZE + 2, y: 1 * TILE_SIZE + 2 },
-    { x: 3 * TILE_SIZE + 2, y: 2 * TILE_SIZE + 2 },
-    { x: 9 * TILE_SIZE + 2, y: 2 * TILE_SIZE + 2 },
-    { x: 1 * TILE_SIZE + 2, y: 5 * TILE_SIZE + 2 },
-    { x: 5 * TILE_SIZE + 2, y: 4 * TILE_SIZE + 2 },
-    { x: 7 * TILE_SIZE + 2, y: 4 * TILE_SIZE + 2 },
-    { x: 11 * TILE_SIZE + 2, y: 5 * TILE_SIZE + 2 },
-    { x: 3 * TILE_SIZE + 2, y: 7 * TILE_SIZE + 2 },
-    { x: 9 * TILE_SIZE + 2, y: 7 * TILE_SIZE + 2 },
-    { x: 1 * TILE_SIZE + 2, y: 10 * TILE_SIZE + 2 },
-    { x: 5 * TILE_SIZE + 2, y: 9 * TILE_SIZE + 2 },
-    { x: 7 * TILE_SIZE + 2, y: 9 * TILE_SIZE + 2 },
-    { x: 11 * TILE_SIZE + 2, y: 10 * TILE_SIZE + 2 },
-    { x: 6 * TILE_SIZE + 2, y: 11 * TILE_SIZE + 2 }
-  ]);
+  const DEFAULT_POWERUP_SPAWNS = freezePoints(ORIGINAL_POWER_UP_SPAWN_SPOTS);
 
   function freezePoints(points) {
     return Object.freeze(points.map((point) => Object.freeze({ ...point })));
