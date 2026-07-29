@@ -147,6 +147,84 @@ assert(runtimeSnapshot.players.length === 0 && runtimeSnapshot.enemySpawned === 
 assert(runtimeSnapshot.powerUpType === null && runtimeSnapshot.clearPendingTimer === 0 && runtimeSnapshot.gameOverTimer === 0, "loading a stage pack should clear transient power-up and transition state");
 assert(runtimeSnapshot.stageResultReason === "clear" && runtimeSnapshot.stageClearElapsed === 0, "loading a stage pack should reset stage-result routing state");
 
+const runtimeShortPack = {
+  id: "short",
+  totalStages: 1,
+  enemyTypes: runtimeSchema.enemyTypes.map((enemyType, index) => index === 0 ? { ...enemyType, hp: 2, wallPower: 2, fireChance: 0.25, score: 150, color: "#ffffff", hitColors: ["#111111", "#ffffff"] } : enemyType),
+  gameSettings: {
+    initialLives: 5,
+    bonusLifeScores: [100],
+    deathPowerLevel: 2,
+    powerUpDurations: { helmet: 30, shovel: 40, shovelFlash: 16, timer: 50 },
+    powerUpRules: { carrierRelease: "hit", clearUncollectedOnCarrierSpawn: false, pickupScore: 750 },
+    timings: { stageIntro: 7, stageClearDelay: 6, stageClear: 8, playerRespawn: 9, playerInvulnerability: 10, enemySpawnFlash: 11, enemyInitialReload: 12, enemySpawnRetry: 13, powerUpTtl: 14 },
+    enemySpawnPacing: { firstDelay: 5, baseDelay: 9, stageStep: 1, minDelay: 4 },
+    playerMovement: { speed: 1.5, iceSlideFrames: 3, iceSlideSpeed: 0.4 },
+    projectileRules: { bulletSize: 6, spawnOffset: 11, boundsPadding: 2 },
+    friendlyFire: { enabled: false, stunFrames: 12 },
+    explosionRules: { enemyDestroy: { ttl: 22, color: "#123456", coreColor: "#abcdef" } },
+    stageAdvance: { loopAfterFinalStage: false },
+    stageClearBonus: { points: 777, twoPlayerOnly: true, requireStrictLead: true },
+    enemyAi: { intersectionTurnChance: 0.33, blockedRetryChance: 0.44, blockedRetryTicks: 5, horizontalFirstChance: 0.22 },
+    playerUpgradeRules: runtimeSchema.playerUpgradeRules.map((rule, index) => index === 0 ? { ...rule, maxBullets: 2, bulletSpeed: 2.75, reload: 21 } : rule),
+    timerFreezesEnemyTime: false
+  },
+  maps: [runtimeSchema.maps[0]],
+  stageSettings: [{
+    maxActiveEnemies: 2,
+    playerSpawns: [{ x: 3, y: 12 }, { x: 9, y: 12 }],
+    enemySpawns: [{ x: 1, y: 0 }, { x: 6, y: 0 }, { x: 11, y: 0 }],
+    powerUpSpawns: [{ x: 2, y: 2 }, { x: 10, y: 10 }]
+  }],
+  enemies: [runtimeSchema.enemies[0].slice(0, 3).map((enemy) => ({ ...enemy, spawnDelay: null }))]
+};
+assert(runtimeApi.validateStagePack(runtimeShortPack).ok === true, "short per-stage enemy list should validate");
+assert(runtimeApi.loadStagePack(runtimeShortPack) === true, "short per-stage enemy list should load");
+assert(runtimeApi.currentPackInfo().enemyTotal === 3, "current stage enemy total should derive from sequence length");
+assert(runtimeApi.currentPackInfo().enemyTypes[0].hp === 2, "current pack should expose custom enemy hp");
+assert(runtimeApi.currentPackInfo().enemyTypes[0].wallPower === 2, "current pack should expose custom enemy wall power");
+assert(runtimeApi.currentPackInfo().enemyTypes[0].fireChance === 0.25, "current pack should expose custom enemy fire chance");
+assert(runtimeApi.currentPackInfo().enemyTypes[0].score === 150, "current pack should expose custom enemy score");
+assert(runtimeApi.currentPackInfo().enemyTypes[0].hitColors[0] === "#111111", "current pack should expose custom enemy hit colors");
+assert(runtimeApi.debugEnemyColorProbe(0, 1) === "#111111", "custom enemy hit colors should apply at low HP");
+assert(runtimeApi.debugEnemyColorProbe(0, 2) === "#ffffff", "custom enemy hit colors should apply at high HP");
+assert(runtimeApi.currentPackInfo().maxActiveEnemies === 2, "current stage max active enemies should use stageSettings");
+const runtimeStageClearDelayStartProbe = runtimeApi.debugStageClearDelayProbe(0, true);
+assert(
+  runtimeStageClearDelayStartProbe.screen === "playing" &&
+    runtimeStageClearDelayStartProbe.clearPendingTimer === runtimeApi.currentPackInfo().timings.stageClearDelay,
+  "stage completion detection should load the full clear delay without decrementing it"
+);
+assert(runtimeApi.debugStageClearDelayProbe(2, true).screen === "playing", "stage clear delay should keep gameplay active before result");
+assert(runtimeApi.debugStageClearDelayProbe(1, true).screen === "stageClear", "stage clear delay should eventually enter result screen");
+const runtimeStageClearLowKillProbe = runtimeApi.debugStageClearDelayProbe(1, true, 0);
+assert(
+  runtimeStageClearLowKillProbe.screen === "stageClear" &&
+    runtimeStageClearLowKillProbe.enemySpawned === runtimeApi.currentPackInfo().enemyTotal &&
+    runtimeStageClearLowKillProbe.enemyKilled === 0,
+  "stage clear should depend on all spawned enemies being gone, not on the kill-table counter"
+);
+assert(runtimeApi.debugStageClearDelayProbe(2, false).screen === "gameOver", "base destruction should win during stage clear delay");
+assert(runtimeApi.debugStageClearPresentationProbe([20, 0, 0, 0], [0, 0, 0, 0], 0).duration === 8, "a positive custom stage-clear timing should override the dynamic result duration");
+assert(runtimeApi.currentPackInfo().playerUpgradeRules[0].maxBullets === 2, "current pack should expose custom player upgrade rules");
+assert(runtimeApi.currentPackInfo().playerUpgradeRules[0].bulletSpeed === 2.75, "current pack should expose custom player bullet speed");
+assert(runtimeApi.currentPackInfo().playerSpawns[0].x === 3, "current stage should expose custom player spawns");
+assert(runtimeApi.currentPackInfo().enemySpawns[0].x === 1, "current stage should expose custom enemy spawns");
+assert(runtimeApi.currentPackInfo().powerUpSpawns[1].x === 10, "current stage should expose custom power-up spawns");
+runtimeByAction.one.click();
+finishRuntimeStageSelectClosing();
+runtimeKeyPress("Enter");
+runtimeSnapshot = runtimeApi.debugSnapshot();
+assert(runtimeSnapshot.nextSpawn === 5, "custom enemy spawn pacing should control the first default spawn delay");
+assert(runtimeSnapshot.clearPendingTimer === 0, "new stage should not start with stage clear pending");
+assert(runtimeSnapshot.enemySpawnPacing.minDelay === 4, "debug snapshot should expose custom enemy spawn pacing");
+assert(runtimeSnapshot.playerMovement.iceSlideFrames === 3, "debug snapshot should expose custom player movement rules");
+assert(runtimeSnapshot.projectileRules.spawnOffset === 11, "debug snapshot should expose custom projectile rules");
+assert(runtimeSnapshot.friendlyFire.enabled === false, "debug snapshot should expose custom friendly-fire rules");
+assert(runtimeSnapshot.explosionRules.enemyDestroy.color === "#123456", "debug snapshot should expose custom explosion rules");
+assert(runtimeSnapshot.stageAdvance.loopAfterFinalStage === false, "debug snapshot should expose custom stage advance rules");
+assert(runtimeSnapshot.stageClearBonus.points === 777, "debug snapshot should expose custom stage clear bonus");
+
 const debugSource = fs.readFileSync(path.join(root, "src/runtime/debug-api.js"), "utf8");
 const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/stage-flow-diagnostics.js"),

@@ -188,64 +188,6 @@ for (const action of actions) {
   assert(typeof byAction[action].listeners.click === "function", `${action} button listener missing`);
 }
 
-const shortPack = {
-  id: "short",
-  totalStages: 1,
-  enemyTypes: schema.enemyTypes.map((enemyType, index) => index === 0 ? { ...enemyType, hp: 2, wallPower: 2, fireChance: 0.25, score: 150, color: "#ffffff", hitColors: ["#111111", "#ffffff"] } : enemyType),
-  gameSettings: {
-    initialLives: 5,
-    bonusLifeScores: [100],
-    deathPowerLevel: 2,
-    powerUpDurations: { helmet: 30, shovel: 40, shovelFlash: 16, timer: 50 },
-    powerUpRules: { carrierRelease: "hit", clearUncollectedOnCarrierSpawn: false, pickupScore: 750 },
-    timings: { stageIntro: 7, stageClearDelay: 6, stageClear: 8, playerRespawn: 9, playerInvulnerability: 10, enemySpawnFlash: 11, enemyInitialReload: 12, enemySpawnRetry: 13, powerUpTtl: 14 },
-    enemySpawnPacing: { firstDelay: 5, baseDelay: 9, stageStep: 1, minDelay: 4 },
-    playerMovement: { speed: 1.5, iceSlideFrames: 3, iceSlideSpeed: 0.4 },
-    projectileRules: { bulletSize: 6, spawnOffset: 11, boundsPadding: 2 },
-    friendlyFire: { enabled: false, stunFrames: 12 },
-    explosionRules: { enemyDestroy: { ttl: 22, color: "#123456", coreColor: "#abcdef" } },
-    stageAdvance: { loopAfterFinalStage: false },
-    stageClearBonus: { points: 777, twoPlayerOnly: true, requireStrictLead: true },
-    enemyAi: { intersectionTurnChance: 0.33, blockedRetryChance: 0.44, blockedRetryTicks: 5, horizontalFirstChance: 0.22 },
-    playerUpgradeRules: schema.playerUpgradeRules.map((rule, index) => index === 0 ? { ...rule, maxBullets: 2, bulletSpeed: 2.75, reload: 21 } : rule),
-    timerFreezesEnemyTime: false
-  },
-  maps: [schema.maps[0]],
-  stageSettings: [{
-    maxActiveEnemies: 2,
-    playerSpawns: [{ x: 3, y: 12 }, { x: 9, y: 12 }],
-    enemySpawns: [{ x: 1, y: 0 }, { x: 6, y: 0 }, { x: 11, y: 0 }],
-    powerUpSpawns: [{ x: 2, y: 2 }, { x: 10, y: 10 }]
-  }],
-  enemies: [schema.enemies[0].slice(0, 3).map((enemy) => ({ ...enemy, spawnDelay: null }))]
-};
-assert(context.window.TankDefender8.validateStagePack(shortPack).ok === true, "short per-stage enemy list should validate");
-assert(context.window.TankDefender8.loadStagePack(shortPack) === true, "short per-stage enemy list should load");
-assert(context.window.TankDefender8.currentPackInfo().enemyTotal === 3, "current stage enemy total should derive from sequence length");
-assert(context.window.TankDefender8.currentPackInfo().enemyTypes[0].hp === 2, "current pack should expose custom enemy hp");
-assert(context.window.TankDefender8.currentPackInfo().enemyTypes[0].wallPower === 2, "current pack should expose custom enemy wall power");
-assert(context.window.TankDefender8.currentPackInfo().enemyTypes[0].fireChance === 0.25, "current pack should expose custom enemy fire chance");
-assert(context.window.TankDefender8.currentPackInfo().enemyTypes[0].score === 150, "current pack should expose custom enemy score");
-assert(context.window.TankDefender8.currentPackInfo().enemyTypes[0].hitColors[0] === "#111111", "current pack should expose custom enemy hit colors");
-assert(context.window.TankDefender8.debugEnemyColorProbe(0, 1) === "#111111", "custom enemy hit colors should apply at low HP");
-assert(context.window.TankDefender8.debugEnemyColorProbe(0, 2) === "#ffffff", "custom enemy hit colors should apply at high HP");
-assert(context.window.TankDefender8.currentPackInfo().maxActiveEnemies === 2, "current stage max active enemies should use stageSettings");
-const stageClearDelayStartProbe = context.window.TankDefender8.debugStageClearDelayProbe(0, true);
-assert(
-  stageClearDelayStartProbe.screen === "playing" &&
-    stageClearDelayStartProbe.clearPendingTimer === context.window.TankDefender8.currentPackInfo().timings.stageClearDelay,
-  "stage completion detection should load the full clear delay without decrementing it"
-);
-assert(context.window.TankDefender8.debugStageClearDelayProbe(2, true).screen === "playing", "stage clear delay should keep gameplay active before result");
-assert(context.window.TankDefender8.debugStageClearDelayProbe(1, true).screen === "stageClear", "stage clear delay should eventually enter result screen");
-const stageClearLowKillProbe = context.window.TankDefender8.debugStageClearDelayProbe(1, true, 0);
-assert(
-  stageClearLowKillProbe.screen === "stageClear" &&
-    stageClearLowKillProbe.enemySpawned === context.window.TankDefender8.currentPackInfo().enemyTotal &&
-    stageClearLowKillProbe.enemyKilled === 0,
-  "stage clear should depend on all spawned enemies being gone, not on the kill-table counter"
-);
-assert(context.window.TankDefender8.debugStageClearDelayProbe(2, false).screen === "gameOver", "base destruction should win during stage clear delay");
 const gameOverBattleProbe = context.window.TankDefender8.debugGameOverBattleProbe();
 assert(gameOverBattleProbe.after.screen === "gameOver" && gameOverBattleProbe.after.tick === gameOverBattleProbe.before.tick + 1, "game-over field frames should keep the battle clock active");
 assert(gameOverBattleProbe.after.timer === gameOverBattleProbe.before.timer - 1, "game-over field frames should consume one total-duration frame");
@@ -287,25 +229,6 @@ assert(
 assert(gameOverStageResultProbe.afterEnd.score === gameOverStageResultProbe.scoreBeforeFinish && gameOverStageResultProbe.afterEnd.bonusAwarded === false, "game-over result should never award the two-player leader bonus");
 assert(gameOverStageResultProbe.afterEnd.newHighScore === true && gameOverStageResultProbe.highScoreRoute.screen === "highScore", "the high-score celebration should remain after the result and full-screen game-over sequence");
 assert(gameOverStageResultProbe.wrappedStage.screen === "fullGameOver" && gameOverStageResultProbe.wrappedStage.stage === 1, "a stage-70 game-over result should preserve the original extended-loop wrap before full-screen game over");
-assert(context.window.TankDefender8.debugStageClearPresentationProbe([20, 0, 0, 0], [0, 0, 0, 0], 0).duration === 8, "a positive custom stage-clear timing should override the dynamic result duration");
-assert(context.window.TankDefender8.currentPackInfo().playerUpgradeRules[0].maxBullets === 2, "current pack should expose custom player upgrade rules");
-assert(context.window.TankDefender8.currentPackInfo().playerUpgradeRules[0].bulletSpeed === 2.75, "current pack should expose custom player bullet speed");
-assert(context.window.TankDefender8.currentPackInfo().playerSpawns[0].x === 3, "current stage should expose custom player spawns");
-assert(context.window.TankDefender8.currentPackInfo().enemySpawns[0].x === 1, "current stage should expose custom enemy spawns");
-assert(context.window.TankDefender8.currentPackInfo().powerUpSpawns[1].x === 10, "current stage should expose custom power-up spawns");
-byAction.one.click();
-finishStageSelectClosing();
-keyPress("Enter");
-snapshot = context.window.TankDefender8.debugSnapshot();
-assert(snapshot.nextSpawn === 5, "custom enemy spawn pacing should control the first default spawn delay");
-assert(snapshot.clearPendingTimer === 0, "new stage should not start with stage clear pending");
-assert(snapshot.enemySpawnPacing.minDelay === 4, "debug snapshot should expose custom enemy spawn pacing");
-assert(snapshot.playerMovement.iceSlideFrames === 3, "debug snapshot should expose custom player movement rules");
-assert(snapshot.projectileRules.spawnOffset === 11, "debug snapshot should expose custom projectile rules");
-assert(snapshot.friendlyFire.enabled === false, "debug snapshot should expose custom friendly-fire rules");
-assert(snapshot.explosionRules.enemyDestroy.color === "#123456", "debug snapshot should expose custom explosion rules");
-assert(snapshot.stageAdvance.loopAfterFinalStage === false, "debug snapshot should expose custom stage advance rules");
-assert(snapshot.stageClearBonus.points === 777, "debug snapshot should expose custom stage clear bonus");
 assert(freePack.totalStages === 35, "free replacement pack should contain 35 stages");
 assert(freePack.maps.length === 35, "free replacement pack should contain 35 maps");
 assert(freePack.enemies.length === 35, "free replacement pack should contain 35 enemy sequences");
