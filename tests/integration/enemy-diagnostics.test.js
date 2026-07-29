@@ -51,6 +51,14 @@ assert.equal(
 );
 
 const debugSource = fs.readFileSync(path.join(root, "src/runtime/debug-api.js"), "utf8");
+const detailedHarness = createBrowserGameHarness(root);
+const detailedApi = detailedHarness.context.window.TankDefender8;
+const onePlayerSpawnTimeline = detailedApi.debugEnemySpawnTimelineProbe(1, 3);
+const twoPlayerSpawnTimeline = detailedApi.debugEnemySpawnTimelineProbe(2, 3);
+assert(onePlayerSpawnTimeline.frames.join(",") === "1,188,375", `one-player stage 1 spawn frames: ${onePlayerSpawnTimeline.frames.join(",")}`);
+assert(twoPlayerSpawnTimeline.frames.join(",") === "1,168,335", `two-player stage 1 spawn frames: ${twoPlayerSpawnTimeline.frames.join(",")}`);
+assert(onePlayerSpawnTimeline.slots.join(",") === "5,4,3" && twoPlayerSpawnTimeline.slots.join(",") === "7,6,5", "enemy object slots should allocate from the highest available slot downward");
+assert(onePlayerSpawnTimeline.spawnIndices.join(",") === "1,2,0", "the first three enemies should spawn center, right, then left");
 const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/enemy-diagnostics.js"),
   "utf8"
