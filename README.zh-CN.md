@@ -697,7 +697,7 @@ tank-defender-8/
 
 `src/rules/power-up-spawn-rules.js` 接管原版 8 项道具随机表、稳定坐标去重、16 位均匀候选选择，以及存在替代位置时排除上次位置。运行时代码仍先依据战场边界、当前基地、固体地形和坦克占位过滤配置/回退位置，再把可达候选交给该模块。
 
-`tests/helpers/test-file-discovery.js` 按稳定路径顺序递归发现 `*.test.js` 文件。`tests/run-tests.js` 使用它依次在隔离的 Node 进程中运行全部单元测试、全部集成测试，最后运行剩余 smoke 套件，因此新增功能测试不再需要手工维护运行器清单。音频、屏幕流程和道具探针的详细生命周期断言现在分别由 `tests/integration/audio-diagnostics.test.js`、`tests/integration/screen-flow-diagnostics.test.js` 和 `tests/integration/power-up-diagnostics.test.js` 负责；`tools/smoke-test.js` 只保留尚未迁移的跨域回归。
+`tests/helpers/test-file-discovery.js` 按稳定路径顺序递归发现 `*.test.js` 文件。`tests/run-tests.js` 使用它依次在隔离的 Node 进程中运行全部单元测试、全部集成测试，最后运行剩余 smoke 套件，因此新增功能测试不再需要手工维护运行器清单。音频、屏幕流程、道具和计时器探针的详细生命周期断言现在分别由 `tests/integration/audio-diagnostics.test.js`、`tests/integration/screen-flow-diagnostics.test.js`、`tests/integration/power-up-diagnostics.test.js` 和 `tests/integration/timer-diagnostics.test.js` 负责；`tools/smoke-test.js` 只保留尚未迁移的跨域回归。
 
 `tests/unit/readme-tree.test.js` 校验 UTF-8 解码与代码围栏配对，要求英文和中文文件树完全一致，并在排除 Git、Codex 与 Reasonix 元数据目录后，将文档中的文件逐项对照实际工作区。
 
