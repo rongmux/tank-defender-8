@@ -117,6 +117,7 @@
   var audioBrickHitDiagnostics = requireRuntimeModule("audioBrickHitDiagnostics");
   var audioSteelHitDiagnostics = requireRuntimeModule("audioSteelHitDiagnostics");
   var audioEnemyHitDiagnostics = requireRuntimeModule("audioEnemyHitDiagnostics");
+  var audioEnemyDestroyDiagnostics = requireRuntimeModule("audioEnemyDestroyDiagnostics");
   var audioDiagnostics = requireRuntimeModule("audioDiagnostics");
 
   // ── Editor ─────────────────────────────────────────────────────────────────
@@ -378,6 +379,7 @@
     audioBrickHitDiagnostics: audioBrickHitDiagnostics,
     audioSteelHitDiagnostics: audioSteelHitDiagnostics,
     audioEnemyHitDiagnostics: audioEnemyHitDiagnostics,
+    audioEnemyDestroyDiagnostics: audioEnemyDestroyDiagnostics,
     createAudioDiagnostics: audioDiagnostics.createAudioDiagnostics,
 
     // Editor

@@ -83,6 +83,7 @@
     const brickHitDiagnostics = deps.audioBrickHitDiagnostics.createAudioBrickHitDiagnostics(scope);
     const steelHitDiagnostics = deps.audioSteelHitDiagnostics.createAudioSteelHitDiagnostics(scope);
     const enemyHitDiagnostics = deps.audioEnemyHitDiagnostics.createAudioEnemyHitDiagnostics(scope);
+    const enemyDestroyDiagnostics = deps.audioEnemyDestroyDiagnostics.createAudioEnemyDestroyDiagnostics(scope);
     const {
       applyPowerUp,
       baseHitAudio,
@@ -904,16 +905,7 @@
             syncMovementAudio();
           }
         },
-        debugEnemyDestroyAudioProbe() {
-          const event = FREE_AUDIO_MANIFEST.events.enemyDestroy;
-          const frames = [0, 1, 2, 3, 4, 13, 14];
-          return {
-            durationFrames: event.durationFrames,
-            voiceDurations: event.voices.map(fixedFrameVoiceDuration),
-            waves: event.voices.map((voice) => voice.wave),
-            frames: frames.map((frame) => enemyDestroyAudioPresentation(frame))
-          };
-        },
+        ...enemyDestroyDiagnostics,
         debugEnemyDestroyAudioLifecycleProbe() {
           const previous = { ...game };
           const audioStates = [

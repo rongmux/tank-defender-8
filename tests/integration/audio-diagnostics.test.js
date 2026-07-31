@@ -57,6 +57,8 @@ assert(modules.audioSteelHitDiagnostics, "steel-hit audio diagnostics module sho
 assert.equal(Object.isFrozen(modules.audioSteelHitDiagnostics), true);
 assert(modules.audioEnemyHitDiagnostics, "enemy-hit audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioEnemyHitDiagnostics), true);
+assert(modules.audioEnemyDestroyDiagnostics, "enemy-destroy audio diagnostics module should register before audio-diagnostics.js");
+assert.equal(Object.isFrozen(modules.audioEnemyDestroyDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(3, 34))),
   AUDIO_DIAGNOSTIC_METHODS
@@ -322,6 +324,10 @@ const enemyHitDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-enemy-hit-diagnostics.js"),
   "utf8"
 );
+const enemyDestroyDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/audio-enemy-destroy-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createAudioDiagnostics(state, deps)"));
 for (const name of AUDIO_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}()`), false);
@@ -337,6 +343,8 @@ for (const name of AUDIO_DIAGNOSTIC_METHODS) {
             ? steelHitDiagnosticsSource
             : name === "debugEnemyHitAudioProbe"
               ? enemyHitDiagnosticsSource
+              : name === "debugEnemyDestroyAudioProbe"
+                ? enemyDestroyDiagnosticsSource
           : diagnosticsSource;
   assert.equal(owner.includes(`${name}()`), true);
 }
@@ -346,6 +354,7 @@ assert.equal(diagnosticsSource.includes("debugMovementAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBrickHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugSteelHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugEnemyHitAudioProbe()"), false);
+assert.equal(diagnosticsSource.includes("debugEnemyDestroyAudioProbe()"), false);
 assert.equal(debugSource.includes("function startScoreCountAudio()"), false);
 assert(debugSource.split(/\r?\n/).length < 6500);
 

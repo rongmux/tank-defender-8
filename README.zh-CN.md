@@ -157,6 +157,7 @@ node --check src/runtime/audio-movement-diagnostics.js
 node --check src/runtime/audio-brick-hit-diagnostics.js
 node --check src/runtime/audio-steel-hit-diagnostics.js
 node --check src/runtime/audio-enemy-hit-diagnostics.js
+node --check src/runtime/audio-enemy-destroy-diagnostics.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -324,6 +325,7 @@ tank-defender-8/
 |   |   |-- audio-brick-hit-diagnostics.js
 |   |   |-- audio-steel-hit-diagnostics.js
 |   |   |-- audio-enemy-hit-diagnostics.js
+|   |   |-- audio-enemy-destroy-diagnostics.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -459,6 +461,7 @@ tank-defender-8/
 |   |   |-- audio-brick-hit-diagnostics.test.js
 |   |   |-- audio-steel-hit-diagnostics.test.js
 |   |   |-- audio-enemy-hit-diagnostics.test.js
+|   |   |-- audio-enemy-destroy-diagnostics.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
 |   |   |-- battlefield-grid.test.js
@@ -797,6 +800,8 @@ tank-defender-8/
 `src/runtime/audio-steel-hit-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态钢墙命中音效表现探针。它通过显式作用域将五帧边界撞击序列与钢墙命中生命周期探针分离。
 
 `src/runtime/audio-enemy-hit-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态敌方坦克命中音效表现探针。它通过显式作用域将六帧装甲命中序列与敌方命中生命周期探针分离。
+
+`src/runtime/audio-enemy-destroy-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态敌方摧毁音效表现探针。它通过显式作用域将采样的摧毁序列与敌人释放和计分生命周期探针分离。
 
 `src/game.js` 现在不再为已注册的音频或非音频 runtime 方法维护本地别名。组合模块在初始化期间读取 `state.fn`，主循环在注册完成后直接调用最高分接口；组合入口仅保留依赖桶、共享状态句柄、关卡 runtime 和少量图块名称映射。
 
