@@ -15,6 +15,7 @@ const audioStageStartDiagnostics = require("../../src/runtime/audio-stage-start-
 const audioBonusLifeDiagnostics = require("../../src/runtime/audio-bonus-life-diagnostics");
 const audioPowerUpPickupDiagnostics = require("../../src/runtime/audio-power-up-pickup-diagnostics");
 const audioPowerUpAppearDiagnostics = require("../../src/runtime/audio-power-up-appear-diagnostics");
+const audioPowerUpAppearLifecycleDiagnostics = require("../../src/runtime/audio-power-up-appear-lifecycle-diagnostics");
 const audioPauseDiagnostics = require("../../src/runtime/audio-pause-diagnostics");
 const audioPauseLifecycleDiagnostics = require("../../src/runtime/audio-pause-lifecycle-diagnostics");
 
@@ -132,6 +133,7 @@ const deps = {
   audioBonusLifeDiagnostics,
   audioPowerUpPickupDiagnostics,
   audioPowerUpAppearDiagnostics,
+  audioPowerUpAppearLifecycleDiagnostics,
   audioPauseDiagnostics,
   audioPauseLifecycleDiagnostics,
   FREE_AUDIO_MANIFEST: manifest,

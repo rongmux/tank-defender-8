@@ -166,6 +166,7 @@ node --check src/runtime/audio-stage-start-diagnostics.js
 node --check src/runtime/audio-bonus-life-diagnostics.js
 node --check src/runtime/audio-power-up-pickup-diagnostics.js
 node --check src/runtime/audio-power-up-appear-diagnostics.js
+node --check src/runtime/audio-power-up-appear-lifecycle-diagnostics.js
 node --check src/runtime/audio-pause-diagnostics.js
 node --check src/runtime/audio-pause-lifecycle-diagnostics.js
 node --check src/runtime/audio-diagnostics.js
@@ -344,6 +345,7 @@ tank-defender-8/
 |   |   |-- audio-bonus-life-diagnostics.js
 |   |   |-- audio-power-up-pickup-diagnostics.js
 |   |   |-- audio-power-up-appear-diagnostics.js
+|   |   |-- audio-power-up-appear-lifecycle-diagnostics.js
 |   |   |-- audio-pause-diagnostics.js
 |   |   |-- audio-pause-lifecycle-diagnostics.js
 |   |   |-- audio-diagnostics.js
@@ -490,6 +492,7 @@ tank-defender-8/
 |   |   |-- audio-bonus-life-diagnostics.test.js
 |   |   |-- audio-power-up-pickup-diagnostics.test.js
 |   |   |-- audio-power-up-appear-diagnostics.test.js
+|   |   |-- audio-power-up-appear-lifecycle-diagnostics.test.js
 |   |   |-- audio-pause-diagnostics.test.js
 |   |   |-- audio-pause-lifecycle-diagnostics.test.js
 |   |   |-- battle-hud-presentation.test.js
@@ -846,6 +849,8 @@ tank-defender-8/
 `src/runtime/audio-power-up-pickup-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态道具拾取音效表现探针。它通过显式作用域将七个乐句边界采样点与收集状态、暂停处理和声道优先级生命周期逻辑分离。
 
 `src/runtime/audio-power-up-appear-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态道具出现音效表现探针。它通过显式作用域将九个乐句边界采样点与携带者释放、暂停处理和拾取优先级生命周期逻辑分离。
+
+`src/runtime/audio-power-up-appear-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的道具出现生命周期探针。它保留携带者释放、暂停冻结、音效完成、声道优先级屏蔽以及无可达位置清理行为，同时由组合入口恢复原有公开 API 位置。
 
 `src/runtime/audio-pause-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态暂停音效表现探针。它通过显式作用域将九个乐句边界采样点与暂停切换、帧冻结和恢复生命周期逻辑分离。
 
