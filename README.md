@@ -155,6 +155,7 @@ node --check src/runtime/audio-score-diagnostics.js
 node --check src/runtime/audio-stage-bonus-diagnostics.js
 node --check src/runtime/audio-movement-diagnostics.js
 node --check src/runtime/audio-brick-hit-diagnostics.js
+node --check src/runtime/audio-steel-hit-diagnostics.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -320,6 +321,7 @@ tank-defender-8/
 |   |   |-- audio-stage-bonus-diagnostics.js
 |   |   |-- audio-movement-diagnostics.js
 |   |   |-- audio-brick-hit-diagnostics.js
+|   |   |-- audio-steel-hit-diagnostics.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -453,6 +455,7 @@ tank-defender-8/
 |   |   |-- audio-stage-bonus-diagnostics.test.js
 |   |   |-- audio-movement-diagnostics.test.js
 |   |   |-- audio-brick-hit-diagnostics.test.js
+|   |   |-- audio-steel-hit-diagnostics.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
 |   |   |-- battlefield-grid.test.js
@@ -695,6 +698,8 @@ tank-defender-8/
 `src/runtime/audio-movement-diagnostics.js` owns the ordinary movement-mode and ice-movement presentation probes extracted from `audio-diagnostics.js`. It keeps their explicit scope and original API positions, while the remaining movement lifecycle probe stays with the main audio diagnostics boundary until its dependent battle scenarios are split.
 
 `src/runtime/audio-brick-hit-diagnostics.js` owns the stateless destructive-brick-hit audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the three-frame triangle replacement sequence independent from the brick collision lifecycle probe.
+
+`src/runtime/audio-steel-hit-diagnostics.js` owns the stateless steel-hit audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the five-frame boundary-impact sequence independent from the steel collision lifecycle probe.
 
 `src/game.js` no longer maintains local aliases for registered audio or non-audio runtime methods. Composition modules read `state.fn` during setup, while the main loop invokes the high-score API directly after registration; the composition root now retains only the dependency bucket, shared-state handle, stage runtime, and small tile-name mapping.
 
