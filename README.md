@@ -177,6 +177,7 @@ node --check src/runtime/audio-bridge.js
 node --check src/runtime/debug-api.js
 node --check src/runtime/debug-battle-runtime.js
 node --check src/runtime/render-adapter-runtime.js
+node --check src/runtime/battle-composition-runtime.js
 node --check src/runtime/render-composition-runtime.js
 node --check src/runtime/legacy-api-runtime.js
 node --check src/game.js
@@ -294,6 +295,7 @@ tank-defender-8/
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
+|   |   |-- battle-composition-runtime.js
 |   |   |-- stage-result-runtime.js
 |   |   |-- player-update-runtime.js
 |   |   |-- battle-timing-runtime.js
@@ -358,6 +360,7 @@ tank-defender-8/
 |   |   |-- public-api-adapters.test.js
 |   |   |-- debug-battle-runtime.test.js
 |   |   |-- render-adapter-runtime.test.js
+|   |   |-- battle-composition-runtime.test.js
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
@@ -459,6 +462,7 @@ tank-defender-8/
 |   |   |-- render-composition-runtime.test.js
 |   |   |-- debug-battle-runtime.test.js
 |   |   |-- render-adapter-runtime.test.js
+|   |   |-- battle-composition-runtime.test.js
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
 |   |   |-- frame-counter-runtime.test.js
@@ -639,6 +643,8 @@ tank-defender-8/
 `src/runtime/render-composition-runtime.js` owns the setup order for the Canvas-facing runtime boundaries: title, terrain, tank, power-up, projectile, effect, stage-result, HUD, editor, transition, and top-level screen rendering. It receives the existing game callbacks, registers the same `state.fn` methods through the original runtime modules, returns their frozen handles to the composition root, and keeps render dependency wiring out of `src/game.js`. Its unit test locks callback validation, setup order, and handle isolation; the browser bootstrap test loads the new script through the real no-build entry path.
 
 `src/runtime/render-adapter-runtime.js` owns the compatibility-facing Canvas adapter functions that connect the composition root to the extracted render runtimes. It keeps the child-runtime lookup lazy until setup completes, preserves the existing presentation selectors and integer text helpers, and accepts the independently initialized battle-scene renderer explicitly. Unit tests lock deferred connection, child receiver identity, and presentation delegation; browser integration verifies the no-build startup path and the unchanged first-frame render.
+
+`src/runtime/battle-composition-runtime.js` owns the initialization order for player movement, projectiles, combat, stage results, stage flow, Game Over, timing, power-ups, enemy AI/movement/update, battle outcomes, the fixed-frame loop, and screen updates. It reads the existing `state.fn` and stage runtime instead of duplicating rules, and accepts only the top-level render/update/spawn gates from `src/game.js`. Unit tests lock the module order and returned loop handles; browser integration verifies the real startup path.
 
 `src/runtime/legacy-api-runtime.js` owns the final compatibility registration of the retained `state.fn` surface. It runs only after all runtime modules have installed their APIs, validates the callback table, preserves registration order, and keeps the public debug adapter independent from the composition root's assignment block. Direct unit coverage locks validation, insertion order, and function identity; browser integration verifies that `src/game.js` contains no direct `state.fn` assignment statements.
 

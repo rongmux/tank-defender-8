@@ -276,9 +276,6 @@
   // Deps module aliases
   var CARRIER_FLASH_COLOR = deps.CARRIER_FLASH_COLOR;
   var CARRIER_FLASH_PHASE_FRAMES = deps.CARRIER_FLASH_PHASE_FRAMES;
-  var DEFAULT_ENEMY_TOTAL = deps.DEFAULT_ENEMY_TOTAL;
-  var DEFAULT_ENEMY_TYPES = deps.DEFAULT_ENEMY_TYPES;
-  var DEFAULT_ORIGINAL_STAGE_COUNT = deps.DEFAULT_ORIGINAL_STAGE_COUNT;
   var DEFAULT_PLAYER_UPGRADE_RULES = deps.DEFAULT_PLAYER_UPGRADE_RULES;
   var DIR_X = deps.DIR_X;
   var DIR_Y = deps.DIR_Y;
@@ -291,7 +288,6 @@
   var LEFT = deps.LEFT;
   var ORIGINAL_EDITOR_PATTERNS = deps.ORIGINAL_EDITOR_PATTERNS;
   var RIGHT = deps.RIGHT;
-  var STAGE_CURTAIN_CLOSE_FRAMES = deps.STAGE_CURTAIN_CLOSE_FRAMES;
   var UP = deps.UP;
   var advanceFixedFrameAudioState = deps.advanceFixedFrameAudioState;
   var advanceFrameCounter = deps.advanceFrameCounter;
@@ -299,7 +295,6 @@
   var beginFixedFrameAudioState = deps.beginFixedFrameAudioState;
   var brickFragmentRect = deps.brickFragmentRect;
   var brickFragmentsFromQuarterMask = deps.brickFragmentsFromQuarterMask;
-  var buildBaseWall = deps.buildBaseWall;
   var canPlayerCollectPowerUp = deps.canPlayerCollectPowerUp;
   var clamp = deps.clamp;
   var clearTile = deps.clearTile;
@@ -319,7 +314,6 @@
   var createStagePackSchema = deps.createStagePackSchema;
   var createStageRuntime = deps.createStageRuntime;
   var directionName = deps.directionName;
-  var directionTowardTarget = deps.directionTowardTarget;
   var enemyAiSettings = deps.enemyAiSettings;
   var enemyColor = deps.enemyColor;
   // (enemyDestructionPresentation — local wrapper, not deps alias)
@@ -334,7 +328,6 @@
   var gridToQuadrants = deps.gridToQuadrants;
   // (highScorePresentation — local wrapper, not deps alias)
   var isEditorDirectionCode = deps.isEditorDirectionCode;
-  var isEnemyAtTurnIntersection = deps.isEnemyAtTurnIntersection;
   var isMovementAudioBlocked = deps.isMovementAudioBlocked;
   var isPlayerShieldVisible = deps.isPlayerShieldVisible;
   var isPlayerTankVisible = deps.isPlayerTankVisible;
@@ -374,7 +367,6 @@
   var spawnAnimationPresentation = deps.spawnAnimationPresentation;
   var stageFlowSettings = deps.stageFlowSettings;
   // (stageIntroCurtainState — local wrapper, not deps alias)
-  var stageResultVisibleKillCount = deps.stageResultVisibleKillCount;
   var stageRouting = deps.stageRouting;
   // (stageSelectCurtainState — local wrapper, not deps alias)
   var summarizeEnemySequences = deps.summarizeEnemySequences;
@@ -395,7 +387,6 @@
   var selectFullGameOverPresentation = deps.fullGameOverPresentation;
   var selectHighScorePresentation = deps.highScorePresentation;
   var selectTitleScoreLayout = deps.titleScoreLayout;
-  var defaultEnemyTypes = deps.DEFAULT_ENEMY_TYPES;
 
   var textRenderRuntime = deps.requireRuntimeModule("textRenderRuntime").setupTextRenderRuntime(state, deps);
   var spriteRenderRuntime = deps.requireRuntimeModule("spriteRenderRuntime").setupSpriteRenderRuntime(state, deps);
@@ -498,218 +489,13 @@
     renderScorePopups: renderScorePopups,
     renderTerrain: renderTerrain
   });
-  deps.requireRuntimeModule("tankMovementRuntime").setupTankMovementRuntime(state, deps);
-  var frameCounterRuntime = deps.requireRuntimeModule("frameCounterRuntime").setupFrameCounterRuntime(state, deps);
-  deps.requireRuntimeModule("playerMovementRuntime").setupPlayerMovementRuntime(state, deps, {
-    advanceTankTracks: fn.advanceTankTracks,
-    gameSettings: gameSettings,
-    isPerpendicularTurn: fn.isPerpendicularTurn,
-    isTankOnIce: fn.isTankOnIce,
-    moveTank: fn.moveTank,
-    playSound: playSound,
-    snapForDirection: fn.snapForDirection
-  });
-  deps.requireRuntimeModule("transientEffectsRuntime").setupTransientEffectsRuntime(state, deps, {
-    gameSettings: gameSettings
-  });
-  deps.requireRuntimeModule("projectileRuntime").setupProjectileRuntime(state, deps, {
-    gameSettings: gameSettings,
-    playSound: playSound
-  });
-  deps.requireRuntimeModule("battleCombatRuntime").setupBattleCombatRuntime(state, deps, {
-    explosionRule: fn.explosionRule,
-    gameSettings: gameSettings,
-    playSound: playSound,
-    resetFrameCounterLow: frameCounterRuntime.resetFrameCounterLow,
-    resetPlayerPosition: fn.resetPlayerPosition,
-    updateHighScore: fn.updateHighScore
-  });
-  deps.requireRuntimeModule("stageResultRuntime").setupStageResultRuntime(state, deps, {
-    addPlayerScore: fn.addPlayerScore,
-    enemyDataStage: enemyDataStage,
-    enemyTypeDefinitions: enemyTypeDefinitions,
-    gameSettings: gameSettings,
-    mapDataStage: mapDataStage,
-    playSound: playSound,
-    stageCycleLimit: stageCycleLimit
-  });
-  deps.requireRuntimeModule("stageFlowRuntime").setupStageFlowRuntime(state, deps, {
-    awardPendingStageClearBonus: fn.awardPendingStageClearBonus,
-    gameSettings: gameSettings,
-    resetTitleIdleTimer: fn.resetTitleIdleTimer,
-    stageAdvanceResult: fn.stageAdvanceResult,
-    stageClearBonusRecipients: fn.stageClearBonusRecipients,
-    stageCurtainCloseFrames: function () { return STAGE_CURTAIN_CLOSE_FRAMES; },
-    stageResultDuration: fn.stageResultDuration,
-    startFullGameOverScreen: fn.startFullGameOverScreen,
-    startStage: fn.startStage,
-    stopGameplayAudioBeforeResult: fn.stopGameplayAudioBeforeResult,
-    stopStageResultAudio: fn.stopStageResultAudio
-  });
-  var gameOverEntryRuntime = deps.requireRuntimeModule("gameOverEntryRuntime").setupGameOverEntryRuntime(state, deps, {
-    endTitleDemo: fn.endTitleDemo,
-    extendedStageEndFrameHigh: function () { return EXTENDED_STAGE_END_FRAME_HIGH; },
-    gameOverFieldDuration: fn.gameOverFieldDuration,
-    resetFrameCounters: frameCounterRuntime.resetFrameCounters,
-    stopBonusLifeAudio: stopBonusLifeAudio,
-    stopBrickHitAudio: stopBrickHitAudio,
-    stopEnemyDestroyAudio: stopEnemyDestroyAudio,
-    stopEnemyHitAudio: stopEnemyHitAudio,
-    stopMovementAudio: stopMovementAudio,
-    stopMovementIceAudio: stopMovementIceAudio,
-    stopPauseAudio: stopPauseAudio,
-    stopPlayerShootAudio: stopPlayerShootAudio,
-    stopPowerUpAppearAudio: stopPowerUpAppearAudio,
-    stopPowerUpPickupAudio: stopPowerUpPickupAudio,
-    stopScoreCountAudio: stopScoreCountAudio,
-    stopStageBonusAudio: stopStageBonusAudio,
-    stopStageStartAudio: stopStageStartAudio,
-    stopSteelHitAudio: stopSteelHitAudio
-  });
-  deps.requireRuntimeModule("battleOutcomeRuntime").setupBattleOutcomeRuntime(state, deps, {
-    endTitleDemo: fn.endTitleDemo,
-    enterGameOver: gameOverEntryRuntime.enterGameOver,
-    enterStageClear: fn.enterStageClear,
-    extendedStageEndFrameHigh: function () { return EXTENDED_STAGE_END_FRAME_HIGH; },
-    gameSettings: gameSettings,
-    playerGameOverMessageActive: function () { return fn.playerGameOverMessageActive(); },
-    playerGameOverStageEndDelay: function () { return PLAYER_GAME_OVER_STAGE_END_DELAY; },
-    resetFrameCounters: frameCounterRuntime.resetFrameCounters,
-    stageEnemiesCleared: function () { return fn.stageEnemiesCleared(); }
-  });
-  deps.requireRuntimeModule("playerUpdateRuntime").setupPlayerUpdateRuntime(state, deps, {
-    directionTowardTarget: directionTowardTarget,
-    finishPlayerDeath: fn.finishPlayerDeath,
-    gameSettings: gameSettings,
-    shoot: fn.shoot,
-    updatePlayerMovement: fn.updatePlayerMovement
-  });
-  deps.requireRuntimeModule("battleTimingRuntime").setupBattleTimingRuntime(state, deps, {
-    enemyTotal: enemyTotal,
-    gameSettings: gameSettings
-  });
-  deps.requireRuntimeModule("battleRandomRuntime").setupBattleRandomRuntime(state, deps, {
-    enemyTotal: enemyTotal,
-    getEnemySpec: getEnemySpec
-  });
-  deps.requireRuntimeModule("powerUpRuntime").setupPowerUpRuntime(state, deps, {
-    addPlayerScore: fn.addPlayerScore,
-    addScorePopup: fn.addScorePopup,
-    buildBaseWall: buildBaseWall,
-    canTankOccupy: fn.canTankOccupy,
-    destroyEnemy: fn.destroyEnemy,
-    gameSettings: gameSettings,
-    playSound: playSound,
-    randomByte: fn.randomByte,
-    rectHitsSolidTerrain: fn.rectHitsSolidTerrain,
-    stageSettings: stageSettings
-  });
-  deps.requireRuntimeModule("enemySpawnRuntime").setupEnemySpawnRuntime(state, deps, {
-    clearPowerUpForCarrierSpawn: function (carrier) {
-      return fn.clearPowerUpForCarrierSpawn(carrier);
-    },
-    enemyTypeDefinitions: enemyTypeDefinitions,
-    enemySpawnPoint: enemySpawnPoint,
-    enemyTotal: enemyTotal,
-    gameSettings: gameSettings,
-    getEnemySpec: getEnemySpec,
-    isExtendedLoopStage: isExtendedLoopStage,
-    maxActiveEnemies: maxActiveEnemies,
-    stageCycleLimit: stageCycleLimit
-  });
-  deps.requireRuntimeModule("enemyAiRuntime").setupEnemyAiRuntime(state, deps, {
-    defaultEnemySpawnDelay: fn.defaultEnemySpawnDelay,
-    directionTowardTarget: directionTowardTarget,
-    gameSettings: gameSettings,
-    randomByte: fn.randomByte,
-    scaleEnemySpawnDelayForPlayers: fn.scaleEnemySpawnDelayForPlayers,
-    selectEnemyTargetPlayer: deps.selectEnemyTargetPlayer
-  });
-  deps.requireRuntimeModule("enemyMovementRuntime").setupEnemyMovementRuntime(state, deps, {
-    advanceTankTracks: fn.advanceTankTracks,
-    aiRoll: fn.aiRoll,
-    canTankOccupy: fn.canTankOccupy,
-    chooseEnemyDirectionByPhase: fn.chooseEnemyDirectionByPhase,
-    gameSettings: gameSettings,
-    isEnemyAtTurnIntersection: isEnemyAtTurnIntersection,
-    moveTank: fn.moveTank,
-    randomByte: fn.randomByte,
-    totalTankOverlapArea: fn.totalTankOverlapArea
-  });
-  deps.requireRuntimeModule("enemyUpdateRuntime").setupEnemyUpdateRuntime(state, deps, {
-    explosionRule: fn.explosionRule,
-    gameSettings: gameSettings,
-    shoot: fn.shoot,
-    shouldEnemyFire: fn.shouldEnemyFire,
-    updateEnemyMovement: fn.updateEnemyMovement
-  });
-  deps.requireRuntimeModule("projectileTargetRuntime").setupProjectileTargetRuntime(state, deps, {
-    addRuleExplosion: fn.addRuleExplosion,
-    baseDestructionDuration: fn.baseDestructionDuration,
-    destroyEnemy: fn.destroyEnemy,
-    gameSettings: gameSettings,
-    killPlayer: fn.killPlayer,
-    playSound: playSound,
-    releaseCarrierPowerUp: fn.releaseCarrierPowerUp
-  });
-  deps.requireRuntimeModule("projectileResolutionRuntime").setupProjectileResolutionRuntime(state, deps, {
-    addRuleExplosion: fn.addRuleExplosion,
-    gameSettings: gameSettings,
-    hitBase: fn.hitBase,
-    hitTank: fn.hitTank,
-    hitTerrain: fn.hitTerrain,
-    playSound: playSound
-  });
-  deps.requireRuntimeModule("projectileMotionRuntime").setupProjectileMotionRuntime(state, deps, {
-    resolveBullet: fn.resolveBullet
-  });
-  deps.requireRuntimeModule("battleLoopRuntime").setupBattleLoopRuntime(state, deps, {
-    checkEndState: fn.checkEndState,
-    spawnEnemies: fn.spawnEnemies,
-    shouldSpawnEnemies: shouldSpawnEnemies,
-    syncMovementAudio: syncMovementAudio,
-    updateBaseDestructionTimer: fn.updateBaseDestructionTimer,
-    updateBullets: fn.updateBullets,
-    updateEnemies: fn.updateEnemies,
-    updateExplosions: fn.updateExplosions,
-    updateFreezeTimer: fn.updateFreezeTimer,
-    updatePlayerGameOverMessage: fn.updatePlayerGameOverMessage,
-    updatePlayerInvulnerabilityTimers: fn.updatePlayerInvulnerabilityTimers,
-    updatePlayers: fn.updatePlayers,
-    updatePowerUp: fn.updatePowerUp,
-    updateScorePopups: fn.updateScorePopups,
-    updateShovelTimer: fn.updateShovelTimer
-  });
-  var frameLoopRuntime = deps.requireRuntimeModule("frameLoopRuntime").setupFrameLoopRuntime(state, deps, {
-    now: function () { return performance.now(); },
+  var battleCompositionRuntime = deps.requireRuntimeModule("battleCompositionRuntime").setupBattleCompositionRuntime(state, deps, {
     render: render,
-    requestAnimationFrame: function (callback) { return requestAnimationFrame(callback); },
-    stepMs: function () { return sh.STEP_MS; },
+    shouldSpawnEnemies: shouldSpawnEnemies,
     update: update
   });
-  var screenUpdateRuntime = deps.requireRuntimeModule("screenUpdateRuntime").setupScreenUpdateRuntime(state, deps, {
-    advanceFrameCounters: frameCounterRuntime.advanceFrameCounters,
-    awardPendingStageClearBonus: fn.awardPendingStageClearBonus,
-    checkEndState: fn.checkEndState,
-    finishGameOverScreen: fn.finishGameOverScreen,
-    finishStageClearClosing: fn.finishStageClearClosing,
-    finishStageResult: fn.finishStageResult,
-    playSound: playSound,
-    resetFrameCounterHigh: frameCounterRuntime.resetFrameCounterHigh,
-    stageClearPresentation: fn.stageClearPresentation,
-    stageResultVisibleKillCount: stageResultVisibleKillCount,
-    syncMovementAudio: syncMovementAudio,
-    updateAudio: fn.updateAllAudio,
-    updateBattle: fn.updateBattle,
-    updateEditorControls: fn.updateEditorControls,
-    updateExplosions: fn.updateExplosions,
-    updateFullGameOverScreen: fn.updateFullGameOverScreen,
-    updateHighScoreScreen: fn.updateHighScoreScreen,
-    updateHiddenMessage: fn.updateHiddenMessage,
-    updateScorePopups: fn.updateScorePopups,
-    updateStageSelectControls: fn.updateStageSelectControls,
-    updateTitleIdle: fn.updateTitleIdle
-  });
+  var frameLoopRuntime = battleCompositionRuntime.frameLoopRuntime;
+  var screenUpdateRuntime = battleCompositionRuntime.screenUpdateRuntime;
   var renderCompositionRuntime = deps.requireRuntimeModule("renderCompositionRuntime").setupRenderCompositionRuntime(state, deps, {
     battleDisplayFrame: battleDisplayFrame,
     createStageGrid: createStageGrid,
