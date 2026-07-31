@@ -112,6 +112,7 @@
   var fixedFrameAudioState = requireRuntimeModule("fixedFrameAudioState");
   var freeAudioManifest = requireRuntimeModule("freeAudioManifest");
   var audioScoreDiagnostics = requireRuntimeModule("audioScoreDiagnostics");
+  var audioStageBonusDiagnostics = requireRuntimeModule("audioStageBonusDiagnostics");
   var audioDiagnostics = requireRuntimeModule("audioDiagnostics");
 
   // ── Editor ─────────────────────────────────────────────────────────────────
@@ -368,6 +369,7 @@
     FREE_AUDIO_MANIFEST: freeAudioManifest.FREE_AUDIO_MANIFEST,
     cloneAudioManifest: freeAudioManifest.cloneAudioManifest,
     audioScoreDiagnostics: audioScoreDiagnostics,
+    audioStageBonusDiagnostics: audioStageBonusDiagnostics,
     createAudioDiagnostics: audioDiagnostics.createAudioDiagnostics,
 
     // Editor

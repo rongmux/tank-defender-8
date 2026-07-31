@@ -47,6 +47,8 @@ assert(modules.audioDiagnostics, "audio diagnostics module should register befor
 assert.equal(Object.isFrozen(modules.audioDiagnostics), true);
 assert(modules.audioScoreDiagnostics, "score audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioScoreDiagnostics), true);
+assert(modules.audioStageBonusDiagnostics, "stage-bonus audio diagnostics module should register before audio-diagnostics.js");
+assert.equal(Object.isFrozen(modules.audioStageBonusDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(3, 34))),
   AUDIO_DIAGNOSTIC_METHODS
@@ -292,13 +294,22 @@ const scoreDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-score-diagnostics.js"),
   "utf8"
 );
+const stageBonusDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/audio-stage-bonus-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createAudioDiagnostics(state, deps)"));
 for (const name of AUDIO_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}()`), false);
-  const owner = name.startsWith("debugScoreCountAudio") ? scoreDiagnosticsSource : diagnosticsSource;
+  const owner = name.startsWith("debugScoreCountAudio")
+    ? scoreDiagnosticsSource
+    : name.startsWith("debugStageBonusAudio")
+      ? stageBonusDiagnosticsSource
+      : diagnosticsSource;
   assert.equal(owner.includes(`${name}()`), true);
 }
 assert.equal(diagnosticsSource.includes("debugScoreCountAudioProbe()"), false);
+assert.equal(diagnosticsSource.includes("debugStageBonusAudioProbe()"), false);
 assert.equal(debugSource.includes("function startScoreCountAudio()"), false);
 assert(debugSource.split(/\r?\n/).length < 6500);
 

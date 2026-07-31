@@ -152,6 +152,7 @@ node --check src/runtime/enemy-ai-runtime.js
 node --check src/runtime/enemy-movement-runtime.js
 node --check src/runtime/enemy-update-runtime.js
 node --check src/runtime/audio-score-diagnostics.js
+node --check src/runtime/audio-stage-bonus-diagnostics.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -314,6 +315,7 @@ tank-defender-8/
 |   |   |-- enemy-movement-runtime.js
 |   |   |-- enemy-update-runtime.js
 |   |   |-- audio-score-diagnostics.js
+|   |   |-- audio-stage-bonus-diagnostics.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -444,6 +446,7 @@ tank-defender-8/
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
 |   |   |-- audio-score-diagnostics.test.js
+|   |   |-- audio-stage-bonus-diagnostics.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
 |   |   |-- battlefield-grid.test.js
@@ -680,6 +683,8 @@ tank-defender-8/
 `src/runtime/audio-bridge.js` now also owns the fixed-frame audio lifecycle order exposed to the composition root: updating every voice, stopping gameplay voices before a result, stopping result voices, and stopping every voice on full teardown. The unit test locks all four sequences so later audio changes cannot silently reorder channel cleanup or advancement.
 
 `src/runtime/audio-score-diagnostics.js` owns the score-count audio presentation and lifecycle probes extracted from `audio-diagnostics.js`. It accepts an explicit runtime scope and returns frozen probe methods; `audio-diagnostics.js` composes them back into the original public order, while direct and browser tests preserve the existing output hash.
+
+`src/runtime/audio-stage-bonus-diagnostics.js` owns the stage-result leader-bonus audio presentation and lifecycle probes extracted from `audio-diagnostics.js`. It uses the same explicit scope boundary and is composed back into the original public order; direct and browser tests preserve the original 28-frame cue and result behavior.
 
 `src/game.js` no longer maintains local aliases for registered audio or non-audio runtime methods. Composition modules read `state.fn` during setup, while the main loop invokes the high-score API directly after registration; the composition root now retains only the dependency bucket, shared-state handle, stage runtime, and small tile-name mapping.
 

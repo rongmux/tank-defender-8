@@ -152,6 +152,7 @@ node --check src/runtime/enemy-ai-runtime.js
 node --check src/runtime/enemy-movement-runtime.js
 node --check src/runtime/enemy-update-runtime.js
 node --check src/runtime/audio-score-diagnostics.js
+node --check src/runtime/audio-stage-bonus-diagnostics.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -314,6 +315,7 @@ tank-defender-8/
 |   |   |-- enemy-movement-runtime.js
 |   |   |-- enemy-update-runtime.js
 |   |   |-- audio-score-diagnostics.js
+|   |   |-- audio-stage-bonus-diagnostics.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -444,6 +446,7 @@ tank-defender-8/
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
 |   |   |-- audio-score-diagnostics.test.js
+|   |   |-- audio-stage-bonus-diagnostics.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
 |   |   |-- battlefield-grid.test.js
@@ -772,6 +775,8 @@ tank-defender-8/
 `src/runtime/audio-bridge.js` 现在也接管交给组合入口的固定帧音频生命周期顺序：更新全部声部、结算前停止游戏声部、停止结算声部，以及完整退出时停止全部声部。单元测试锁定这四组顺序，避免后续音频修改静默改变声道清理或推进顺序。
 
 `src/runtime/audio-score-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的计分音效表现与生命周期探针。它接收显式运行时作用域并返回冻结的探针方法；`audio-diagnostics.js` 再将其合并回原有公开顺序，直接测试和浏览器测试共同保持现有输出哈希。
+
+`src/runtime/audio-stage-bonus-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的关卡结算领先奖励音效表现与生命周期探针。它使用同样的显式作用域边界并合并回原有公开顺序；直接测试和浏览器测试保持原版 28 帧音效及结算行为。
 
 `src/game.js` 现在不再为已注册的音频或非音频 runtime 方法维护本地别名。组合模块在初始化期间读取 `state.fn`，主循环在注册完成后直接调用最高分接口；组合入口仅保留依赖桶、共享状态句柄、关卡 runtime 和少量图块名称映射。
 
