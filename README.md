@@ -175,6 +175,7 @@ node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-bridge.js
 node --check src/runtime/debug-api.js
+node --check src/runtime/debug-battle-runtime.js
 node --check src/runtime/render-composition-runtime.js
 node --check src/runtime/legacy-api-runtime.js
 node --check src/game.js
@@ -327,6 +328,7 @@ tank-defender-8/
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
 |   |   |-- audio-bridge.js
+|   |   |-- debug-battle-runtime.js
 |   |   |-- debug-api.js
 |   |   |-- render-composition-runtime.js
 |   |   `-- legacy-api-runtime.js
@@ -352,6 +354,7 @@ tank-defender-8/
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
+|   |   |-- debug-battle-runtime.test.js
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
@@ -451,6 +454,7 @@ tank-defender-8/
 |   |   |-- input-runtime.test.js
 |   |   |-- screen-render-runtime.test.js
 |   |   |-- render-composition-runtime.test.js
+|   |   |-- debug-battle-runtime.test.js
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
 |   |   |-- frame-counter-runtime.test.js
@@ -631,6 +635,8 @@ tank-defender-8/
 `src/runtime/render-composition-runtime.js` owns the setup order for the Canvas-facing runtime boundaries: title, terrain, tank, power-up, projectile, effect, stage-result, HUD, editor, transition, and top-level screen rendering. It receives the existing game callbacks, registers the same `state.fn` methods through the original runtime modules, returns their frozen handles to the composition root, and keeps render dependency wiring out of `src/game.js`. Its unit test locks callback validation, setup order, and handle isolation; the browser bootstrap test loads the new script through the real no-build entry path.
 
 `src/runtime/legacy-api-runtime.js` owns the final compatibility registration of the retained `state.fn` surface. It runs only after all runtime modules have installed their APIs, validates the callback table, preserves registration order, and keeps the public debug adapter independent from the composition root's assignment block. Direct unit coverage locks validation, insertion order, and function identity; browser integration verifies that `src/game.js` contains no direct `state.fn` assignment statements.
+
+`src/runtime/debug-battle-runtime.js` owns the deterministic paused battle fixture used by effect, power-up, score, timer, and terrain diagnostics. It writes only the minimal battle state required by those probes, keeps the 60 Hz tick/frame-byte conversion in one boundary, and leaves the production battle loop untouched. Unit tests lock the fixture geometry, normalization, and reset fields; browser integration verifies that the diagnostics still use the extracted fixture.
 
 `src/runtime/audio-bridge.js` now also owns the fixed-frame audio lifecycle order exposed to the composition root: updating every voice, stopping gameplay voices before a result, stopping result voices, and stopping every voice on full teardown. The unit test locks all four sequences so later audio changes cannot silently reorder channel cleanup or advancement.
 

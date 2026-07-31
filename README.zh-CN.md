@@ -175,6 +175,7 @@ node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-bridge.js
 node --check src/runtime/debug-api.js
+node --check src/runtime/debug-battle-runtime.js
 node --check src/runtime/render-composition-runtime.js
 node --check src/runtime/legacy-api-runtime.js
 node --check src/game.js
@@ -327,6 +328,7 @@ tank-defender-8/
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
 |   |   |-- audio-bridge.js
+|   |   |-- debug-battle-runtime.js
 |   |   |-- debug-api.js
 |   |   |-- render-composition-runtime.js
 |   |   `-- legacy-api-runtime.js
@@ -352,6 +354,7 @@ tank-defender-8/
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
+|   |   |-- debug-battle-runtime.test.js
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
@@ -451,6 +454,7 @@ tank-defender-8/
 |   |   |-- input-runtime.test.js
 |   |   |-- screen-render-runtime.test.js
 |   |   |-- render-composition-runtime.test.js
+|   |   |-- debug-battle-runtime.test.js
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
 |   |   |-- frame-counter-runtime.test.js
@@ -723,6 +727,8 @@ tank-defender-8/
 `src/runtime/render-composition-runtime.js` 接管面向 Canvas 的 runtime 组装顺序：标题、地形、坦克、道具、子弹、效果、结算表、HUD、编辑器、转场和顶层屏幕渲染。它接收现有游戏回调，通过原有 runtime 模块注册相同的 `state.fn` 方法，将冻结的 runtime 句柄返回给组合入口，并把渲染依赖接线从 `src/game.js` 移出。单元测试锁定回调校验、组装顺序和句柄隔离；浏览器启动测试通过真实的无构建入口加载该脚本。
 
 `src/runtime/legacy-api-runtime.js` 接管保留的 `state.fn` 兼容接口的最终注册。它只在所有 runtime 模块完成 API 注册后运行，校验回调表、保持注册顺序，并让公开调试适配器不再依赖组合入口中的逐项赋值。单元测试锁定参数校验、插入顺序和函数身份；浏览器集成测试验证 `src/game.js` 不再直接赋值 `state.fn`。
+
+`src/runtime/debug-battle-runtime.js` 接管效果、道具、分数、计时器和地形诊断共用的确定性暂停战斗夹具。它只写入这些探针所需的最小战斗状态，将 60 Hz 计数与帧字节转换集中到一个边界，并保持正式战斗循环不变。单元测试锁定夹具几何、数值归一化和重置字段；浏览器集成测试验证诊断仍使用抽离后的夹具。
 
 `src/runtime/audio-bridge.js` 现在也接管交给组合入口的固定帧音频生命周期顺序：更新全部声部、结算前停止游戏声部、停止结算声部，以及完整退出时停止全部声部。单元测试锁定这四组顺序，避免后续音频修改静默改变声道清理或推进顺序。
 

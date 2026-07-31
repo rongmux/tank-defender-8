@@ -85,6 +85,9 @@
   var stageRoute = stageExports.stageRoute;
   var stageSettings = stageExports.stageSettings;
 
+  var debugBattleRuntime = deps.requireRuntimeModule("debugBattleRuntime").setupDebugBattleRuntime(state, deps);
+  var preparePausedDebugBattle = debugBattleRuntime.preparePausedDebugBattle;
+
   // ── Setup runtime modules ──────────────────────────────────────────────
   deps.requireRuntimeModule("gameLifecycle").setupGameLifecycle(state, deps);
   deps.requireRuntimeModule("audioBridge").setupAudioBridge(state, deps);
@@ -1136,23 +1139,6 @@
   function pad2(value) {
     return String(value).padStart(2, "0");
   }
-
-  function preparePausedDebugBattle(tick) {
-    game.screen = "playing";
-    game.demoMode = false;
-    game.paused = true;
-    game.pauseElapsed = 0;
-    game.tick = Math.max(0, Math.floor(Number(tick) || 0));
-    game.frameLow = game.tick & 0xff;
-    game.frameHigh = Math.floor(game.tick / 0x40) & 0xff;
-    game.base = { x: 6 * sh.TILE, y: 12 * sh.TILE, w: sh.TILE, h: sh.TILE, alive: true };
-    game.players = [{ alive: true, lives: 1, respawn: 0 }];
-    game.enemies = [];
-    game.enemySpawned = 0;
-    game.clearPendingTimer = 0;
-    game.scorePopups = [];
-  }
-
 
   // ── Register local functions on state.fn (for debug-api access) ──────
   deps.requireRuntimeModule("legacyApiRuntime").setupLegacyApiRuntime(state, {
