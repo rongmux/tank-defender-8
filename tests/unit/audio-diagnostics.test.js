@@ -2,6 +2,7 @@ const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/audio-diagnostics");
 const audioScoreDiagnostics = require("../../src/runtime/audio-score-diagnostics");
 const audioStageBonusDiagnostics = require("../../src/runtime/audio-stage-bonus-diagnostics");
+const audioMovementDiagnostics = require("../../src/runtime/audio-movement-diagnostics");
 
 const AUDIO_DIAGNOSTIC_METHODS = [
   "audioManifest",
@@ -104,6 +105,7 @@ const deps = {
   sharedState: {},
   audioScoreDiagnostics,
   audioStageBonusDiagnostics,
+  audioMovementDiagnostics,
   FREE_AUDIO_MANIFEST: manifest,
   cloneAudioManifest() {
     assert.equal(this, deps);

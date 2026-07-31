@@ -113,6 +113,7 @@
   var freeAudioManifest = requireRuntimeModule("freeAudioManifest");
   var audioScoreDiagnostics = requireRuntimeModule("audioScoreDiagnostics");
   var audioStageBonusDiagnostics = requireRuntimeModule("audioStageBonusDiagnostics");
+  var audioMovementDiagnostics = requireRuntimeModule("audioMovementDiagnostics");
   var audioDiagnostics = requireRuntimeModule("audioDiagnostics");
 
   // ── Editor ─────────────────────────────────────────────────────────────────
@@ -370,6 +371,7 @@
     cloneAudioManifest: freeAudioManifest.cloneAudioManifest,
     audioScoreDiagnostics: audioScoreDiagnostics,
     audioStageBonusDiagnostics: audioStageBonusDiagnostics,
+    audioMovementDiagnostics: audioMovementDiagnostics,
     createAudioDiagnostics: audioDiagnostics.createAudioDiagnostics,
 
     // Editor
