@@ -7,6 +7,7 @@ const audioBrickHitDiagnostics = require("../../src/runtime/audio-brick-hit-diag
 const audioSteelHitDiagnostics = require("../../src/runtime/audio-steel-hit-diagnostics");
 const audioEnemyHitDiagnostics = require("../../src/runtime/audio-enemy-hit-diagnostics");
 const audioEnemyDestroyDiagnostics = require("../../src/runtime/audio-enemy-destroy-diagnostics");
+const audioPlayerDestroyDiagnostics = require("../../src/runtime/audio-player-destroy-diagnostics");
 
 const AUDIO_DIAGNOSTIC_METHODS = [
   "audioManifest",
@@ -114,6 +115,7 @@ const deps = {
   audioSteelHitDiagnostics,
   audioEnemyHitDiagnostics,
   audioEnemyDestroyDiagnostics,
+  audioPlayerDestroyDiagnostics,
   FREE_AUDIO_MANIFEST: manifest,
   cloneAudioManifest() {
     assert.equal(this, deps);
