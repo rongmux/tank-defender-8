@@ -111,6 +111,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/audio-enemy-hit-diagnostics.js",
   "src/runtime/audio-enemy-destroy-diagnostics.js",
   "src/runtime/audio-player-destroy-diagnostics.js",
+  "src/runtime/audio-base-hit-diagnostics.js",
   "src/runtime/audio-diagnostics.js",
   "src/runtime/stage-pack-diagnostics.js",
   "src/runtime/stage-result-diagnostics.js",

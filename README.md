@@ -159,6 +159,7 @@ node --check src/runtime/audio-steel-hit-diagnostics.js
 node --check src/runtime/audio-enemy-hit-diagnostics.js
 node --check src/runtime/audio-enemy-destroy-diagnostics.js
 node --check src/runtime/audio-player-destroy-diagnostics.js
+node --check src/runtime/audio-base-hit-diagnostics.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -328,6 +329,7 @@ tank-defender-8/
 |   |   |-- audio-enemy-hit-diagnostics.js
 |   |   |-- audio-enemy-destroy-diagnostics.js
 |   |   |-- audio-player-destroy-diagnostics.js
+|   |   |-- audio-base-hit-diagnostics.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -465,6 +467,7 @@ tank-defender-8/
 |   |   |-- audio-enemy-hit-diagnostics.test.js
 |   |   |-- audio-enemy-destroy-diagnostics.test.js
 |   |   |-- audio-player-destroy-diagnostics.test.js
+|   |   |-- audio-base-hit-diagnostics.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
 |   |   |-- battlefield-grid.test.js
@@ -715,6 +718,8 @@ tank-defender-8/
 `src/runtime/audio-enemy-destroy-diagnostics.js` owns the stateless enemy-destruction audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the sampled destruction sequence independent from the enemy release and score lifecycle probe.
 
 `src/runtime/audio-player-destroy-diagnostics.js` owns the stateless player-destruction audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the sampled respawn-destruction sequence independent from player lifecycle state restoration.
+
+`src/runtime/audio-base-hit-diagnostics.js` owns the stateless base-hit audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the sampled base-destruction sequence independent from the base lifecycle and stage-reset probe.
 
 `src/game.js` no longer maintains local aliases for registered audio or non-audio runtime methods. Composition modules read `state.fn` during setup, while the main loop invokes the high-score API directly after registration; the composition root now retains only the dependency bucket, shared-state handle, stage runtime, and small tile-name mapping.
 
