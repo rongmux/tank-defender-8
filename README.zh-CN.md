@@ -174,6 +174,7 @@ node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-bridge.js
+node --check src/runtime/application-flow-composition-runtime.js
 node --check src/runtime/debug-api.js
 node --check src/runtime/debug-battle-runtime.js
 node --check src/runtime/render-adapter-runtime.js
@@ -331,6 +332,7 @@ tank-defender-8/
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
 |   |   |-- audio-bridge.js
+|   |   |-- application-flow-composition-runtime.js
 |   |   |-- debug-battle-runtime.js
 |   |   |-- debug-api.js
 |   |   |-- render-adapter-runtime.js
@@ -344,6 +346,7 @@ tank-defender-8/
 |   |   `-- test-file-discovery.js
 |   |-- integration/
 |   |   |-- app-bootstrap.test.js
+|   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
@@ -422,6 +425,7 @@ tank-defender-8/
 |   |   `-- wall-diagnostics.test.js
 |   |-- unit/
 |   |   |-- audio-bridge.test.js
+|   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
@@ -735,6 +739,8 @@ tank-defender-8/
 `src/runtime/render-composition-runtime.js` 接管面向 Canvas 的 runtime 组装顺序：标题、地形、坦克、道具、子弹、效果、结算表、HUD、编辑器、转场和顶层屏幕渲染。它接收现有游戏回调，通过原有 runtime 模块注册相同的 `state.fn` 方法，将冻结的 runtime 句柄返回给组合入口，并把渲染依赖接线从 `src/game.js` 移出。单元测试锁定回调校验、组装顺序和句柄隔离；浏览器启动测试通过真实的无构建入口加载该脚本。
 
 `src/runtime/render-adapter-runtime.js` 接管把组合入口连接到已抽离渲染 runtime 的兼容 Canvas 适配函数。它延迟到组装完成后才查找子 runtime，保留原有表现选择器和整数文字辅助函数，并显式接收单独初始化的战斗场景渲染器。单元测试锁定延迟连接、子 runtime 的接收者身份和表现委托；浏览器集成测试验证无需构建的启动路径及首帧渲染保持不变。
+
+`src/runtime/application-flow-composition-runtime.js` 接管生命周期、音频、Construction 输入、选关和全屏结算画面的应用流程初始化顺序。它读取现有 `state.fn` 注册结果，保持帧/生命周期回调显式注入，并将这段初始化从 `src/game.js` 移出。单元测试锁定初始化顺序和回调接线；浏览器集成测试验证真实的无需构建启动路径。
 
 `src/runtime/battle-composition-runtime.js` 接管玩家移动、投射物、战斗、关卡结算、关卡流程、Game Over、计时、道具、敌人 AI/移动/更新、战斗结束判定、固定帧循环和屏幕更新的初始化顺序。它读取现有 `state.fn` 与关卡 runtime，不复制规则，只从 `src/game.js` 接收顶层渲染/更新/生成门控。单元测试锁定模块顺序和返回的循环句柄；浏览器集成测试验证真实启动路径。
 

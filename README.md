@@ -174,6 +174,7 @@ node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-bridge.js
+node --check src/runtime/application-flow-composition-runtime.js
 node --check src/runtime/debug-api.js
 node --check src/runtime/debug-battle-runtime.js
 node --check src/runtime/render-adapter-runtime.js
@@ -331,6 +332,7 @@ tank-defender-8/
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
 |   |   |-- audio-bridge.js
+|   |   |-- application-flow-composition-runtime.js
 |   |   |-- debug-battle-runtime.js
 |   |   |-- debug-api.js
 |   |   |-- render-adapter-runtime.js
@@ -344,6 +346,7 @@ tank-defender-8/
 |   |   `-- test-file-discovery.js
 |   |-- integration/
 |   |   |-- app-bootstrap.test.js
+|   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
@@ -422,6 +425,7 @@ tank-defender-8/
 |   |   `-- wall-diagnostics.test.js
 |   |-- unit/
 |   |   |-- audio-bridge.test.js
+|   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
@@ -643,6 +647,8 @@ tank-defender-8/
 `src/runtime/render-composition-runtime.js` owns the setup order for the Canvas-facing runtime boundaries: title, terrain, tank, power-up, projectile, effect, stage-result, HUD, editor, transition, and top-level screen rendering. It receives the existing game callbacks, registers the same `state.fn` methods through the original runtime modules, returns their frozen handles to the composition root, and keeps render dependency wiring out of `src/game.js`. Its unit test locks callback validation, setup order, and handle isolation; the browser bootstrap test loads the new script through the real no-build entry path.
 
 `src/runtime/render-adapter-runtime.js` owns the compatibility-facing Canvas adapter functions that connect the composition root to the extracted render runtimes. It keeps the child-runtime lookup lazy until setup completes, preserves the existing presentation selectors and integer text helpers, and accepts the independently initialized battle-scene renderer explicitly. Unit tests lock deferred connection, child receiver identity, and presentation delegation; browser integration verifies the no-build startup path and the unchanged first-frame render.
+
+`src/runtime/application-flow-composition-runtime.js` owns the application-flow initialization order for lifecycle, audio, Construction input, stage selection, and full-screen post-game screens. It reads the existing `state.fn` registrations, keeps frame/lifecycle callbacks explicit, and removes this setup block from `src/game.js`. Unit tests lock setup order and callback wiring; browser integration verifies the real no-build bootstrap.
 
 `src/runtime/battle-composition-runtime.js` owns the initialization order for player movement, projectiles, combat, stage results, stage flow, Game Over, timing, power-ups, enemy AI/movement/update, battle outcomes, the fixed-frame loop, and screen updates. It reads the existing `state.fn` and stage runtime instead of duplicating rules, and accepts only the top-level render/update/spawn gates from `src/game.js`. Unit tests lock the module order and returned loop handles; browser integration verifies the real startup path.
 

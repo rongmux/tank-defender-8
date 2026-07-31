@@ -89,24 +89,8 @@
   var preparePausedDebugBattle = debugBattleRuntime.preparePausedDebugBattle;
 
   // ── Setup runtime modules ──────────────────────────────────────────────
-  deps.requireRuntimeModule("gameLifecycle").setupGameLifecycle(state, deps);
-  deps.requireRuntimeModule("audioBridge").setupAudioBridge(state, deps);
-  deps.requireRuntimeModule("editorInputRuntime").setupEditorInputRuntime(state, deps, {
-    playSound: fn.playSound,
-    showEditorMessage: fn.showEditorMessage,
+  deps.requireRuntimeModule("applicationFlowCompositionRuntime").setupApplicationFlowCompositionRuntime(state, deps, {
     tileTypeName: tileTypeName
-  });
-  deps.requireRuntimeModule("stageSelectRuntime").setupStageSelectRuntime(state, deps, {
-    changeStageSelection: fn.changeStageSelection
-  });
-  deps.requireRuntimeModule("postGameRuntime").setupPostGameRuntime(state, deps, {
-    fullGameOverScreenFrames: function () { return FULL_GAME_OVER_SCREEN_FRAMES; },
-    highScoreScreenFrames: function () { return HIGH_SCORE_SCREEN_FRAMES; },
-    playSound: fn.playSound,
-    resetTitleIdleTimer: fn.resetTitleIdleTimer,
-    stopAllAudio: fn.stopAllAudio,
-    stopGameOverAudio: fn.stopGameOverAudio,
-    stopStageResultAudio: fn.stopStageResultAudio
   });
 
   // ── Stage runtime ──────────────────────────────────────────────────────

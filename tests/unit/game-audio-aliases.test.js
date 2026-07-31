@@ -4,6 +4,10 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "../..");
 const source = fs.readFileSync(path.join(root, "src/game.js"), "utf8");
+const applicationFlowSource = fs.readFileSync(
+  path.join(root, "src/runtime/application-flow-composition-runtime.js"),
+  "utf8"
+);
 const startMarker = "// Audio methods are registered before this bridge and do not depend on a receiver.";
 const endMarker = "// Deps module aliases";
 const start = source.indexOf(startMarker);
@@ -18,8 +22,8 @@ for (const [, localName, fnName] of aliases) {
   assert.equal(localName, fnName, `${localName} should reference the same state.fn method`);
 }
 assert(!/\bfunction\s+[A-Za-z0-9_]*Audio[A-Za-z0-9_]*\s*\(/.test(block), "audio aliases should not be forwarding functions");
-assert(source.includes("playSound: fn.playSound"), "startup callbacks should use registered audio methods");
-assert(source.includes("stopGameOverAudio: fn.stopGameOverAudio"), "post-game startup should use registered audio methods");
+assert(applicationFlowSource.includes("playSound: fn.playSound"), "startup callbacks should use registered audio methods");
+assert(applicationFlowSource.includes("stopGameOverAudio: fn.stopGameOverAudio"), "post-game startup should use registered audio methods");
 
 const runtimeStartMarker = "// Runtime methods are referenced only after all extracted modules register them.";
 const runtimeEndMarker = 'requireRuntimeModule("inputRuntime")';
