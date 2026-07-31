@@ -111,6 +111,7 @@
   var audioMixRules = requireRuntimeModule("audioMixRules");
   var fixedFrameAudioState = requireRuntimeModule("fixedFrameAudioState");
   var freeAudioManifest = requireRuntimeModule("freeAudioManifest");
+  var audioScoreDiagnostics = requireRuntimeModule("audioScoreDiagnostics");
   var audioDiagnostics = requireRuntimeModule("audioDiagnostics");
 
   // ── Editor ─────────────────────────────────────────────────────────────────
@@ -366,6 +367,7 @@
     resetFixedFrameAudioState: fixedFrameAudioState.resetFixedFrameAudioState,
     FREE_AUDIO_MANIFEST: freeAudioManifest.FREE_AUDIO_MANIFEST,
     cloneAudioManifest: freeAudioManifest.cloneAudioManifest,
+    audioScoreDiagnostics: audioScoreDiagnostics,
     createAudioDiagnostics: audioDiagnostics.createAudioDiagnostics,
 
     // Editor
