@@ -400,6 +400,83 @@
   var textRenderRuntime = deps.requireRuntimeModule("textRenderRuntime").setupTextRenderRuntime(state, deps);
   var spriteRenderRuntime = deps.requireRuntimeModule("spriteRenderRuntime").setupSpriteRenderRuntime(state, deps);
   var drawMiniTank = spriteRenderRuntime.drawMiniTank;
+  var renderAdapterRuntime = deps.requireRuntimeModule("renderAdapterRuntime").setupRenderAdapterRuntime(state, deps, {
+    textRenderRuntime: textRenderRuntime,
+    spriteRenderRuntime: spriteRenderRuntime
+  });
+  var renderTitle = renderAdapterRuntime.renderTitle;
+  var renderHiddenMessage = renderAdapterRuntime.renderHiddenMessage;
+  var renderHighScore = renderAdapterRuntime.renderHighScore;
+  var renderFullGameOver = renderAdapterRuntime.renderFullGameOver;
+  var fullGameOverPresentation = renderAdapterRuntime.fullGameOverPresentation;
+  var highScorePresentation = renderAdapterRuntime.highScorePresentation;
+  var titleScoreLayout = renderAdapterRuntime.titleScoreLayout;
+  var drawStripedTitleText = renderAdapterRuntime.drawStripedTitleText;
+  var drawTitleMenuCursor = renderAdapterRuntime.drawTitleMenuCursor;
+  var renderStageSelect = renderAdapterRuntime.renderStageSelect;
+  var renderStageSelectClosing = renderAdapterRuntime.renderStageSelectClosing;
+  var renderGame = renderAdapterRuntime.renderGame;
+  var renderGameBackdrop = renderAdapterRuntime.renderGameBackdrop;
+  var renderTerrain = renderAdapterRuntime.renderTerrain;
+  var drawWallCell = renderAdapterRuntime.drawWallCell;
+  var drawBrickCell = renderAdapterRuntime.drawBrickCell;
+  var drawWater = renderAdapterRuntime.drawWater;
+  var waterFrameName = renderAdapterRuntime.waterFrameName;
+  var drawIce = renderAdapterRuntime.drawIce;
+  var renderProjectileTerrainCover = renderAdapterRuntime.renderProjectileTerrainCover;
+  var drawIceProjectileCover = renderAdapterRuntime.drawIceProjectileCover;
+  var drawForest = renderAdapterRuntime.drawForest;
+  var renderBase = renderAdapterRuntime.renderBase;
+  var drawTank = renderAdapterRuntime.drawTank;
+  var drawPlayerUpgradeOverlay = renderAdapterRuntime.drawPlayerUpgradeOverlay;
+  var drawShield = renderAdapterRuntime.drawShield;
+  var drawSpawn = renderAdapterRuntime.drawSpawn;
+  var drawBullet = renderAdapterRuntime.drawBullet;
+  var drawPowerUp = renderAdapterRuntime.drawPowerUp;
+  var isPowerUpVisible = renderAdapterRuntime.isPowerUpVisible;
+  var battleDisplayFrame = renderAdapterRuntime.battleDisplayFrame;
+  var powerUpVisualRect = renderAdapterRuntime.powerUpVisualRect;
+  var drawManifestSprite = renderAdapterRuntime.drawManifestSprite;
+  var drawScaledManifestSprite = renderAdapterRuntime.drawScaledManifestSprite;
+  var renderExplosions = renderAdapterRuntime.renderExplosions;
+  var drawTankDestructionExplosion = renderAdapterRuntime.drawTankDestructionExplosion;
+  var renderPlayerDestructions = renderAdapterRuntime.renderPlayerDestructions;
+  var playerDestructionPresentation = renderAdapterRuntime.playerDestructionPresentation;
+  var renderEnemyDestructions = renderAdapterRuntime.renderEnemyDestructions;
+  var enemyDestructionPresentation = renderAdapterRuntime.enemyDestructionPresentation;
+  var renderBaseDestruction = renderAdapterRuntime.renderBaseDestruction;
+  var baseDestructionPresentation = renderAdapterRuntime.baseDestructionPresentation;
+  var tankDestructionPresentation = renderAdapterRuntime.tankDestructionPresentation;
+  var explosionPresentation = renderAdapterRuntime.explosionPresentation;
+  var renderScorePopups = renderAdapterRuntime.renderScorePopups;
+  var scorePopupPresentation = renderAdapterRuntime.scorePopupPresentation;
+  var renderPanel = renderAdapterRuntime.renderPanel;
+  var drawStageFlag = renderAdapterRuntime.drawStageFlag;
+  var panelEnemyCounterRemaining = renderAdapterRuntime.panelEnemyCounterRemaining;
+  var panelLifeCount = renderAdapterRuntime.panelLifeCount;
+  var drawSmallScore = renderAdapterRuntime.drawSmallScore;
+  var formatScore5 = renderAdapterRuntime.formatScore5;
+  var renderStageIntro = renderAdapterRuntime.renderStageIntro;
+  var renderCurtain = renderAdapterRuntime.renderCurtain;
+  var stageSelectCurtainState = renderAdapterRuntime.stageSelectCurtainState;
+  var stageIntroCurtainState = renderAdapterRuntime.stageIntroCurtainState;
+  var renderStageClear = renderAdapterRuntime.renderStageClear;
+  var renderStageClearClosing = renderAdapterRuntime.renderStageClearClosing;
+  var totalStageKills = renderAdapterRuntime.totalStageKills;
+  var drawResultArrow = renderAdapterRuntime.drawResultArrow;
+  var renderGameOver = renderAdapterRuntime.renderGameOver;
+  var renderPlayerGameOverMessage = renderAdapterRuntime.renderPlayerGameOverMessage;
+  var playerGameOverMessagePresentation = renderAdapterRuntime.playerGameOverMessagePresentation;
+  var drawCompactGameOverWord = renderAdapterRuntime.drawCompactGameOverWord;
+  var gameOverBannerY = renderAdapterRuntime.gameOverBannerY;
+  var renderPause = renderAdapterRuntime.renderPause;
+  var pausePresentation = renderAdapterRuntime.pausePresentation;
+  var renderEditor = renderAdapterRuntime.renderEditor;
+  var drawTileLegend = renderAdapterRuntime.drawTileLegend;
+  var drawText = renderAdapterRuntime.drawText;
+  var drawTextClipped = renderAdapterRuntime.drawTextClipped;
+  var drawTextRight = renderAdapterRuntime.drawTextRight;
+  var pad2 = renderAdapterRuntime.pad2;
   var battleSceneRenderRuntime = deps.requireRuntimeModule("battleSceneRenderRuntime").setupBattleSceneRenderRuntime(state, deps, {
     battleDisplayFrame: battleDisplayFrame,
     drawBullet: drawBullet,
@@ -683,16 +760,7 @@
     tankTrackFrameName: tankTrackFrameName,
     titleScoreLayout: titleScoreLayout
   });
-  var titleRenderRuntime = renderCompositionRuntime.titleRenderRuntime;
-  var terrainRenderRuntime = renderCompositionRuntime.terrainRenderRuntime;
-  var tankRenderRuntime = renderCompositionRuntime.tankRenderRuntime;
-  var powerUpRenderRuntime = renderCompositionRuntime.powerUpRenderRuntime;
-  var projectileRenderRuntime = renderCompositionRuntime.projectileRenderRuntime;
-  var effectRenderRuntime = renderCompositionRuntime.effectRenderRuntime;
-  var stageResultRenderRuntime = renderCompositionRuntime.stageResultRenderRuntime;
-  var battleHudRenderRuntime = renderCompositionRuntime.battleHudRenderRuntime;
-  var editorRenderRuntime = renderCompositionRuntime.editorRenderRuntime;
-  var screenTransitionRenderRuntime = renderCompositionRuntime.screenTransitionRenderRuntime;
+  renderAdapterRuntime.connectRenderCompositionRuntime(renderCompositionRuntime, battleSceneRenderRuntime);
   var screenRenderRuntime = renderCompositionRuntime.screenRenderRuntime;
 
   // Runtime methods are referenced only after all extracted modules register them.
@@ -841,303 +909,6 @@
 
   function render() {
     return screenRenderRuntime.render();
-  }
-
-  function renderTitle() {
-    return titleRenderRuntime.renderTitle();
-  }
-
-  function renderHiddenMessage() {
-    return titleRenderRuntime.renderHiddenMessage();
-  }
-
-  function renderHighScore() {
-    return titleRenderRuntime.renderHighScore();
-  }
-
-  function renderFullGameOver() {
-    return titleRenderRuntime.renderFullGameOver();
-  }
-
-  function fullGameOverPresentation(elapsed) {
-    return selectFullGameOverPresentation(elapsed);
-  }
-
-  function highScorePresentation(elapsed, score) {
-    return selectHighScorePresentation(elapsed, score, { screenWidth: SCREEN_W });
-  }
-
-  function titleScoreLayout(menuIndex) {
-    const selected = menuIndex === undefined ? game.titleMenu : menuIndex;
-    return selectTitleScoreLayout(selected, game.highScore);
-  }
-
-  function drawStripedTitleText(text, x, y, scale, palette) {
-    return titleRenderRuntime.drawStripedTitleText(text, x, y, scale, palette);
-  }
-
-  function drawTitleMenuCursor(item) {
-    return titleRenderRuntime.drawTitleMenuCursor(item);
-  }
-
-  function renderStageSelect() {
-    return screenTransitionRenderRuntime.renderStageSelect();
-  }
-
-  function renderStageSelectClosing() {
-    return screenTransitionRenderRuntime.renderStageSelectClosing();
-  }
-
-  function renderGame() {
-    return battleSceneRenderRuntime.renderGame();
-  }
-
-  function renderGameBackdrop(grid) {
-    return terrainRenderRuntime.renderGameBackdrop(grid);
-  }
-
-  function renderTerrain(topLayer, grid) {
-    return terrainRenderRuntime.renderTerrain(topLayer, grid);
-  }
-
-  function drawWallCell(x, y, mask, dark, light) {
-    return terrainRenderRuntime.drawWallCell(x, y, mask, dark, light);
-  }
-
-  function drawBrickCell(x, y, cell) {
-    return terrainRenderRuntime.drawBrickCell(x, y, cell);
-  }
-
-  function drawWater(x, y) {
-    return terrainRenderRuntime.drawWater(x, y);
-  }
-
-  function waterFrameName(tick) {
-    return terrainRenderRuntime.waterFrameName(tick);
-  }
-
-  function drawIce(x, y) {
-    return terrainRenderRuntime.drawIce(x, y);
-  }
-
-  function renderProjectileTerrainCover(grid) {
-    return terrainRenderRuntime.renderProjectileTerrainCover(grid);
-  }
-
-  function drawIceProjectileCover(x, y) {
-    return terrainRenderRuntime.drawIceProjectileCover(x, y);
-  }
-
-  function drawForest(x, y) {
-    return terrainRenderRuntime.drawForest(x, y);
-  }
-
-  function renderBase() {
-    return terrainRenderRuntime.renderBase();
-  }
-
-  function drawTank(tank, color, accent) {
-    return tankRenderRuntime.drawTank(tank, color, accent);
-  }
-
-  function drawPlayerUpgradeOverlay(tank, x, y, accent) {
-    return tankRenderRuntime.drawPlayerUpgradeOverlay(tank, x, y, accent);
-  }
-
-  function drawShield(tank) {
-    return tankRenderRuntime.drawShield(tank);
-  }
-
-  function drawSpawn(tank) {
-    return tankRenderRuntime.drawSpawn(tank);
-  }
-
-  function drawBullet(bullet) {
-    return projectileRenderRuntime.drawBullet(bullet);
-  }
-
-  function drawPowerUp(power) {
-    return powerUpRenderRuntime.drawPowerUp(power);
-  }
-
-  function isPowerUpVisible(tick) {
-    return powerUpRenderRuntime.isPowerUpVisible(tick);
-  }
-
-  /**
-   * Returns the visual frame phase used by display handlers that keep running
-   * while the battle simulation is paused.
-   */
-  function battleDisplayFrame() {
-    return game.frameLow;
-  }
-
-  function powerUpVisualRect(power) {
-    return powerUpRenderRuntime.powerUpVisualRect(power);
-  }
-
-  function drawManifestSprite(spriteName, frameName, x, y, palette) {
-    return spriteRenderRuntime.drawManifestSprite(spriteName, frameName, x, y, palette);
-  }
-
-  function drawScaledManifestSprite(spriteName, frameName, x, y, scale, palette) {
-    return spriteRenderRuntime.drawScaledManifestSprite(spriteName, frameName, x, y, scale, palette);
-  }
-
-  function renderExplosions() {
-    return effectRenderRuntime.renderExplosions();
-  }
-
-  function drawTankDestructionExplosion(explosion) {
-    return effectRenderRuntime.drawTankDestructionExplosion(explosion);
-  }
-
-  function renderPlayerDestructions() {
-    return effectRenderRuntime.renderPlayerDestructions();
-  }
-
-  function playerDestructionPresentation(player) {
-    return effectRenderRuntime.playerDestructionPresentation(player);
-  }
-
-  function renderEnemyDestructions() {
-    return effectRenderRuntime.renderEnemyDestructions();
-  }
-
-  function enemyDestructionPresentation(enemy) {
-    return effectRenderRuntime.enemyDestructionPresentation(enemy);
-  }
-
-  function renderBaseDestruction() {
-    return effectRenderRuntime.renderBaseDestruction();
-  }
-
-  function baseDestructionPresentation(timer) {
-    return effectRenderRuntime.baseDestructionPresentation(timer);
-  }
-
-  function tankDestructionPresentation(explosion) {
-    return effectRenderRuntime.tankDestructionPresentation(explosion);
-  }
-
-  function explosionPresentation(explosion) {
-    return effectRenderRuntime.explosionPresentation(explosion);
-  }
-
-  function renderScorePopups() {
-    return effectRenderRuntime.renderScorePopups();
-  }
-
-  function scorePopupPresentation(popup) {
-    return effectRenderRuntime.scorePopupPresentation(popup);
-  }
-
-  function renderPanel() {
-    return battleHudRenderRuntime.renderPanel();
-  }
-
-  function drawStageFlag(x, y) {
-    return battleHudRenderRuntime.drawStageFlag(x, y);
-  }
-
-  function panelEnemyCounterRemaining(total, spawned) {
-    return battleHudRenderRuntime.panelEnemyCounterRemaining(total, spawned);
-  }
-
-  function panelLifeCount(player) {
-    return battleHudRenderRuntime.panelLifeCount(player);
-  }
-
-  function drawSmallScore(score, x, y, color) {
-    return stageResultRenderRuntime.drawSmallScore(score, x, y, color);
-  }
-
-  function formatScore5(score) {
-    return stageResultRenderRuntime.formatScore5(score);
-  }
-
-  function renderStageIntro() {
-    return screenTransitionRenderRuntime.renderStageIntro();
-  }
-
-  function renderCurtain(curtain) {
-    return screenTransitionRenderRuntime.renderCurtain(curtain);
-  }
-
-  function stageSelectCurtainState(timer) {
-    return screenTransitionRenderRuntime.stageSelectCurtainState(timer);
-  }
-
-  function stageIntroCurtainState(timer) {
-    return screenTransitionRenderRuntime.stageIntroCurtainState(timer);
-  }
-
-  function renderStageClear() {
-    return stageResultRenderRuntime.renderStageClear();
-  }
-
-  function renderStageClearClosing() {
-    return stageResultRenderRuntime.renderStageClearClosing();
-  }
-
-  function totalStageKills(player) {
-    return stageResultRenderRuntime.totalStageKills(player);
-  }
-
-  function drawResultArrow(x, y, direction) {
-    return stageResultRenderRuntime.drawResultArrow(x, y, direction);
-  }
-
-  function renderGameOver() {
-    return battleHudRenderRuntime.renderGameOver();
-  }
-
-  function renderPlayerGameOverMessage() {
-    return battleHudRenderRuntime.renderPlayerGameOverMessage();
-  }
-
-  function playerGameOverMessagePresentation() {
-    return battleHudRenderRuntime.playerGameOverMessagePresentation();
-  }
-
-  function drawCompactGameOverWord(word, x, y) {
-    return battleHudRenderRuntime.drawCompactGameOverWord(word, x, y);
-  }
-
-  function gameOverBannerY(timer) {
-    return battleHudRenderRuntime.gameOverBannerY(timer);
-  }
-
-  function renderPause() {
-    return battleHudRenderRuntime.renderPause();
-  }
-
-  function pausePresentation(frame) {
-    return battleHudRenderRuntime.pausePresentation(frame);
-  }
-
-  function renderEditor() {
-    return editorRenderRuntime.renderEditor();
-  }
-
-  function drawTileLegend(x, y) {
-    return editorRenderRuntime.drawTileLegend(x, y);
-  }
-
-  function drawText(text, x, y, scale, color, advance) {
-    return textRenderRuntime.drawText(text, x, y, scale, color, advance);
-  }
-
-  function drawTextClipped(text, x, y, scale, color, clips) {
-    return textRenderRuntime.drawTextClipped(text, x, y, scale, color, clips);
-  }
-
-  function drawTextRight(text, right, y, scale, color) {
-    return textRenderRuntime.drawTextRight(text, right, y, scale, color);
-  }
-
-  function pad2(value) {
-    return String(value).padStart(2, "0");
   }
 
   // ── Register local functions on state.fn (for debug-api access) ──────
