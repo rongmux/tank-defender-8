@@ -32,14 +32,23 @@ const api = runtime.setupSpriteRenderRuntime(state, {
             { rect: [9, 10, 11, 12], color: "#part" }
           ]
         }
+      },
+      miniTank: {
+        frames: {
+          up: [
+            { role: "primary", rect: [0, 0, 4, 4] },
+            { role: "shadow", rect: [1, 1, 2, 2] }
+          ]
+        }
       }
     }
   }
 });
 
 assert(Object.isFrozen(api));
-assert.deepEqual(Object.keys(api), ["drawManifestSprite", "drawScaledManifestSprite"]);
+assert.deepEqual(Object.keys(api), ["drawManifestSprite", "drawMiniTank", "drawScaledManifestSprite"]);
 assert.equal(state.fn.drawManifestSprite, api.drawManifestSprite);
+assert.equal(state.fn.drawMiniTank, api.drawMiniTank);
 
 api.drawManifestSprite("demo", "frame", 10, 20, { primary: "#primary" });
 assert.deepEqual(calls, [
@@ -57,6 +66,13 @@ assert.deepEqual(calls, [
   ["fillRect", 10.5, 21, 1.5, 2],
   ["strokeRect", 12.5, 23, 3.5, 4],
   ["fillRect", 14.5, 25, 5.5, 6]
+]);
+
+calls.length = 0;
+api.drawMiniTank(12, 20, "#tank");
+assert.deepEqual(calls, [
+  ["fillRect", 12, 20, 4, 4],
+  ["fillRect", 13, 21, 2, 2]
 ]);
 
 calls.length = 0;

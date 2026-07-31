@@ -606,7 +606,7 @@ tank-defender-8/
 
 `src/runtime/text-render-runtime.js` owns the shared integer pixel-font submission path for normal, clipped, and right-aligned text. It preserves uppercase glyph lookup, rounded integer origins, scale/advance defaults, clip intersection, and right-edge alignment; direct tests cover exact glyph rectangles, clipping, empty clips, and right-aligned call flow.
 
-`src/runtime/sprite-render-runtime.js` owns free sprite-manifest frame lookup plus native and scaled Canvas rectangle submission. It preserves role-first palette fallback, part colors, fill/stroke operations, and fractional scaling geometry; direct tests cover native frames, scaled frames, fallback colors, missing frames, and registration.
+`src/runtime/sprite-render-runtime.js` owns free sprite-manifest frame lookup plus native and scaled Canvas rectangle submission. It also owns the shared `miniTank/up` result/title sprite composition, including its fixed shadow palette, so the composition root no longer duplicates that primitive. It preserves role-first palette fallback, part colors, fill/stroke operations, and fractional scaling geometry; direct tests cover native frames, scaled frames, mini-tank composition, fallback colors, missing frames, and registration.
 
 `src/runtime/battle-scene-render-runtime.js` owns the active-battle Canvas composition order: background, field, terrain, base, players, enemies, bullets, projectile cover, top terrain, power-up, explosions, destruction overlays, score popups, player GAME OVER text, and side panel. It preserves spawn/death filtering, paused shield visibility, display-frame reads, and every occlusion boundary; direct tests lock the complete callback sequence.
 

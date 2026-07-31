@@ -396,6 +396,7 @@
 
   var textRenderRuntime = deps.requireRuntimeModule("textRenderRuntime").setupTextRenderRuntime(state, deps);
   var spriteRenderRuntime = deps.requireRuntimeModule("spriteRenderRuntime").setupSpriteRenderRuntime(state, deps);
+  var drawMiniTank = spriteRenderRuntime.drawMiniTank;
   var battleSceneRenderRuntime = deps.requireRuntimeModule("battleSceneRenderRuntime").setupBattleSceneRenderRuntime(state, deps, {
     battleDisplayFrame: battleDisplayFrame,
     drawBullet: drawBullet,
@@ -1084,13 +1085,6 @@
     return stageResultRenderRuntime.drawResultArrow(x, y, direction);
   }
 
-  function drawMiniTank(x, y, color) {
-    drawManifestSprite("miniTank", "up", x, y, {
-      primary: color,
-      shadow: "#111111"
-    });
-  }
-
   function renderGameOver() {
     return battleHudRenderRuntime.renderGameOver();
   }
@@ -1225,7 +1219,6 @@
   state.fn.renderStageClearClosing = renderStageClearClosing;
   state.fn.totalStageKills = totalStageKills;
   state.fn.drawResultArrow = drawResultArrow;
-  state.fn.drawMiniTank = drawMiniTank;
   state.fn.renderGameOver = renderGameOver;
   state.fn.renderPlayerGameOverMessage = renderPlayerGameOverMessage;
   state.fn.playerGameOverMessagePresentation = playerGameOverMessagePresentation;

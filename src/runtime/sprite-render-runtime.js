@@ -47,6 +47,13 @@
       }
     }
 
+    function drawMiniTank(x, y, color) {
+      drawManifestSprite("miniTank", "up", x, y, {
+        primary: color,
+        shadow: "#111111"
+      });
+    }
+
     function drawScaledManifestSprite(spriteName, frameName, x, y, scale, palette) {
       var sprite = spriteManifest.sprites[spriteName];
       var frame = sprite && sprite.frames[frameName];
@@ -71,6 +78,7 @@
 
     var api = {
       drawManifestSprite: drawManifestSprite,
+      drawMiniTank: drawMiniTank,
       drawScaledManifestSprite: drawScaledManifestSprite
     };
     Object.assign(state.fn, api);
