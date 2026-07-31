@@ -1155,105 +1155,105 @@
 
 
   // ── Register local functions on state.fn (for debug-api access) ──────
-  state.fn.update = update;
-  state.fn.render = render;
-  state.fn.tileTypeName = tileTypeName;
-  state.fn.shouldSpawnEnemies = shouldSpawnEnemies;
-  state.fn.renderTitle = renderTitle;
-  state.fn.renderHiddenMessage = renderHiddenMessage;
-  state.fn.renderHighScore = renderHighScore;
-  state.fn.renderFullGameOver = renderFullGameOver;
-  state.fn.fullGameOverPresentation = fullGameOverPresentation;
-  state.fn.highScorePresentation = highScorePresentation;
-  state.fn.titleScoreLayout = titleScoreLayout;
-  state.fn.drawStripedTitleText = drawStripedTitleText;
-  state.fn.drawTitleMenuCursor = drawTitleMenuCursor;
-  state.fn.renderStageSelect = renderStageSelect;
-  state.fn.renderStageSelectClosing = renderStageSelectClosing;
-  state.fn.renderGame = renderGame;
-  state.fn.renderGameBackdrop = renderGameBackdrop;
-  state.fn.renderTerrain = renderTerrain;
-  state.fn.drawWallCell = drawWallCell;
-  state.fn.drawBrickCell = drawBrickCell;
-  state.fn.drawWater = drawWater;
-  state.fn.waterFrameName = waterFrameName;
-  state.fn.drawIce = drawIce;
-  state.fn.renderProjectileTerrainCover = renderProjectileTerrainCover;
-  state.fn.drawIceProjectileCover = drawIceProjectileCover;
-  state.fn.drawForest = drawForest;
-  state.fn.renderBase = renderBase;
-  state.fn.drawTank = drawTank;
-  state.fn.drawPlayerUpgradeOverlay = drawPlayerUpgradeOverlay;
-  state.fn.drawShield = drawShield;
-  state.fn.drawSpawn = drawSpawn;
-  state.fn.drawBullet = drawBullet;
-  state.fn.drawPowerUp = drawPowerUp;
-  state.fn.isPowerUpVisible = isPowerUpVisible;
-  state.fn.battleDisplayFrame = battleDisplayFrame;
-  state.fn.powerUpVisualRect = powerUpVisualRect;
-  state.fn.drawManifestSprite = drawManifestSprite;
-  state.fn.drawScaledManifestSprite = drawScaledManifestSprite;
-  state.fn.renderExplosions = renderExplosions;
-  state.fn.drawTankDestructionExplosion = drawTankDestructionExplosion;
-  state.fn.renderPlayerDestructions = renderPlayerDestructions;
-  state.fn.playerDestructionPresentation = playerDestructionPresentation;
-  state.fn.renderEnemyDestructions = renderEnemyDestructions;
-  state.fn.enemyDestructionPresentation = enemyDestructionPresentation;
-  state.fn.renderBaseDestruction = renderBaseDestruction;
-  state.fn.baseDestructionPresentation = baseDestructionPresentation;
-  state.fn.tankDestructionPresentation = tankDestructionPresentation;
-  state.fn.explosionPresentation = explosionPresentation;
-  state.fn.renderScorePopups = renderScorePopups;
-  state.fn.scorePopupPresentation = scorePopupPresentation;
-  state.fn.renderPanel = renderPanel;
-  state.fn.drawStageFlag = drawStageFlag;
-  state.fn.panelEnemyCounterRemaining = panelEnemyCounterRemaining;
-  state.fn.panelLifeCount = panelLifeCount;
-  state.fn.drawSmallScore = drawSmallScore;
-  state.fn.formatScore5 = formatScore5;
-  state.fn.renderStageIntro = renderStageIntro;
-  state.fn.renderCurtain = renderCurtain;
-  state.fn.stageSelectCurtainState = stageSelectCurtainState;
-  state.fn.stageIntroCurtainState = stageIntroCurtainState;
-  state.fn.renderStageClear = renderStageClear;
-  state.fn.renderStageClearClosing = renderStageClearClosing;
-  state.fn.totalStageKills = totalStageKills;
-  state.fn.drawResultArrow = drawResultArrow;
-  state.fn.renderGameOver = renderGameOver;
-  state.fn.renderPlayerGameOverMessage = renderPlayerGameOverMessage;
-  state.fn.playerGameOverMessagePresentation = playerGameOverMessagePresentation;
-  state.fn.drawCompactGameOverWord = drawCompactGameOverWord;
-  state.fn.gameOverBannerY = gameOverBannerY;
-  state.fn.renderPause = renderPause;
-  state.fn.pausePresentation = pausePresentation;
-  state.fn.renderEditor = renderEditor;
-  state.fn.drawTileLegend = drawTileLegend;
-  state.fn.drawText = drawText;
-  state.fn.drawTextClipped = drawTextClipped;
-  state.fn.drawTextRight = drawTextRight;
-  state.fn.pad2 = pad2;
-  state.fn.preparePausedDebugBattle = preparePausedDebugBattle;
-
-  // Stage-runtime functions (used by debug-api)
-  state.fn.gameSettings = gameSettings;
-  state.fn.enemyTypeDefinitions = enemyTypeDefinitions;
-  state.fn.stageCount = stageCount;
-  state.fn.stageCycleLimit = stageCycleLimit;
-  state.fn.stageRoute = stageRoute;
-  state.fn.enemySequenceForStage = enemySequenceForStage;
-  state.fn.enemyTotal = enemyTotal;
-  state.fn.enemySpawnPoint = enemySpawnPoint;
-  state.fn.maxActiveEnemies = maxActiveEnemies;
-  state.fn.getEnemySpec = getEnemySpec;
-  state.fn.currentEnemySpawns = currentEnemySpawns;
-  state.fn.currentPlayerSpawns = currentPlayerSpawns;
-  state.fn.currentPowerUpSpawns = currentPowerUpSpawns;
-  state.fn.enemyDataStage = enemyDataStage;
-  state.fn.mapDataStage = mapDataStage;
-  state.fn.playerSpawnPoint = playerSpawnPoint;
-  state.fn.isExtendedLoopStage = isExtendedLoopStage;
-  state.fn.stageSettings = stageSettings;
-  state.fn.createStageGrid = createStageGrid;
+  deps.requireRuntimeModule("legacyApiRuntime").setupLegacyApiRuntime(state, {
+    update: update,
+    render: render,
+    tileTypeName: tileTypeName,
+    shouldSpawnEnemies: shouldSpawnEnemies,
+    renderTitle: renderTitle,
+    renderHiddenMessage: renderHiddenMessage,
+    renderHighScore: renderHighScore,
+    renderFullGameOver: renderFullGameOver,
+    fullGameOverPresentation: fullGameOverPresentation,
+    highScorePresentation: highScorePresentation,
+    titleScoreLayout: titleScoreLayout,
+    drawStripedTitleText: drawStripedTitleText,
+    drawTitleMenuCursor: drawTitleMenuCursor,
+    renderStageSelect: renderStageSelect,
+    renderStageSelectClosing: renderStageSelectClosing,
+    renderGame: renderGame,
+    renderGameBackdrop: renderGameBackdrop,
+    renderTerrain: renderTerrain,
+    drawWallCell: drawWallCell,
+    drawBrickCell: drawBrickCell,
+    drawWater: drawWater,
+    waterFrameName: waterFrameName,
+    drawIce: drawIce,
+    renderProjectileTerrainCover: renderProjectileTerrainCover,
+    drawIceProjectileCover: drawIceProjectileCover,
+    drawForest: drawForest,
+    renderBase: renderBase,
+    drawTank: drawTank,
+    drawPlayerUpgradeOverlay: drawPlayerUpgradeOverlay,
+    drawShield: drawShield,
+    drawSpawn: drawSpawn,
+    drawBullet: drawBullet,
+    drawPowerUp: drawPowerUp,
+    isPowerUpVisible: isPowerUpVisible,
+    battleDisplayFrame: battleDisplayFrame,
+    powerUpVisualRect: powerUpVisualRect,
+    drawManifestSprite: drawManifestSprite,
+    drawScaledManifestSprite: drawScaledManifestSprite,
+    renderExplosions: renderExplosions,
+    drawTankDestructionExplosion: drawTankDestructionExplosion,
+    renderPlayerDestructions: renderPlayerDestructions,
+    playerDestructionPresentation: playerDestructionPresentation,
+    renderEnemyDestructions: renderEnemyDestructions,
+    enemyDestructionPresentation: enemyDestructionPresentation,
+    renderBaseDestruction: renderBaseDestruction,
+    baseDestructionPresentation: baseDestructionPresentation,
+    tankDestructionPresentation: tankDestructionPresentation,
+    explosionPresentation: explosionPresentation,
+    renderScorePopups: renderScorePopups,
+    scorePopupPresentation: scorePopupPresentation,
+    renderPanel: renderPanel,
+    drawStageFlag: drawStageFlag,
+    panelEnemyCounterRemaining: panelEnemyCounterRemaining,
+    panelLifeCount: panelLifeCount,
+    drawSmallScore: drawSmallScore,
+    formatScore5: formatScore5,
+    renderStageIntro: renderStageIntro,
+    renderCurtain: renderCurtain,
+    stageSelectCurtainState: stageSelectCurtainState,
+    stageIntroCurtainState: stageIntroCurtainState,
+    renderStageClear: renderStageClear,
+    renderStageClearClosing: renderStageClearClosing,
+    totalStageKills: totalStageKills,
+    drawResultArrow: drawResultArrow,
+    renderGameOver: renderGameOver,
+    renderPlayerGameOverMessage: renderPlayerGameOverMessage,
+    playerGameOverMessagePresentation: playerGameOverMessagePresentation,
+    drawCompactGameOverWord: drawCompactGameOverWord,
+    gameOverBannerY: gameOverBannerY,
+    renderPause: renderPause,
+    pausePresentation: pausePresentation,
+    renderEditor: renderEditor,
+    drawTileLegend: drawTileLegend,
+    drawText: drawText,
+    drawTextClipped: drawTextClipped,
+    drawTextRight: drawTextRight,
+    pad2: pad2,
+    preparePausedDebugBattle: preparePausedDebugBattle,
+    gameSettings: gameSettings,
+    enemyTypeDefinitions: enemyTypeDefinitions,
+    stageCount: stageCount,
+    stageCycleLimit: stageCycleLimit,
+    stageRoute: stageRoute,
+    enemySequenceForStage: enemySequenceForStage,
+    enemyTotal: enemyTotal,
+    enemySpawnPoint: enemySpawnPoint,
+    maxActiveEnemies: maxActiveEnemies,
+    getEnemySpec: getEnemySpec,
+    currentEnemySpawns: currentEnemySpawns,
+    currentPlayerSpawns: currentPlayerSpawns,
+    currentPowerUpSpawns: currentPowerUpSpawns,
+    enemyDataStage: enemyDataStage,
+    mapDataStage: mapDataStage,
+    playerSpawnPoint: playerSpawnPoint,
+    isExtendedLoopStage: isExtendedLoopStage,
+    stageSettings: stageSettings,
+    createStageGrid: createStageGrid
+  });
 
   // ── Debug API (must be last) ───────────────────────────────────────────
   deps.requireRuntimeModule("debugApi").setupDebugApi(state, deps);

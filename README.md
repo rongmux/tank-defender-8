@@ -176,6 +176,7 @@ node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-bridge.js
 node --check src/runtime/debug-api.js
 node --check src/runtime/render-composition-runtime.js
+node --check src/runtime/legacy-api-runtime.js
 node --check src/game.js
 node --check tests/helpers/test-file-discovery.js
 node --check tools/build-free-stage-pack.js
@@ -327,7 +328,8 @@ tank-defender-8/
 |   |   |-- game-lifecycle.js
 |   |   |-- audio-bridge.js
 |   |   |-- debug-api.js
-|   |   `-- render-composition-runtime.js
+|   |   |-- render-composition-runtime.js
+|   |   `-- legacy-api-runtime.js
 |   `-- game.js
 |-- tests/
 |   |-- helpers/
@@ -350,6 +352,7 @@ tank-defender-8/
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
+|   |   |-- legacy-api-runtime.test.js
 |   |   |-- effect-presentation.test.js
 |   |   |-- enemy-diagnostics.test.js
 |   |   |-- enemy-ai-rules.test.js
@@ -448,6 +451,7 @@ tank-defender-8/
 |   |   |-- input-runtime.test.js
 |   |   |-- screen-render-runtime.test.js
 |   |   |-- render-composition-runtime.test.js
+|   |   |-- legacy-api-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
 |   |   |-- frame-counter-runtime.test.js
 |   |   |-- effect-diagnostics.test.js
@@ -625,6 +629,8 @@ tank-defender-8/
 `src/runtime/` contains the browser composition boundary created during the runtime split. `shared-state.js` creates the single mutable state graph and fixed layout/timing constants; `module-deps.js` validates script order and exposes the explicit dependency barrel; `game-lifecycle.js` owns high-score persistence plus title, stage, editor, pack-loading, and transition orchestration; `audio-bridge.js` owns Web Audio node creation and event synchronization; and `debug-api.js` adapts retained runtime functions into the public test/diagnostic API. `audio-diagnostics.js` owns the 31 contiguous manifest, presentation, movement, priority, pause, and fixed-frame lifecycle probes behind 142 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`; extracting it plus dead aliases reduces `debug-api.js` from 8,957 to 6,171 lines. Its unit suite locks method order, validation, binding precedence, and clone isolation; browser integration executes every probe in sequence and preserves the pre-refactor 61,974-byte SHA-256 output. `stage-pack-diagnostics.js` owns the exact cloned projection shared by `currentPackInfo()` and the stage-pack section of `debugSnapshot()`, including route metadata, normalized settings, enemy types, upgrade/wall rules, spawn layouts, and the active enemy sequence. `stage-result-diagnostics.js` binds four frozen public stage-result probes to pure rules, normalizes diagnostic player records, projects bonus recipients, row scores/layout gaps, and count/reveal timing, and removes two debug-only helpers from `src/game.js`. Its unit suite covers input normalization, bonus eligibility, dynamic timing overrides, presentation boundaries, and output isolation; browser integration locks public API order and the pre-refactor 1,478-byte output hash. `stage-flow-diagnostics.js` binds 17 contiguous curtain, stage-cycle, stage-clear, automatic-advance, and game-over probes through 49 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`; extracting it and 17 dead aliases reduces `debug-api.js` from 6,171 to 5,483 lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all 17 probes at their original public indices and preserves the pre-refactor 13,047-byte output SHA-256. `screen-flow-diagnostics.js` binds 11 contiguous title-score, frame-counter, stage-select cadence, title demo/hidden-message, high-score, and full-screen game-over probes through 57 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`; extracting it and 32 dead aliases reduces `debug-api.js` from 5,483 to 4,833 lines. Its unit suite locks validation, exact method order, binding precedence, receiver identity, and cloned layout output; browser integration executes all 11 probes at their original public indices and preserves the pre-refactor 25,534-byte output SHA-256. `enemy-diagnostics.js` binds 11 contiguous carrier, enemy presentation, target selection, AI/movement cadence, blocked recovery, spawn timeline, and spawn-animation probes through 34 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`; extracting it and four dead aliases reduces `debug-api.js` from 4,833 to 4,497 lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all 11 probes at their original public indices and preserves the pre-refactor 3,839-byte output SHA-256. `debug-snapshot.js` owns the complete 95-field public state projection: screen and fixed counters, all 17 retained audio events, stage-pack diagnostics, score popups, battle/editor grids, field geometry, and independently cloned player summaries. Unit tests lock the exact field order, audio event mapping, representative values, and clone isolation; browser integration verifies module registration, the thin adapter, and repeated-call isolation.
 
 `src/runtime/render-composition-runtime.js` owns the setup order for the Canvas-facing runtime boundaries: title, terrain, tank, power-up, projectile, effect, stage-result, HUD, editor, transition, and top-level screen rendering. It receives the existing game callbacks, registers the same `state.fn` methods through the original runtime modules, returns their frozen handles to the composition root, and keeps render dependency wiring out of `src/game.js`. Its unit test locks callback validation, setup order, and handle isolation; the browser bootstrap test loads the new script through the real no-build entry path.
+
+`src/runtime/legacy-api-runtime.js` owns the final compatibility registration of the retained `state.fn` surface. It runs only after all runtime modules have installed their APIs, validates the callback table, preserves registration order, and keeps the public debug adapter independent from the composition root's assignment block. Direct unit coverage locks validation, insertion order, and function identity; browser integration verifies that `src/game.js` contains no direct `state.fn` assignment statements.
 
 `src/runtime/audio-bridge.js` now also owns the fixed-frame audio lifecycle order exposed to the composition root: updating every voice, stopping gameplay voices before a result, stopping result voices, and stopping every voice on full teardown. The unit test locks all four sequences so later audio changes cannot silently reorder channel cleanup or advancement.
 

@@ -128,6 +128,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/audio-bridge.js",
   "src/runtime/debug-api.js",
   "src/runtime/render-composition-runtime.js",
+  "src/runtime/legacy-api-runtime.js",
   "src/game.js"
 ]);
 
