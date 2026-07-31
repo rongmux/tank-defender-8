@@ -69,6 +69,8 @@ assert(modules.audioStageStartDiagnostics, "stage-start audio diagnostics module
 assert.equal(Object.isFrozen(modules.audioStageStartDiagnostics), true);
 assert(modules.audioBonusLifeDiagnostics, "bonus-life audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioBonusLifeDiagnostics), true);
+assert(modules.audioPowerUpPickupDiagnostics, "power-up-pickup audio diagnostics module should register before audio-diagnostics.js");
+assert.equal(Object.isFrozen(modules.audioPowerUpPickupDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(3, 34))),
   AUDIO_DIAGNOSTIC_METHODS
@@ -358,6 +360,10 @@ const bonusLifeDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-bonus-life-diagnostics.js"),
   "utf8"
 );
+const powerUpPickupDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/audio-power-up-pickup-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createAudioDiagnostics(state, deps)"));
 for (const name of AUDIO_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}()`), false);
@@ -385,6 +391,8 @@ for (const name of AUDIO_DIAGNOSTIC_METHODS) {
                         ? stageStartDiagnosticsSource
                         : name === "debugBonusLifeAudioProbe"
                           ? bonusLifeDiagnosticsSource
+                          : name === "debugPowerUpPickupAudioProbe"
+                            ? powerUpPickupDiagnosticsSource
           : diagnosticsSource;
   assert.equal(owner.includes(`${name}()`), true);
 }
@@ -400,6 +408,7 @@ assert.equal(diagnosticsSource.includes("debugBaseHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPlayerShootAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugStageStartAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBonusLifeAudioProbe()"), false);
+assert.equal(diagnosticsSource.includes("debugPowerUpPickupAudioProbe()"), false);
 assert.equal(debugSource.includes("function startScoreCountAudio()"), false);
 assert(debugSource.split(/\r?\n/).length < 6500);
 
