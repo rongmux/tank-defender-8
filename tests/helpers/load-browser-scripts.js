@@ -129,6 +129,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/application-flow-composition-runtime.js",
   "src/runtime/input-composition-runtime.js",
   "src/runtime/legacy-api-composition-runtime.js",
+  "src/runtime/render-pipeline-composition-runtime.js",
   "src/runtime/debug-battle-runtime.js",
   "src/runtime/debug-api.js",
   "src/runtime/render-composition-runtime.js",

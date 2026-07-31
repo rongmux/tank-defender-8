@@ -177,6 +177,7 @@ node --check src/runtime/audio-bridge.js
 node --check src/runtime/application-flow-composition-runtime.js
 node --check src/runtime/input-composition-runtime.js
 node --check src/runtime/legacy-api-composition-runtime.js
+node --check src/runtime/render-pipeline-composition-runtime.js
 node --check src/runtime/debug-api.js
 node --check src/runtime/debug-battle-runtime.js
 node --check src/runtime/render-adapter-runtime.js
@@ -337,6 +338,7 @@ tank-defender-8/
 |   |   |-- application-flow-composition-runtime.js
 |   |   |-- input-composition-runtime.js
 |   |   |-- legacy-api-composition-runtime.js
+|   |   |-- render-pipeline-composition-runtime.js
 |   |   |-- debug-battle-runtime.js
 |   |   |-- debug-api.js
 |   |   |-- render-adapter-runtime.js
@@ -353,6 +355,7 @@ tank-defender-8/
 |   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- input-composition-runtime.test.js
 |   |   |-- legacy-api-composition-runtime.test.js
+|   |   |-- render-pipeline-composition-runtime.test.js
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
@@ -434,6 +437,7 @@ tank-defender-8/
 |   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- input-composition-runtime.test.js
 |   |   |-- legacy-api-composition-runtime.test.js
+|   |   |-- render-pipeline-composition-runtime.test.js
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
@@ -661,6 +665,8 @@ tank-defender-8/
 `src/runtime/input-composition-runtime.js` owns the browser-input callback composition that connects the extracted input router to the registered game methods. It preserves the existing callback order, the dynamic stage-clear predicate used by pause gating, and the explicit DOM/shared-state dependencies, leaving `src/game.js` with only the composition call and the main-loop high-score reference. Unit tests lock callback identity and adapter inputs; browser integration verifies the no-build registration.
 
 `src/runtime/legacy-api-composition-runtime.js` owns the retained public/debug API callback projection. It combines local screen/update callbacks with the extracted render adapter and stage runtime, then delegates the original registration order to `legacy-api-runtime.js`, removing the large registration object from `src/game.js` without changing the public `state.fn` surface. Unit tests lock callback identity across both sources; browser integration verifies the no-build registration boundary.
+
+`src/runtime/render-pipeline-composition-runtime.js` owns the multi-phase Canvas pipeline assembly: text and sprite adapters, the render adapter, the battle scene, and the final screen render composition. It exposes an explicit completion step so `battle-composition-runtime.js` remains between battle-scene setup and screen-composition setup, preserving the original initialization order while removing the large wiring block from `src/game.js`. Unit tests lock phase order, callback identity, and idempotent completion; browser integration verifies the no-build pipeline boundary.
 
 `src/runtime/battle-composition-runtime.js` owns the initialization order for player movement, projectiles, combat, stage results, stage flow, Game Over, timing, power-ups, enemy AI/movement/update, battle outcomes, the fixed-frame loop, and screen updates. It reads the existing `state.fn` and stage runtime instead of duplicating rules, and accepts only the top-level render/update/spawn gates from `src/game.js`. Unit tests lock the module order and returned loop handles; browser integration verifies the real startup path.
 

@@ -177,6 +177,7 @@ node --check src/runtime/audio-bridge.js
 node --check src/runtime/application-flow-composition-runtime.js
 node --check src/runtime/input-composition-runtime.js
 node --check src/runtime/legacy-api-composition-runtime.js
+node --check src/runtime/render-pipeline-composition-runtime.js
 node --check src/runtime/debug-api.js
 node --check src/runtime/debug-battle-runtime.js
 node --check src/runtime/render-adapter-runtime.js
@@ -337,6 +338,7 @@ tank-defender-8/
 |   |   |-- application-flow-composition-runtime.js
 |   |   |-- input-composition-runtime.js
 |   |   |-- legacy-api-composition-runtime.js
+|   |   |-- render-pipeline-composition-runtime.js
 |   |   |-- debug-battle-runtime.js
 |   |   |-- debug-api.js
 |   |   |-- render-adapter-runtime.js
@@ -353,6 +355,7 @@ tank-defender-8/
 |   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- input-composition-runtime.test.js
 |   |   |-- legacy-api-composition-runtime.test.js
+|   |   |-- render-pipeline-composition-runtime.test.js
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
@@ -434,6 +437,7 @@ tank-defender-8/
 |   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- input-composition-runtime.test.js
 |   |   |-- legacy-api-composition-runtime.test.js
+|   |   |-- render-pipeline-composition-runtime.test.js
 |   |   |-- audio-diagnostics.test.js
 |   |   |-- audio-mix-rules.test.js
 |   |   |-- audio-presentation.test.js
@@ -753,6 +757,8 @@ tank-defender-8/
 `src/runtime/input-composition-runtime.js` 接管把浏览器输入路由连接到已注册游戏方法的回调组装。它保留原有回调顺序、暂停门控使用的动态关卡清空判定，以及显式的 DOM/共享状态依赖，让 `src/game.js` 只保留组合调用和主循环最高分引用。单元测试锁定回调身份和适配器输入；浏览器集成测试验证无需构建的注册路径。
 
 `src/runtime/legacy-api-composition-runtime.js` 接管保留的公开/调试 API 回调投影。它组合本地屏幕/更新回调、抽离后的渲染适配器和关卡 runtime，再将原有注册顺序交给 `legacy-api-runtime.js`，从 `src/game.js` 移出大型注册对象，同时不改变公开的 `state.fn` 表面。单元测试锁定两类来源的回调身份；浏览器集成测试验证无需构建的注册边界。
+
+`src/runtime/render-pipeline-composition-runtime.js` 接管分阶段的 Canvas 管线组装：文本与精灵适配器、渲染适配器、战斗场景和最终屏幕渲染组合。它提供显式完成步骤，让 `battle-composition-runtime.js` 继续位于战斗场景初始化与屏幕组合初始化之间，在移出 `src/game.js` 大型接线块的同时保持原有初始化顺序。单元测试锁定阶段顺序、回调身份和幂等完成；浏览器集成测试验证无需构建的管线边界。
 
 `src/runtime/battle-composition-runtime.js` 接管玩家移动、投射物、战斗、关卡结算、关卡流程、Game Over、计时、道具、敌人 AI/移动/更新、战斗结束判定、固定帧循环和屏幕更新的初始化顺序。它读取现有 `state.fn` 与关卡 runtime，不复制规则，只从 `src/game.js` 接收顶层渲染/更新/生成门控。单元测试锁定模块顺序和返回的循环句柄；浏览器集成测试验证真实启动路径。
 
