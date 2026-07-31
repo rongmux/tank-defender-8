@@ -662,7 +662,7 @@ tank-defender-8/
 
 `src/runtime/application-flow-composition-runtime.js` owns the application-flow initialization order for lifecycle, audio, Construction input, stage selection, and full-screen post-game screens. It reads the existing `state.fn` registrations, keeps frame/lifecycle callbacks explicit, and removes this setup block from `src/game.js`. Unit tests lock setup order and callback wiring; browser integration verifies the real no-build bootstrap.
 
-`src/runtime/input-composition-runtime.js` owns the browser-input callback composition that connects the extracted input router to the registered game methods. It preserves the existing callback order, the dynamic stage-clear predicate used by pause gating, and the explicit DOM/shared-state dependencies, leaving `src/game.js` with only the composition call and the main-loop high-score reference. Unit tests lock callback identity and adapter inputs; browser integration verifies the no-build registration.
+`src/runtime/input-composition-runtime.js` owns the browser-input callback composition that connects the extracted input router to the registered game methods. It preserves the existing callback order, the dynamic stage-clear predicate used by pause gating, and the explicit DOM/shared-state dependencies, leaving `src/game.js` with only the composition call and the direct main-loop high-score invocation. Unit tests lock callback identity and adapter inputs; browser integration verifies the no-build registration.
 
 `src/runtime/legacy-api-composition-runtime.js` owns the retained public/debug API callback projection. It combines local screen/update callbacks with the extracted render adapter and stage runtime, then delegates the original registration order to `legacy-api-runtime.js`, removing the large registration object from `src/game.js` without changing the public `state.fn` surface. Unit tests lock callback identity across both sources; browser integration verifies the no-build registration boundary.
 
@@ -676,9 +676,8 @@ tank-defender-8/
 
 `src/runtime/audio-bridge.js` now also owns the fixed-frame audio lifecycle order exposed to the composition root: updating every voice, stopping gameplay voices before a result, stopping result voices, and stopping every voice on full teardown. The unit test locks all four sequences so later audio changes cannot silently reorder channel cleanup or advancement.
 
-`src/game.js` now keeps stable direct references to the audio methods registered by `audio-bridge.js` instead of maintaining a second forwarding-function layer. Startup callbacks use the registered `state.fn` methods directly, so initialization remains safe while the composition root shrinks.
+`src/game.js` no longer maintains local aliases for registered audio or non-audio runtime methods. Composition modules read `state.fn` during setup, while the main loop invokes the high-score API directly after registration; the composition root now retains only the dependency bucket, shared-state handle, stage runtime, and small tile-name mapping.
 
-`src/game.js` now applies the same boundary to the 71 non-audio runtime methods: setup callbacks read `state.fn` during registration, and stable direct references are created only after every extracted runtime has registered its API. This removes the remaining forwarding-function layer without changing runtime call order.
 
 `effect-diagnostics.js` binds the five contiguous explosion-rule, tank-destruction, enemy-release, rendered-frame, and paused-impact probes through 31 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and seven dead-adapter removals leave `debug-api.js` at 4,175 physical lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all five probes at their original public indices 130-134 and preserves the pre-refactor 6,548-byte output SHA-256.
 

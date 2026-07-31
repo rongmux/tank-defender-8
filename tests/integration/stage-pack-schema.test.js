@@ -30,8 +30,7 @@ assert.equal(api.loadStagePack({
 assert.equal(api.currentPackInfo().initialLives, 7);
 assert.deepEqual(JSON.parse(JSON.stringify(api.stagePackSchema())), direct);
 
-assert(source.includes('createStagePackSchema'));
-assert(source.includes("createStagePackSchema"));
+assert(!source.includes("var createStagePackSchema = deps.createStagePackSchema"));
 assert(!source.includes("mapFormat: \"Use either maps"));
 
 console.log("stage-pack-schema integration test passed");
