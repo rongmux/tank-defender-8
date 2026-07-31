@@ -472,6 +472,7 @@ tank-defender-8/
 |   |   |-- free-audio-manifest.test.js
 |   |   |-- free-sprite-manifest.test.js
 |   |   |-- game-session-settings.test.js
+|   |   |-- game-audio-aliases.test.js
 |   |   |-- geometry.test.js
 |   |   |-- pixel-font.test.js
 |   |   |-- player-movement-settings.test.js
@@ -718,6 +719,8 @@ tank-defender-8/
 `src/runtime/render-composition-runtime.js` 接管面向 Canvas 的 runtime 组装顺序：标题、地形、坦克、道具、子弹、效果、结算表、HUD、编辑器、转场和顶层屏幕渲染。它接收现有游戏回调，通过原有 runtime 模块注册相同的 `state.fn` 方法，将冻结的 runtime 句柄返回给组合入口，并把渲染依赖接线从 `src/game.js` 移出。单元测试锁定回调校验、组装顺序和句柄隔离；浏览器启动测试通过真实的无构建入口加载该脚本。
 
 `src/runtime/audio-bridge.js` 现在也接管交给组合入口的固定帧音频生命周期顺序：更新全部声部、结算前停止游戏声部、停止结算声部，以及完整退出时停止全部声部。单元测试锁定这四组顺序，避免后续音频修改静默改变声道清理或推进顺序。
+
+`src/game.js` 现在直接引用 `audio-bridge.js` 注册的音频方法，不再维护第二层转发函数。启动回调直接使用已注册的 `state.fn` 方法，在缩小组合入口的同时保持初始化顺序安全。
 
 ## 操作方式
 

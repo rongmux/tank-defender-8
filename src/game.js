@@ -89,7 +89,7 @@
   deps.requireRuntimeModule("gameLifecycle").setupGameLifecycle(state, deps);
   deps.requireRuntimeModule("audioBridge").setupAudioBridge(state, deps);
   deps.requireRuntimeModule("editorInputRuntime").setupEditorInputRuntime(state, deps, {
-    playSound: playSound,
+    playSound: fn.playSound,
     showEditorMessage: showEditorMessage,
     tileTypeName: tileTypeName
   });
@@ -99,10 +99,10 @@
   deps.requireRuntimeModule("postGameRuntime").setupPostGameRuntime(state, deps, {
     fullGameOverScreenFrames: function () { return FULL_GAME_OVER_SCREEN_FRAMES; },
     highScoreScreenFrames: function () { return HIGH_SCORE_SCREEN_FRAMES; },
-    playSound: playSound,
+    playSound: fn.playSound,
     resetTitleIdleTimer: resetTitleIdleTimer,
     stopAllAudio: fn.stopAllAudio,
-    stopGameOverAudio: stopGameOverAudio,
+    stopGameOverAudio: fn.stopGameOverAudio,
     stopStageResultAudio: fn.stopStageResultAudio
   });
 
@@ -214,151 +214,133 @@
   function checkEndState() { return fn.checkEndState(); }
   function updateBattle(options) { return fn.updateBattle(options); }
 
-  // Audio function aliases
-  function initAudio() { return fn.initAudio(); }
-  function trackSequencedSound(n, o) { return fn.trackSequencedSound(n, o); }
-  function stopSound(n) { return fn.stopSound(n); }
-  function fixedFrameAudioPresentation(ev, fr) { return fn.fixedFrameAudioPresentation(ev, fr); }
-  function shortNoiseBuffer(cr) { return fn.shortNoiseBuffer(cr); }
-  function longNoiseBuffer(cr) { return fn.longNoiseBuffer(cr); }
-  function createFixedFrameAudioSource(v) { return fn.createFixedFrameAudioSource(v); }
-  function stopFixedFrameAudioNodes(aud) { return fn.stopFixedFrameAudioNodes(aud); }
-  function syncFixedFrameAudioNodes(aud, ev, audb, rwp) { return fn.syncFixedFrameAudioNodes(aud, ev, audb, rwp); }
-  function startFixedFrameAudio(aud, ev, audb, rwp) { return fn.startFixedFrameAudio(aud, ev, audb, rwp); }
-  function stopFixedFrameAudio(aud) { return fn.stopFixedFrameAudio(aud); }
-  function updateFixedFrameAudio(aud, ev, audb, rwp) { return fn.updateFixedFrameAudio(aud, ev, audb, rwp); }
-
-  function stageStartAudioPresentation(fr) { return fn.stageStartAudioPresentation(fr); }
-  function currentAudioMixState() { return fn.currentAudioMixState(); }
-  function currentAudioAudibility() { return fn.currentAudioAudibility(); }
-  function stageStartAudioAudibility() { return fn.stageStartAudioAudibility(); }
-  function syncStageStartAudioNodes() { return fn.syncStageStartAudioNodes(); }
-  function startStageStartAudio() { return fn.startStageStartAudio(); }
-  function stopStageStartAudio() { return fn.stopStageStartAudio(); }
-  function updateStageStartAudio() { return fn.updateStageStartAudio(); }
-
-  function bonusLifeAudioPresentation(fr) { return fn.bonusLifeAudioPresentation(fr); }
-  function bonusLifeAudioAudibility() { return fn.bonusLifeAudioAudibility(); }
-  function syncBonusLifeAudioNodes() { return fn.syncBonusLifeAudioNodes(); }
-  function startBonusLifeAudio() { return fn.startBonusLifeAudio(); }
-  function stopBonusLifeAudio() { return fn.stopBonusLifeAudio(); }
-  function updateBonusLifeAudio() { return fn.updateBonusLifeAudio(); }
-  function bonusLifePulse1Active() { return fn.bonusLifePulse1Active(); }
-  function bonusLifePulse2Active() { return fn.bonusLifePulse2Active(); }
-
-  function powerUpPickupAudioPresentation(fr) { return fn.powerUpPickupAudioPresentation(fr); }
-  function powerUpPickupAudioAudible() { return fn.powerUpPickupAudioAudible(); }
-  function syncPowerUpPickupAudioNodes() { return fn.syncPowerUpPickupAudioNodes(); }
-  function startPowerUpPickupAudio() { return fn.startPowerUpPickupAudio(); }
-  function stopPowerUpPickupAudio() { return fn.stopPowerUpPickupAudio(); }
-  function updatePowerUpPickupAudio() { return fn.updatePowerUpPickupAudio(); }
-
-  function powerUpAppearAudioPresentation(fr) { return fn.powerUpAppearAudioPresentation(fr); }
-  function powerUpAppearAudioAudible() { return fn.powerUpAppearAudioAudible(); }
-  function syncPowerUpAppearAudioNodes() { return fn.syncPowerUpAppearAudioNodes(); }
-  function startPowerUpAppearAudio() { return fn.startPowerUpAppearAudio(); }
-  function stopPowerUpAppearAudio() { return fn.stopPowerUpAppearAudio(); }
-  function updatePowerUpAppearAudio() { return fn.updatePowerUpAppearAudio(); }
-
-  function brickHitAudioPresentation(fr) { return fn.brickHitAudioPresentation(fr); }
-  function brickHitAudioAudible() { return fn.brickHitAudioAudible(); }
-  function syncBrickHitAudioNodes() { return fn.syncBrickHitAudioNodes(); }
-  function startBrickHitAudio() { return fn.startBrickHitAudio(); }
-  function stopBrickHitAudio() { return fn.stopBrickHitAudio(); }
-  function updateBrickHitAudio() { return fn.updateBrickHitAudio(); }
-
-  function baseHitAudioPresentation(fr) { return fn.baseHitAudioPresentation(fr); }
-  function baseHitAudioAudible() { return fn.baseHitAudioAudible(); }
-  function syncBaseHitAudioNodes() { return fn.syncBaseHitAudioNodes(); }
-  function syncLowerPriorityPulse2AudioNodes() { return fn.syncLowerPriorityPulse2AudioNodes(); }
-  function startBaseHitAudio() { return fn.startBaseHitAudio(); }
-  function stopBaseHitAudio() { return fn.stopBaseHitAudio(); }
-  function updateBaseHitAudio() { return fn.updateBaseHitAudio(); }
-
-  function steelHitAudioPresentation(fr) { return fn.steelHitAudioPresentation(fr); }
-  function steelHitAudioAudible() { return fn.steelHitAudioAudible(); }
-  function syncSteelHitAudioNodes() { return fn.syncSteelHitAudioNodes(); }
-  function startSteelHitAudio() { return fn.startSteelHitAudio(); }
-  function stopSteelHitAudio() { return fn.stopSteelHitAudio(); }
-  function updateSteelHitAudio() { return fn.updateSteelHitAudio(); }
-
-  function enemyHitAudioPresentation(fr) { return fn.enemyHitAudioPresentation(fr); }
-  function enemyHitAudioAudible() { return fn.enemyHitAudioAudible(); }
-  function syncEnemyHitAudioNodes() { return fn.syncEnemyHitAudioNodes(); }
-  function startEnemyHitAudio() { return fn.startEnemyHitAudio(); }
-  function stopEnemyHitAudio() { return fn.stopEnemyHitAudio(); }
-  function updateEnemyHitAudio() { return fn.updateEnemyHitAudio(); }
-
-  function enemyDestroyAudioPresentation(fr) { return fn.enemyDestroyAudioPresentation(fr); }
-  function enemyDestroyAudioAudible() { return fn.enemyDestroyAudioAudible(); }
-  function syncEnemyDestroyAudioNodes() { return fn.syncEnemyDestroyAudioNodes(); }
-  function startEnemyDestroyAudio() { return fn.startEnemyDestroyAudio(); }
-  function stopEnemyDestroyAudio() { return fn.stopEnemyDestroyAudio(); }
-  function updateEnemyDestroyAudio() { return fn.updateEnemyDestroyAudio(); }
-
-  function playerDestroyAudioPresentation(fr) { return fn.playerDestroyAudioPresentation(fr); }
-  function syncPlayerDestroyAudioNodes() { return fn.syncPlayerDestroyAudioNodes(); }
-  function startPlayerDestroyAudio() { return fn.startPlayerDestroyAudio(); }
-  function stopPlayerDestroyAudio() { return fn.stopPlayerDestroyAudio(); }
-  function updatePlayerDestroyAudio() { return fn.updatePlayerDestroyAudio(); }
-
-  function playerShootAudioPresentation(fr) { return fn.playerShootAudioPresentation(fr); }
-  function playerShootAudioAudible() { return fn.playerShootAudioAudible(); }
-  function syncPlayerShootAudioNodes() { return fn.syncPlayerShootAudioNodes(); }
-  function startPlayerShootAudio() { return fn.startPlayerShootAudio(); }
-  function stopPlayerShootAudio() { return fn.stopPlayerShootAudio(); }
-  function updatePlayerShootAudio() { return fn.updatePlayerShootAudio(); }
-
-  function movementIceAudioPresentation(fr) { return fn.movementIceAudioPresentation(fr); }
-  function movementIceAudioAudible() { return fn.movementIceAudioAudible(); }
-  function syncMovementIceAudioNodes() { return fn.syncMovementIceAudioNodes(); }
-  function startMovementIceAudio() { return fn.startMovementIceAudio(); }
-  function stopMovementIceAudio() { return fn.stopMovementIceAudio(); }
-  function updateMovementIceAudio() { return fn.updateMovementIceAudio(); }
-
-  function pauseAudioPresentation(fr) { return fn.pauseAudioPresentation(fr); }
-  function syncPauseAudioNodes() { return fn.syncPauseAudioNodes(); }
-  function startPauseAudio() { return fn.startPauseAudio(); }
-  function stopPauseAudio() { return fn.stopPauseAudio(); }
-  function updatePauseAudio() { return fn.updatePauseAudio(); }
-
-  function scoreCountAudioPresentation(fr) { return fn.scoreCountAudioPresentation(fr); }
-  function syncScoreCountAudioNodes() { return fn.syncScoreCountAudioNodes(); }
-  function startScoreCountAudio() { return fn.startScoreCountAudio(); }
-  function stopScoreCountAudio() { return fn.stopScoreCountAudio(); }
-  function updateScoreCountAudio() { return fn.updateScoreCountAudio(); }
-
-  function stageBonusAudioPresentation(fr) { return fn.stageBonusAudioPresentation(fr); }
-  function stageBonusAudioAudible() { return fn.stageBonusAudioAudible(); }
-  function syncStageBonusAudioNodes() { return fn.syncStageBonusAudioNodes(); }
-  function startStageBonusAudio() { return fn.startStageBonusAudio(); }
-  function stopStageBonusAudio() { return fn.stopStageBonusAudio(); }
-  function updateStageBonusAudio() { return fn.updateStageBonusAudio(); }
-
-  function gameOverAudioPresentation(fr) { return fn.gameOverAudioPresentation(fr); }
-  function syncGameOverAudioNodes() { return fn.syncGameOverAudioNodes(); }
-  function startGameOverAudio() { return fn.startGameOverAudio(); }
-  function stopGameOverAudio() { return fn.stopGameOverAudio(); }
-  function updateGameOverAudio() { return fn.updateGameOverAudio(); }
-
-  function highScoreAudioPresentation(fr) { return fn.highScoreAudioPresentation(fr); }
-  function syncHighScoreAudioNodes() { return fn.syncHighScoreAudioNodes(); }
-  function startHighScoreAudio() { return fn.startHighScoreAudio(); }
-  function stopHighScoreAudio() { return fn.stopHighScoreAudio(); }
-  function updateHighScoreAudio() { return fn.updateHighScoreAudio(); }
-
-  function movementAudioPresentation(m, t) { return fn.movementAudioPresentation(m, t); }
-  function stopMovementAudioNode() { return fn.stopMovementAudioNode(); }
-  function startMovementAudioNode() { return fn.startMovementAudioNode(); }
-  function setMovementAudioMode(m) { return fn.setMovementAudioMode(m); }
-  function stopMovementAudio() { return fn.stopMovementAudio(); }
-  function playerHasMovementSoundState(p) { return fn.playerHasMovementSoundState(p); }
-  function playerMovementAudioRequested() { return fn.playerMovementAudioRequested(); }
-  function movementAudioModeForState() { return fn.movementAudioModeForState(); }
-  function syncMovementAudio() { return fn.syncMovementAudio(); }
-  function beep(fr, dur, g, t, d, sn) { return fn.beep(fr, dur, g, t, d, sn); }
-  function playSoundVoice(n, v, defs) { return fn.playSoundVoice(n, v, defs); }
-  function playSound(n, opts) { return fn.playSound(n, opts); }
+  // Audio methods are registered before this bridge and do not depend on a receiver.
+  var initAudio = fn.initAudio;
+  var trackSequencedSound = fn.trackSequencedSound;
+  var stopSound = fn.stopSound;
+  var fixedFrameAudioPresentation = fn.fixedFrameAudioPresentation;
+  var shortNoiseBuffer = fn.shortNoiseBuffer;
+  var longNoiseBuffer = fn.longNoiseBuffer;
+  var createFixedFrameAudioSource = fn.createFixedFrameAudioSource;
+  var stopFixedFrameAudioNodes = fn.stopFixedFrameAudioNodes;
+  var syncFixedFrameAudioNodes = fn.syncFixedFrameAudioNodes;
+  var startFixedFrameAudio = fn.startFixedFrameAudio;
+  var stopFixedFrameAudio = fn.stopFixedFrameAudio;
+  var updateFixedFrameAudio = fn.updateFixedFrameAudio;
+  var stageStartAudioPresentation = fn.stageStartAudioPresentation;
+  var currentAudioMixState = fn.currentAudioMixState;
+  var currentAudioAudibility = fn.currentAudioAudibility;
+  var stageStartAudioAudibility = fn.stageStartAudioAudibility;
+  var syncStageStartAudioNodes = fn.syncStageStartAudioNodes;
+  var startStageStartAudio = fn.startStageStartAudio;
+  var stopStageStartAudio = fn.stopStageStartAudio;
+  var updateStageStartAudio = fn.updateStageStartAudio;
+  var bonusLifeAudioPresentation = fn.bonusLifeAudioPresentation;
+  var bonusLifeAudioAudibility = fn.bonusLifeAudioAudibility;
+  var syncBonusLifeAudioNodes = fn.syncBonusLifeAudioNodes;
+  var startBonusLifeAudio = fn.startBonusLifeAudio;
+  var stopBonusLifeAudio = fn.stopBonusLifeAudio;
+  var updateBonusLifeAudio = fn.updateBonusLifeAudio;
+  var bonusLifePulse1Active = fn.bonusLifePulse1Active;
+  var bonusLifePulse2Active = fn.bonusLifePulse2Active;
+  var powerUpPickupAudioPresentation = fn.powerUpPickupAudioPresentation;
+  var powerUpPickupAudioAudible = fn.powerUpPickupAudioAudible;
+  var syncPowerUpPickupAudioNodes = fn.syncPowerUpPickupAudioNodes;
+  var startPowerUpPickupAudio = fn.startPowerUpPickupAudio;
+  var stopPowerUpPickupAudio = fn.stopPowerUpPickupAudio;
+  var updatePowerUpPickupAudio = fn.updatePowerUpPickupAudio;
+  var powerUpAppearAudioPresentation = fn.powerUpAppearAudioPresentation;
+  var powerUpAppearAudioAudible = fn.powerUpAppearAudioAudible;
+  var syncPowerUpAppearAudioNodes = fn.syncPowerUpAppearAudioNodes;
+  var startPowerUpAppearAudio = fn.startPowerUpAppearAudio;
+  var stopPowerUpAppearAudio = fn.stopPowerUpAppearAudio;
+  var updatePowerUpAppearAudio = fn.updatePowerUpAppearAudio;
+  var brickHitAudioPresentation = fn.brickHitAudioPresentation;
+  var brickHitAudioAudible = fn.brickHitAudioAudible;
+  var syncBrickHitAudioNodes = fn.syncBrickHitAudioNodes;
+  var startBrickHitAudio = fn.startBrickHitAudio;
+  var stopBrickHitAudio = fn.stopBrickHitAudio;
+  var updateBrickHitAudio = fn.updateBrickHitAudio;
+  var baseHitAudioPresentation = fn.baseHitAudioPresentation;
+  var baseHitAudioAudible = fn.baseHitAudioAudible;
+  var syncBaseHitAudioNodes = fn.syncBaseHitAudioNodes;
+  var syncLowerPriorityPulse2AudioNodes = fn.syncLowerPriorityPulse2AudioNodes;
+  var startBaseHitAudio = fn.startBaseHitAudio;
+  var stopBaseHitAudio = fn.stopBaseHitAudio;
+  var updateBaseHitAudio = fn.updateBaseHitAudio;
+  var steelHitAudioPresentation = fn.steelHitAudioPresentation;
+  var steelHitAudioAudible = fn.steelHitAudioAudible;
+  var syncSteelHitAudioNodes = fn.syncSteelHitAudioNodes;
+  var startSteelHitAudio = fn.startSteelHitAudio;
+  var stopSteelHitAudio = fn.stopSteelHitAudio;
+  var updateSteelHitAudio = fn.updateSteelHitAudio;
+  var enemyHitAudioPresentation = fn.enemyHitAudioPresentation;
+  var enemyHitAudioAudible = fn.enemyHitAudioAudible;
+  var syncEnemyHitAudioNodes = fn.syncEnemyHitAudioNodes;
+  var startEnemyHitAudio = fn.startEnemyHitAudio;
+  var stopEnemyHitAudio = fn.stopEnemyHitAudio;
+  var updateEnemyHitAudio = fn.updateEnemyHitAudio;
+  var enemyDestroyAudioPresentation = fn.enemyDestroyAudioPresentation;
+  var enemyDestroyAudioAudible = fn.enemyDestroyAudioAudible;
+  var syncEnemyDestroyAudioNodes = fn.syncEnemyDestroyAudioNodes;
+  var startEnemyDestroyAudio = fn.startEnemyDestroyAudio;
+  var stopEnemyDestroyAudio = fn.stopEnemyDestroyAudio;
+  var updateEnemyDestroyAudio = fn.updateEnemyDestroyAudio;
+  var playerDestroyAudioPresentation = fn.playerDestroyAudioPresentation;
+  var syncPlayerDestroyAudioNodes = fn.syncPlayerDestroyAudioNodes;
+  var startPlayerDestroyAudio = fn.startPlayerDestroyAudio;
+  var stopPlayerDestroyAudio = fn.stopPlayerDestroyAudio;
+  var updatePlayerDestroyAudio = fn.updatePlayerDestroyAudio;
+  var playerShootAudioPresentation = fn.playerShootAudioPresentation;
+  var playerShootAudioAudible = fn.playerShootAudioAudible;
+  var syncPlayerShootAudioNodes = fn.syncPlayerShootAudioNodes;
+  var startPlayerShootAudio = fn.startPlayerShootAudio;
+  var stopPlayerShootAudio = fn.stopPlayerShootAudio;
+  var updatePlayerShootAudio = fn.updatePlayerShootAudio;
+  var movementIceAudioPresentation = fn.movementIceAudioPresentation;
+  var movementIceAudioAudible = fn.movementIceAudioAudible;
+  var syncMovementIceAudioNodes = fn.syncMovementIceAudioNodes;
+  var startMovementIceAudio = fn.startMovementIceAudio;
+  var stopMovementIceAudio = fn.stopMovementIceAudio;
+  var updateMovementIceAudio = fn.updateMovementIceAudio;
+  var pauseAudioPresentation = fn.pauseAudioPresentation;
+  var syncPauseAudioNodes = fn.syncPauseAudioNodes;
+  var startPauseAudio = fn.startPauseAudio;
+  var stopPauseAudio = fn.stopPauseAudio;
+  var updatePauseAudio = fn.updatePauseAudio;
+  var scoreCountAudioPresentation = fn.scoreCountAudioPresentation;
+  var syncScoreCountAudioNodes = fn.syncScoreCountAudioNodes;
+  var startScoreCountAudio = fn.startScoreCountAudio;
+  var stopScoreCountAudio = fn.stopScoreCountAudio;
+  var updateScoreCountAudio = fn.updateScoreCountAudio;
+  var stageBonusAudioPresentation = fn.stageBonusAudioPresentation;
+  var stageBonusAudioAudible = fn.stageBonusAudioAudible;
+  var syncStageBonusAudioNodes = fn.syncStageBonusAudioNodes;
+  var startStageBonusAudio = fn.startStageBonusAudio;
+  var stopStageBonusAudio = fn.stopStageBonusAudio;
+  var updateStageBonusAudio = fn.updateStageBonusAudio;
+  var gameOverAudioPresentation = fn.gameOverAudioPresentation;
+  var syncGameOverAudioNodes = fn.syncGameOverAudioNodes;
+  var startGameOverAudio = fn.startGameOverAudio;
+  var stopGameOverAudio = fn.stopGameOverAudio;
+  var updateGameOverAudio = fn.updateGameOverAudio;
+  var highScoreAudioPresentation = fn.highScoreAudioPresentation;
+  var syncHighScoreAudioNodes = fn.syncHighScoreAudioNodes;
+  var startHighScoreAudio = fn.startHighScoreAudio;
+  var stopHighScoreAudio = fn.stopHighScoreAudio;
+  var updateHighScoreAudio = fn.updateHighScoreAudio;
+  var movementAudioPresentation = fn.movementAudioPresentation;
+  var stopMovementAudioNode = fn.stopMovementAudioNode;
+  var startMovementAudioNode = fn.startMovementAudioNode;
+  var setMovementAudioMode = fn.setMovementAudioMode;
+  var stopMovementAudio = fn.stopMovementAudio;
+  var playerHasMovementSoundState = fn.playerHasMovementSoundState;
+  var playerMovementAudioRequested = fn.playerMovementAudioRequested;
+  var movementAudioModeForState = fn.movementAudioModeForState;
+  var syncMovementAudio = fn.syncMovementAudio;
+  var beep = fn.beep;
+  var playSoundVoice = fn.playSoundVoice;
+  var playSound = fn.playSound;
 
 
   // Deps module aliases

@@ -472,6 +472,7 @@ tank-defender-8/
 |   |   |-- free-audio-manifest.test.js
 |   |   |-- free-sprite-manifest.test.js
 |   |   |-- game-session-settings.test.js
+|   |   |-- game-audio-aliases.test.js
 |   |   |-- geometry.test.js
 |   |   |-- pixel-font.test.js
 |   |   |-- player-movement-settings.test.js
@@ -626,6 +627,8 @@ tank-defender-8/
 `src/runtime/render-composition-runtime.js` owns the setup order for the Canvas-facing runtime boundaries: title, terrain, tank, power-up, projectile, effect, stage-result, HUD, editor, transition, and top-level screen rendering. It receives the existing game callbacks, registers the same `state.fn` methods through the original runtime modules, returns their frozen handles to the composition root, and keeps render dependency wiring out of `src/game.js`. Its unit test locks callback validation, setup order, and handle isolation; the browser bootstrap test loads the new script through the real no-build entry path.
 
 `src/runtime/audio-bridge.js` now also owns the fixed-frame audio lifecycle order exposed to the composition root: updating every voice, stopping gameplay voices before a result, stopping result voices, and stopping every voice on full teardown. The unit test locks all four sequences so later audio changes cannot silently reorder channel cleanup or advancement.
+
+`src/game.js` now keeps stable direct references to the audio methods registered by `audio-bridge.js` instead of maintaining a second forwarding-function layer. Startup callbacks use the registered `state.fn` methods directly, so initialization remains safe while the composition root shrinks.
 
 `effect-diagnostics.js` binds the five contiguous explosion-rule, tank-destruction, enemy-release, rendered-frame, and paused-impact probes through 31 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and seven dead-adapter removals leave `debug-api.js` at 4,175 physical lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all five probes at their original public indices 130-134 and preserves the pre-refactor 6,548-byte output SHA-256.
 
