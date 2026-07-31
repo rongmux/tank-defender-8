@@ -90,6 +90,7 @@
     const stageStartDiagnostics = deps.audioStageStartDiagnostics.createAudioStageStartDiagnostics(scope);
     const bonusLifeDiagnostics = deps.audioBonusLifeDiagnostics.createAudioBonusLifeDiagnostics(scope);
     const powerUpPickupDiagnostics = deps.audioPowerUpPickupDiagnostics.createAudioPowerUpPickupDiagnostics(scope);
+    const powerUpAppearDiagnostics = deps.audioPowerUpAppearDiagnostics.createAudioPowerUpAppearDiagnostics(scope);
     const {
       applyPowerUp,
       baseHitAudio,
@@ -1826,16 +1827,7 @@
         ...stageStartDiagnostics,
         ...bonusLifeDiagnostics,
         ...powerUpPickupDiagnostics,
-        debugPowerUpAppearAudioProbe() {
-          const event = FREE_AUDIO_MANIFEST.events.powerUpAppear;
-          const frames = [0, 3, 4, 7, 8, 27, 28, 31, 32];
-          return {
-            durationFrames: event.durationFrames,
-            voiceDurations: event.voices.map(fixedFrameVoiceDuration),
-            waves: event.voices.map((voice) => voice.wave),
-            frames: frames.map((frame) => powerUpAppearAudioPresentation(frame))
-          };
-        },
+        ...powerUpAppearDiagnostics,
         debugPowerUpAppearAudioLifecycleProbe() {
           const previous = { ...game };
           const previousKeys = Array.from(keys);
