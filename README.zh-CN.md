@@ -154,6 +154,7 @@ node --check src/runtime/enemy-update-runtime.js
 node --check src/runtime/audio-score-diagnostics.js
 node --check src/runtime/audio-stage-bonus-diagnostics.js
 node --check src/runtime/audio-movement-diagnostics.js
+node --check src/runtime/audio-movement-lifecycle-diagnostics.js
 node --check src/runtime/audio-brick-hit-diagnostics.js
 node --check src/runtime/audio-steel-hit-diagnostics.js
 node --check src/runtime/audio-enemy-hit-diagnostics.js
@@ -330,6 +331,7 @@ tank-defender-8/
 |   |   |-- audio-score-diagnostics.js
 |   |   |-- audio-stage-bonus-diagnostics.js
 |   |   |-- audio-movement-diagnostics.js
+|   |   |-- audio-movement-lifecycle-diagnostics.js
 |   |   |-- audio-brick-hit-diagnostics.js
 |   |   |-- audio-steel-hit-diagnostics.js
 |   |   |-- audio-enemy-hit-diagnostics.js
@@ -474,6 +476,7 @@ tank-defender-8/
 |   |   |-- audio-score-diagnostics.test.js
 |   |   |-- audio-stage-bonus-diagnostics.test.js
 |   |   |-- audio-movement-diagnostics.test.js
+|   |   |-- audio-movement-lifecycle-diagnostics.test.js
 |   |   |-- audio-brick-hit-diagnostics.test.js
 |   |   |-- audio-steel-hit-diagnostics.test.js
 |   |   |-- audio-enemy-hit-diagnostics.test.js
@@ -817,7 +820,7 @@ tank-defender-8/
 
 `src/runtime/audio-stage-bonus-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的关卡结算领先奖励音效表现与生命周期探针。它使用同样的显式作用域边界并合并回原有公开顺序；直接测试和浏览器测试保持原版 28 帧音效及结算行为。
 
-`src/runtime/audio-movement-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的普通移动模式与冰面移动表现探针。它保留显式作用域和原有 API 位置；剩余的移动生命周期探针仍留在主音频诊断边界中，待其依赖的战斗场景继续拆分。
+`src/runtime/audio-movement-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的普通移动模式与冰面移动表现探针。`src/runtime/audio-movement-lifecycle-diagnostics.js` 接管冰面移动生命周期探针，包括暂停冻结、优先级屏蔽、重新触发和关卡清理；组合入口会将它合并回原有公开 API 位置。
 
 `src/runtime/audio-brick-hit-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态可破坏砖块命中音效表现探针。它通过显式作用域将三帧三角波替代序列与砖块命中生命周期探针分离。
 

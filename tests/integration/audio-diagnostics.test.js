@@ -51,6 +51,8 @@ assert(modules.audioStageBonusDiagnostics, "stage-bonus audio diagnostics module
 assert.equal(Object.isFrozen(modules.audioStageBonusDiagnostics), true);
 assert(modules.audioMovementDiagnostics, "movement audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioMovementDiagnostics), true);
+assert(modules.audioMovementLifecycleDiagnostics, "movement lifecycle audio diagnostics module should register before audio-diagnostics.js");
+assert.equal(Object.isFrozen(modules.audioMovementLifecycleDiagnostics), true);
 assert(modules.audioBrickHitDiagnostics, "brick-hit audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioBrickHitDiagnostics), true);
 assert(modules.audioSteelHitDiagnostics, "steel-hit audio diagnostics module should register before audio-diagnostics.js");
@@ -328,6 +330,10 @@ const movementDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-movement-diagnostics.js"),
   "utf8"
 );
+const movementLifecycleDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/audio-movement-lifecycle-diagnostics.js"),
+  "utf8"
+);
 const brickHitDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-brick-hit-diagnostics.js"),
   "utf8"
@@ -385,6 +391,8 @@ for (const name of AUDIO_DIAGNOSTIC_METHODS) {
       ? stageBonusDiagnosticsSource
       : name === "debugMovementAudioProbe" || name === "debugMovementIceAudioProbe"
         ? movementDiagnosticsSource
+        : name === "debugMovementIceAudioLifecycleProbe"
+          ? movementLifecycleDiagnosticsSource
         : name === "debugBrickHitAudioProbe"
           ? brickHitDiagnosticsSource
           : name === "debugSteelHitAudioProbe"
@@ -415,6 +423,7 @@ for (const name of AUDIO_DIAGNOSTIC_METHODS) {
 assert.equal(diagnosticsSource.includes("debugScoreCountAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugStageBonusAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugMovementAudioProbe()"), false);
+assert.equal(diagnosticsSource.includes("debugMovementIceAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBrickHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugSteelHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugEnemyHitAudioProbe()"), false);

@@ -154,6 +154,7 @@ node --check src/runtime/enemy-update-runtime.js
 node --check src/runtime/audio-score-diagnostics.js
 node --check src/runtime/audio-stage-bonus-diagnostics.js
 node --check src/runtime/audio-movement-diagnostics.js
+node --check src/runtime/audio-movement-lifecycle-diagnostics.js
 node --check src/runtime/audio-brick-hit-diagnostics.js
 node --check src/runtime/audio-steel-hit-diagnostics.js
 node --check src/runtime/audio-enemy-hit-diagnostics.js
@@ -330,6 +331,7 @@ tank-defender-8/
 |   |   |-- audio-score-diagnostics.js
 |   |   |-- audio-stage-bonus-diagnostics.js
 |   |   |-- audio-movement-diagnostics.js
+|   |   |-- audio-movement-lifecycle-diagnostics.js
 |   |   |-- audio-brick-hit-diagnostics.js
 |   |   |-- audio-steel-hit-diagnostics.js
 |   |   |-- audio-enemy-hit-diagnostics.js
@@ -474,6 +476,7 @@ tank-defender-8/
 |   |   |-- audio-score-diagnostics.test.js
 |   |   |-- audio-stage-bonus-diagnostics.test.js
 |   |   |-- audio-movement-diagnostics.test.js
+|   |   |-- audio-movement-lifecycle-diagnostics.test.js
 |   |   |-- audio-brick-hit-diagnostics.test.js
 |   |   |-- audio-steel-hit-diagnostics.test.js
 |   |   |-- audio-enemy-hit-diagnostics.test.js
@@ -725,7 +728,7 @@ tank-defender-8/
 
 `src/runtime/audio-stage-bonus-diagnostics.js` owns the stage-result leader-bonus audio presentation and lifecycle probes extracted from `audio-diagnostics.js`. It uses the same explicit scope boundary and is composed back into the original public order; direct and browser tests preserve the original 28-frame cue and result behavior.
 
-`src/runtime/audio-movement-diagnostics.js` owns the ordinary movement-mode and ice-movement presentation probes extracted from `audio-diagnostics.js`. It keeps their explicit scope and original API positions, while the remaining movement lifecycle probe stays with the main audio diagnostics boundary until its dependent battle scenarios are split.
+`src/runtime/audio-movement-diagnostics.js` owns the ordinary movement-mode and ice-movement presentation probes extracted from `audio-diagnostics.js`. `src/runtime/audio-movement-lifecycle-diagnostics.js` owns the ice-movement lifecycle probe, including pause freezing, priority masking, retriggering, and stage cleanup; the composition root merges it back at the original public API position.
 
 `src/runtime/audio-brick-hit-diagnostics.js` owns the stateless destructive-brick-hit audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the three-frame triangle replacement sequence independent from the brick collision lifecycle probe.
 
