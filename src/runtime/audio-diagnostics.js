@@ -91,6 +91,7 @@
     const bonusLifeDiagnostics = deps.audioBonusLifeDiagnostics.createAudioBonusLifeDiagnostics(scope);
     const powerUpPickupDiagnostics = deps.audioPowerUpPickupDiagnostics.createAudioPowerUpPickupDiagnostics(scope);
     const powerUpAppearDiagnostics = deps.audioPowerUpAppearDiagnostics.createAudioPowerUpAppearDiagnostics(scope);
+    const pauseDiagnostics = deps.audioPauseDiagnostics.createAudioPauseDiagnostics(scope);
     const {
       applyPowerUp,
       baseHitAudio,
@@ -1962,16 +1963,7 @@
             syncMovementAudio();
           }
         },
-        debugPauseAudioProbe() {
-          const event = FREE_AUDIO_MANIFEST.events.pause;
-          const frames = [0, 3, 4, 7, 8, 23, 24, 35, 36];
-          return {
-            durationFrames: event.durationFrames,
-            voiceDurations: event.voices.map(fixedFrameVoiceDuration),
-            waves: event.voices.map((voice) => voice.wave),
-            frames: frames.map((frame) => pauseAudioPresentation(frame))
-          };
-        },
+        ...pauseDiagnostics,
         debugPauseAudioLifecycleProbe() {
           const previous = { ...game };
           const previousKeys = Array.from(keys);
