@@ -86,6 +86,7 @@
     const enemyDestroyDiagnostics = deps.audioEnemyDestroyDiagnostics.createAudioEnemyDestroyDiagnostics(scope);
     const playerDestroyDiagnostics = deps.audioPlayerDestroyDiagnostics.createAudioPlayerDestroyDiagnostics(scope);
     const baseHitDiagnostics = deps.audioBaseHitDiagnostics.createAudioBaseHitDiagnostics(scope);
+    const playerShootDiagnostics = deps.audioPlayerShootDiagnostics.createAudioPlayerShootDiagnostics(scope);
     const {
       applyPowerUp,
       baseHitAudio,
@@ -1479,16 +1480,7 @@
             syncMovementAudio();
           }
         },
-        debugPlayerShootAudioProbe() {
-          const event = FREE_AUDIO_MANIFEST.events.playerShoot;
-          const frames = [0, 14, 15];
-          return {
-            durationFrames: event.durationFrames,
-            voiceDurations: event.voices.map(fixedFrameVoiceDuration),
-            waves: event.voices.map((voice) => voice.wave),
-            frames: frames.map((frame) => playerShootAudioPresentation(frame))
-          };
-        },
+        ...playerShootDiagnostics,
         debugPlayerShootAudioLifecycleProbe() {
           const previous = { ...game };
           const previousKeys = Array.from(keys);
