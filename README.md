@@ -167,6 +167,7 @@ node --check src/runtime/audio-bonus-life-diagnostics.js
 node --check src/runtime/audio-power-up-pickup-diagnostics.js
 node --check src/runtime/audio-power-up-appear-diagnostics.js
 node --check src/runtime/audio-pause-diagnostics.js
+node --check src/runtime/audio-pause-lifecycle-diagnostics.js
 node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
@@ -344,6 +345,7 @@ tank-defender-8/
 |   |   |-- audio-power-up-pickup-diagnostics.js
 |   |   |-- audio-power-up-appear-diagnostics.js
 |   |   |-- audio-pause-diagnostics.js
+|   |   |-- audio-pause-lifecycle-diagnostics.js
 |   |   |-- audio-diagnostics.js
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
@@ -489,6 +491,7 @@ tank-defender-8/
 |   |   |-- audio-power-up-pickup-diagnostics.test.js
 |   |   |-- audio-power-up-appear-diagnostics.test.js
 |   |   |-- audio-pause-diagnostics.test.js
+|   |   |-- audio-pause-lifecycle-diagnostics.test.js
 |   |   |-- battle-hud-presentation.test.js
 |   |   |-- battle-random.test.js
 |   |   |-- battlefield-grid.test.js
@@ -753,6 +756,8 @@ tank-defender-8/
 `src/runtime/audio-power-up-appear-diagnostics.js` owns the stateless power-up appearance audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the nine phrase-boundary samples independent from carrier release, pause handling, and pickup-priority lifecycle logic.
 
 `src/runtime/audio-pause-diagnostics.js` owns the stateless pause audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the nine phrase-boundary samples independent from pause toggling, frame freezing, and resume lifecycle logic.
+
+`src/runtime/audio-pause-lifecycle-diagnostics.js` owns the pause lifecycle probe extracted from `audio-diagnostics.js`. It preserves pause entry/exit, retained audio frames, final-frame completion, and cleanup behavior while the composition root restores the original public API position.
 
 `src/game.js` no longer maintains local aliases for registered audio or non-audio runtime methods. Composition modules read `state.fn` during setup, while the main loop invokes the high-score API directly after registration; the composition root now retains only the dependency bucket, shared-state handle, stage runtime, and small tile-name mapping.
 

@@ -16,6 +16,7 @@ const audioBonusLifeDiagnostics = require("../../src/runtime/audio-bonus-life-di
 const audioPowerUpPickupDiagnostics = require("../../src/runtime/audio-power-up-pickup-diagnostics");
 const audioPowerUpAppearDiagnostics = require("../../src/runtime/audio-power-up-appear-diagnostics");
 const audioPauseDiagnostics = require("../../src/runtime/audio-pause-diagnostics");
+const audioPauseLifecycleDiagnostics = require("../../src/runtime/audio-pause-lifecycle-diagnostics");
 
 const AUDIO_DIAGNOSTIC_METHODS = [
   "audioManifest",
@@ -132,6 +133,7 @@ const deps = {
   audioPowerUpPickupDiagnostics,
   audioPowerUpAppearDiagnostics,
   audioPauseDiagnostics,
+  audioPauseLifecycleDiagnostics,
   FREE_AUDIO_MANIFEST: manifest,
   cloneAudioManifest() {
     assert.equal(this, deps);
