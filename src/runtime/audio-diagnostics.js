@@ -80,6 +80,7 @@
     const scoreDiagnostics = deps.audioScoreDiagnostics.createAudioScoreDiagnostics(scope);
     const stageBonusDiagnostics = deps.audioStageBonusDiagnostics.createAudioStageBonusDiagnostics(scope);
     const movementDiagnostics = deps.audioMovementDiagnostics.createAudioMovementDiagnostics(scope);
+    const brickHitDiagnostics = deps.audioBrickHitDiagnostics.createAudioBrickHitDiagnostics(scope);
     const {
       applyPowerUp,
       baseHitAudio,
@@ -232,16 +233,7 @@
         ...scoreDiagnostics,
         ...stageBonusDiagnostics,
         ...movementDiagnostics,
-        debugBrickHitAudioProbe() {
-          const event = FREE_AUDIO_MANIFEST.events.brickHit;
-          const frames = [0, 1, 2, 3];
-          return {
-            durationFrames: event.durationFrames,
-            voiceDurations: event.voices.map(fixedFrameVoiceDuration),
-            waves: event.voices.map((voice) => voice.wave),
-            frames: frames.map((frame) => brickHitAudioPresentation(frame))
-          };
-        },
+        ...brickHitDiagnostics,
         debugBrickHitAudioLifecycleProbe() {
           const previous = { ...game };
           const previousKeys = Array.from(keys);

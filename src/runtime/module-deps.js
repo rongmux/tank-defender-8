@@ -114,6 +114,7 @@
   var audioScoreDiagnostics = requireRuntimeModule("audioScoreDiagnostics");
   var audioStageBonusDiagnostics = requireRuntimeModule("audioStageBonusDiagnostics");
   var audioMovementDiagnostics = requireRuntimeModule("audioMovementDiagnostics");
+  var audioBrickHitDiagnostics = requireRuntimeModule("audioBrickHitDiagnostics");
   var audioDiagnostics = requireRuntimeModule("audioDiagnostics");
 
   // ── Editor ─────────────────────────────────────────────────────────────────
@@ -372,6 +373,7 @@
     audioScoreDiagnostics: audioScoreDiagnostics,
     audioStageBonusDiagnostics: audioStageBonusDiagnostics,
     audioMovementDiagnostics: audioMovementDiagnostics,
+    audioBrickHitDiagnostics: audioBrickHitDiagnostics,
     createAudioDiagnostics: audioDiagnostics.createAudioDiagnostics,
 
     // Editor
