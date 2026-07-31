@@ -88,6 +88,7 @@
     const baseHitDiagnostics = deps.audioBaseHitDiagnostics.createAudioBaseHitDiagnostics(scope);
     const playerShootDiagnostics = deps.audioPlayerShootDiagnostics.createAudioPlayerShootDiagnostics(scope);
     const stageStartDiagnostics = deps.audioStageStartDiagnostics.createAudioStageStartDiagnostics(scope);
+    const bonusLifeDiagnostics = deps.audioBonusLifeDiagnostics.createAudioBonusLifeDiagnostics(scope);
     const {
       applyPowerUp,
       baseHitAudio,
@@ -1822,16 +1823,7 @@
           }
         },
         ...stageStartDiagnostics,
-        debugBonusLifeAudioProbe() {
-          const event = FREE_AUDIO_MANIFEST.events.bonusLife;
-          const frames = [0, 1, 2, 5, 6, 41, 42, 53, 54, 59, 60];
-          return {
-            durationFrames: event.durationFrames,
-            voiceDurations: event.voices.map(fixedFrameVoiceDuration),
-            waves: event.voices.map((voice) => voice.wave),
-            frames: frames.map((frame) => bonusLifeAudioPresentation(frame))
-          };
-        },
+        ...bonusLifeDiagnostics,
         debugPowerUpPickupAudioProbe() {
           const event = FREE_AUDIO_MANIFEST.events.powerUp;
           const frames = [0, 2, 3, 35, 36, 38, 39];
