@@ -21,4 +21,18 @@ assert(!/\bfunction\s+[A-Za-z0-9_]*Audio[A-Za-z0-9_]*\s*\(/.test(block), "audio 
 assert(source.includes("playSound: fn.playSound"), "startup callbacks should use registered audio methods");
 assert(source.includes("stopGameOverAudio: fn.stopGameOverAudio"), "post-game startup should use registered audio methods");
 
+const runtimeStartMarker = "// Runtime methods are referenced only after all extracted modules register them.";
+const runtimeEndMarker = 'requireRuntimeModule("inputRuntime")';
+const runtimeStart = source.indexOf(runtimeStartMarker);
+const runtimeEnd = source.indexOf(runtimeEndMarker, runtimeStart);
+assert(runtimeStart >= 0 && runtimeEnd > runtimeStart, "game.js should expose the deferred runtime reference block");
+const runtimeBlock = source.slice(runtimeStart, runtimeEnd);
+const runtimeAliases = [...runtimeBlock.matchAll(/\bvar ([A-Za-z0-9_]+) = fn\.([A-Za-z0-9_]+);/g)];
+assert.equal(runtimeAliases.length, 71, "all extracted runtime methods should use direct fn references");
+assert.equal(new Set(runtimeAliases.map((match) => match[1])).size, runtimeAliases.length);
+for (const [, localName, fnName] of runtimeAliases) {
+  assert.equal(localName, fnName, `${localName} should reference the same state.fn method`);
+}
+assert(!/\bfunction\s+[A-Za-z0-9_]+\s*\(/.test(runtimeBlock), "runtime aliases should not be forwarding functions");
+
 console.log("game-audio-aliases unit test passed");

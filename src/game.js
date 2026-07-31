@@ -90,17 +90,17 @@
   deps.requireRuntimeModule("audioBridge").setupAudioBridge(state, deps);
   deps.requireRuntimeModule("editorInputRuntime").setupEditorInputRuntime(state, deps, {
     playSound: fn.playSound,
-    showEditorMessage: showEditorMessage,
+    showEditorMessage: fn.showEditorMessage,
     tileTypeName: tileTypeName
   });
   deps.requireRuntimeModule("stageSelectRuntime").setupStageSelectRuntime(state, deps, {
-    changeStageSelection: changeStageSelection
+    changeStageSelection: fn.changeStageSelection
   });
   deps.requireRuntimeModule("postGameRuntime").setupPostGameRuntime(state, deps, {
     fullGameOverScreenFrames: function () { return FULL_GAME_OVER_SCREEN_FRAMES; },
     highScoreScreenFrames: function () { return HIGH_SCORE_SCREEN_FRAMES; },
     playSound: fn.playSound,
-    resetTitleIdleTimer: resetTitleIdleTimer,
+    resetTitleIdleTimer: fn.resetTitleIdleTimer,
     stopAllAudio: fn.stopAllAudio,
     stopGameOverAudio: fn.stopGameOverAudio,
     stopStageResultAudio: fn.stopStageResultAudio
@@ -140,79 +140,6 @@
   var WATER = deps.TILE_TYPES.WATER;
   var FOREST = deps.TILE_TYPES.FOREST;
   var ICE = deps.TILE_TYPES.ICE;
-
-  // ── Function aliases (delegate to state.fn for extracted modules) ──────
-  function loadHighScore() { return fn.loadHighScore(); }
-  function saveHighScore() { return fn.saveHighScore(); }
-  function updateHighScore(s) { return fn.updateHighScore(s); }
-  function createPlayer(id) { return fn.createPlayer(id); }
-  function resetPlayerPosition(p) { return fn.resetPlayerPosition(p); }
-  function startGame(pl, opts) { return fn.startGame(pl, opts); }
-  function startTitleDemo() { return fn.startTitleDemo(); }
-  function endTitleDemo() { return fn.endTitleDemo(); }
-  function updateTitleIdle() { return fn.updateTitleIdle(); }
-  function resetTitleIdleTimer() { return fn.resetTitleIdleTimer(); }
-  function resetTitleIdleHighByte() { return fn.resetTitleIdleHighByte(); }
-  function hiddenMessageTriggerReady() { return fn.hiddenMessageTriggerReady(); }
-  function reserveTitleDirectionForHiddenInput(c) { return fn.reserveTitleDirectionForHiddenInput(c); }
-  function recordHiddenTitleInput(c) { return fn.recordHiddenTitleInput(c); }
-  function startHiddenMessage() { return fn.startHiddenMessage(); }
-  function updateHiddenMessage() { return fn.updateHiddenMessage(); }
-  function hiddenMessagePresentation(e) { return fn.hiddenMessagePresentation(e); }
-  function beginStageSelect(pl) { return fn.beginStageSelect(pl); }
-  function startSelectedGame() { return fn.startSelectedGame(); }
-  function stageSelectLimit() { return fn.stageSelectLimit(); }
-  function changeStageSelection(d) { return fn.changeStageSelection(d); }
-  function startStage(st) { return fn.startStage(st); }
-  function resetStageStats(p) { return fn.resetStageStats(p); }
-  function enterEditor() { return fn.enterEditor(); }
-  function exitEditorToTitle() { return fn.exitEditorToTitle(); }
-  function moveTitleMenu(d) { return fn.moveTitleMenu(d); }
-  function setTitleMenu(i) { return fn.setTitleMenu(i); }
-  function activateTitleMenu() { return fn.activateTitleMenu(); }
-  function testEditorStage() { return fn.testEditorStage(); }
-  function saveEditorStage() { return fn.saveEditorStage(); }
-  function loadEditorStage() { return fn.loadEditorStage(); }
-  function clearEditorStage() { return fn.clearEditorStage(); }
-  function exportEditorStage() { return fn.exportEditorStage(); }
-  function importStagePackFile() { return fn.importStagePackFile(); }
-  function loadStagePackJsonText(t) { return fn.loadStagePackJsonText(t); }
-  function loadStagePackObject(p) { return fn.loadStagePackObject(p); }
-  function applyStagePack(p) { return fn.applyStagePack(p); }
-  function clearTransientBattleState() { return fn.clearTransientBattleState(); }
-  function restoreBuiltInStagePack() { return fn.restoreBuiltInStagePack(); }
-  function showEditorMessage(m) { return fn.showEditorMessage(m); }
-  function nextStage(d) { return fn.nextStage(d); }
-  function moveEditorFromCode(c) { return fn.moveEditorFromCode(c); }
-  function moveEditorCursor(dx, dy) { return fn.moveEditorCursor(dx, dy); }
-  function useOriginalEditorButton(d) { return fn.useOriginalEditorButton(d); }
-  function pasteOriginalEditorPattern() { return fn.pasteOriginalEditorPattern(); }
-  function editAtEditorCursor(fullTile) { return fn.editAtEditorCursor(fullTile); }
-  function paintEditorCell(c, r) { return fn.paintEditorCell(c, r); }
-  function paintEditorQuadrant(qc, qr) { return fn.paintEditorQuadrant(qc, qr); }
-  function selectEditorBrush(type) { return fn.selectEditorBrush(type); }
-  function selectEditorBrushFromPanel(x, y) { return fn.selectEditorBrushFromPanel(x, y); }
-  function cycleEditorCell(c, r) { return fn.cycleEditorCell(c, r); }
-  function cycleEditorQuadrant(qc, qr) { return fn.cycleEditorQuadrant(qc, qr); }
-  function updateEditorControls() { return fn.updateEditorControls(); }
-  function stageSelectAHeld(input) { return fn.stageSelectAHeld(input); }
-  function stageSelectBHeld(input) { return fn.stageSelectBHeld(input); }
-  function updateStageSelectControls() { return fn.updateStageSelectControls(); }
-  function startFullGameOverScreen() { return fn.startFullGameOverScreen(); }
-  function updateFullGameOverScreen() { return fn.updateFullGameOverScreen(); }
-  function handleFullGameOverInput(code) { return fn.handleFullGameOverInput(code); }
-  function finishFullGameOverScreen() { return fn.finishFullGameOverScreen(); }
-  function startHighScoreScreen() { return fn.startHighScoreScreen(); }
-  function updateHighScoreScreen() { return fn.updateHighScoreScreen(); }
-  function returnToTitleAfterGame() { return fn.returnToTitleAfterGame(); }
-  function enterStageClear() { return fn.enterStageClear(); }
-  function enterStageResult(reason) { return fn.enterStageResult(reason); }
-  function finishStageResult() { return fn.finishStageResult(); }
-  function finishStageClearClosing() { return fn.finishStageClearClosing(); }
-  function finishGameOverScreen() { return fn.finishGameOverScreen(); }
-  function gameOverFieldDuration() { return fn.gameOverFieldDuration(); }
-  function checkEndState() { return fn.checkEndState(); }
-  function updateBattle(options) { return fn.updateBattle(options); }
 
   // Audio methods are registered before this bridge and do not depend on a receiver.
   var initAudio = fn.initAudio;
@@ -513,8 +440,8 @@
     gameSettings: gameSettings,
     playSound: playSound,
     resetFrameCounterLow: frameCounterRuntime.resetFrameCounterLow,
-    resetPlayerPosition: resetPlayerPosition,
-    updateHighScore: updateHighScore
+    resetPlayerPosition: fn.resetPlayerPosition,
+    updateHighScore: fn.updateHighScore
   });
   deps.requireRuntimeModule("stageResultRuntime").setupStageResultRuntime(state, deps, {
     addPlayerScore: fn.addPlayerScore,
@@ -528,20 +455,20 @@
   deps.requireRuntimeModule("stageFlowRuntime").setupStageFlowRuntime(state, deps, {
     awardPendingStageClearBonus: fn.awardPendingStageClearBonus,
     gameSettings: gameSettings,
-    resetTitleIdleTimer: resetTitleIdleTimer,
+    resetTitleIdleTimer: fn.resetTitleIdleTimer,
     stageAdvanceResult: fn.stageAdvanceResult,
     stageClearBonusRecipients: fn.stageClearBonusRecipients,
     stageCurtainCloseFrames: function () { return STAGE_CURTAIN_CLOSE_FRAMES; },
     stageResultDuration: fn.stageResultDuration,
-    startFullGameOverScreen: startFullGameOverScreen,
-    startStage: startStage,
+    startFullGameOverScreen: fn.startFullGameOverScreen,
+    startStage: fn.startStage,
     stopGameplayAudioBeforeResult: fn.stopGameplayAudioBeforeResult,
     stopStageResultAudio: fn.stopStageResultAudio
   });
   var gameOverEntryRuntime = deps.requireRuntimeModule("gameOverEntryRuntime").setupGameOverEntryRuntime(state, deps, {
-    endTitleDemo: endTitleDemo,
+    endTitleDemo: fn.endTitleDemo,
     extendedStageEndFrameHigh: function () { return EXTENDED_STAGE_END_FRAME_HIGH; },
-    gameOverFieldDuration: gameOverFieldDuration,
+    gameOverFieldDuration: fn.gameOverFieldDuration,
     resetFrameCounters: frameCounterRuntime.resetFrameCounters,
     stopBonusLifeAudio: stopBonusLifeAudio,
     stopBrickHitAudio: stopBrickHitAudio,
@@ -559,9 +486,9 @@
     stopSteelHitAudio: stopSteelHitAudio
   });
   deps.requireRuntimeModule("battleOutcomeRuntime").setupBattleOutcomeRuntime(state, deps, {
-    endTitleDemo: endTitleDemo,
+    endTitleDemo: fn.endTitleDemo,
     enterGameOver: gameOverEntryRuntime.enterGameOver,
-    enterStageClear: enterStageClear,
+    enterStageClear: fn.enterStageClear,
     extendedStageEndFrameHigh: function () { return EXTENDED_STAGE_END_FRAME_HIGH; },
     gameSettings: gameSettings,
     playerGameOverMessageActive: function () { return fn.playerGameOverMessageActive(); },
@@ -656,7 +583,7 @@
     resolveBullet: fn.resolveBullet
   });
   deps.requireRuntimeModule("battleLoopRuntime").setupBattleLoopRuntime(state, deps, {
-    checkEndState: checkEndState,
+    checkEndState: fn.checkEndState,
     spawnEnemies: fn.spawnEnemies,
     shouldSpawnEnemies: shouldSpawnEnemies,
     syncMovementAudio: syncMovementAudio,
@@ -682,25 +609,25 @@
   var screenUpdateRuntime = deps.requireRuntimeModule("screenUpdateRuntime").setupScreenUpdateRuntime(state, deps, {
     advanceFrameCounters: frameCounterRuntime.advanceFrameCounters,
     awardPendingStageClearBonus: fn.awardPendingStageClearBonus,
-    checkEndState: checkEndState,
-    finishGameOverScreen: finishGameOverScreen,
-    finishStageClearClosing: finishStageClearClosing,
-    finishStageResult: finishStageResult,
+    checkEndState: fn.checkEndState,
+    finishGameOverScreen: fn.finishGameOverScreen,
+    finishStageClearClosing: fn.finishStageClearClosing,
+    finishStageResult: fn.finishStageResult,
     playSound: playSound,
     resetFrameCounterHigh: frameCounterRuntime.resetFrameCounterHigh,
     stageClearPresentation: fn.stageClearPresentation,
     stageResultVisibleKillCount: stageResultVisibleKillCount,
     syncMovementAudio: syncMovementAudio,
     updateAudio: fn.updateAllAudio,
-    updateBattle: updateBattle,
-    updateEditorControls: updateEditorControls,
+    updateBattle: fn.updateBattle,
+    updateEditorControls: fn.updateEditorControls,
     updateExplosions: fn.updateExplosions,
-    updateFullGameOverScreen: updateFullGameOverScreen,
-    updateHighScoreScreen: updateHighScoreScreen,
-    updateHiddenMessage: updateHiddenMessage,
+    updateFullGameOverScreen: fn.updateFullGameOverScreen,
+    updateHighScoreScreen: fn.updateHighScoreScreen,
+    updateHiddenMessage: fn.updateHiddenMessage,
     updateScorePopups: fn.updateScorePopups,
-    updateStageSelectControls: updateStageSelectControls,
-    updateTitleIdle: updateTitleIdle
+    updateStageSelectControls: fn.updateStageSelectControls,
+    updateTitleIdle: fn.updateTitleIdle
   });
   var renderCompositionRuntime = deps.requireRuntimeModule("renderCompositionRuntime").setupRenderCompositionRuntime(state, deps, {
     battleDisplayFrame: battleDisplayFrame,
@@ -722,7 +649,7 @@
     fullGameOverPresentation: fullGameOverPresentation,
     gameSettings: gameSettings,
     highScorePresentation: highScorePresentation,
-    hiddenMessagePresentation: hiddenMessagePresentation,
+    hiddenMessagePresentation: fn.hiddenMessagePresentation,
     normalizeBrickFragmentMask: normalizeBrickFragmentMask,
     pixelGlyph: pixelGlyph,
     playerUpgradeOverlayParts: playerUpgradeOverlayParts,
@@ -763,6 +690,79 @@
   var editorRenderRuntime = renderCompositionRuntime.editorRenderRuntime;
   var screenTransitionRenderRuntime = renderCompositionRuntime.screenTransitionRenderRuntime;
   var screenRenderRuntime = renderCompositionRuntime.screenRenderRuntime;
+
+  // Runtime methods are referenced only after all extracted modules register them.
+  var loadHighScore = fn.loadHighScore;
+  var saveHighScore = fn.saveHighScore;
+  var updateHighScore = fn.updateHighScore;
+  var createPlayer = fn.createPlayer;
+  var resetPlayerPosition = fn.resetPlayerPosition;
+  var startGame = fn.startGame;
+  var startTitleDemo = fn.startTitleDemo;
+  var endTitleDemo = fn.endTitleDemo;
+  var updateTitleIdle = fn.updateTitleIdle;
+  var resetTitleIdleTimer = fn.resetTitleIdleTimer;
+  var resetTitleIdleHighByte = fn.resetTitleIdleHighByte;
+  var hiddenMessageTriggerReady = fn.hiddenMessageTriggerReady;
+  var reserveTitleDirectionForHiddenInput = fn.reserveTitleDirectionForHiddenInput;
+  var recordHiddenTitleInput = fn.recordHiddenTitleInput;
+  var startHiddenMessage = fn.startHiddenMessage;
+  var updateHiddenMessage = fn.updateHiddenMessage;
+  var hiddenMessagePresentation = fn.hiddenMessagePresentation;
+  var beginStageSelect = fn.beginStageSelect;
+  var startSelectedGame = fn.startSelectedGame;
+  var stageSelectLimit = fn.stageSelectLimit;
+  var changeStageSelection = fn.changeStageSelection;
+  var startStage = fn.startStage;
+  var resetStageStats = fn.resetStageStats;
+  var enterEditor = fn.enterEditor;
+  var exitEditorToTitle = fn.exitEditorToTitle;
+  var moveTitleMenu = fn.moveTitleMenu;
+  var setTitleMenu = fn.setTitleMenu;
+  var activateTitleMenu = fn.activateTitleMenu;
+  var testEditorStage = fn.testEditorStage;
+  var saveEditorStage = fn.saveEditorStage;
+  var loadEditorStage = fn.loadEditorStage;
+  var clearEditorStage = fn.clearEditorStage;
+  var exportEditorStage = fn.exportEditorStage;
+  var importStagePackFile = fn.importStagePackFile;
+  var loadStagePackJsonText = fn.loadStagePackJsonText;
+  var loadStagePackObject = fn.loadStagePackObject;
+  var applyStagePack = fn.applyStagePack;
+  var clearTransientBattleState = fn.clearTransientBattleState;
+  var restoreBuiltInStagePack = fn.restoreBuiltInStagePack;
+  var showEditorMessage = fn.showEditorMessage;
+  var nextStage = fn.nextStage;
+  var moveEditorFromCode = fn.moveEditorFromCode;
+  var moveEditorCursor = fn.moveEditorCursor;
+  var useOriginalEditorButton = fn.useOriginalEditorButton;
+  var pasteOriginalEditorPattern = fn.pasteOriginalEditorPattern;
+  var editAtEditorCursor = fn.editAtEditorCursor;
+  var paintEditorCell = fn.paintEditorCell;
+  var paintEditorQuadrant = fn.paintEditorQuadrant;
+  var selectEditorBrush = fn.selectEditorBrush;
+  var selectEditorBrushFromPanel = fn.selectEditorBrushFromPanel;
+  var cycleEditorCell = fn.cycleEditorCell;
+  var cycleEditorQuadrant = fn.cycleEditorQuadrant;
+  var updateEditorControls = fn.updateEditorControls;
+  var stageSelectAHeld = fn.stageSelectAHeld;
+  var stageSelectBHeld = fn.stageSelectBHeld;
+  var updateStageSelectControls = fn.updateStageSelectControls;
+  var startFullGameOverScreen = fn.startFullGameOverScreen;
+  var updateFullGameOverScreen = fn.updateFullGameOverScreen;
+  var handleFullGameOverInput = fn.handleFullGameOverInput;
+  var finishFullGameOverScreen = fn.finishFullGameOverScreen;
+  var startHighScoreScreen = fn.startHighScoreScreen;
+  var updateHighScoreScreen = fn.updateHighScoreScreen;
+  var returnToTitleAfterGame = fn.returnToTitleAfterGame;
+  var enterStageClear = fn.enterStageClear;
+  var enterStageResult = fn.enterStageResult;
+  var finishStageResult = fn.finishStageResult;
+  var finishStageClearClosing = fn.finishStageClearClosing;
+  var finishGameOverScreen = fn.finishGameOverScreen;
+  var gameOverFieldDuration = fn.gameOverFieldDuration;
+  var checkEndState = fn.checkEndState;
+  var updateBattle = fn.updateBattle;
 
   deps.requireRuntimeModule("inputRuntime").setupInputRuntime(state, {
     dom: { document: document, window: window },

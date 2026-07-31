@@ -722,6 +722,8 @@ tank-defender-8/
 
 `src/game.js` 现在直接引用 `audio-bridge.js` 注册的音频方法，不再维护第二层转发函数。启动回调直接使用已注册的 `state.fn` 方法，在缩小组合入口的同时保持初始化顺序安全。
 
+`src/game.js` 现在对 71 个非音频 runtime 方法采用同样的边界：模块注册回调期间直接读取 `state.fn`，所有抽离 runtime 完成注册后才建立稳定的直接引用。这样移除了剩余转发函数层，同时不改变运行时调用顺序。
+
 ## 操作方式
 
 - 标题画面：使用方向键或 `WASD` 选择 `1 PLAYER`、`2 PLAYERS` 或 `CONSTRUCTION`；按 `Enter`/`Space` 激活所选项目。`1`、`2` 和 `C`/`E` 仍可作为直接快捷键。未操作的标题画面待机 640 帧后会开始演示；按 `Enter`、`Space` 或 `Escape` 返回标题画面。
