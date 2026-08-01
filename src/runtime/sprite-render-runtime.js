@@ -47,11 +47,34 @@
       }
     }
 
-    function drawMiniTank(x, y, color) {
+    function drawMiniTank(x, y, color, typeIndex) {
       drawManifestSprite("miniTank", "up", x, y, {
         primary: color,
         shadow: "#111111"
       });
+      drawMiniTankTypeDetails(x, y, color, typeIndex);
+    }
+
+    function drawMiniTankTypeDetails(x, y, color, typeIndex) {
+      var type = Math.max(0, Math.min(3, Math.floor(Number(typeIndex) || 0)));
+      if (type === 0) return;
+      if (type === 1) {
+        // Fast tanks use offset tread marks in the NES result-table silhouette.
+        ctx.fillStyle = "#111111";
+        ctx.fillRect(x + 1, y + 4, 2, 2);
+        ctx.fillRect(x + 11, y + 8, 2, 2);
+        return;
+      }
+      if (type === 2) {
+        // Power tanks have the characteristic split barrel.
+        ctx.fillStyle = color;
+        ctx.fillRect(x + 5, y + 1, 1, 4);
+        ctx.fillRect(x + 8, y + 1, 1, 4);
+        return;
+      }
+      // Armor tanks carry a visible plate around the central hull.
+      ctx.strokeStyle = "#f3f0d4";
+      ctx.strokeRect(x + 3, y + 3, 8, 8);
     }
 
     function drawScaledManifestSprite(spriteName, frameName, x, y, scale, palette) {

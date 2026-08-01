@@ -92,7 +92,7 @@
         drawText("PTS", 64, y, 1, "#f3f0d4");
         drawTextRight(String(row.p1VisibleKills), rowLayout.p1KillsRightX, y, 1, "#f3f0d4");
         drawResultArrow(rowLayout.leftArrowX, y + 2, -1);
-        drawMiniTank(rowLayout.miniTankX, y - 3, row.color);
+        drawMiniTank(rowLayout.miniTankX, y - 3, row.color, row.typeIndex);
         if (game.playerCount > 1) {
           drawResultArrow(rowLayout.rightArrowX, y + 2, 1);
           drawText(String(row.p2VisibleKills), rowLayout.p2KillsX, y, 1, "#f3f0d4");

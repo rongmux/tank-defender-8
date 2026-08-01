@@ -93,7 +93,21 @@
           respawn: 0,
           spawnFlash: gameSettings().timings.enemySpawnFlash
         };
-        game.players = [];
+        game.players = [0, 1, 2]
+          .filter((index) => index !== spec.spawnIndex)
+          .map((index) => {
+            const point = enemySpawnPoint(index);
+            return {
+              kind: "player",
+              id: 300 + index,
+              x: point.x,
+              y: point.y,
+              w: 14,
+              h: 14,
+              alive: true,
+              respawn: 0
+            };
+          });
         game.enemies = [blocker];
         game.bullets = [];
         game.explosions = [];
@@ -108,6 +122,7 @@
         };
         blocker.x = HALF * 2;
         blocker.y = HALF * 2;
+        game.players = [];
         for (let frame = 0; frame < gameSettings().timings.enemySpawnRetry; frame += 1) spawnEnemies();
         const beforeRetry = {
           enemyCount: game.enemies.length,

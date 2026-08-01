@@ -76,6 +76,18 @@ assert.deepEqual(calls, [
 ]);
 
 calls.length = 0;
+api.drawMiniTank(12, 20, "#tank", 1);
+assert(calls.some((call) => call[0] === "fillRect" && call[1] === 13 && call[2] === 24));
+
+calls.length = 0;
+api.drawMiniTank(12, 20, "#tank", 2);
+assert(calls.some((call) => call[0] === "fillRect" && call[1] === 17 && call[2] === 21));
+
+calls.length = 0;
+api.drawMiniTank(12, 20, "#tank", 3);
+assert(calls.some((call) => call[0] === "strokeRect" && call[1] === 15 && call[2] === 23));
+
+calls.length = 0;
 api.drawManifestSprite("demo", "missing", 0, 0, {});
 assert.deepEqual(calls, []);
 

@@ -11,9 +11,13 @@ const calls = [];
 const state = {
   ctx: {
     fillStyle: "",
+    strokeStyle: "",
     lineWidth: 0,
     fillRect(...args) {
       calls.push(["fillRect", ...args]);
+    },
+    strokeRect(...args) {
+      calls.push(["strokeRect", ...args]);
     }
   },
   game: { frameLow: 5 },
@@ -76,9 +80,11 @@ assert.deepEqual(Object.keys(api), [
   "drawPlayerUpgradeOverlay",
   "drawShield",
   "drawSpawn",
-  "drawTank"
+  "drawTank",
+  "drawTankForestOutline"
 ]);
 assert.equal(state.fn.drawTank, api.drawTank);
+assert.equal(state.fn.drawTankForestOutline, api.drawTankForestOutline);
 
 const player = { kind: "player", x: 3.2, y: 4.7, dir: 2, level: 3, trackPhase: 1, spawnFlash: 0 };
 api.drawTank(player, "#tank", "#accent");
@@ -107,5 +113,9 @@ assert.deepEqual(calls, [
   ["spawnPresentation", 0, 28],
   ["scaled", "spawn", "box", 21, 15, 10 / 14, { primary: "#f3f0d4" }]
 ]);
+
+calls.length = 0;
+api.drawTankForestOutline(player);
+assert(calls.some((call) => call[0] === "strokeRect" && call[1] === 20 && call[2] === 14));
 
 console.log("tank-render-runtime unit test passed");

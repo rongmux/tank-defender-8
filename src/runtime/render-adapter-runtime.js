@@ -107,6 +107,7 @@
       drawForest: forward("terrainRenderRuntime", "drawForest"),
       renderBase: forward("terrainRenderRuntime", "renderBase"),
       drawTank: forward("tankRenderRuntime", "drawTank"),
+      drawTankForestOutline: forward("tankRenderRuntime", "drawTankForestOutline"),
       drawPlayerUpgradeOverlay: forward("tankRenderRuntime", "drawPlayerUpgradeOverlay"),
       drawShield: forward("tankRenderRuntime", "drawShield"),
       drawSpawn: forward("tankRenderRuntime", "drawSpawn"),

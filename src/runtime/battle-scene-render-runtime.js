@@ -19,6 +19,7 @@
     "drawShield",
     "drawSpawn",
     "drawTank",
+    "drawTankForestOutline",
     "enemyColor",
     "isPlayerShieldVisible",
     "isPlayerTankVisible",
@@ -65,12 +66,16 @@
     var fieldY = shared.FIELD_Y;
     var fieldWidth = shared.FIELD_W;
     var fieldHeight = shared.FIELD_H;
+    var tile = shared.TILE;
+    var gridSize = shared.GRID;
+    var forest = deps.FOREST;
     var battleDisplayFrame = callbacks.battleDisplayFrame;
     var drawBullet = callbacks.drawBullet;
     var drawPowerUp = callbacks.drawPowerUp;
     var drawShield = callbacks.drawShield;
     var drawSpawn = callbacks.drawSpawn;
     var drawTank = callbacks.drawTank;
+    var drawTankForestOutline = callbacks.drawTankForestOutline;
     var enemyColor = callbacks.enemyColor;
     var isPlayerShieldVisible = callbacks.isPlayerShieldVisible;
     var isPlayerTankVisible = callbacks.isPlayerTankVisible;
@@ -117,6 +122,7 @@
       }
       renderProjectileTerrainCover(game.grid);
       renderTerrain(true, game.grid);
+      renderForestTankOutlines();
       if (game.powerUp) drawPowerUp(game.powerUp);
       renderExplosions();
       renderPlayerDestructions();
@@ -125,6 +131,44 @@
       renderScorePopups();
       renderPlayerGameOverMessage();
       renderPanel();
+    }
+
+    function renderForestTankOutlines() {
+      for (var playerIndex = 0; playerIndex < game.players.length; playerIndex += 1) {
+        var player = game.players[playerIndex];
+        if (!isTankUnderForest(player)) continue;
+        if (!player.alive || player.respawn > 0 || player.spawnFlash > 0) continue;
+        if (isPlayerTankVisible(player, battleDisplayFrame())) drawTankForestOutline(player);
+      }
+      for (var enemyIndex = 0; enemyIndex < game.enemies.length; enemyIndex += 1) {
+        var enemy = game.enemies[enemyIndex];
+        if (!isTankUnderForest(enemy)) continue;
+        if (!enemy.alive || enemy.destroying || enemy.spawnFlash > 0) continue;
+        drawTankForestOutline(enemy);
+      }
+    }
+
+    function isTankUnderForest(tank) {
+      if (!tank || !Array.isArray(game.grid) || !Number.isFinite(tile) || tile <= 0 || forest === undefined) {
+        return false;
+      }
+      var x = Number(tank.x);
+      var y = Number(tank.y);
+      var width = Math.max(1, Number(tank.w) || 14);
+      var height = Math.max(1, Number(tank.h) || 14);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+      var left = Math.max(0, Math.floor(x / tile));
+      var top = Math.max(0, Math.floor(y / tile));
+      var right = Math.min(gridSize - 1, Math.floor((x + width - 1) / tile));
+      var bottom = Math.min(gridSize - 1, Math.floor((y + height - 1) / tile));
+      for (var row = top; row <= bottom; row += 1) {
+        var cells = game.grid[row];
+        if (!Array.isArray(cells)) continue;
+        for (var column = left; column <= right; column += 1) {
+          if (cells[column] && cells[column].type === forest) return true;
+        }
+      }
+      return false;
     }
 
     var api = { renderGame: renderGame };

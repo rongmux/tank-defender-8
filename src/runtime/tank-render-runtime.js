@@ -79,6 +79,23 @@
       if (tank.kind === "player") drawPlayerUpgradeOverlay(tank, x, y, accent);
     }
 
+    function drawTankForestOutline(tank) {
+      var x = Math.round(fieldX + tank.x);
+      var y = Math.round(fieldY + tank.y);
+      var previousStrokeStyle = ctx.strokeStyle;
+      var previousLineWidth = ctx.lineWidth;
+      ctx.strokeStyle = "#f3f0d4";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 1, y + 1, 12, 12);
+      var direction = directionName(tank.dir);
+      if (direction === "up") ctx.strokeRect(x + 6, y, 2, 5);
+      else if (direction === "down") ctx.strokeRect(x + 6, y + 9, 2, 5);
+      else if (direction === "left") ctx.strokeRect(x, y + 6, 5, 2);
+      else ctx.strokeRect(x + 9, y + 6, 5, 2);
+      ctx.strokeStyle = previousStrokeStyle;
+      ctx.lineWidth = previousLineWidth;
+    }
+
     function drawPlayerUpgradeOverlay(tank, x, y, accent) {
       var parts = playerUpgradeOverlayParts(tank.level, tank.dir);
       if (!parts.length) return;
@@ -126,7 +143,8 @@
       drawPlayerUpgradeOverlay: drawPlayerUpgradeOverlay,
       drawShield: drawShield,
       drawSpawn: drawSpawn,
-      drawTank: drawTank
+      drawTank: drawTank,
+      drawTankForestOutline: drawTankForestOutline
     };
     Object.assign(state.fn, api);
     return Object.freeze(api);

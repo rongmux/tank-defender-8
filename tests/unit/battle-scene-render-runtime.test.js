@@ -19,12 +19,12 @@ const state = {
     grid: "grid",
     paused: true,
     players: [
-      { id: 1, alive: true, respawn: 0, spawnFlash: 0, color: "p1", accent: "a1" },
+      { id: 1, alive: true, respawn: 0, spawnFlash: 0, x: 0, y: 0, color: "p1", accent: "a1" },
       { id: 2, alive: true, respawn: 0, spawnFlash: 2, color: "p2", accent: "a2" },
       { id: 3, alive: false, respawn: 0, spawnFlash: 0 }
     ],
     enemies: [
-      { id: 1, alive: true, destroying: false, spawnFlash: 0, accent: "e1" },
+      { id: 1, alive: true, destroying: false, spawnFlash: 0, x: 0, y: 0, accent: "e1" },
       { id: 2, alive: true, destroying: false, spawnFlash: 2, accent: "e2" },
       { id: 3, alive: true, destroying: true, spawnFlash: 0 },
       { id: 4, alive: false, destroying: false, spawnFlash: 0 }
@@ -34,15 +34,19 @@ const state = {
   },
   fn: {}
 };
+const sharedState = {
+  SCREEN_W: 256,
+  SCREEN_H: 240,
+  FIELD_X: 16,
+  FIELD_Y: 16,
+  FIELD_W: 208,
+  FIELD_H: 208,
+  TILE: 16,
+  GRID: 1
+};
 const api = runtime.setupBattleSceneRenderRuntime(state, {
-  sharedState: {
-    SCREEN_W: 256,
-    SCREEN_H: 240,
-    FIELD_X: 16,
-    FIELD_Y: 16,
-    FIELD_W: 208,
-    FIELD_H: 208
-  }
+  FOREST: "forest",
+  sharedState
 }, {
   battleDisplayFrame() {
     calls.push(["displayFrame"]);
@@ -62,6 +66,9 @@ const api = runtime.setupBattleSceneRenderRuntime(state, {
   },
   drawTank(...args) {
     calls.push(["tank", ...args]);
+  },
+  drawTankForestOutline(...args) {
+    calls.push(["forestOutline", ...args]);
   },
   enemyColor(enemy) {
     calls.push(["enemyColor", enemy.id]);
@@ -139,5 +146,10 @@ assert.deepEqual(calls, [
   ["playerGameOver"],
   ["panel"]
 ]);
+
+calls.length = 0;
+state.game.grid = [[{ type: "forest" }]];
+api.renderGame();
+assert.equal(calls.filter((call) => call[0] === "forestOutline").length, 2);
 
 console.log("battle-scene-render-runtime unit test passed");

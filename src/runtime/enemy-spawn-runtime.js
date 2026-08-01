@@ -23,6 +23,7 @@
     "maxActiveEnemies",
     "stageCycleLimit"
   ];
+  var ENEMY_SPAWN_POINT_COUNT = 3;
 
   function requireInputs(state, deps, callbacks) {
     if (!state || typeof state !== "object") throw new Error("state must be an object");
@@ -66,14 +67,14 @@
       }
       var enemySpec = getEnemySpec(game.stage, game.enemySpawned);
       var spawnIndex = deps.selectEnemySpawnIndex(enemySpec, game.enemySpawned);
-      var point = enemySpawnPoint(spawnIndex);
       var typeIndex = enemySpec.typeIndex;
       var enemyTypes = callbacks.enemyTypeDefinitions();
       var type = enemyTypes[typeIndex] || enemyTypes[0];
       var carrier = enemySpec.carrier;
       var slotIndex = deps.findAvailableEnemySlot(game.enemies, capacity);
       if (slotIndex === null) return;
-      if (deps.isEnemySpawnPointOccupied(point, game.players, game.enemies)) {
+      var spawnLocation = findAvailableSpawnLocation(spawnIndex);
+      if (!spawnLocation) {
         game.nextSpawn = gameSettings().timings.enemySpawnRetry;
         return;
       }
@@ -81,7 +82,7 @@
       game.enemies.push(deps.createEnemyState({
         id: 100 + game.enemySpawned,
         slotIndex: slotIndex,
-        spawn: point,
+        spawn: spawnLocation.point,
         direction: deps.DOWN,
         type: type,
         typeIndex: typeIndex,
@@ -91,6 +92,19 @@
       }));
       game.enemySpawned += 1;
       game.nextSpawn = enemySpawnDelay(game.stage, game.enemySpawned);
+    }
+
+    function findAvailableSpawnLocation(preferredIndex) {
+      var normalized = Math.floor(Number(preferredIndex) || 0) % ENEMY_SPAWN_POINT_COUNT;
+      if (normalized < 0) normalized += ENEMY_SPAWN_POINT_COUNT;
+      for (var offset = 0; offset < ENEMY_SPAWN_POINT_COUNT; offset += 1) {
+        var index = (normalized + offset) % ENEMY_SPAWN_POINT_COUNT;
+        var point = enemySpawnPoint(index);
+        if (!deps.isEnemySpawnPointOccupied(point, game.players, game.enemies)) {
+          return { index: index, point: point };
+        }
+      }
+      return null;
     }
 
     function enemySpawnDelay(stage, index) {

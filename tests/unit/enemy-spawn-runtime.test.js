@@ -114,6 +114,15 @@ assert.equal(api.scaleEnemySpawnDelayForPlayers(10, 2), 20);
 state.game.enemySpawned = 1;
 state.game.nextSpawn = 0;
 state.game.enemies = [];
+deps.isEnemySpawnPointOccupied = (point) => point.x === 0;
+api.spawnEnemies();
+assert.equal(state.game.enemySpawned, 2);
+assert.equal(state.game.enemies.length, 1);
+assert.equal(state.game.enemies[0].spawn.x, 16);
+
+state.game.enemySpawned = 1;
+state.game.nextSpawn = 0;
+state.game.enemies = [];
 deps.isEnemySpawnPointOccupied = () => true;
 api.spawnEnemies();
 assert.equal(state.game.enemySpawned, 1);

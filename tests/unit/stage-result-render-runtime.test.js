@@ -97,7 +97,7 @@ assert.deepEqual(calls.slice(0, 2), [
   ["fillRect", 0, 0, 256, 240],
   ["text", "HI-SCORE", 64, 24, 1, "#f05a42"]
 ]);
-assert(calls.some((call) => call[0] === "miniTank" && call[1] === 121 && call[2] === 93));
+assert(calls.some((call) => call[0] === "miniTank" && call[1] === 121 && call[2] === 93 && call[4] === 0));
 assert.deepEqual(calls.filter((call) => call[0] === "fillRect").slice(1, 7), [
   ["fillRect", 112, 100, 8, 1],
   ["fillRect", 112, 99, 2, 3],
