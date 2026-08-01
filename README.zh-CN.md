@@ -160,6 +160,7 @@ node --check src/runtime/audio-brick-hit-lifecycle-diagnostics.js
 node --check src/runtime/audio-steel-hit-diagnostics.js
 node --check src/runtime/audio-steel-hit-lifecycle-diagnostics.js
 node --check src/runtime/audio-enemy-hit-diagnostics.js
+node --check src/runtime/audio-enemy-hit-lifecycle-diagnostics.js
 node --check src/runtime/audio-enemy-destroy-diagnostics.js
 node --check src/runtime/audio-player-destroy-diagnostics.js
 node --check src/runtime/audio-base-hit-diagnostics.js
@@ -343,6 +344,7 @@ tank-defender-8/
 |   |   |-- audio-steel-hit-diagnostics.js
 |   |   |-- audio-steel-hit-lifecycle-diagnostics.js
 |   |   |-- audio-enemy-hit-diagnostics.js
+|   |   |-- audio-enemy-hit-lifecycle-diagnostics.js
 |   |   |-- audio-enemy-destroy-diagnostics.js
 |   |   |-- audio-player-destroy-diagnostics.js
 |   |   |-- audio-base-hit-diagnostics.js
@@ -494,6 +496,7 @@ tank-defender-8/
 |   |   |-- audio-steel-hit-diagnostics.test.js
 |   |   |-- audio-steel-hit-lifecycle-diagnostics.test.js
 |   |   |-- audio-enemy-hit-diagnostics.test.js
+|   |   |-- audio-enemy-hit-lifecycle-diagnostics.test.js
 |   |   |-- audio-enemy-destroy-diagnostics.test.js
 |   |   |-- audio-player-destroy-diagnostics.test.js
 |   |   |-- audio-base-hit-diagnostics.test.js
@@ -849,6 +852,8 @@ tank-defender-8/
 `src/runtime/audio-steel-hit-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的钢墙命中生命周期探针。它保留边界与敌方子弹命中、暂停冻结、道具出现和关卡开场优先级屏蔽、独立射击声道以及关卡清理行为，同时由组合入口恢复原有公开 API 位置。
 
 `src/runtime/audio-enemy-hit-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态敌方坦克命中音效表现探针。它通过显式作用域将六帧装甲命中序列与敌方命中生命周期探针分离。
+
+`src/runtime/audio-enemy-hit-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的敌方命中生命周期探针。它保留装甲第二音高时序、致命命中转交、友军眩晕、玩家受击摧毁、声道优先级以及关卡清理行为，同时由组合入口恢复原有公开 API 位置。
 
 `src/runtime/audio-enemy-destroy-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态敌方摧毁音效表现探针。它通过显式作用域将采样的摧毁序列与敌人释放和计分生命周期探针分离。
 
