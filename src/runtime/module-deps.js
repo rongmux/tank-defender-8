@@ -113,6 +113,7 @@
   var audioFixedFrameRuntime = requireRuntimeModule("audioFixedFrameRuntime");
   var audioChannelRuntime = requireRuntimeModule("audioChannelRuntime");
   var audioMovementRuntime = requireRuntimeModule("audioMovementRuntime");
+  var audioVoiceRuntime = requireRuntimeModule("audioVoiceRuntime");
   var freeAudioManifest = requireRuntimeModule("freeAudioManifest");
   var audioScoreDiagnostics = requireRuntimeModule("audioScoreDiagnostics");
   var audioStageBonusDiagnostics = requireRuntimeModule("audioStageBonusDiagnostics");
@@ -391,6 +392,7 @@
     audioFixedFrameRuntime: audioFixedFrameRuntime,
     audioChannelRuntime: audioChannelRuntime,
     audioMovementRuntime: audioMovementRuntime,
+    audioVoiceRuntime: audioVoiceRuntime,
     FIXED_FRAME_AUDIO_UPDATE_MODE: fixedFrameAudioState.FIXED_FRAME_AUDIO_UPDATE_MODE,
     advanceFixedFrameAudioState: fixedFrameAudioState.advanceFixedFrameAudioState,
     beginFixedFrameAudioState: fixedFrameAudioState.beginFixedFrameAudioState,

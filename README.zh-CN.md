@@ -203,6 +203,7 @@ node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-fixed-frame-runtime.js
 node --check src/runtime/audio-channel-runtime.js
 node --check src/runtime/audio-movement-runtime.js
+node --check src/runtime/audio-voice-runtime.js
 node --check src/runtime/audio-bridge.js
 node --check src/runtime/application-flow-composition-runtime.js
 node --check src/runtime/input-composition-runtime.js
@@ -394,6 +395,7 @@ tank-defender-8/
 |   |   |-- audio-fixed-frame-runtime.js
 |   |   |-- audio-channel-runtime.js
 |   |   |-- audio-movement-runtime.js
+|   |   |-- audio-voice-runtime.js
 |   |   |-- audio-bridge.js
 |   |   |-- application-flow-composition-runtime.js
 |   |   |-- input-composition-runtime.js
@@ -497,6 +499,7 @@ tank-defender-8/
 |   |   |-- audio-fixed-frame-runtime.test.js
 |   |   |-- audio-channel-runtime.test.js
 |   |   |-- audio-movement-runtime.test.js
+|   |   |-- audio-voice-runtime.test.js
 |   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- input-composition-runtime.test.js
 |   |   |-- legacy-api-composition-runtime.test.js
@@ -856,13 +859,15 @@ tank-defender-8/
 
 `src/runtime/debug-battle-runtime.js` 接管效果、道具、分数、计时器和地形诊断共用的确定性暂停战斗夹具。它只写入这些探针所需的最小战斗状态，将 60 Hz 计数与帧字节转换集中到一个边界，并保持正式战斗循环不变。单元测试锁定夹具几何、数值归一化和重置字段；浏览器集成测试验证诊断仍使用抽离后的夹具。
 
-`src/runtime/audio-bridge.js` 现在也接管交给组合入口的固定帧音频生命周期顺序：更新全部声部、结算前停止游戏声部、停止结算声部，以及完整退出时停止全部声部。单元测试锁定这四组顺序，避免后续音频修改静默改变声道清理或推进顺序。
+`src/runtime/audio-bridge.js` 接管音频状态初始化、混音投影、已抽取音频运行时模块的组合，以及交给组合入口的固定帧音频生命周期顺序：更新全部声部、结算前停止游戏声部、停止结算声部，以及完整退出时停止全部声部。通用 Web Audio 声部调度现由 `audio-voice-runtime.js` 接管。单元测试锁定这四组生命周期顺序，避免后续音频修改静默改变声道清理或推进顺序。
 
 `src/runtime/audio-fixed-frame-runtime.js` 接管从 `audio-bridge.js` 抽出的固定帧音频基础设施：清单表现查询、确定性的短/长噪声缓冲、Web Audio 声源创建、节点同步、暂停感知的帧推进和移动音效重新同步。其单元测试锁定注册和无音频上下文时的噪声缓冲行为，同时由 audio bridge 测试保留生命周期方法顺序。
 
-`src/runtime/audio-channel-runtime.js` 接管从 `audio-bridge.js` 抽出的 17 个固定帧事件声道绑定：表现查询、可听性选择、节点同步、启动/停止/更新生命周期，以及暂停、关卡开始、奖励生命和道具事件所需的跨声道重新同步。其单元测试锁定完整声道方法面和代表性的优先级回调；audio bridge 继续负责混音状态、移动音效、通用声音播放和全局停止顺序。
+`src/runtime/audio-channel-runtime.js` 接管从 `audio-bridge.js` 抽出的 17 个固定帧事件声道绑定：表现查询、可听性选择、节点同步、启动/停止/更新生命周期，以及暂停、关卡开始、奖励生命和道具事件所需的跨声道重新同步。其单元测试锁定完整声道方法面和代表性的优先级回调；audio bridge 继续负责音频状态、混音投影、模块组合和全局生命周期顺序。
 
 `src/runtime/audio-movement-runtime.js` 接管从 `audio-bridge.js` 抽出的连续移动音效状态机：玩家输入请求、演示模式请求、玩家/敌人模式判定、振荡器生命周期、按相位更新频率，以及与混音状态的移动声道同步。其单元测试覆盖输入检测、振荡器创建、相位更新、屏蔽和销毁。
+
+`src/runtime/audio-voice-runtime.js` 接管从 `audio-bridge.js` 抽出的 Web Audio 上下文初始化、序列振荡器的跟踪与清理、通用音调创建、清单声部时序，以及固定帧事件的重定向路由。其单元测试锁定序列时序、通用音高路由、重定向和初始化节点同步。
 
 `src/runtime/audio-score-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的计分音效表现与生命周期探针。它接收显式运行时作用域并返回冻结的探针方法；`audio-diagnostics.js` 再将其合并回原有公开顺序，直接测试和浏览器测试共同保持现有输出哈希。
 
