@@ -164,6 +164,7 @@ node --check src/runtime/audio-enemy-hit-lifecycle-diagnostics.js
 node --check src/runtime/audio-enemy-destroy-diagnostics.js
 node --check src/runtime/audio-enemy-destroy-lifecycle-diagnostics.js
 node --check src/runtime/audio-player-destroy-diagnostics.js
+node --check src/runtime/audio-player-destroy-lifecycle-diagnostics.js
 node --check src/runtime/audio-base-hit-diagnostics.js
 node --check src/runtime/audio-player-shoot-diagnostics.js
 node --check src/runtime/audio-stage-start-diagnostics.js
@@ -349,6 +350,7 @@ tank-defender-8/
 |   |   |-- audio-enemy-destroy-diagnostics.js
 |   |   |-- audio-enemy-destroy-lifecycle-diagnostics.js
 |   |   |-- audio-player-destroy-diagnostics.js
+|   |   |-- audio-player-destroy-lifecycle-diagnostics.js
 |   |   |-- audio-base-hit-diagnostics.js
 |   |   |-- audio-player-shoot-diagnostics.js
 |   |   |-- audio-stage-start-diagnostics.js
@@ -502,6 +504,7 @@ tank-defender-8/
 |   |   |-- audio-enemy-destroy-diagnostics.test.js
 |   |   |-- audio-enemy-destroy-lifecycle-diagnostics.test.js
 |   |   |-- audio-player-destroy-diagnostics.test.js
+|   |   |-- audio-player-destroy-lifecycle-diagnostics.test.js
 |   |   |-- audio-base-hit-diagnostics.test.js
 |   |   |-- audio-player-shoot-diagnostics.test.js
 |   |   |-- audio-stage-start-diagnostics.test.js
@@ -771,6 +774,8 @@ tank-defender-8/
 `src/runtime/audio-enemy-destroy-lifecycle-diagnostics.js` owns the enemy-destruction lifecycle probe extracted from `audio-diagnostics.js`. It preserves destruction animation phases, score-popup timing, grenade clear behavior, spawning-enemy handling, pause progression, and stage cleanup while the composition root restores the original public API position.
 
 `src/runtime/audio-player-destroy-diagnostics.js` owns the stateless player-destruction audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the sampled respawn-destruction sequence independent from player lifecycle state restoration.
+
+`src/runtime/audio-player-destroy-lifecycle-diagnostics.js` owns the player-destruction lifecycle probe extracted from `audio-diagnostics.js`. It preserves enemy-bullet death, shield immunity, pause freezing, GAME OVER continuation, destruction-channel priority, and stage cleanup while the composition root restores the original public API position.
 
 `src/runtime/audio-base-hit-diagnostics.js` owns the stateless base-hit audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the sampled base-destruction sequence independent from the base lifecycle and stage-reset probe.
 
