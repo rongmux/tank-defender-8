@@ -75,6 +75,8 @@ assert(modules.audioPlayerDestroyLifecycleDiagnostics, "player-destroy lifecycle
 assert.equal(Object.isFrozen(modules.audioPlayerDestroyLifecycleDiagnostics), true);
 assert(modules.audioBaseHitDiagnostics, "base-hit audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioBaseHitDiagnostics), true);
+assert(modules.audioBaseHitLifecycleDiagnostics, "base-hit lifecycle audio diagnostics module should register before audio-diagnostics.js");
+assert.equal(Object.isFrozen(modules.audioBaseHitLifecycleDiagnostics), true);
 assert(modules.audioPlayerShootDiagnostics, "player-shoot audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioPlayerShootDiagnostics), true);
 assert(modules.audioStageStartDiagnostics, "stage-start audio diagnostics module should register before audio-diagnostics.js");
@@ -388,6 +390,10 @@ const playerDestroyLifecycleDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-player-destroy-lifecycle-diagnostics.js"),
   "utf8"
 );
+const baseHitLifecycleDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/audio-base-hit-lifecycle-diagnostics.js"),
+  "utf8"
+);
 const playerDestroyDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-player-destroy-diagnostics.js"),
   "utf8"
@@ -469,6 +475,8 @@ for (const name of AUDIO_DIAGNOSTIC_METHODS) {
                     ? playerDestroyLifecycleDiagnosticsSource
                   : name === "debugBaseHitAudioProbe"
                     ? baseHitDiagnosticsSource
+                    : name === "debugBaseHitAudioLifecycleProbe"
+                      ? baseHitLifecycleDiagnosticsSource
                     : name === "debugPlayerShootAudioProbe"
                       ? playerShootDiagnosticsSource
                       : name === "debugStageStartAudioProbe"
@@ -507,6 +515,7 @@ assert.equal(diagnosticsSource.includes("debugEnemyDestroyAudioLifecycleProbe()"
 assert.equal(diagnosticsSource.includes("debugPlayerDestroyAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPlayerDestroyAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBaseHitAudioProbe()"), false);
+assert.equal(diagnosticsSource.includes("debugBaseHitAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPlayerShootAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugStageStartAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBonusLifeAudioProbe()"), false);

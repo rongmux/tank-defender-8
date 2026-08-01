@@ -166,6 +166,7 @@ node --check src/runtime/audio-enemy-destroy-lifecycle-diagnostics.js
 node --check src/runtime/audio-player-destroy-diagnostics.js
 node --check src/runtime/audio-player-destroy-lifecycle-diagnostics.js
 node --check src/runtime/audio-base-hit-diagnostics.js
+node --check src/runtime/audio-base-hit-lifecycle-diagnostics.js
 node --check src/runtime/audio-player-shoot-diagnostics.js
 node --check src/runtime/audio-stage-start-diagnostics.js
 node --check src/runtime/audio-bonus-life-diagnostics.js
@@ -352,6 +353,7 @@ tank-defender-8/
 |   |   |-- audio-player-destroy-diagnostics.js
 |   |   |-- audio-player-destroy-lifecycle-diagnostics.js
 |   |   |-- audio-base-hit-diagnostics.js
+|   |   |-- audio-base-hit-lifecycle-diagnostics.js
 |   |   |-- audio-player-shoot-diagnostics.js
 |   |   |-- audio-stage-start-diagnostics.js
 |   |   |-- audio-bonus-life-diagnostics.js
@@ -506,6 +508,7 @@ tank-defender-8/
 |   |   |-- audio-player-destroy-diagnostics.test.js
 |   |   |-- audio-player-destroy-lifecycle-diagnostics.test.js
 |   |   |-- audio-base-hit-diagnostics.test.js
+|   |   |-- audio-base-hit-lifecycle-diagnostics.test.js
 |   |   |-- audio-player-shoot-diagnostics.test.js
 |   |   |-- audio-stage-start-diagnostics.test.js
 |   |   |-- audio-bonus-life-diagnostics.test.js
@@ -870,6 +873,8 @@ tank-defender-8/
 `src/runtime/audio-player-destroy-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的玩家摧毁生命周期探针。它保留敌方子弹击杀、护盾免疫、暂停冻结、GAME OVER 延续、摧毁声道优先级和关卡清理行为，同时由组合入口恢复原有公开 API 位置。
 
 `src/runtime/audio-base-hit-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态基地命中音效表现探针。它通过显式作用域将采样的基地摧毁序列与基地生命周期和关卡复位探针分离。
+
+`src/runtime/audio-base-hit-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的基地命中生命周期探针。它保留基地摧毁、GAME OVER 延续、优先级屏蔽、暂停冻结、外观屏蔽和关卡清理行为，同时由组合入口恢复原有公开 API 位置。
 
 `src/runtime/audio-player-shoot-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态玩家射击音效表现探针。它通过显式作用域将三个边界采样点与射击输入和子弹生命周期状态分离。
 

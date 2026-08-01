@@ -126,6 +126,7 @@
   var audioPlayerDestroyDiagnostics = requireRuntimeModule("audioPlayerDestroyDiagnostics");
   var audioPlayerDestroyLifecycleDiagnostics = requireRuntimeModule("audioPlayerDestroyLifecycleDiagnostics");
   var audioBaseHitDiagnostics = requireRuntimeModule("audioBaseHitDiagnostics");
+  var audioBaseHitLifecycleDiagnostics = requireRuntimeModule("audioBaseHitLifecycleDiagnostics");
   var audioPlayerShootDiagnostics = requireRuntimeModule("audioPlayerShootDiagnostics");
   var audioStageStartDiagnostics = requireRuntimeModule("audioStageStartDiagnostics");
   var audioBonusLifeDiagnostics = requireRuntimeModule("audioBonusLifeDiagnostics");
@@ -406,6 +407,7 @@
     audioPlayerDestroyDiagnostics: audioPlayerDestroyDiagnostics,
     audioPlayerDestroyLifecycleDiagnostics: audioPlayerDestroyLifecycleDiagnostics,
     audioBaseHitDiagnostics: audioBaseHitDiagnostics,
+    audioBaseHitLifecycleDiagnostics: audioBaseHitLifecycleDiagnostics,
     audioPlayerShootDiagnostics: audioPlayerShootDiagnostics,
     audioStageStartDiagnostics: audioStageStartDiagnostics,
     audioBonusLifeDiagnostics: audioBonusLifeDiagnostics,

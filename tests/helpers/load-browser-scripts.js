@@ -118,6 +118,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/audio-player-destroy-diagnostics.js",
   "src/runtime/audio-player-destroy-lifecycle-diagnostics.js",
   "src/runtime/audio-base-hit-diagnostics.js",
+  "src/runtime/audio-base-hit-lifecycle-diagnostics.js",
   "src/runtime/audio-player-shoot-diagnostics.js",
   "src/runtime/audio-stage-start-diagnostics.js",
   "src/runtime/audio-bonus-life-diagnostics.js",
