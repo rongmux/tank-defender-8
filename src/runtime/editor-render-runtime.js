@@ -88,18 +88,41 @@
 
       var cursor = game.editorCursor;
       if (
+        cursor &&
         cursor.qc >= 0 && cursor.qc < quadGrid &&
-        cursor.qr >= 0 && cursor.qr < quadGrid &&
-        Math.floor(game.editorTick / 16) % 2 === 0
+        cursor.qr >= 0 && cursor.qr < quadGrid
       ) {
-        var column = Math.floor(cursor.qc / 2);
-        var row = Math.floor(cursor.qr / 2);
-        drawManifestSprite("tank", "up", fieldX + column * tile + 1, fieldY + row * tile + 1, {
-          primary: "#e3c64e",
-          accent: "#fff0a8",
-          shadow: "#111111"
-        });
+        drawEditorCursor(cursor);
       }
+    }
+
+    function drawEditorCursor(cursor) {
+      var half = tile / 2;
+      var cellX = fieldX + Math.floor(cursor.qc / 2) * tile;
+      var cellY = fieldY + Math.floor(cursor.qr / 2) * tile;
+      var quadrantX = fieldX + cursor.qc * half;
+      var quadrantY = fieldY + cursor.qr * half;
+      var editorTick = Math.max(0, Math.floor(Number(game.editorTick) || 0));
+      var marker = Math.floor(editorTick / 8) % 2 === 0 ? "#fff0a8" : "#e3c64e";
+      var previousFillStyle = ctx.fillStyle;
+      var previousStrokeStyle = ctx.strokeStyle;
+
+      // Keep the selection visible at all times while its palette gently cycles.
+      ctx.strokeStyle = "#111111";
+      ctx.strokeRect(cellX, cellY, tile - 1, tile - 1);
+      ctx.strokeStyle = marker;
+      ctx.strokeRect(cellX + 1, cellY + 1, tile - 3, tile - 3);
+      ctx.strokeStyle = "#111111";
+      ctx.strokeRect(quadrantX, quadrantY, half - 1, half - 1);
+      ctx.strokeStyle = marker;
+      ctx.strokeRect(quadrantX + 1, quadrantY + 1, half - 3, half - 3);
+      ctx.fillStyle = marker;
+      ctx.fillRect(quadrantX, quadrantY, 2, 2);
+      ctx.fillRect(quadrantX + half - 2, quadrantY, 2, 2);
+      ctx.fillRect(quadrantX, quadrantY + half - 2, 2, 2);
+      ctx.fillRect(quadrantX + half - 2, quadrantY + half - 2, 2, 2);
+      ctx.fillStyle = previousFillStyle;
+      ctx.strokeStyle = previousStrokeStyle;
     }
 
     function drawTileLegend(x, y) {

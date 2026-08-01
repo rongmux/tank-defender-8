@@ -107,9 +107,19 @@
         }
         return;
       }
+      drawArmorPlate(x, y);
+    }
+
+    function drawArmorPlate(x, y) {
+      var previousFillStyle = ctx.fillStyle;
       var previousStrokeStyle = ctx.strokeStyle;
-      ctx.strokeStyle = "#f3f0d4";
-      ctx.strokeRect(x + 3, y + 3, 8, 8);
+      ctx.fillStyle = "#f3f0d4";
+      ctx.fillRect(x + 3, y + 3, 8, 8);
+      ctx.fillStyle = "#111111";
+      ctx.fillRect(x + 5, y + 5, 4, 4);
+      ctx.strokeStyle = "#b0b5c3";
+      ctx.strokeRect(x + 2, y + 2, 10, 10);
+      ctx.fillStyle = previousFillStyle;
       ctx.strokeStyle = previousStrokeStyle;
     }
 

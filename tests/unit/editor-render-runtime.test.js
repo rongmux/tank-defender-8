@@ -81,24 +81,27 @@ assert.deepEqual(Object.keys(api), ["drawTileLegend", "renderEditor"]);
 assert.equal(state.fn.renderEditor, api.renderEditor);
 
 api.renderEditor();
-assert.deepEqual(calls.slice(0, 7), [
+assert.deepEqual(calls.slice(0, 15), [
   ["createGrid", 3],
   ["fillRect", 0, 0, 256, 240],
   ["fillRect", 16, 16, 208, 208],
   ["terrain", false, [[{ type: "empty" }]]],
   ["base"],
   ["terrain", true, [[{ type: "empty" }]]],
-  ["sprite", "tank", "up", 33, 49, {
-    primary: "#e3c64e",
-    accent: "#fff0a8",
-    shadow: "#111111"
-  }]
+  ["strokeRect", 32, 48, 15, 15],
+  ["strokeRect", 33, 49, 13, 13],
+  ["strokeRect", 32, 48, 7, 7],
+  ["strokeRect", 33, 49, 5, 5],
+  ["fillRect", 32, 48, 2, 2],
+  ["fillRect", 38, 48, 2, 2],
+  ["fillRect", 32, 54, 2, 2],
+  ["fillRect", 38, 54, 2, 2]
 ]);
 
 state.game.editorTick = 16;
 calls.length = 0;
 api.renderEditor();
-assert.equal(calls.some((call) => call[0] === "sprite"), false);
+assert(calls.some((call) => call[0] === "strokeRect" && call[1] === 32 && call[2] === 48));
 
 calls.length = 0;
 api.drawTileLegend(40, 60);
