@@ -101,6 +101,16 @@ assert.deepEqual(calls.slice(0, 8), [
 assert.deepEqual(calls[8], ["fillRect", 24, 19, 7, 8]);
 
 calls.length = 0;
+const armorEnemy = { kind: "enemy", typeIndex: 3, x: 3.2, y: 4.7, dir: 2, trackPhase: 1 };
+api.drawTank(armorEnemy, "#tank", "#accent");
+assert(calls.some((call) => call[0] === "strokeRect" && call[1] === 22 && call[2] === 16 && call[3] === 8 && call[4] === 8));
+
+calls.length = 0;
+const powerEnemy = { kind: "enemy", typeIndex: 2, x: 3.2, y: 4.7, dir: 2, trackPhase: 1 };
+api.drawTank(powerEnemy, "#tank", "#accent");
+assert(calls.some((call) => call[0] === "fillRect" && call[1] === 28 && call[2] === 18 && call[3] === 5 && call[4] === 1));
+
+calls.length = 0;
 api.drawShield(player);
 assert.deepEqual(calls, [
   ["shieldColor", 5],

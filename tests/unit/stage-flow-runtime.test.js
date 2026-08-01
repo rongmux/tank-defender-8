@@ -112,6 +112,10 @@ state.game.customGrid = true;
 state.game.stageResultReason = "clear";
 api.finishStageResult();
 assert.equal(state.game.screen, "stageClearClosing");
+assert.equal(state.game.customGrid, null);
+api.finishStageClearClosing();
+assert.equal(state.game.stage, 36);
+assert.deepEqual(events.slice(-2), [["advance", 35], ["startStage", 36]]);
 
 state.game.customGrid = false;
 state.game.screen = "gameOver";
@@ -123,8 +127,10 @@ assert.deepEqual(state.game.stageClearBonusPlayerIds, []);
 state.game.customGrid = true;
 state.game.stageResultReason = "clear";
 state.game.screen = "stageClear";
+state.game.stage = 36;
 api.finishStageResult();
-assert.equal(state.game.screen, "stageClearClosing");
+assert.equal(state.game.screen, "title");
+assert.equal(state.game.customGrid, null);
 
 state.game.customGrid = false;
 state.game.stage = 36;

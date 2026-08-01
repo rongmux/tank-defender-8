@@ -385,7 +385,6 @@
         fn.showEditorMessage("BAD");
         return;
       }
-      state.game.stagePack = result.pack;
       fn.startGame(1, { stage: 1, customGrid: deps.parseStageQuadrants(pack.quadrants[0]) });
     };
 

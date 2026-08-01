@@ -77,6 +77,40 @@
         shadow: "#111111"
       });
       if (tank.kind === "player") drawPlayerUpgradeOverlay(tank, x, y, accent);
+      else drawEnemyTypeDetails(tank, x, y);
+    }
+
+    function drawEnemyTypeDetails(tank, x, y) {
+      var type = Math.max(0, Math.min(3, Math.floor(Number(tank.typeIndex) || 0)));
+      if (type === 0) return;
+      if (type === 1) {
+        ctx.fillStyle = "#111111";
+        ctx.fillRect(x + 1, y + 4, 2, 2);
+        ctx.fillRect(x + 11, y + 8, 2, 2);
+        return;
+      }
+      if (type === 2) {
+        ctx.fillStyle = "#f3f0d4";
+        var direction = directionName(tank.dir);
+        if (direction === "up") {
+          ctx.fillRect(x + 5, y, 1, 5);
+          ctx.fillRect(x + 8, y, 1, 5);
+        } else if (direction === "down") {
+          ctx.fillRect(x + 5, y + 9, 1, 5);
+          ctx.fillRect(x + 8, y + 9, 1, 5);
+        } else if (direction === "left") {
+          ctx.fillRect(x, y + 5, 5, 1);
+          ctx.fillRect(x, y + 8, 5, 1);
+        } else {
+          ctx.fillRect(x + 9, y + 5, 5, 1);
+          ctx.fillRect(x + 9, y + 8, 5, 1);
+        }
+        return;
+      }
+      var previousStrokeStyle = ctx.strokeStyle;
+      ctx.strokeStyle = "#f3f0d4";
+      ctx.strokeRect(x + 3, y + 3, 8, 8);
+      ctx.strokeStyle = previousStrokeStyle;
     }
 
     function drawTankForestOutline(tank) {

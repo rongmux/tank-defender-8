@@ -90,7 +90,8 @@
       }
       awardPendingStageClearBonus();
       var advance = stageAdvanceResult(game.stage);
-      if (!game.customGrid && advance.stops) {
+      game.customGrid = null;
+      if (advance.stops) {
         game.screen = "title";
         resetTitleIdleTimer();
         return;
@@ -101,7 +102,7 @@
     }
 
     function finishStageClearClosing() {
-      if (!game.customGrid) game.stage = stageAdvanceResult(game.stage).stage;
+      game.stage = stageAdvanceResult(game.stage).stage;
       startStage(game.stage);
     }
 

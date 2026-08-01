@@ -29,7 +29,7 @@ const state = {
 };
 const events = [];
 const specs = [
-  { typeIndex: 0, carrier: true, spawnDelay: null },
+  { typeIndex: 3, carrier: true, spawnDelay: null },
   { typeIndex: 1, carrier: false, spawnDelay: 9 }
 ];
 const deps = {
@@ -63,7 +63,7 @@ const callbacks = {
     events.push({ name: "clearPowerUp", carrier });
   },
   enemyTypeDefinitions() {
-    return [{ name: "basic" }, { name: "fast" }];
+    return [{ name: "basic" }, { name: "fast" }, { name: "power" }, { name: "armor" }];
   },
   enemySpawnPoint(index) {
     return { x: index * 16, y: 0 };
@@ -101,7 +101,8 @@ assert.equal(state.fn.spawnEnemies, api.spawnEnemies);
 api.spawnEnemies();
 assert.equal(state.game.enemySpawned, 1);
 assert.equal(state.game.enemies.length, 1);
-assert.equal(state.game.enemies[0].type.name, "basic");
+assert.equal(state.game.enemies[0].type.name, "armor");
+assert.equal(state.game.enemies[0].typeIndex, 3);
 assert.equal(state.game.enemies[0].normalMoveSpeed, 0.5);
 assert.deepEqual(events, [{ name: "clearPowerUp", carrier: true }]);
 assert.equal(state.game.nextSpawn, 9);

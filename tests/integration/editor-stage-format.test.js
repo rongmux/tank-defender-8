@@ -126,7 +126,7 @@ function finishStageSelectClosing(api) {
   assert.deepEqual(snapshot.powerUpSpawns[0], { x: 2, y: 2 });
   assert.equal(snapshot.players[0].stageKills.length, 4);
   assert.equal(snapshot.players[0].totalKills.length, 4);
-  assert.equal(api.currentPackInfo().id, "custom-stage");
+  assert.equal(api.currentPackInfo().id, "original-style");
 
   action("reset").click();
   snapshot = JSON.parse(JSON.stringify(api.debugSnapshot()));
