@@ -13,6 +13,8 @@ assert.equal(Object.isFrozen(modules.stagePack), true);
 assert.equal(typeof modules.stagePack.normalizeGameSettings, "function");
 assert.equal(typeof modules.stagePack.normalizeStagePack, "function");
 assert.equal(typeof modules.stagePack.tryNormalizeStagePack, "function");
+assert(modules.stagePackLifecycleRuntime, "stage-pack lifecycle runtime should register before game.js");
+assert.equal(Object.isFrozen(modules.stagePackLifecycleRuntime), true);
 
 const validPack = {
   id: "stage-pack-integration",

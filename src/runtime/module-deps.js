@@ -150,6 +150,7 @@
 
   // ── Runtime (shared-state) ─────────────────────────────────────────────────
   var editorLifecycleRuntime = requireRuntimeModule("editorLifecycleRuntime");
+  var stagePackLifecycleRuntime = requireRuntimeModule("stagePackLifecycleRuntime");
   var sharedState = requireRuntimeModule("sharedState");
 
   return {
@@ -454,6 +455,7 @@
 
     // Runtime modules
     editorLifecycleRuntime: editorLifecycleRuntime,
+    stagePackLifecycleRuntime: stagePackLifecycleRuntime,
 
     // Shared state module
     sharedState: sharedState,

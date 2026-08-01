@@ -333,49 +333,6 @@
     };
 
     // ── Stage pack loading ────────────────────────────────────────────────
-    fn.loadStagePackJsonText = function (text) {
-      var parsed = deps.parseJsonText(text);
-      return parsed.ok
-        ? fn.loadStagePackObject(parsed.value)
-        : { ok: false, error: parsed.error };
-    };
-
-    fn.loadStagePackObject = function (pack) {
-      var result = deps.tryNormalizeStagePack(pack);
-      if (!result.ok) return { ok: false, error: result.error };
-      fn.applyStagePack(result.pack);
-      return { ok: true, error: "" };
-    };
-
-    fn.applyStagePack = function (pack) {
-      state.game.stagePack = pack;
-      state.game.stage = 1;
-      state.game.titleMenu = 0;
-      fn.resetTitleIdleTimer();
-      state.game.demoMode = false;
-      state.game.constructionUsed = false;
-      state.game.constructionVisits = 0;
-      state.game.hiddenInputCount = 0;
-      state.game.hiddenMessageElapsed = 0;
-      state.game.customGrid = null;
-      state.game.constructedGrid = null;
-      state.game.constructionStageActive = false;
-      state.game.grid = state.stageRuntime.createStageGrid(state.game.stage);
-      deps.prepareBattleGrid(state.game.grid);
-      state.game.editorGrid = null;
-      state.game.editorCursor = { qc: -1, qr: -1 };
-      state.game.editorPattern = 0;
-      state.game.editorPatternArmed = false;
-      state.game.editorMoveHoldTimer = 0;
-      state.game.editorTick = 0;
-      state.game.editorBrush = deps.TILE_TYPES.BRICK;
-      state.game.stageSelectPlayers = 1;
-      state.game.screen = "title";
-      state.game.paused = false;
-      fn.resetBattleRandom();
-      fn.clearTransientBattleState();
-    };
-
     fn.clearTransientBattleState = function () {
       fn.stopMovementAudio();
       fn.stopStageStartAudio();
@@ -424,9 +381,11 @@
       state.pendingStageSelectPresses.clear();
     };
 
-    fn.restoreBuiltInStagePack = function () {
-      fn.applyStagePack(state.builtInStagePack);
-    };
+    deps.stagePackLifecycleRuntime.setupStagePackLifecycleRuntime(state, deps, {
+      clearTransientBattleState: fn.clearTransientBattleState,
+      resetBattleRandom: function () { fn.resetBattleRandom(); },
+      resetTitleIdleTimer: fn.resetTitleIdleTimer
+    });
 
     fn.nextStage = function (delta) {
       if (state.game.screen === "stageSelectClosing" || state.game.screen === "stageClearClosing") return;
