@@ -17,6 +17,7 @@ const audioPlayerDestroyLifecycleDiagnostics = require("../../src/runtime/audio-
 const audioBaseHitDiagnostics = require("../../src/runtime/audio-base-hit-diagnostics");
 const audioBaseHitLifecycleDiagnostics = require("../../src/runtime/audio-base-hit-lifecycle-diagnostics");
 const audioPlayerShootDiagnostics = require("../../src/runtime/audio-player-shoot-diagnostics");
+const audioPlayerShootLifecycleDiagnostics = require("../../src/runtime/audio-player-shoot-lifecycle-diagnostics");
 const audioStageStartDiagnostics = require("../../src/runtime/audio-stage-start-diagnostics");
 const audioBonusLifeDiagnostics = require("../../src/runtime/audio-bonus-life-diagnostics");
 const audioBonusLifeLifecycleDiagnostics = require("../../src/runtime/audio-bonus-life-lifecycle-diagnostics");
@@ -143,6 +144,7 @@ const deps = {
   audioBaseHitDiagnostics,
   audioBaseHitLifecycleDiagnostics,
   audioPlayerShootDiagnostics,
+  audioPlayerShootLifecycleDiagnostics,
   audioStageStartDiagnostics,
   audioBonusLifeDiagnostics,
   audioBonusLifeLifecycleDiagnostics,

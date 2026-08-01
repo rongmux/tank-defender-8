@@ -79,6 +79,8 @@ assert(modules.audioBaseHitLifecycleDiagnostics, "base-hit lifecycle audio diagn
 assert.equal(Object.isFrozen(modules.audioBaseHitLifecycleDiagnostics), true);
 assert(modules.audioPlayerShootDiagnostics, "player-shoot audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioPlayerShootDiagnostics), true);
+assert(modules.audioPlayerShootLifecycleDiagnostics, "player-shoot lifecycle audio diagnostics module should register before audio-diagnostics.js");
+assert.equal(Object.isFrozen(modules.audioPlayerShootLifecycleDiagnostics), true);
 assert(modules.audioStageStartDiagnostics, "stage-start audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioStageStartDiagnostics), true);
 assert(modules.audioBonusLifeDiagnostics, "bonus-life audio diagnostics module should register before audio-diagnostics.js");
@@ -394,6 +396,10 @@ const baseHitLifecycleDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-base-hit-lifecycle-diagnostics.js"),
   "utf8"
 );
+const playerShootLifecycleDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/audio-player-shoot-lifecycle-diagnostics.js"),
+  "utf8"
+);
 const playerDestroyDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-player-destroy-diagnostics.js"),
   "utf8"
@@ -479,6 +485,8 @@ for (const name of AUDIO_DIAGNOSTIC_METHODS) {
                       ? baseHitLifecycleDiagnosticsSource
                     : name === "debugPlayerShootAudioProbe"
                       ? playerShootDiagnosticsSource
+                      : name === "debugPlayerShootAudioLifecycleProbe"
+                        ? playerShootLifecycleDiagnosticsSource
                       : name === "debugStageStartAudioProbe"
                          ? stageStartDiagnosticsSource
                          : name === "debugBonusLifeAudioProbe"
@@ -517,6 +525,7 @@ assert.equal(diagnosticsSource.includes("debugPlayerDestroyAudioLifecycleProbe()
 assert.equal(diagnosticsSource.includes("debugBaseHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBaseHitAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPlayerShootAudioProbe()"), false);
+assert.equal(diagnosticsSource.includes("debugPlayerShootAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugStageStartAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBonusLifeAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBonusLifeAudioLifecycleProbe()"), false);

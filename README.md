@@ -168,6 +168,7 @@ node --check src/runtime/audio-player-destroy-lifecycle-diagnostics.js
 node --check src/runtime/audio-base-hit-diagnostics.js
 node --check src/runtime/audio-base-hit-lifecycle-diagnostics.js
 node --check src/runtime/audio-player-shoot-diagnostics.js
+node --check src/runtime/audio-player-shoot-lifecycle-diagnostics.js
 node --check src/runtime/audio-stage-start-diagnostics.js
 node --check src/runtime/audio-bonus-life-diagnostics.js
 node --check src/runtime/audio-bonus-life-lifecycle-diagnostics.js
@@ -355,6 +356,7 @@ tank-defender-8/
 |   |   |-- audio-base-hit-diagnostics.js
 |   |   |-- audio-base-hit-lifecycle-diagnostics.js
 |   |   |-- audio-player-shoot-diagnostics.js
+|   |   |-- audio-player-shoot-lifecycle-diagnostics.js
 |   |   |-- audio-stage-start-diagnostics.js
 |   |   |-- audio-bonus-life-diagnostics.js
 |   |   |-- audio-bonus-life-lifecycle-diagnostics.js
@@ -510,6 +512,7 @@ tank-defender-8/
 |   |   |-- audio-base-hit-diagnostics.test.js
 |   |   |-- audio-base-hit-lifecycle-diagnostics.test.js
 |   |   |-- audio-player-shoot-diagnostics.test.js
+|   |   |-- audio-player-shoot-lifecycle-diagnostics.test.js
 |   |   |-- audio-stage-start-diagnostics.test.js
 |   |   |-- audio-bonus-life-diagnostics.test.js
 |   |   |-- audio-bonus-life-lifecycle-diagnostics.test.js
@@ -785,6 +788,8 @@ tank-defender-8/
 `src/runtime/audio-base-hit-lifecycle-diagnostics.js` owns the base-hit lifecycle probe extracted from `audio-diagnostics.js`. It preserves base destruction, GAME OVER continuation, priority masking, pause freezing, appearance masking, and stage cleanup while the composition root restores the original public API position.
 
 `src/runtime/audio-player-shoot-diagnostics.js` owns the stateless player-shoot audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the three boundary samples independent from firing input and projectile lifecycle state.
+
+`src/runtime/audio-player-shoot-lifecycle-diagnostics.js` owns the player-shoot lifecycle probe extracted from `audio-diagnostics.js`. It preserves player/enemy firing differences, reload re-trigger protection, pause freezing, ice-channel masking, stage-start and bonus-life priority, and stage cleanup while the composition root restores the original public API position.
 
 `src/runtime/audio-stage-start-diagnostics.js` owns the stateless stage-start audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the long fixed-frame samples independent from stage initialization and curtain lifecycle state.
 
