@@ -165,6 +165,7 @@ node --check src/runtime/audio-player-shoot-diagnostics.js
 node --check src/runtime/audio-stage-start-diagnostics.js
 node --check src/runtime/audio-bonus-life-diagnostics.js
 node --check src/runtime/audio-power-up-pickup-diagnostics.js
+node --check src/runtime/audio-power-up-pickup-lifecycle-diagnostics.js
 node --check src/runtime/audio-power-up-appear-diagnostics.js
 node --check src/runtime/audio-power-up-appear-lifecycle-diagnostics.js
 node --check src/runtime/audio-pause-diagnostics.js
@@ -344,6 +345,7 @@ tank-defender-8/
 |   |   |-- audio-stage-start-diagnostics.js
 |   |   |-- audio-bonus-life-diagnostics.js
 |   |   |-- audio-power-up-pickup-diagnostics.js
+|   |   |-- audio-power-up-pickup-lifecycle-diagnostics.js
 |   |   |-- audio-power-up-appear-diagnostics.js
 |   |   |-- audio-power-up-appear-lifecycle-diagnostics.js
 |   |   |-- audio-pause-diagnostics.js
@@ -491,6 +493,7 @@ tank-defender-8/
 |   |   |-- audio-stage-start-diagnostics.test.js
 |   |   |-- audio-bonus-life-diagnostics.test.js
 |   |   |-- audio-power-up-pickup-diagnostics.test.js
+|   |   |-- audio-power-up-pickup-lifecycle-diagnostics.test.js
 |   |   |-- audio-power-up-appear-diagnostics.test.js
 |   |   |-- audio-power-up-appear-lifecycle-diagnostics.test.js
 |   |   |-- audio-pause-diagnostics.test.js
@@ -755,6 +758,8 @@ tank-defender-8/
 `src/runtime/audio-bonus-life-diagnostics.js` owns the stateless bonus-life audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the two-voice phrase samples independent from bonus-life state changes and channel-priority lifecycle logic.
 
 `src/runtime/audio-power-up-pickup-diagnostics.js` owns the stateless power-up pickup audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the seven phrase-boundary samples independent from collection state, pause handling, and channel-priority lifecycle logic.
+
+`src/runtime/audio-power-up-pickup-lifecycle-diagnostics.js` owns the power-up pickup lifecycle probe extracted from `audio-diagnostics.js`. It preserves the 39-frame completion boundary, pause freezing, bonus-life channel masking, and movement-audio restoration while the composition root restores the original public API position.
 
 `src/runtime/audio-power-up-appear-diagnostics.js` owns the stateless power-up appearance audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the nine phrase-boundary samples independent from carrier release, pause handling, and pickup-priority lifecycle logic.
 

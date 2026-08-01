@@ -73,6 +73,8 @@ assert(modules.audioBonusLifeDiagnostics, "bonus-life audio diagnostics module s
 assert.equal(Object.isFrozen(modules.audioBonusLifeDiagnostics), true);
 assert(modules.audioPowerUpPickupDiagnostics, "power-up-pickup audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioPowerUpPickupDiagnostics), true);
+assert(modules.audioPowerUpPickupLifecycleDiagnostics, "power-up-pickup lifecycle audio diagnostics module should register before audio-diagnostics.js");
+assert.equal(Object.isFrozen(modules.audioPowerUpPickupLifecycleDiagnostics), true);
 assert(modules.audioPowerUpAppearDiagnostics, "power-up-appear audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioPowerUpAppearDiagnostics), true);
 assert(modules.audioPowerUpAppearLifecycleDiagnostics, "power-up-appear lifecycle audio diagnostics module should register before audio-diagnostics.js");
@@ -378,6 +380,10 @@ const powerUpPickupDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-power-up-pickup-diagnostics.js"),
   "utf8"
 );
+const powerUpPickupLifecycleDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/audio-power-up-pickup-lifecycle-diagnostics.js"),
+  "utf8"
+);
 const powerUpAppearDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-power-up-appear-diagnostics.js"),
   "utf8"
@@ -422,9 +428,11 @@ for (const name of AUDIO_DIAGNOSTIC_METHODS) {
                       : name === "debugStageStartAudioProbe"
                         ? stageStartDiagnosticsSource
                         : name === "debugBonusLifeAudioProbe"
-                          ? bonusLifeDiagnosticsSource
-                          : name === "debugPowerUpPickupAudioProbe"
+                           ? bonusLifeDiagnosticsSource
+                           : name === "debugPowerUpPickupAudioProbe"
                              ? powerUpPickupDiagnosticsSource
+                             : name === "debugPowerUpPickupAudioLifecycleProbe"
+                               ? powerUpPickupLifecycleDiagnosticsSource
                              : name === "debugPowerUpAppearAudioProbe"
                                ? powerUpAppearDiagnosticsSource
                                : name === "debugPowerUpAppearAudioLifecycleProbe"
@@ -450,6 +458,7 @@ assert.equal(diagnosticsSource.includes("debugPlayerShootAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugStageStartAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBonusLifeAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPowerUpPickupAudioProbe()"), false);
+assert.equal(diagnosticsSource.includes("debugPowerUpPickupAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPowerUpAppearAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPowerUpAppearAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPauseAudioProbe()"), false);

@@ -125,6 +125,7 @@
   var audioStageStartDiagnostics = requireRuntimeModule("audioStageStartDiagnostics");
   var audioBonusLifeDiagnostics = requireRuntimeModule("audioBonusLifeDiagnostics");
   var audioPowerUpPickupDiagnostics = requireRuntimeModule("audioPowerUpPickupDiagnostics");
+  var audioPowerUpPickupLifecycleDiagnostics = requireRuntimeModule("audioPowerUpPickupLifecycleDiagnostics");
   var audioPowerUpAppearDiagnostics = requireRuntimeModule("audioPowerUpAppearDiagnostics");
   var audioPowerUpAppearLifecycleDiagnostics = requireRuntimeModule("audioPowerUpAppearLifecycleDiagnostics");
   var audioPauseDiagnostics = requireRuntimeModule("audioPauseDiagnostics");
@@ -398,6 +399,7 @@
     audioStageStartDiagnostics: audioStageStartDiagnostics,
     audioBonusLifeDiagnostics: audioBonusLifeDiagnostics,
     audioPowerUpPickupDiagnostics: audioPowerUpPickupDiagnostics,
+    audioPowerUpPickupLifecycleDiagnostics: audioPowerUpPickupLifecycleDiagnostics,
     audioPowerUpAppearDiagnostics: audioPowerUpAppearDiagnostics,
     audioPowerUpAppearLifecycleDiagnostics: audioPowerUpAppearLifecycleDiagnostics,
     audioPauseDiagnostics: audioPauseDiagnostics,
