@@ -21,32 +21,7 @@
     var fn = state.fn;
 
     // ── High score ─────────────────────────────────────────────────────────
-    fn.loadHighScore = function () {
-      try {
-        var value = Number(localStorage.getItem(sh.HIGH_SCORE_STORAGE_KEY));
-        state.game.highScore = Number.isFinite(value) && value > 0
-          ? Math.max(sh.DEFAULT_HIGH_SCORE, Math.floor(value))
-          : sh.DEFAULT_HIGH_SCORE;
-      } catch (error) {
-        state.game.highScore = sh.DEFAULT_HIGH_SCORE;
-      }
-      state.game.runHighScoreBaseline = state.game.highScore;
-    };
-
-    fn.saveHighScore = function () {
-      try {
-        localStorage.setItem(sh.HIGH_SCORE_STORAGE_KEY, String(state.game.highScore));
-      } catch (error) {
-        // localStorage can be unavailable in restricted browser contexts.
-      }
-    };
-
-    fn.updateHighScore = function (score) {
-      if (score > state.game.highScore) {
-        state.game.highScore = score;
-        fn.saveHighScore();
-      }
-    };
+    deps.highScoreRuntime.setupHighScoreRuntime(state, deps);
 
     // ── Player helpers ────────────────────────────────────────────────────
     fn.createPlayer = function (id) {

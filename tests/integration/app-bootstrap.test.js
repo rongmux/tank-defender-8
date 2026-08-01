@@ -20,6 +20,7 @@ function keyPress(listeners, code) {
   const api = context.window.TankDefender8;
 
   assert(api, "the browser bootstrap should expose the public game API");
+  assert.equal(Object.isFrozen(context.window.TankDefender8Modules.highScoreRuntime), true);
   assert.equal(typeof animationFrameCallback, "function");
   for (const button of buttons) {
     assert.equal(typeof button.listeners.click, "function", `${button.dataset.action} should have a toolbar listener`);

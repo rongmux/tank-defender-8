@@ -201,6 +201,7 @@ node --check src/runtime/public-api-adapters.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
+node --check src/runtime/high-score-runtime.js
 node --check src/runtime/stage-pack-lifecycle-runtime.js
 node --check src/runtime/audio-fixed-frame-runtime.js
 node --check src/runtime/audio-channel-runtime.js
@@ -395,6 +396,7 @@ tank-defender-8/
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
+|   |   |-- high-score-runtime.js
 |   |   |-- stage-pack-lifecycle-runtime.js
 |   |   |-- audio-fixed-frame-runtime.js
 |   |   |-- audio-channel-runtime.js
@@ -550,6 +552,7 @@ tank-defender-8/
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-input-runtime.test.js
 |   |   |-- editor-lifecycle-runtime.test.js
+|   |   |-- high-score-runtime.test.js
 |   |   |-- stage-pack-lifecycle-runtime.test.js
 |   |   |-- stage-select-runtime.test.js
 |   |   |-- post-game-runtime.test.js
@@ -703,6 +706,8 @@ tank-defender-8/
 
 `src/runtime/stage-pack-lifecycle-runtime.js` 接管 JSON 解析、关卡包规范化、活动包安装、战场网格准备和内置包恢复。显式回调将标题闲置计时复位、战斗随机数复位及临时战斗状态清理保留在组合边界；其单元测试锁定畸形输入、校验失败、状态复位投影和内置包恢复，浏览器集成测试锁定模块注册和公开关卡包加载。
 
+`src/runtime/high-score-runtime.js` 接管最高分读取、存储持久化和单调分数提升。直接测试锁定数值规范化、基线投影、较小分数拒绝、存储写入以及受限浏览器环境下的存储降级。
+
 `src/runtime/input-runtime.js` 接管浏览器输入路由：工具栏动作、键盘屏幕分派、一次性射击/选关按键、暂停音频交接、关卡包文件导入和 Construction 鼠标编辑。它保留方向键/WASD 映射、演示退出路径、隐藏信息输入保留、编辑器快捷键、坐标换算和暂停门控；`src/game.js` 只提供显式回调。直接测试锁定注册、动作分派、暂停同步顺序、键盘路由和鼠标坐标。
 
 `src/runtime/stage-select-runtime.js` 接管进入选关、玩家数选择、关卡范围钳制、确认开局及固定帧 A/B 输入节奏。先消费一次性按键，再处理长按重复；重复发生在原版八帧边界；A/B 同时到达时保留 A 优先级。显式回调将音频初始化、标题闲置计时复位、帧计数复位和游戏启动保留在组合边界；直接测试覆盖范围边界、进入状态、确认开局和输入节奏。
@@ -757,7 +762,7 @@ tank-defender-8/
 
 `src/stages/stage-runtime.js` 将纯路由/配置/网格模块绑定到动态读取的游戏状态。其冻结运行时 API 接管活动关卡包回退、显示/地图/敌人关卡解析、逐关敌人总数与单双人容量、默认/自定义出生点查询、地图解码/程序化回退、敌人规格回退及规范化关卡序列。直接测试让同一个运行时在内置、自定义、原始 quadrants、无地图和演示状态间切换；浏览器集成测试验证公开关卡包诊断，并从 `src/game.js` 删除对应查询包装函数。
 
-`src/runtime/` 包含运行时拆分后形成的浏览器组合边界。`shared-state.js` 创建唯一的可变状态图以及固定布局/时序常量；`module-deps.js` 校验脚本顺序并公开显式依赖桶；`game-lifecycle.js` 接管最高分持久化及标题、关卡、编辑器和过渡编排；`stage-pack-lifecycle-runtime.js` 通过显式的标题、随机数和临时状态回调，接管 JSON 解析、规范化关卡包安装、战场网格准备和内置包恢复；`audio-bridge.js` 接管 Web Audio 节点创建与事件同步；`debug-api.js` 把保留的运行时函数适配为公开测试/诊断 API。`audio-diagnostics.js` 通过保留接收者的函数绑定和 142 个显式解构的运行时符号，接管连续的 31 个清单、表现、移动、优先级、暂停和固定帧生命周期探针，且不使用 `eval`；抽离该模块并清理死别名后，`debug-api.js` 从 8,957 行降至 6,171 行。其单元测试锁定方法顺序、输入校验、绑定优先级和克隆隔离；浏览器集成测试依次执行全部探针，并保持重构前 61,974 字节输出的 SHA-256。`stage-pack-diagnostics.js` 接管 `currentPackInfo()` 与 `debugSnapshot()` 关卡包区段共用的精确克隆投影，包括路由元数据、规范化设置、敌人类型、升级/墙体规则、出生布局和活动敌人序列。`stage-result-diagnostics.js` 将四个冻结的公开关卡结算探针绑定到纯规则，规范化诊断玩家记录，投影奖励领取者、结算行得分/布局间距和计数/揭示时序，并从 `src/game.js` 删除两个仅供调试使用的辅助函数。其单元测试覆盖输入规范化、奖励资格、动态时序覆盖、表现边界和输出隔离；浏览器集成测试锁定公开 API 顺序及重构前 1,478 字节输出哈希。`stage-flow-diagnostics.js` 通过保留接收者的函数绑定和 49 个显式解构的运行时符号，接管连续的 17 个幕布、关卡循环、通关、自动推进和 Game Over 探针，且不使用 `eval`；抽离该模块并清理 17 个死别名后，`debug-api.js` 从 6,171 行降至 5,483 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引依次执行全部 17 个探针，并保持重构前 13,047 字节输出的 SHA-256。`screen-flow-diagnostics.js` 通过保留接收者的函数绑定和 57 个显式解构的运行时符号，接管连续的 11 个标题计分、帧计数、选关节奏、标题演示/隐藏信息、最高分和全屏 Game Over 探针，且不使用 `eval`；抽离该模块并清理 32 个死别名后，`debug-api.js` 从 5,483 行降至 4,833 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和克隆布局输出；浏览器集成测试在原公开索引依次执行全部 11 个探针，并保持重构前 25,534 字节输出的 SHA-256。`enemy-diagnostics.js` 通过保留接收者的函数绑定和 34 个显式解构的运行时符号，接管连续的 11 个携带者、敌人表现、目标选择、AI/移动节奏、受阻恢复、生成时间线和出生动画探针，且不使用 `eval`；抽离该模块并清理 4 个死别名后，`debug-api.js` 从 4,833 行降至 4,497 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引依次执行全部 11 个探针，并保持重构前 3,839 字节输出的 SHA-256。`debug-snapshot.js` 现已接管完整的 95 字段公开状态投影：画面与固定计数器、全部 17 个保留音频事件、关卡包诊断、分数提示、战场/编辑器网格、场地几何和独立克隆的玩家摘要。单元测试锁定精确字段顺序、音频事件映射、代表值和克隆隔离；浏览器集成测试验证模块注册、薄适配器和重复调用隔离。
+`src/runtime/` 包含运行时拆分后形成的浏览器组合边界。`shared-state.js` 创建唯一的可变状态图以及固定布局/时序常量；`module-deps.js` 校验脚本顺序并公开显式依赖桶；`game-lifecycle.js` 接管标题、关卡、编辑器和过渡编排；`high-score-runtime.js` 接管最高分读取、持久化和单调提升；`stage-pack-lifecycle-runtime.js` 通过显式的标题、随机数和临时状态回调，接管 JSON 解析、规范化关卡包安装、战场网格准备和内置包恢复；`audio-bridge.js` 接管 Web Audio 节点创建与事件同步；`debug-api.js` 把保留的运行时函数适配为公开测试/诊断 API。`audio-diagnostics.js` 通过保留接收者的函数绑定和 142 个显式解构的运行时符号，接管连续的 31 个清单、表现、移动、优先级、暂停和固定帧生命周期探针，且不使用 `eval`；抽离该模块并清理死别名后，`debug-api.js` 从 8,957 行降至 6,171 行。其单元测试锁定方法顺序、输入校验、绑定优先级和克隆隔离；浏览器集成测试依次执行全部探针，并保持重构前 61,974 字节输出的 SHA-256。`stage-pack-diagnostics.js` 接管 `currentPackInfo()` 与 `debugSnapshot()` 关卡包区段共用的精确克隆投影，包括路由元数据、规范化设置、敌人类型、升级/墙体规则、出生布局和活动敌人序列。`stage-result-diagnostics.js` 将四个冻结的公开关卡结算探针绑定到纯规则，规范化诊断玩家记录，投影奖励领取者、结算行得分/布局间距和计数/揭示时序，并从 `src/game.js` 删除两个仅供调试使用的辅助函数。其单元测试覆盖输入规范化、奖励资格、动态时序覆盖、表现边界和输出隔离；浏览器集成测试锁定公开 API 顺序及重构前 1,478 字节输出哈希。`stage-flow-diagnostics.js` 通过保留接收者的函数绑定和 49 个显式解构的运行时符号，接管连续的 17 个幕布、关卡循环、通关、自动推进和 Game Over 探针，且不使用 `eval`；抽离该模块并清理 17 个死别名后，`debug-api.js` 从 6,171 行降至 5,483 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引依次执行全部 17 个探针，并保持重构前 13,047 字节输出的 SHA-256。`screen-flow-diagnostics.js` 通过保留接收者的函数绑定和 57 个显式解构的运行时符号，接管连续的 11 个标题计分、帧计数、选关节奏、标题演示/隐藏信息、最高分和全屏 Game Over 探针，且不使用 `eval`；抽离该模块并清理 32 个死别名后，`debug-api.js` 从 5,483 行降至 4,833 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和克隆布局输出；浏览器集成测试在原公开索引依次执行全部 11 个探针，并保持重构前 25,534 字节输出的 SHA-256。`enemy-diagnostics.js` 通过保留接收者的函数绑定和 34 个显式解构的运行时符号，接管连续的 11 个携带者、敌人表现、目标选择、AI/移动节奏、受阻恢复、生成时间线和出生动画探针，且不使用 `eval`；抽离该模块并清理 4 个死别名后，`debug-api.js` 从 4,833 行降至 4,497 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引依次执行全部 11 个探针，并保持重构前 3,839 字节输出的 SHA-256。`debug-snapshot.js` 现已接管完整的 95 字段公开状态投影：画面与固定计数器、全部 17 个保留音频事件、关卡包诊断、分数提示、战场/编辑器网格、场地几何和独立克隆的玩家摘要。单元测试锁定精确字段顺序、音频事件映射、代表值和克隆隔离；浏览器集成测试验证模块注册、薄适配器和重复调用隔离。
 
 `effect-diagnostics.js` 通过保留接收者的函数绑定和 31 个显式解构的运行时符号，接管连续的 5 个爆炸规则、坦克摧毁、敌人释放、渲染帧和暂停命中特效探针，且不使用 `eval`。抽离并移除 7 个死适配器后，`debug-api.js` 保留 4,175 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 130-134 依次执行全部 5 个探针，并保持重构前 6,548 字节输出的 SHA-256。
 
