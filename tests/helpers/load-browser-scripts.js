@@ -152,6 +152,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/debug-snapshot.js",
   "src/runtime/audio-fixed-frame-runtime.js",
   "src/runtime/audio-channel-runtime.js",
+  "src/runtime/audio-movement-runtime.js",
   "src/runtime/module-deps.js",
   "src/runtime/game-lifecycle.js",
   "src/runtime/audio-bridge.js",
