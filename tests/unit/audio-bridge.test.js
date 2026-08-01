@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const audioBridge = require("../../src/runtime/audio-bridge");
+const audioFixedFrameRuntime = require("../../src/runtime/audio-fixed-frame-runtime");
 
 const state = {
   activeSequencedSounds: new Map(),
@@ -10,7 +11,12 @@ const state = {
   movementAudio: {},
   noiseBufferCache: {}
 };
-audioBridge.setupAudioBridge(state, {});
+audioBridge.setupAudioBridge(state, {
+  requireRuntimeModule(name) {
+    assert.equal(name, "audioFixedFrameRuntime");
+    return audioFixedFrameRuntime;
+  }
+});
 
 const updateMethods = [
   "updateStageStartAudio",

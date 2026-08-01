@@ -200,6 +200,7 @@ node --check src/runtime/public-api-adapters.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
+node --check src/runtime/audio-fixed-frame-runtime.js
 node --check src/runtime/audio-bridge.js
 node --check src/runtime/application-flow-composition-runtime.js
 node --check src/runtime/input-composition-runtime.js
@@ -388,6 +389,7 @@ tank-defender-8/
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
+|   |   |-- audio-fixed-frame-runtime.js
 |   |   |-- audio-bridge.js
 |   |   |-- application-flow-composition-runtime.js
 |   |   |-- input-composition-runtime.js
@@ -488,6 +490,7 @@ tank-defender-8/
 |   |   `-- wall-diagnostics.test.js
 |   |-- unit/
 |   |   |-- audio-bridge.test.js
+|   |   |-- audio-fixed-frame-runtime.test.js
 |   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- input-composition-runtime.test.js
 |   |   |-- legacy-api-composition-runtime.test.js
@@ -848,6 +851,8 @@ tank-defender-8/
 `src/runtime/debug-battle-runtime.js` 接管效果、道具、分数、计时器和地形诊断共用的确定性暂停战斗夹具。它只写入这些探针所需的最小战斗状态，将 60 Hz 计数与帧字节转换集中到一个边界，并保持正式战斗循环不变。单元测试锁定夹具几何、数值归一化和重置字段；浏览器集成测试验证诊断仍使用抽离后的夹具。
 
 `src/runtime/audio-bridge.js` 现在也接管交给组合入口的固定帧音频生命周期顺序：更新全部声部、结算前停止游戏声部、停止结算声部，以及完整退出时停止全部声部。单元测试锁定这四组顺序，避免后续音频修改静默改变声道清理或推进顺序。
+
+`src/runtime/audio-fixed-frame-runtime.js` 接管从 `audio-bridge.js` 抽出的固定帧音频基础设施：清单表现查询、确定性的短/长噪声缓冲、Web Audio 声源创建、节点同步、暂停感知的帧推进和移动音效重新同步。其单元测试锁定注册和无音频上下文时的噪声缓冲行为，同时由 audio bridge 测试保留生命周期方法顺序。
 
 `src/runtime/audio-score-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的计分音效表现与生命周期探针。它接收显式运行时作用域并返回冻结的探针方法；`audio-diagnostics.js` 再将其合并回原有公开顺序，直接测试和浏览器测试共同保持现有输出哈希。
 
