@@ -88,87 +88,8 @@
       fn.clearTransientBattleState();
     };
 
-    // ── Title idle ────────────────────────────────────────────────────────
-    fn.updateTitleIdle = function () {
-      if (state.game.constructionUsed || state.game.demoMode) return;
-      state.game.titleIdleFrames += 1;
-      if (state.game.frameHigh === 0x0a) fn.startTitleDemo();
-    };
-
-    fn.resetTitleIdleTimer = function () {
-      state.game.titleIdleFrames = 0;
-      fn.resetFrameCounterHigh();
-    };
-
-    fn.resetTitleIdleHighByte = function () {
-      state.game.titleIdleFrames = 0;
-      fn.resetFrameCounterHigh();
-    };
-
-    // ── Hidden message ────────────────────────────────────────────────────
-    fn.hiddenMessageTriggerReady = function () {
-      return state.game.constructionVisits === sh.HIDDEN_MESSAGE_REQUIRED_VISITS &&
-        state.game.hiddenInputCount === 0x74;
-    };
-
-    fn.reserveTitleDirectionForHiddenInput = function (code) {
-      return state.game.screen === "title" &&
-        state.game.constructionVisits === sh.HIDDEN_MESSAGE_REQUIRED_VISITS &&
-        (code === "ArrowDown" || code === "ArrowRight");
-    };
-
-    fn.recordHiddenTitleInput = function (code) {
-      if (state.game.screen !== "title" || state.game.constructionVisits !== sh.HIDDEN_MESSAGE_REQUIRED_VISITS) return false;
-      if (code === "KeyF" && state.keys.has("ArrowDown")) {
-        state.game.hiddenInputCount = (state.game.hiddenInputCount + 0x10) & 0xff;
-        return true;
-      }
-      if (code === "KeyG" && state.keys.has("ArrowRight")) {
-        state.game.hiddenInputCount = (state.game.hiddenInputCount - 1) & 0xff;
-        return true;
-      }
-      return false;
-    };
-
-    fn.startHiddenMessage = function () {
-      state.game.screen = "hiddenMessage";
-      state.game.paused = false;
-      state.game.demoMode = false;
-      state.game.hiddenMessageElapsed = 0;
-      state.pendingFirePresses.clear();
-    };
-
-    fn.updateHiddenMessage = function () {
-      state.game.hiddenMessageElapsed += 1;
-      if (state.game.hiddenMessageElapsed < sh.HIDDEN_MESSAGE_END_FRAME) return;
-      state.game.hiddenInputCount = 0;
-      fn.activateTitleMenu();
-    };
-
-    fn.hiddenMessagePresentation = function (elapsed) {
-      var frame = Math.max(0, Math.floor(Number(elapsed) || 0));
-      var lines = ["THIS PROGRAM WAS", "WRITTEN BY", "OPEN-REACH", "WHO LOVES NORIKO"];
-      var visibleLines = lines.filter(function (line, index) {
-        return frame >= sh.HIDDEN_MESSAGE_TEXT_START + index * sh.HIDDEN_MESSAGE_STEP_FRAMES;
-      });
-      var firstDotFrame = sh.HIDDEN_MESSAGE_TEXT_START + lines.length * sh.HIDDEN_MESSAGE_STEP_FRAMES;
-      var dots = frame < firstDotFrame
-        ? 0
-        : deps.clamp(Math.floor((frame - firstDotFrame) / sh.HIDDEN_MESSAGE_STEP_FRAMES) + 1, 0, 5);
-      var drop = null;
-      if (frame > sh.HIDDEN_MESSAGE_DROP_START && frame < sh.HIDDEN_MESSAGE_END_FRAME) {
-        var age = frame - sh.HIDDEN_MESSAGE_DROP_START;
-        if (age <= sh.HIDDEN_MESSAGE_DROP_MORPH_FRAMES) {
-          var morphSequence = [3, 2, 1, 0, 1, 2, 3];
-          var phase = morphSequence[Math.floor((age - 1) / 4)];
-          drop = { x: 120, y: 30, frame: "morph" + phase };
-        } else {
-          var fallAge = Math.min(sh.HIDDEN_MESSAGE_DROP_FALL_FRAMES, age - sh.HIDDEN_MESSAGE_DROP_MORPH_FRAMES);
-          drop = { x: 120, y: 30 + fallAge, frame: "fall" };
-        }
-      }
-      return { frame: frame, visibleLines: visibleLines, dots: dots, drop: drop };
-    };
+    // ── Title flow ────────────────────────────────────────────────────────
+    deps.titleFlowRuntime.setupTitleFlowRuntime(state, deps);
 
     // ── Stage start ───────────────────────────────────────────────────────
     fn.startStage = function (stage) {

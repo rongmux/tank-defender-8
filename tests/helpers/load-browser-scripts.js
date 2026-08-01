@@ -158,6 +158,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/high-score-runtime.js",
   "src/runtime/player-session-runtime.js",
   "src/runtime/stage-pack-lifecycle-runtime.js",
+  "src/runtime/title-flow-runtime.js",
   "src/runtime/module-deps.js",
   "src/runtime/game-lifecycle.js",
   "src/runtime/audio-bridge.js",

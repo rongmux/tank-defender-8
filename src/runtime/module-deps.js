@@ -153,6 +153,7 @@
   var highScoreRuntime = requireRuntimeModule("highScoreRuntime");
   var playerSessionRuntime = requireRuntimeModule("playerSessionRuntime");
   var stagePackLifecycleRuntime = requireRuntimeModule("stagePackLifecycleRuntime");
+  var titleFlowRuntime = requireRuntimeModule("titleFlowRuntime");
   var sharedState = requireRuntimeModule("sharedState");
 
   return {
@@ -460,6 +461,7 @@
     highScoreRuntime: highScoreRuntime,
     playerSessionRuntime: playerSessionRuntime,
     stagePackLifecycleRuntime: stagePackLifecycleRuntime,
+    titleFlowRuntime: titleFlowRuntime,
 
     // Shared state module
     sharedState: sharedState,

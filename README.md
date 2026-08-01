@@ -203,6 +203,7 @@ node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
 node --check src/runtime/high-score-runtime.js
 node --check src/runtime/player-session-runtime.js
+node --check src/runtime/title-flow-runtime.js
 node --check src/runtime/stage-pack-lifecycle-runtime.js
 node --check src/runtime/audio-fixed-frame-runtime.js
 node --check src/runtime/audio-channel-runtime.js
@@ -399,6 +400,7 @@ tank-defender-8/
 |   |   |-- game-lifecycle.js
 |   |   |-- high-score-runtime.js
 |   |   |-- player-session-runtime.js
+|   |   |-- title-flow-runtime.js
 |   |   |-- stage-pack-lifecycle-runtime.js
 |   |   |-- audio-fixed-frame-runtime.js
 |   |   |-- audio-channel-runtime.js
@@ -556,6 +558,7 @@ tank-defender-8/
 |   |   |-- editor-lifecycle-runtime.test.js
 |   |   |-- high-score-runtime.test.js
 |   |   |-- player-session-runtime.test.js
+|   |   |-- title-flow-runtime.test.js
 |   |   |-- stage-pack-lifecycle-runtime.test.js
 |   |   |-- stage-select-runtime.test.js
 |   |   |-- post-game-runtime.test.js
@@ -712,6 +715,8 @@ tank-defender-8/
 `src/runtime/high-score-runtime.js` owns high-score loading, storage persistence, and monotonic score promotion. Its direct tests lock numeric normalization, baseline projection, smaller-score rejection, storage writes, and restricted-browser storage fallback.
 
 `src/runtime/player-session-runtime.js` owns player record creation and per-stage position reset through the active stage runtime. Its direct tests lock spawn lookup, game settings, enemy-type count, direction, and reset payloads.
+
+`src/runtime/title-flow-runtime.js` owns the title idle counter and the hidden-message input, timeline, and presentation. Its direct tests lock demo activation, reset callbacks, controller arithmetic, start/end transitions, text cadence, dot timing, and the drop animation.
 
 `src/runtime/input-runtime.js` owns browser input routing: toolbar actions, keyboard screen dispatch, one-shot fire/stage-selection presses, pause audio handoff, stage-pack file import, and Construction mouse editing. It preserves the Arrow/WASD mappings, demo escape path, hidden-message input reservation, editor shortcuts, coordinate conversion, and pause gating while `src/game.js` supplies only explicit callbacks; direct tests lock registration, action dispatch, pause synchronization order, keyboard routing, and mouse coordinates.
 
