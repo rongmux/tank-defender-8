@@ -110,6 +110,7 @@ node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
 node --check src/runtime/editor-input-runtime.js
+node --check src/runtime/editor-lifecycle-runtime.js
 node --check src/runtime/stage-select-runtime.js
 node --check src/runtime/post-game-runtime.js
 node --check src/runtime/stage-flow-runtime.js
@@ -301,6 +302,7 @@ tank-defender-8/
 |   |-- runtime/
 |   |   |-- shared-state.js
 |   |   |-- editor-input-runtime.js
+|   |   |-- editor-lifecycle-runtime.js
 |   |   |-- stage-select-runtime.js
 |   |   |-- post-game-runtime.js
 |   |   |-- stage-flow-runtime.js
@@ -545,6 +547,7 @@ tank-defender-8/
 |   |   |-- directions.test.js
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-input-runtime.test.js
+|   |   |-- editor-lifecycle-runtime.test.js
 |   |   |-- stage-select-runtime.test.js
 |   |   |-- post-game-runtime.test.js
 |   |   |-- stage-flow-runtime.test.js
@@ -692,6 +695,8 @@ tank-defender-8/
 `src/editor/editor-rules.js` 接管六种地形的浏览器调色板、14 步原版 Construction 块序列、方向键/WASD 映射与按住优先级、整格光标钳位、面板色块命中测试、图块循环、光标到单元格转换，以及精确的砖块碎片/钢墙象限编辑。`src/editor/editor-stage-format.js` 接管紧凑的版本 2 本地存档序列化、旧版 13x13 `rows` 与当前 26x26 `quadrants` 格式的兼容加载、可复用的 JSON 解析结果、默认单关导出/测试关卡包组装，以及带缩进的导出序列化。`src/game.js` 现在只保留编辑器屏幕状态、本地存储/剪贴板/文件副作用、消息、音效和事件接线。单元测试锁定两种存档编码、JSON 语法错误与存档结构错误的区分、相互独立的默认关卡包记录、出生点、敌人构成和序列化输出；浏览器集成测试接管原先位于 smoke 中的完整保存、清空、加载、导出、文件导入、Construction 关卡安装、即时测试和复位流程。
 
 `src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，`src/game.js` 只保留 Canvas 坐标换算与 DOM 事件接线；直接测试覆盖原版图案掩码、边界安全编辑、画笔选择和 20 帧重复节奏。
+
+`src/runtime/editor-lifecycle-runtime.js` 接管 Construction 的进入/退出、单关地图试运行、本地存取、清空、剪贴板导出、导入按钮分派和编辑器反馈信息。试运行会保留当前关卡包，仅把编辑地图用于第 1 关，因此通关清除该临时地图后仍按常规关卡推进。其单元测试锁定注册、Construction 状态复位、持久化、活动关卡包保留、退出安装和导入分派；浏览器集成测试继续覆盖完整编辑器工作流。
 
 `src/runtime/input-runtime.js` 接管浏览器输入路由：工具栏动作、键盘屏幕分派、一次性射击/选关按键、暂停音频交接、关卡包文件导入和 Construction 鼠标编辑。它保留方向键/WASD 映射、演示退出路径、隐藏信息输入保留、编辑器快捷键、坐标换算和暂停门控；`src/game.js` 只提供显式回调。直接测试锁定注册、动作分派、暂停同步顺序、键盘路由和鼠标坐标。
 
@@ -987,6 +992,8 @@ tank-defender-8/
 `src/runtime/stage-result-runtime.js` 接管关卡推进投影、结算表时序、通关奖励领取者选择以及一次性通关奖励副作用。屏幕状态转换仍保留在 `src/game.js`，诊断接口和关卡结算渲染使用同一个冻结运行时 API。
 
 `src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，`src/game.js` 只保留 Canvas 坐标换算与 DOM 事件接线；直接测试覆盖原版图案掩码、边界安全编辑、画笔选择和 20 帧重复节奏。
+
+`src/runtime/editor-lifecycle-runtime.js` 接管 Construction 的进入/退出、单关地图试运行、本地存取、清空、剪贴板导出、导入按钮分派和编辑器反馈信息。试运行会保留当前关卡包，仅把编辑地图用于第 1 关，因此通关清除该临时地图后仍按常规关卡推进。其单元测试锁定注册、Construction 状态复位、持久化、活动关卡包保留、退出安装和导入分派；浏览器集成测试继续覆盖完整编辑器工作流。
 
 `src/runtime/input-runtime.js` 接管工具栏动作、键盘屏幕分派、暂停交接、关卡包导入和 Construction 鼠标编辑等浏览器输入路由。它将浏览器事件时序置于固定帧模拟之外，并通过显式回调提交状态变化；直接测试锁定输入契约，不重复实现游戏规则。
 

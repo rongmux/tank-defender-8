@@ -149,6 +149,7 @@
   var editorStageFormat = requireRuntimeModule("editorStageFormat");
 
   // ── Runtime (shared-state) ─────────────────────────────────────────────────
+  var editorLifecycleRuntime = requireRuntimeModule("editorLifecycleRuntime");
   var sharedState = requireRuntimeModule("sharedState");
 
   return {
@@ -450,6 +451,9 @@
     parseJsonText: editorStageFormat.parseJsonText,
     serializeEditorStage: editorStageFormat.serializeEditorStage,
     serializeEditorStagePack: editorStageFormat.serializeEditorStagePack,
+
+    // Runtime modules
+    editorLifecycleRuntime: editorLifecycleRuntime,
 
     // Shared state module
     sharedState: sharedState,

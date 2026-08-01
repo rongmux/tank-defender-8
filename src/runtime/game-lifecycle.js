@@ -312,51 +312,7 @@
       player.stageKills = Array(typeCount).fill(0);
     };
 
-    // ── Editor ────────────────────────────────────────────────────────────
-    fn.enterEditor = function () {
-      fn.stopMovementAudio();
-      fn.stopStageStartAudio();
-      fn.stopBonusLifeAudio();
-      fn.stopPowerUpPickupAudio();
-      fn.stopPowerUpAppearAudio();
-      fn.stopPauseAudio();
-      fn.stopBrickHitAudio();
-      fn.stopEnemyHitAudio();
-      fn.stopBaseHitAudio();
-      fn.stopEnemyDestroyAudio();
-      fn.stopPlayerDestroyAudio();
-      fn.stopSteelHitAudio();
-      fn.stopPlayerShootAudio();
-      fn.stopMovementIceAudio();
-      fn.stopScoreCountAudio();
-      fn.stopStageBonusAudio();
-      fn.initAudio();
-      state.game.screen = "editor";
-      state.game.paused = false;
-      if (!state.game.editorGrid) state.game.editorGrid = deps.makeOriginalConstructionGrid();
-      state.game.editorCursor = { qc: 0, qr: 0 };
-      state.game.editorPattern = 0;
-      state.game.editorPatternArmed = false;
-      state.game.editorMoveHoldTimer = 0;
-      state.game.editorTick = 0;
-      state.game.editorBrush = deps.ORIGINAL_EDITOR_PATTERNS[0].type;
-      fn.showEditorMessage("EDIT");
-    };
-
-    fn.exitEditorToTitle = function () {
-      if (state.game.editorGrid) state.game.constructedGrid = deps.cloneGrid(state.game.editorGrid);
-      state.game.constructionVisits = (state.game.constructionVisits + 1) & 0xff;
-      state.game.constructionUsed = state.game.constructionVisits > 0;
-      state.game.hiddenInputCount = 0;
-      state.game.customGrid = null;
-      state.game.constructionStageActive = false;
-      state.game.stage = 1;
-      state.game.screen = "title";
-      state.game.paused = false;
-      state.game.demoMode = false;
-      fn.resetTitleIdleTimer();
-      state.game.editorMoveHoldTimer = 0;
-    };
+    deps.editorLifecycleRuntime.setupEditorLifecycleRuntime(state, deps);
 
     // ── Title menu ────────────────────────────────────────────────────────
     fn.moveTitleMenu = function (delta) {
@@ -374,87 +330,6 @@
       if (item.action === "one") fn.beginStageSelect(1);
       else if (item.action === "two") fn.beginStageSelect(2);
       else if (item.action === "construction") fn.enterEditor();
-    };
-
-    // ── Editor operations ─────────────────────────────────────────────────
-    fn.testEditorStage = function () {
-      if (!state.game.editorGrid) return;
-      var pack = deps.createEditorStagePack(state.game.editorGrid);
-      var result = deps.tryNormalizeStagePack(pack);
-      if (!result.ok) {
-        fn.showEditorMessage("BAD");
-        return;
-      }
-      fn.startGame(1, { stage: 1, customGrid: deps.parseStageQuadrants(pack.quadrants[0]) });
-    };
-
-    fn.saveEditorStage = function () {
-      if (!state.game.editorGrid) return;
-      try {
-        localStorage.setItem(sh.EDITOR_STORAGE_KEY, deps.serializeEditorStage(state.game.editorGrid));
-        fn.showEditorMessage("SAVED");
-        fn.playSound("editorSave");
-      } catch (error) {
-        fn.showEditorMessage("ERR");
-      }
-    };
-
-    fn.loadEditorStage = function () {
-      try {
-        var raw = localStorage.getItem(sh.EDITOR_STORAGE_KEY);
-        if (!raw) {
-          fn.showEditorMessage("EMPTY");
-          return;
-        }
-        var result = deps.parseEditorStageText(raw);
-        if (!result.ok) {
-          fn.showEditorMessage(result.kind === "stage" ? "BAD" : "ERR");
-          return;
-        }
-        state.game.editorGrid = result.grid;
-        fn.showEditorMessage("LOADED");
-        fn.playSound("editorLoad");
-      } catch (error) {
-        fn.showEditorMessage("ERR");
-      }
-    };
-
-    fn.clearEditorStage = function () {
-      state.game.editorGrid = deps.makeOriginalConstructionGrid();
-      state.game.editorCursor = { qc: 0, qr: 0 };
-      state.game.editorPattern = 0;
-      state.game.editorPatternArmed = false;
-      state.game.editorMoveHoldTimer = 0;
-      state.game.editorBrush = deps.ORIGINAL_EDITOR_PATTERNS[0].type;
-      fn.showEditorMessage("CLEAR");
-      fn.playSound("editorClear");
-    };
-
-    fn.exportEditorStage = function () {
-      if (!state.game.editorGrid) return;
-      var text = deps.serializeEditorStagePack(state.game.editorGrid);
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function () {
-            // Clipboard write succeeded
-          });
-          fn.showEditorMessage("COPIED");
-        } else {
-          console.log(text);
-          fn.showEditorMessage("LOGGED");
-        }
-      } catch (error) {
-        console.log(text);
-        fn.showEditorMessage("LOGGED");
-      }
-    };
-
-    fn.importStagePackFile = function () {
-      if (state.packFileInput) {
-        state.packFileInput.click();
-      } else {
-        fn.showEditorMessage("NOFILE");
-      }
     };
 
     // ── Stage pack loading ────────────────────────────────────────────────
@@ -551,11 +426,6 @@
 
     fn.restoreBuiltInStagePack = function () {
       fn.applyStagePack(state.builtInStagePack);
-    };
-
-    fn.showEditorMessage = function (message) {
-      state.game.editorMessage = message;
-      state.game.editorMessageTimer = 120;
     };
 
     fn.nextStage = function (delta) {

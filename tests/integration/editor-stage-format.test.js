@@ -36,6 +36,8 @@ function finishStageSelectClosing(api) {
 
   assert(modules.editorStageFormat, "editor stage format module should register before game.js");
   assert.equal(Object.isFrozen(modules.editorStageFormat), true);
+  assert(modules.editorLifecycleRuntime, "editor lifecycle runtime should register before game.js");
+  assert.equal(Object.isFrozen(modules.editorLifecycleRuntime), true);
 
   action("edit").click();
   action("clear").click();

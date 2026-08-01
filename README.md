@@ -110,6 +110,7 @@ node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
 node --check src/runtime/editor-input-runtime.js
+node --check src/runtime/editor-lifecycle-runtime.js
 node --check src/runtime/stage-select-runtime.js
 node --check src/runtime/post-game-runtime.js
 node --check src/runtime/stage-flow-runtime.js
@@ -301,6 +302,7 @@ tank-defender-8/
 |   |-- runtime/
 |   |   |-- shared-state.js
 |   |   |-- editor-input-runtime.js
+|   |   |-- editor-lifecycle-runtime.js
 |   |   |-- stage-select-runtime.js
 |   |   |-- post-game-runtime.js
 |   |   |-- stage-flow-runtime.js
@@ -545,6 +547,7 @@ tank-defender-8/
 |   |   |-- directions.test.js
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-input-runtime.test.js
+|   |   |-- editor-lifecycle-runtime.test.js
 |   |   |-- stage-select-runtime.test.js
 |   |   |-- post-game-runtime.test.js
 |   |   |-- stage-flow-runtime.test.js
@@ -692,6 +695,8 @@ tank-defender-8/
 `src/editor/editor-rules.js` owns the six-terrain browser palette, the 14-step original Construction block sequence, Arrow/WASD direction mapping and hold priority, full-cell cursor clamping, panel swatch hit testing, tile cycling, cursor-to-cell conversion, and exact brick-fragment/steel-quarter edits. `src/editor/editor-stage-format.js` owns compact version-2 local-save serialization, compatible loading of the legacy 13x13 `rows` format and current 26x26 `quadrants` format, reusable JSON parse results, default one-stage export/test pack composition, and pretty export serialization. `src/game.js` now retains only editor screen state, local-storage/clipboard/file side effects, messages, sounds, and event wiring. Unit coverage locks both save encodings, malformed JSON versus structurally invalid saves, independent default pack records, spawn coordinates, enemy composition, and serialized output; browser integration owns the complete save, clear, load, export, file import, constructed-stage install, immediate test, and reset workflow formerly held by smoke.
 
 `src/runtime/editor-input-runtime.js` owns the fixed-frame Construction input orchestration: cursor movement, original A/B pattern cycling, full-cell and quadrant painting, brush selection, tile cycling, and held-direction repeat. It keeps mutations and sounds as explicit callbacks while `src/game.js` retains Canvas coordinate conversion and DOM event wiring; direct tests cover the original pattern masks, boundary-safe edits, brush selection, and 20-frame repeat cadence.
+
+`src/runtime/editor-lifecycle-runtime.js` owns Construction entry and exit, one-stage map test runs, local save/load, clearing, clipboard export, import-button dispatch, and editor feedback messages. A test run preserves the active stage pack and uses the edited map only for stage one, so standard stage progression remains intact after clearing it. Its unit test locks registration, construction-state reset, persistence, active-pack preservation, exit installation, and import dispatch; browser integration continues to cover the complete editor workflow.
 
 `src/runtime/input-runtime.js` owns browser input routing: toolbar actions, keyboard screen dispatch, one-shot fire/stage-selection presses, pause audio handoff, stage-pack file import, and Construction mouse editing. It preserves the Arrow/WASD mappings, demo escape path, hidden-message input reservation, editor shortcuts, coordinate conversion, and pause gating while `src/game.js` supplies only explicit callbacks; direct tests lock registration, action dispatch, pause synchronization order, keyboard routing, and mouse coordinates.
 
@@ -986,6 +991,8 @@ The migration order is core timing/random/geometry, configuration and stage pack
 `src/runtime/stage-result-runtime.js` owns stage-advance projections, result-table timing, clear-bonus recipient selection, and one-shot clear-bonus side effects. Screen transitions remain in `src/game.js`, while diagnostics and the stage-clear renderer use the same frozen runtime API.
 
 `src/runtime/editor-input-runtime.js` owns the fixed-frame Construction input orchestration: cursor movement, original A/B pattern cycling, full-cell and quadrant painting, brush selection, tile cycling, and held-direction repeat. It keeps mutations and sounds as explicit callbacks while `src/game.js` retains Canvas coordinate conversion and DOM event wiring; direct tests cover the original pattern masks, boundary-safe edits, brush selection, and 20-frame repeat cadence.
+
+`src/runtime/editor-lifecycle-runtime.js` owns Construction entry and exit, one-stage map test runs, local save/load, clearing, clipboard export, import-button dispatch, and editor feedback messages. A test run preserves the active stage pack and uses the edited map only for stage one, so standard stage progression remains intact after clearing it. Its unit test locks registration, construction-state reset, persistence, active-pack preservation, exit installation, and import dispatch; browser integration continues to cover the complete editor workflow.
 
 `src/runtime/input-runtime.js` owns browser input routing for toolbar actions, keyboard screen dispatch, pause handoff, stage-pack imports, and Construction mouse editing. It keeps browser event timing outside the fixed-frame simulation and delegates state changes through explicit callbacks; its direct tests lock the input contract without duplicating gameplay rules.
 
