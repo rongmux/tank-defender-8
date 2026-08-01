@@ -150,6 +150,7 @@
 
   // ── Runtime (shared-state) ─────────────────────────────────────────────────
   var editorLifecycleRuntime = requireRuntimeModule("editorLifecycleRuntime");
+  var gameSessionRuntime = requireRuntimeModule("gameSessionRuntime");
   var highScoreRuntime = requireRuntimeModule("highScoreRuntime");
   var playerSessionRuntime = requireRuntimeModule("playerSessionRuntime");
   var stagePackLifecycleRuntime = requireRuntimeModule("stagePackLifecycleRuntime");
@@ -458,6 +459,7 @@
 
     // Runtime modules
     editorLifecycleRuntime: editorLifecycleRuntime,
+    gameSessionRuntime: gameSessionRuntime,
     highScoreRuntime: highScoreRuntime,
     playerSessionRuntime: playerSessionRuntime,
     stagePackLifecycleRuntime: stagePackLifecycleRuntime,

@@ -201,6 +201,7 @@ node --check src/runtime/public-api-adapters.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
+node --check src/runtime/game-session-runtime.js
 node --check src/runtime/high-score-runtime.js
 node --check src/runtime/player-session-runtime.js
 node --check src/runtime/title-flow-runtime.js
@@ -398,6 +399,7 @@ tank-defender-8/
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
+|   |   |-- game-session-runtime.js
 |   |   |-- high-score-runtime.js
 |   |   |-- player-session-runtime.js
 |   |   |-- title-flow-runtime.js
@@ -556,6 +558,7 @@ tank-defender-8/
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-input-runtime.test.js
 |   |   |-- editor-lifecycle-runtime.test.js
+|   |   |-- game-session-runtime.test.js
 |   |   |-- high-score-runtime.test.js
 |   |   |-- player-session-runtime.test.js
 |   |   |-- title-flow-runtime.test.js
@@ -709,6 +712,8 @@ tank-defender-8/
 `src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，`src/game.js` 只保留 Canvas 坐标换算与 DOM 事件接线；直接测试覆盖原版图案掩码、边界安全编辑、画笔选择和 20 帧重复节奏。
 
 `src/runtime/editor-lifecycle-runtime.js` 接管 Construction 的进入/退出、单关地图试运行、本地存取、清空、剪贴板导出、导入按钮分派和编辑器反馈信息。试运行会保留当前关卡包，仅把编辑地图用于第 1 关，因此通关清除该临时地图后仍按常规关卡推进。其单元测试锁定注册、Construction 状态复位、持久化、活动关卡包保留、退出安装和导入分派；浏览器集成测试继续覆盖完整编辑器工作流。
+
+`src/runtime/game-session-runtime.js` 接管常规游戏会话初始化以及标题演示的进入和退出。直接测试锁定最高分基线复位、Construction/自定义网格选择、玩家创建、关卡启动、演示时序、帧计数器复位、移动音频交接和完整的演示音频清理。
 
 `src/runtime/stage-pack-lifecycle-runtime.js` 接管 JSON 解析、关卡包规范化、活动包安装、战场网格准备和内置包恢复。显式回调将标题闲置计时复位、战斗随机数复位及临时战斗状态清理保留在组合边界；其单元测试锁定畸形输入、校验失败、状态复位投影和内置包恢复，浏览器集成测试锁定模块注册和公开关卡包加载。
 

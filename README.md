@@ -201,6 +201,7 @@ node --check src/runtime/public-api-adapters.js
 node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
+node --check src/runtime/game-session-runtime.js
 node --check src/runtime/high-score-runtime.js
 node --check src/runtime/player-session-runtime.js
 node --check src/runtime/title-flow-runtime.js
@@ -398,6 +399,7 @@ tank-defender-8/
 |   |   |-- debug-snapshot.js
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
+|   |   |-- game-session-runtime.js
 |   |   |-- high-score-runtime.js
 |   |   |-- player-session-runtime.js
 |   |   |-- title-flow-runtime.js
@@ -556,6 +558,7 @@ tank-defender-8/
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-input-runtime.test.js
 |   |   |-- editor-lifecycle-runtime.test.js
+|   |   |-- game-session-runtime.test.js
 |   |   |-- high-score-runtime.test.js
 |   |   |-- player-session-runtime.test.js
 |   |   |-- title-flow-runtime.test.js
@@ -709,6 +712,8 @@ tank-defender-8/
 `src/runtime/editor-input-runtime.js` owns the fixed-frame Construction input orchestration: cursor movement, original A/B pattern cycling, full-cell and quadrant painting, brush selection, tile cycling, and held-direction repeat. It keeps mutations and sounds as explicit callbacks while `src/game.js` retains Canvas coordinate conversion and DOM event wiring; direct tests cover the original pattern masks, boundary-safe edits, brush selection, and 20-frame repeat cadence.
 
 `src/runtime/editor-lifecycle-runtime.js` owns Construction entry and exit, one-stage map test runs, local save/load, clearing, clipboard export, import-button dispatch, and editor feedback messages. A test run preserves the active stage pack and uses the edited map only for stage one, so standard stage progression remains intact after clearing it. Its unit test locks registration, construction-state reset, persistence, active-pack preservation, exit installation, and import dispatch; browser integration continues to cover the complete editor workflow.
+
+`src/runtime/game-session-runtime.js` owns normal game-session setup plus title-demo entry and exit. Its direct tests lock high-score baseline reset, Construction/custom-grid selection, player creation, stage start, demo timing, frame-counter reset, movement-audio handoff, and full demo audio cleanup.
 
 `src/runtime/stage-pack-lifecycle-runtime.js` owns JSON parsing, pack normalization, active-pack installation, fresh-grid preparation, and restoring the built-in pack. Explicit callbacks keep title-idle reset, battle-random reset, and transient battle-state clearing at the composition boundary; its unit test locks malformed input, validation failures, reset projection, and built-in restoration, while browser integration locks module registration and public pack loading.
 

@@ -20,6 +20,7 @@ function keyPress(listeners, code) {
   const api = context.window.TankDefender8;
 
   assert(api, "the browser bootstrap should expose the public game API");
+  assert.equal(Object.isFrozen(context.window.TankDefender8Modules.gameSessionRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.highScoreRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.playerSessionRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.titleFlowRuntime), true);

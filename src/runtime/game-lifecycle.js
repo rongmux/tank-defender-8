@@ -27,66 +27,7 @@
     deps.playerSessionRuntime.setupPlayerSessionRuntime(state, deps);
 
     // ── Game start / Title demo ───────────────────────────────────────────
-    fn.startGame = function (players, options) {
-      var opts = options || {};
-      if (!opts.demo) {
-        fn.initAudio();
-        state.game.constructionUsed = false;
-        state.game.constructionVisits = 0;
-        state.game.hiddenInputCount = 0;
-        state.game.runHighScoreBaseline = state.game.highScore;
-        state.game.newHighScoreAtGameOver = false;
-        state.game.fullGameOverElapsed = 0;
-        state.game.highScoreScreenElapsed = 0;
-      }
-      state.game.demoMode = Boolean(opts.demo);
-      state.game.playerCount = players;
-      state.game.paused = false;
-      state.game.pauseElapsed = 0;
-      state.game.stage = opts.stage || state.game.stage || 1;
-      state.game.customGrid = opts.customGrid ? deps.cloneGrid(opts.customGrid) : null;
-      state.game.constructionStageActive = Boolean(
-        !state.game.customGrid &&
-        opts.useConstruction !== false &&
-        state.game.stage === 1 &&
-        state.game.constructedGrid
-      );
-      state.game.players = [];
-      for (var i = 1; i <= players; i += 1) {
-        state.game.players.push(fn.createPlayer(i));
-      }
-      fn.startStage(state.game.stage);
-    };
-
-    fn.startTitleDemo = function () {
-      fn.startGame(2, { stage: sh.DEMO_DISPLAY_STAGE, useConstruction: false, demo: true });
-      state.game.screen = "playing";
-      state.game.transitionTimer = 0;
-      state.game.titleIdleFrames = 0;
-      fn.resetFrameCounters();
-      state.game.frameLow = sh.DEMO_INITIAL_FRAME_LOW;
-      fn.syncMovementAudio();
-    };
-
-    fn.endTitleDemo = function () {
-      fn.stopMovementAudio();
-      fn.stopBrickHitAudio();
-      fn.stopEnemyHitAudio();
-      fn.stopBaseHitAudio();
-      fn.stopEnemyDestroyAudio();
-      fn.stopPlayerDestroyAudio();
-      fn.stopSteelHitAudio();
-      fn.stopPlayerShootAudio();
-      fn.stopMovementIceAudio();
-      fn.stopScoreCountAudio();
-      fn.stopStageBonusAudio();
-      state.game.demoMode = false;
-      state.game.stage = 1;
-      state.game.screen = "title";
-      state.game.paused = false;
-      fn.resetTitleIdleTimer();
-      fn.clearTransientBattleState();
-    };
+    deps.gameSessionRuntime.setupGameSessionRuntime(state, deps);
 
     // ── Title flow ────────────────────────────────────────────────────────
     deps.titleFlowRuntime.setupTitleFlowRuntime(state, deps);
