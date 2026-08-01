@@ -156,6 +156,7 @@ node --check src/runtime/audio-stage-bonus-diagnostics.js
 node --check src/runtime/audio-movement-diagnostics.js
 node --check src/runtime/audio-movement-lifecycle-diagnostics.js
 node --check src/runtime/audio-brick-hit-diagnostics.js
+node --check src/runtime/audio-brick-hit-lifecycle-diagnostics.js
 node --check src/runtime/audio-steel-hit-diagnostics.js
 node --check src/runtime/audio-enemy-hit-diagnostics.js
 node --check src/runtime/audio-enemy-destroy-diagnostics.js
@@ -337,6 +338,7 @@ tank-defender-8/
 |   |   |-- audio-movement-diagnostics.js
 |   |   |-- audio-movement-lifecycle-diagnostics.js
 |   |   |-- audio-brick-hit-diagnostics.js
+|   |   |-- audio-brick-hit-lifecycle-diagnostics.js
 |   |   |-- audio-steel-hit-diagnostics.js
 |   |   |-- audio-enemy-hit-diagnostics.js
 |   |   |-- audio-enemy-destroy-diagnostics.js
@@ -486,6 +488,7 @@ tank-defender-8/
 |   |   |-- audio-movement-diagnostics.test.js
 |   |   |-- audio-movement-lifecycle-diagnostics.test.js
 |   |   |-- audio-brick-hit-diagnostics.test.js
+|   |   |-- audio-brick-hit-lifecycle-diagnostics.test.js
 |   |   |-- audio-steel-hit-diagnostics.test.js
 |   |   |-- audio-enemy-hit-diagnostics.test.js
 |   |   |-- audio-enemy-destroy-diagnostics.test.js
@@ -743,6 +746,8 @@ tank-defender-8/
 `src/runtime/audio-movement-diagnostics.js` owns the ordinary movement-mode and ice-movement presentation probes extracted from `audio-diagnostics.js`. `src/runtime/audio-movement-lifecycle-diagnostics.js` owns the ice-movement lifecycle probe, including pause freezing, priority masking, retriggering, and stage cleanup; the composition root merges it back at the original public API position.
 
 `src/runtime/audio-brick-hit-diagnostics.js` owns the stateless destructive-brick-hit audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the three-frame triangle replacement sequence independent from the brick collision lifecycle probe.
+
+`src/runtime/audio-brick-hit-lifecycle-diagnostics.js` owns the brick-hit lifecycle probe extracted from `audio-diagnostics.js`. It preserves brick and steel collision coverage, pause and stage-start priority masking, independent shooting channels, and stage cleanup while the composition root restores the original public API position.
 
 `src/runtime/audio-steel-hit-diagnostics.js` owns the stateless steel-hit audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the five-frame boundary-impact sequence independent from the steel collision lifecycle probe.
 
