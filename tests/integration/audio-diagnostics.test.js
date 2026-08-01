@@ -65,8 +65,10 @@ assert(modules.audioEnemyHitDiagnostics, "enemy-hit audio diagnostics module sho
 assert.equal(Object.isFrozen(modules.audioEnemyHitDiagnostics), true);
 assert(modules.audioEnemyHitLifecycleDiagnostics, "enemy-hit lifecycle audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioEnemyHitLifecycleDiagnostics), true);
-assert(modules.audioEnemyDestroyDiagnostics, "enemy-destroy audio diagnostics module should register before audio-diagnostics.js");
-assert.equal(Object.isFrozen(modules.audioEnemyDestroyDiagnostics), true);
+  assert(modules.audioEnemyDestroyDiagnostics, "enemy-destroy audio diagnostics module should register before audio-diagnostics.js");
+  assert.equal(Object.isFrozen(modules.audioEnemyDestroyDiagnostics), true);
+  assert(modules.audioEnemyDestroyLifecycleDiagnostics, "enemy-destroy lifecycle audio diagnostics module should register before audio-diagnostics.js");
+  assert.equal(Object.isFrozen(modules.audioEnemyDestroyLifecycleDiagnostics), true);
 assert(modules.audioPlayerDestroyDiagnostics, "player-destroy audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioPlayerDestroyDiagnostics), true);
 assert(modules.audioBaseHitDiagnostics, "base-hit audio diagnostics module should register before audio-diagnostics.js");
@@ -376,6 +378,10 @@ const enemyDestroyDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-enemy-destroy-diagnostics.js"),
   "utf8"
 );
+const enemyDestroyLifecycleDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/audio-enemy-destroy-lifecycle-diagnostics.js"),
+  "utf8"
+);
 const playerDestroyDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-player-destroy-diagnostics.js"),
   "utf8"
@@ -447,9 +453,11 @@ for (const name of AUDIO_DIAGNOSTIC_METHODS) {
                ? enemyHitDiagnosticsSource
                : name === "debugEnemyHitAudioLifecycleProbe"
                  ? enemyHitLifecycleDiagnosticsSource
-               : name === "debugEnemyDestroyAudioProbe"
-                ? enemyDestroyDiagnosticsSource
-                : name === "debugPlayerDestroyAudioProbe"
+                : name === "debugEnemyDestroyAudioProbe"
+                 ? enemyDestroyDiagnosticsSource
+                 : name === "debugEnemyDestroyAudioLifecycleProbe"
+                   ? enemyDestroyLifecycleDiagnosticsSource
+                 : name === "debugPlayerDestroyAudioProbe"
                   ? playerDestroyDiagnosticsSource
                   : name === "debugBaseHitAudioProbe"
                     ? baseHitDiagnosticsSource
@@ -487,6 +495,7 @@ assert.equal(diagnosticsSource.includes("debugSteelHitAudioLifecycleProbe()"), f
 assert.equal(diagnosticsSource.includes("debugEnemyHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugEnemyHitAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugEnemyDestroyAudioProbe()"), false);
+assert.equal(diagnosticsSource.includes("debugEnemyDestroyAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPlayerDestroyAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBaseHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPlayerShootAudioProbe()"), false);

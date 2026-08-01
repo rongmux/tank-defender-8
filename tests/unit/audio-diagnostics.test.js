@@ -11,6 +11,7 @@ const audioSteelHitLifecycleDiagnostics = require("../../src/runtime/audio-steel
 const audioEnemyHitDiagnostics = require("../../src/runtime/audio-enemy-hit-diagnostics");
 const audioEnemyHitLifecycleDiagnostics = require("../../src/runtime/audio-enemy-hit-lifecycle-diagnostics");
 const audioEnemyDestroyDiagnostics = require("../../src/runtime/audio-enemy-destroy-diagnostics");
+const audioEnemyDestroyLifecycleDiagnostics = require("../../src/runtime/audio-enemy-destroy-lifecycle-diagnostics");
 const audioPlayerDestroyDiagnostics = require("../../src/runtime/audio-player-destroy-diagnostics");
 const audioBaseHitDiagnostics = require("../../src/runtime/audio-base-hit-diagnostics");
 const audioPlayerShootDiagnostics = require("../../src/runtime/audio-player-shoot-diagnostics");
@@ -134,6 +135,7 @@ const deps = {
   audioEnemyHitDiagnostics,
   audioEnemyHitLifecycleDiagnostics,
   audioEnemyDestroyDiagnostics,
+  audioEnemyDestroyLifecycleDiagnostics,
   audioPlayerDestroyDiagnostics,
   audioBaseHitDiagnostics,
   audioPlayerShootDiagnostics,
