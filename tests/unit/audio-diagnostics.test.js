@@ -13,6 +13,7 @@ const audioBaseHitDiagnostics = require("../../src/runtime/audio-base-hit-diagno
 const audioPlayerShootDiagnostics = require("../../src/runtime/audio-player-shoot-diagnostics");
 const audioStageStartDiagnostics = require("../../src/runtime/audio-stage-start-diagnostics");
 const audioBonusLifeDiagnostics = require("../../src/runtime/audio-bonus-life-diagnostics");
+const audioBonusLifeLifecycleDiagnostics = require("../../src/runtime/audio-bonus-life-lifecycle-diagnostics");
 const audioPowerUpPickupDiagnostics = require("../../src/runtime/audio-power-up-pickup-diagnostics");
 const audioPowerUpPickupLifecycleDiagnostics = require("../../src/runtime/audio-power-up-pickup-lifecycle-diagnostics");
 const audioPowerUpAppearDiagnostics = require("../../src/runtime/audio-power-up-appear-diagnostics");
@@ -132,6 +133,7 @@ const deps = {
   audioPlayerShootDiagnostics,
   audioStageStartDiagnostics,
   audioBonusLifeDiagnostics,
+  audioBonusLifeLifecycleDiagnostics,
   audioPowerUpPickupDiagnostics,
   audioPowerUpPickupLifecycleDiagnostics,
   audioPowerUpAppearDiagnostics,
