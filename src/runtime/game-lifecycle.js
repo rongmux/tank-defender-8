@@ -24,23 +24,7 @@
     deps.highScoreRuntime.setupHighScoreRuntime(state, deps);
 
     // ── Player helpers ────────────────────────────────────────────────────
-    fn.createPlayer = function (id) {
-      var runtime = state.stageRuntime;
-      return deps.createPlayerState({
-        id: id,
-        spawn: runtime.playerSpawnPoint(id),
-        settings: runtime.gameSettings(),
-        enemyTypeCount: runtime.enemyTypeDefinitions().length,
-        direction: deps.UP
-      });
-    };
-
-    fn.resetPlayerPosition = function (player) {
-      deps.resetPlayerState(player, {
-        settings: state.stageRuntime.gameSettings(),
-        direction: deps.UP
-      });
-    };
+    deps.playerSessionRuntime.setupPlayerSessionRuntime(state, deps);
 
     // ── Game start / Title demo ───────────────────────────────────────────
     fn.startGame = function (players, options) {
