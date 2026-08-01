@@ -47,7 +47,10 @@
       tileTypeName: callbacks.tileTypeName
     });
     deps.requireRuntimeModule("stageSelectRuntime").setupStageSelectRuntime(state, deps, {
-      changeStageSelection: fn.changeStageSelection
+      initAudio: fn.initAudio,
+      resetFrameCounterLow: function () { fn.resetFrameCounterLow(); },
+      resetTitleIdleTimer: fn.resetTitleIdleTimer,
+      startGame: fn.startGame
     });
     deps.requireRuntimeModule("postGameRuntime").setupPostGameRuntime(state, deps, {
       fullGameOverScreenFrames: function () { return deps.FULL_GAME_OVER_SCREEN_FRAMES; },

@@ -705,7 +705,7 @@ tank-defender-8/
 
 `src/runtime/input-runtime.js` owns browser input routing: toolbar actions, keyboard screen dispatch, one-shot fire/stage-selection presses, pause audio handoff, stage-pack file import, and Construction mouse editing. It preserves the Arrow/WASD mappings, demo escape path, hidden-message input reservation, editor shortcuts, coordinate conversion, and pause gating while `src/game.js` supplies only explicit callbacks; direct tests lock registration, action dispatch, pause synchronization order, keyboard routing, and mouse coordinates.
 
-`src/runtime/stage-select-runtime.js` owns the fixed-frame stage-selection A/B input cadence: one-shot presses are consumed before held-key repeats, repeats occur on the original eight-frame boundary, and A retains priority when both buttons arrive together. The stage mapping and screen transition remain explicit callbacks from `src/game.js`.
+`src/runtime/stage-select-runtime.js` owns stage-selection entry, player-mode selection, stage-range clamping, confirmation, and fixed-frame A/B input cadence. One-shot presses are consumed before held-key repeats, repeats occur on the original eight-frame boundary, and A retains priority when both buttons arrive together. Explicit callbacks keep audio initialization, title-idle reset, frame-counter reset, and game startup at the composition boundary; direct tests cover range bounds, entry state, confirmation, and input cadence.
 
 `src/runtime/post-game-runtime.js` owns the fixed-frame full GAME OVER and high-score screen lifecycle: audio handoff, timed completion, Start/Escape skip behavior, high-score branching, and title-state reset. The existing score comparison and stage-result transition remain outside it and are supplied through explicit callbacks.
 
@@ -1003,7 +1003,7 @@ The migration order is core timing/random/geometry, configuration and stage pack
 
 `src/runtime/screen-render-runtime.js` owns the top-level screen dispatch and overlay order, while specialized render runtimes own the pixels for each screen.
 
-`src/runtime/stage-select-runtime.js` owns the fixed-frame stage-selection A/B input cadence: one-shot presses are consumed before held-key repeats, repeats occur on the original eight-frame boundary, and A retains priority when both buttons arrive together. The stage mapping and screen transition remain explicit callbacks from `src/game.js`.
+`src/runtime/stage-select-runtime.js` owns stage-selection entry, player-mode selection, stage-range clamping, confirmation, and fixed-frame A/B input cadence. One-shot presses are consumed before held-key repeats, repeats occur on the original eight-frame boundary, and A retains priority when both buttons arrive together. Explicit callbacks keep audio initialization, title-idle reset, frame-counter reset, and game startup at the composition boundary; direct tests cover range bounds, entry state, confirmation, and input cadence.
 
 ## Stage Pack Format
 

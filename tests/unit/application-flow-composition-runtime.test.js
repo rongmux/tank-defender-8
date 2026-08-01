@@ -15,8 +15,10 @@ const setupOrder = [];
 const fn = {
   playSound() {},
   showEditorMessage() {},
-  changeStageSelection() {},
+  initAudio() {},
+  resetFrameCounterLow() {},
   resetTitleIdleTimer() {},
+  startGame() {},
   stopAllAudio() {},
   stopGameOverAudio() {},
   stopStageResultAudio() {}
@@ -61,7 +63,10 @@ assert.deepEqual(setupOrder, [
 assert.equal(setupCallbacks.editorInputRuntime.playSound, fn.playSound);
 assert.equal(setupCallbacks.editorInputRuntime.showEditorMessage, fn.showEditorMessage);
 assert.equal(typeof setupCallbacks.editorInputRuntime.tileTypeName, "function");
-assert.equal(setupCallbacks.stageSelectRuntime.changeStageSelection, fn.changeStageSelection);
+assert.equal(setupCallbacks.stageSelectRuntime.initAudio, fn.initAudio);
+assert.equal(setupCallbacks.stageSelectRuntime.resetTitleIdleTimer, fn.resetTitleIdleTimer);
+assert.equal(setupCallbacks.stageSelectRuntime.startGame, fn.startGame);
+assert.equal(typeof setupCallbacks.stageSelectRuntime.resetFrameCounterLow, "function");
 assert.equal(setupCallbacks.postGameRuntime.playSound, fn.playSound);
 assert.equal(setupCallbacks.postGameRuntime.resetTitleIdleTimer, fn.resetTitleIdleTimer);
 assert.equal(setupCallbacks.postGameRuntime.stopAllAudio, fn.stopAllAudio);

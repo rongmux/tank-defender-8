@@ -211,34 +211,6 @@
       return { frame: frame, visibleLines: visibleLines, dots: dots, drop: drop };
     };
 
-    // ── Stage select ──────────────────────────────────────────────────────
-    fn.beginStageSelect = function (players) {
-      fn.initAudio();
-      state.game.demoMode = false;
-      fn.resetTitleIdleTimer();
-      state.game.stageSelectPlayers = players === 2 ? 2 : 1;
-      state.game.stage = 1;
-      state.game.screen = "stageSelectClosing";
-      state.game.paused = false;
-      state.game.transitionTimer = deps.STAGE_CURTAIN_CLOSE_FRAMES;
-      state.pendingStageSelectPresses.clear();
-    };
-
-    fn.startSelectedGame = function () {
-      state.pendingStageSelectPresses.clear();
-      fn.startGame(state.game.stageSelectPlayers, { stage: state.game.stage });
-    };
-
-    fn.stageSelectLimit = function () {
-      return Math.max(1, Math.min(deps.DEFAULT_ORIGINAL_STAGE_COUNT, state.stageRuntime.stageCount()));
-    };
-
-    fn.changeStageSelection = function (delta) {
-      var limit = fn.stageSelectLimit();
-      fn.resetFrameCounterLow();
-      state.game.stage = deps.clamp(state.game.stage + delta, 1, limit);
-    };
-
     // ── Stage start ───────────────────────────────────────────────────────
     fn.startStage = function (stage) {
       fn.stopMovementAudio();
