@@ -59,6 +59,8 @@ assert(modules.audioBrickHitLifecycleDiagnostics, "brick-hit lifecycle audio dia
 assert.equal(Object.isFrozen(modules.audioBrickHitLifecycleDiagnostics), true);
 assert(modules.audioSteelHitDiagnostics, "steel-hit audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioSteelHitDiagnostics), true);
+assert(modules.audioSteelHitLifecycleDiagnostics, "steel-hit lifecycle audio diagnostics module should register before audio-diagnostics.js");
+assert.equal(Object.isFrozen(modules.audioSteelHitLifecycleDiagnostics), true);
 assert(modules.audioEnemyHitDiagnostics, "enemy-hit audio diagnostics module should register before audio-diagnostics.js");
 assert.equal(Object.isFrozen(modules.audioEnemyHitDiagnostics), true);
 assert(modules.audioEnemyDestroyDiagnostics, "enemy-destroy audio diagnostics module should register before audio-diagnostics.js");
@@ -356,6 +358,10 @@ const steelHitDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-steel-hit-diagnostics.js"),
   "utf8"
 );
+const steelHitLifecycleDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/audio-steel-hit-lifecycle-diagnostics.js"),
+  "utf8"
+);
 const enemyHitDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/audio-enemy-hit-diagnostics.js"),
   "utf8"
@@ -426,10 +432,12 @@ for (const name of AUDIO_DIAGNOSTIC_METHODS) {
          : name === "debugBrickHitAudioProbe"
            ? brickHitDiagnosticsSource
            : name === "debugBrickHitAudioLifecycleProbe"
-             ? brickHitLifecycleDiagnosticsSource
+           ? brickHitLifecycleDiagnosticsSource
            : name === "debugSteelHitAudioProbe"
-            ? steelHitDiagnosticsSource
-            : name === "debugEnemyHitAudioProbe"
+             ? steelHitDiagnosticsSource
+             : name === "debugSteelHitAudioLifecycleProbe"
+               ? steelHitLifecycleDiagnosticsSource
+             : name === "debugEnemyHitAudioProbe"
               ? enemyHitDiagnosticsSource
               : name === "debugEnemyDestroyAudioProbe"
                 ? enemyDestroyDiagnosticsSource
@@ -467,6 +475,7 @@ assert.equal(diagnosticsSource.includes("debugMovementIceAudioLifecycleProbe()")
 assert.equal(diagnosticsSource.includes("debugBrickHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugBrickHitAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugSteelHitAudioProbe()"), false);
+assert.equal(diagnosticsSource.includes("debugSteelHitAudioLifecycleProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugEnemyHitAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugEnemyDestroyAudioProbe()"), false);
 assert.equal(diagnosticsSource.includes("debugPlayerDestroyAudioProbe()"), false);

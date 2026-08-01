@@ -158,6 +158,7 @@ node --check src/runtime/audio-movement-lifecycle-diagnostics.js
 node --check src/runtime/audio-brick-hit-diagnostics.js
 node --check src/runtime/audio-brick-hit-lifecycle-diagnostics.js
 node --check src/runtime/audio-steel-hit-diagnostics.js
+node --check src/runtime/audio-steel-hit-lifecycle-diagnostics.js
 node --check src/runtime/audio-enemy-hit-diagnostics.js
 node --check src/runtime/audio-enemy-destroy-diagnostics.js
 node --check src/runtime/audio-player-destroy-diagnostics.js
@@ -340,6 +341,7 @@ tank-defender-8/
 |   |   |-- audio-brick-hit-diagnostics.js
 |   |   |-- audio-brick-hit-lifecycle-diagnostics.js
 |   |   |-- audio-steel-hit-diagnostics.js
+|   |   |-- audio-steel-hit-lifecycle-diagnostics.js
 |   |   |-- audio-enemy-hit-diagnostics.js
 |   |   |-- audio-enemy-destroy-diagnostics.js
 |   |   |-- audio-player-destroy-diagnostics.js
@@ -490,6 +492,7 @@ tank-defender-8/
 |   |   |-- audio-brick-hit-diagnostics.test.js
 |   |   |-- audio-brick-hit-lifecycle-diagnostics.test.js
 |   |   |-- audio-steel-hit-diagnostics.test.js
+|   |   |-- audio-steel-hit-lifecycle-diagnostics.test.js
 |   |   |-- audio-enemy-hit-diagnostics.test.js
 |   |   |-- audio-enemy-destroy-diagnostics.test.js
 |   |   |-- audio-player-destroy-diagnostics.test.js
@@ -750,6 +753,8 @@ tank-defender-8/
 `src/runtime/audio-brick-hit-lifecycle-diagnostics.js` owns the brick-hit lifecycle probe extracted from `audio-diagnostics.js`. It preserves brick and steel collision coverage, pause and stage-start priority masking, independent shooting channels, and stage cleanup while the composition root restores the original public API position.
 
 `src/runtime/audio-steel-hit-diagnostics.js` owns the stateless steel-hit audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the five-frame boundary-impact sequence independent from the steel collision lifecycle probe.
+
+`src/runtime/audio-steel-hit-lifecycle-diagnostics.js` owns the steel-hit lifecycle probe extracted from `audio-diagnostics.js`. It preserves boundary and enemy-bullet impacts, pause freezing, appearance and stage-start priority masking, independent shooting channels, and stage cleanup while the composition root restores the original public API position.
 
 `src/runtime/audio-enemy-hit-diagnostics.js` owns the stateless enemy-hit audio presentation probe extracted from `audio-diagnostics.js`. Its explicit scope keeps the six-frame armored-hit sequence independent from the enemy collision lifecycle probe.
 
