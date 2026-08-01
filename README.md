@@ -201,6 +201,7 @@ node --check src/runtime/debug-snapshot.js
 node --check src/runtime/module-deps.js
 node --check src/runtime/game-lifecycle.js
 node --check src/runtime/audio-fixed-frame-runtime.js
+node --check src/runtime/audio-channel-runtime.js
 node --check src/runtime/audio-bridge.js
 node --check src/runtime/application-flow-composition-runtime.js
 node --check src/runtime/input-composition-runtime.js
@@ -390,6 +391,7 @@ tank-defender-8/
 |   |   |-- module-deps.js
 |   |   |-- game-lifecycle.js
 |   |   |-- audio-fixed-frame-runtime.js
+|   |   |-- audio-channel-runtime.js
 |   |   |-- audio-bridge.js
 |   |   |-- application-flow-composition-runtime.js
 |   |   |-- input-composition-runtime.js
@@ -491,6 +493,7 @@ tank-defender-8/
 |   |-- unit/
 |   |   |-- audio-bridge.test.js
 |   |   |-- audio-fixed-frame-runtime.test.js
+|   |   |-- audio-channel-runtime.test.js
 |   |   |-- application-flow-composition-runtime.test.js
 |   |   |-- input-composition-runtime.test.js
 |   |   |-- legacy-api-composition-runtime.test.js
@@ -761,6 +764,8 @@ tank-defender-8/
 `src/runtime/audio-bridge.js` now also owns the fixed-frame audio lifecycle order exposed to the composition root: updating every voice, stopping gameplay voices before a result, stopping result voices, and stopping every voice on full teardown. The unit test locks all four sequences so later audio changes cannot silently reorder channel cleanup or advancement.
 
 `src/runtime/audio-fixed-frame-runtime.js` owns the fixed-frame audio infrastructure extracted from `audio-bridge.js`: manifest presentation lookup, deterministic short/long noise buffers, Web Audio source creation, node synchronization, pause-aware frame advancement, and movement-audio resynchronization. Its unit test locks registration and no-context noise-buffer behavior, while the audio bridge test preserves the lifecycle method order.
+
+`src/runtime/audio-channel-runtime.js` owns the 17 fixed-frame event channel bindings extracted from `audio-bridge.js`: presentation lookup, audibility selection, node synchronization, start/stop/update lifecycles, and the cross-channel resynchronization needed by pause, stage-start, bonus-life, and power-up events. Its unit test locks the complete channel surface and representative priority callbacks; the audio bridge remains responsible for mix state, movement audio, generic sound playback, and global stop order.
 
 `src/runtime/audio-score-diagnostics.js` owns the score-count audio presentation and lifecycle probes extracted from `audio-diagnostics.js`. It accepts an explicit runtime scope and returns frozen probe methods; `audio-diagnostics.js` composes them back into the original public order, while direct and browser tests preserve the existing output hash.
 

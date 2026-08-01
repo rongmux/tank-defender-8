@@ -1,6 +1,7 @@
 const assert = require("assert").strict;
 const audioBridge = require("../../src/runtime/audio-bridge");
 const audioFixedFrameRuntime = require("../../src/runtime/audio-fixed-frame-runtime");
+const audioChannelRuntime = require("../../src/runtime/audio-channel-runtime");
 
 const state = {
   activeSequencedSounds: new Map(),
@@ -13,8 +14,9 @@ const state = {
 };
 audioBridge.setupAudioBridge(state, {
   requireRuntimeModule(name) {
-    assert.equal(name, "audioFixedFrameRuntime");
-    return audioFixedFrameRuntime;
+    if (name === "audioFixedFrameRuntime") return audioFixedFrameRuntime;
+    if (name === "audioChannelRuntime") return audioChannelRuntime;
+    assert.fail(`unexpected runtime module: ${name}`);
   }
 });
 
