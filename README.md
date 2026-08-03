@@ -189,6 +189,7 @@ node --check src/runtime/stage-flow-progression-diagnostics.js
 node --check src/runtime/stage-flow-game-over-diagnostics.js
 node --check src/runtime/stage-flow-diagnostics.js
 node --check src/runtime/screen-flow-navigation-diagnostics.js
+node --check src/runtime/screen-flow-title-demo-diagnostics.js
 node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
@@ -399,6 +400,7 @@ tank-defender-8/
 |   |   |-- stage-flow-game-over-diagnostics.js
 |   |   |-- stage-flow-diagnostics.js
 |   |   |-- screen-flow-navigation-diagnostics.js
+|   |   |-- screen-flow-title-demo-diagnostics.js
 |   |   |-- screen-flow-diagnostics.js
 |   |   |-- wall-diagnostics.js
 |   |   |-- enemy-diagnostics.js
@@ -683,6 +685,7 @@ tank-defender-8/
 |   |   |-- readme-tree.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- screen-flow-navigation-diagnostics.test.js
+|   |   |-- screen-flow-title-demo-diagnostics.test.js
 |   |   |-- screen-flow-diagnostics.test.js
 |   |   |-- screen-presentation.test.js
 |   |   |-- stage-flow-transition-diagnostics.test.js
@@ -906,7 +909,7 @@ tank-defender-8/
 
 `stage-flow-transition-diagnostics.js` owns the first six contiguous curtain-state, closing-frame rendering, transition advance, stage-select advance, and stage-start-audio probes. It consumes the explicit stage-flow scope and directly tests validation plus its frozen ordered diagnostic surface. `stage-flow-progression-diagnostics.js` owns the following seven stage routing, enemy-sequence, clear-delay, closing-curtain, state-preserving cycle, and automatic-advance probes. `stage-flow-game-over-diagnostics.js` owns the final four battlefield, banner, full-screen return, and stage-result Game Over probes. `stage-flow-diagnostics.js` now only builds the receiver-preserving scope and composes the three ordered children.
 
-`screen-flow-navigation-diagnostics.js` owns the first three title-score layout, global frame-counter, and stage-select input-cadence probes. It consumes the explicit screen-flow scope and directly tests validation plus its frozen ordered diagnostic surface; `screen-flow-diagnostics.js` composes it ahead of the remaining title-demo, hidden-message, high-score, and Game Over probes.
+`screen-flow-navigation-diagnostics.js` owns the first three title-score layout, global frame-counter, and stage-select input-cadence probes. It consumes the explicit screen-flow scope and directly tests validation plus its frozen ordered diagnostic surface. `screen-flow-title-demo-diagnostics.js` owns the following title-demo and hidden-message lifecycle probes. `screen-flow-diagnostics.js` composes both children ahead of the remaining high-score and Game Over probes.
 
 `effect-diagnostics.js` binds the five contiguous explosion-rule, tank-destruction, enemy-release, rendered-frame, and paused-impact probes through 31 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and seven dead-adapter removals leave `debug-api.js` at 4,175 physical lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all five probes at their original public indices 130-134 and preserves the pre-refactor 6,548-byte output SHA-256.
 

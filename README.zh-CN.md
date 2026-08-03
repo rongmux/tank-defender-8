@@ -189,6 +189,7 @@ node --check src/runtime/stage-flow-progression-diagnostics.js
 node --check src/runtime/stage-flow-game-over-diagnostics.js
 node --check src/runtime/stage-flow-diagnostics.js
 node --check src/runtime/screen-flow-navigation-diagnostics.js
+node --check src/runtime/screen-flow-title-demo-diagnostics.js
 node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
@@ -399,6 +400,7 @@ tank-defender-8/
 |   |   |-- stage-flow-game-over-diagnostics.js
 |   |   |-- stage-flow-diagnostics.js
 |   |   |-- screen-flow-navigation-diagnostics.js
+|   |   |-- screen-flow-title-demo-diagnostics.js
 |   |   |-- screen-flow-diagnostics.js
 |   |   |-- wall-diagnostics.js
 |   |   |-- enemy-diagnostics.js
@@ -683,6 +685,7 @@ tank-defender-8/
 |   |   |-- readme-tree.test.js
 |   |   |-- score-rules.test.js
 |   |   |-- screen-flow-navigation-diagnostics.test.js
+|   |   |-- screen-flow-title-demo-diagnostics.test.js
 |   |   |-- screen-flow-diagnostics.test.js
 |   |   |-- screen-presentation.test.js
 |   |   |-- stage-flow-transition-diagnostics.test.js
@@ -823,7 +826,7 @@ tank-defender-8/
 
 `stage-flow-transition-diagnostics.js` 接管前六个连续的幕布状态、关闭帧渲染、过渡推进、选关推进和关卡开场音频探针。它消费显式 stage-flow 作用域，并直接测试输入校验及冻结的有序诊断接口。`stage-flow-progression-diagnostics.js` 接管随后七个关卡路由、敌人序列、通关延迟、关闭幕布、状态保持循环和自动推进探针。`stage-flow-game-over-diagnostics.js` 接管最后四个战场、横幅、全屏返回和结算路由 Game Over 探针。`stage-flow-diagnostics.js` 现在只构建保留接收者的作用域，并按顺序组合三个子模块。
 
-`screen-flow-navigation-diagnostics.js` 接管前三个标题计分布局、全局帧计数与选关输入节奏探针。它消费显式 screen-flow 作用域，并直接测试输入校验及冻结的有序诊断接口；`screen-flow-diagnostics.js` 在其后组合剩余的标题演示、隐藏信息、最高分和 Game Over 探针。
+`screen-flow-navigation-diagnostics.js` 接管前三个标题计分布局、全局帧计数与选关输入节奏探针。它消费显式 screen-flow 作用域，并直接测试输入校验及冻结的有序诊断接口。`screen-flow-title-demo-diagnostics.js` 接管随后两个标题演示和隐藏信息生命周期探针。`screen-flow-diagnostics.js` 在两个子模块之后组合剩余的最高分和 Game Over 探针。
 
 `effect-diagnostics.js` 通过保留接收者的函数绑定和 31 个显式解构的运行时符号，接管连续的 5 个爆炸规则、坦克摧毁、敌人释放、渲染帧和暂停命中特效探针，且不使用 `eval`。抽离并移除 7 个死适配器后，`debug-api.js` 保留 4,175 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 130-134 依次执行全部 5 个探针，并保持重构前 6,548 字节输出的 SHA-256。
 

@@ -1,6 +1,7 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/screen-flow-diagnostics");
 const navigationDiagnostics = require("../../src/runtime/screen-flow-navigation-diagnostics");
+const titleDemoDiagnostics = require("../../src/runtime/screen-flow-title-demo-diagnostics");
 
 const SCREEN_FLOW_DIAGNOSTIC_METHODS = [
   "debugTitleScoreLayoutProbe",
@@ -50,6 +51,8 @@ const deps = {
   sharedState: {},
   createScreenFlowNavigationDiagnostics:
     navigationDiagnostics.createScreenFlowNavigationDiagnostics,
+  createScreenFlowTitleDemoDiagnostics:
+    titleDemoDiagnostics.createScreenFlowTitleDemoDiagnostics,
   FREE_AUDIO_MANIFEST: {
     events: {
       gameOver: {

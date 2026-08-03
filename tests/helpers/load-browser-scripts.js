@@ -140,6 +140,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/stage-flow-game-over-diagnostics.js",
   "src/runtime/stage-flow-diagnostics.js",
   "src/runtime/screen-flow-navigation-diagnostics.js",
+  "src/runtime/screen-flow-title-demo-diagnostics.js",
   "src/runtime/screen-flow-diagnostics.js",
   "src/runtime/wall-diagnostics.js",
   "src/runtime/enemy-diagnostics.js",
