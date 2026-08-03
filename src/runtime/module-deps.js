@@ -97,6 +97,7 @@
   var powerUpSpawnDiagnostics = requireRuntimeModule("powerUpSpawnDiagnostics");
   var playerLifecycleGameOverDiagnostics = requireRuntimeModule("playerLifecycleGameOverDiagnostics");
   var wallDiagnostics = requireRuntimeModule("wallDiagnostics");
+  var enemySpawnDiagnostics = requireRuntimeModule("enemySpawnDiagnostics");
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
   var timerDiagnostics = requireRuntimeModule("timerDiagnostics");
   var powerUpDiagnostics = requireRuntimeModule("powerUpDiagnostics");
@@ -371,8 +372,12 @@
     createPlayerLifecycleGameOverDiagnostics:
       playerLifecycleGameOverDiagnostics.createPlayerLifecycleGameOverDiagnostics,
     createWallDiagnostics: wallDiagnostics.createWallDiagnostics,
+    createEnemySpawnDiagnostics: enemySpawnDiagnostics.createEnemySpawnDiagnostics,
+    createEnemySpawnOverlapDiagnosticsForScope:
+      enemySpawnDiagnostics.createEnemySpawnOverlapDiagnostics,
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
-    createEnemySpawnOverlapDiagnostics: enemyDiagnostics.createEnemySpawnOverlapDiagnostics,
+    createEnemySpawnOverlapDiagnostics:
+      enemyDiagnostics.createEnemySpawnOverlapDiagnostics,
     createTimerDiagnostics: timerDiagnostics.createTimerDiagnostics,
     createPowerUpDiagnostics: powerUpDiagnostics.createPowerUpDiagnostics,
     createScoreDiagnostics: scoreDiagnostics.createScoreDiagnostics,

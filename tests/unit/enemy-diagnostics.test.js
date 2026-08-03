@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/enemy-diagnostics");
+const enemySpawnDiagnostics = require("../../src/runtime/enemy-spawn-diagnostics");
 
 const ENEMY_DIAGNOSTIC_METHODS = [
   "debugCarrierReleaseProbe",
@@ -40,6 +41,9 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: {},
+  createEnemySpawnDiagnostics: enemySpawnDiagnostics.createEnemySpawnDiagnostics,
+  createEnemySpawnOverlapDiagnosticsForScope:
+    enemySpawnDiagnostics.createEnemySpawnOverlapDiagnostics,
   gameSettings() {
     return {
       powerUpRules: {

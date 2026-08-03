@@ -40,6 +40,7 @@ function keyPress(listeners, code) {
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.powerUpCollectionDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.powerUpSpawnDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.playerLifecycleGameOverDiagnostics), true);
+  assert.equal(Object.isFrozen(context.window.TankDefender8Modules.enemySpawnDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatTankCollisionDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatProjectileDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatFireLimitDiagnostics), true);
