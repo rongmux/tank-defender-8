@@ -171,6 +171,7 @@
 
   // ── Runtime (shared-state) ─────────────────────────────────────────────────
   var editorLifecycleRuntime = requireRuntimeModule("editorLifecycleRuntime");
+  var battleSystemsCompositionRuntime = requireRuntimeModule("battleSystemsCompositionRuntime");
   var gameSessionRuntime = requireRuntimeModule("gameSessionRuntime");
   var highScoreRuntime = requireRuntimeModule("highScoreRuntime");
   var playerSessionRuntime = requireRuntimeModule("playerSessionRuntime");
@@ -511,6 +512,7 @@
     serializeEditorStagePack: editorStageFormat.serializeEditorStagePack,
 
     // Runtime modules
+    battleSystemsCompositionRuntime: battleSystemsCompositionRuntime,
     editorLifecycleRuntime: editorLifecycleRuntime,
     gameSessionRuntime: gameSessionRuntime,
     highScoreRuntime: highScoreRuntime,

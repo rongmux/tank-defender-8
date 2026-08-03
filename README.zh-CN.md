@@ -243,6 +243,7 @@ node --check src/runtime/render-pipeline-composition-runtime.js
 node --check src/runtime/debug-api.js
 node --check src/runtime/debug-battle-runtime.js
 node --check src/runtime/render-adapter-runtime.js
+node --check src/runtime/battle-systems-composition-runtime.js
 node --check src/runtime/battle-composition-runtime.js
 node --check src/runtime/render-composition-runtime.js
 node --check src/runtime/legacy-api-runtime.js
@@ -364,6 +365,7 @@ tank-defender-8/
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
+|   |   |-- battle-systems-composition-runtime.js
 |   |   |-- battle-composition-runtime.js
 |   |   |-- stage-result-runtime.js
 |   |   |-- player-update-runtime.js
@@ -643,6 +645,7 @@ tank-defender-8/
 |   |   |-- render-composition-runtime.test.js
 |   |   |-- debug-battle-runtime.test.js
 |   |   |-- render-adapter-runtime.test.js
+|   |   |-- battle-systems-composition-runtime.test.js
 |   |   |-- battle-composition-runtime.test.js
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
@@ -984,7 +987,7 @@ tank-defender-8/
 
 `src/runtime/render-pipeline-composition-runtime.js` 接管分阶段的 Canvas 管线组装：文本与精灵适配器、渲染适配器、战斗场景和最终屏幕渲染组合。它提供显式完成步骤，让 `battle-composition-runtime.js` 继续位于战斗场景初始化与屏幕组合初始化之间，在移出 `src/game.js` 大型接线块的同时保持原有初始化顺序。单元测试锁定阶段顺序、回调身份和幂等完成；浏览器集成测试验证无需构建的管线边界。
 
-`src/runtime/battle-composition-runtime.js` 接管玩家移动、投射物、战斗、关卡结算、关卡流程、Game Over、计时、道具、敌人 AI/移动/更新、战斗结束判定、固定帧循环和屏幕更新的初始化顺序。它读取现有 `state.fn` 与关卡 runtime，不复制规则，只从 `src/game.js` 接收顶层渲染/更新/生成门控。单元测试锁定模块顺序和返回的循环句柄；浏览器集成测试验证真实启动路径。
+`src/runtime/battle-systems-composition-runtime.js` 接管坦克/玩家移动、瞬态特效、投射物、战斗、关卡流程与结算、Game Over、战斗结束判定、计时/随机、道具、敌人生成/AI/移动/更新和投射物结算的固定原始初始化顺序，只向父模块返回帧计数器与 Game Over 入口句柄。`src/runtime/battle-composition-runtime.js` 现在只负责剩余的战斗循环、帧循环和屏幕更新装配，并保持从 `src/game.js` 接收的顶层渲染/更新/生成门控。直接单元测试锁定 21 个系统的初始化顺序及返回句柄；父模块和浏览器集成测试验证组合及真实启动路径。
 
 `src/runtime/legacy-api-runtime.js` 接管保留的 `state.fn` 兼容接口的最终注册。它只在所有 runtime 模块完成 API 注册后运行，校验回调表、保持注册顺序，并让公开调试适配器不再依赖组合入口中的逐项赋值。单元测试锁定参数校验、插入顺序和函数身份；浏览器集成测试验证 `src/game.js` 不再直接赋值 `state.fn`。
 

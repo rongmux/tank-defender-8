@@ -13,6 +13,12 @@ assert.throws(
 
 const setupOrder = [];
 const moduleResults = {
+  battleSystemsCompositionRuntime: {
+    frameCounterRuntime: {
+      advanceFrameCounters() {},
+      resetFrameCounterHigh() {}
+    }
+  },
   frameCounterRuntime: {
     advanceFrameCounters() {},
     resetFrameCounterHigh() {},
@@ -72,27 +78,7 @@ assert.equal(Object.isFrozen(api), true);
 assert.equal(api.screenUpdateRuntime.updateFrame(), "updated");
 assert.equal(typeof api.frameLoopRuntime.start, "function");
 assert.deepEqual(setupOrder, [
-  "tankMovementRuntime",
-  "frameCounterRuntime",
-  "playerMovementRuntime",
-  "transientEffectsRuntime",
-  "projectileRuntime",
-  "battleCombatRuntime",
-  "stageResultRuntime",
-  "stageFlowRuntime",
-  "gameOverEntryRuntime",
-  "battleOutcomeRuntime",
-  "playerUpdateRuntime",
-  "battleTimingRuntime",
-  "battleRandomRuntime",
-  "powerUpRuntime",
-  "enemySpawnRuntime",
-  "enemyAiRuntime",
-  "enemyMovementRuntime",
-  "enemyUpdateRuntime",
-  "projectileTargetRuntime",
-  "projectileResolutionRuntime",
-  "projectileMotionRuntime",
+  "battleSystemsCompositionRuntime",
   "battleLoopRuntime",
   "frameLoopRuntime",
   "screenUpdateRuntime"

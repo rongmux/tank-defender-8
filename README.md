@@ -243,6 +243,7 @@ node --check src/runtime/render-pipeline-composition-runtime.js
 node --check src/runtime/debug-api.js
 node --check src/runtime/debug-battle-runtime.js
 node --check src/runtime/render-adapter-runtime.js
+node --check src/runtime/battle-systems-composition-runtime.js
 node --check src/runtime/battle-composition-runtime.js
 node --check src/runtime/render-composition-runtime.js
 node --check src/runtime/legacy-api-runtime.js
@@ -364,6 +365,7 @@ tank-defender-8/
 |   |   |-- transient-effects-runtime.js
 |   |   |-- projectile-runtime.js
 |   |   |-- battle-combat-runtime.js
+|   |   |-- battle-systems-composition-runtime.js
 |   |   |-- battle-composition-runtime.js
 |   |   |-- stage-result-runtime.js
 |   |   |-- player-update-runtime.js
@@ -643,6 +645,7 @@ tank-defender-8/
 |   |   |-- render-composition-runtime.test.js
 |   |   |-- debug-battle-runtime.test.js
 |   |   |-- render-adapter-runtime.test.js
+|   |   |-- battle-systems-composition-runtime.test.js
 |   |   |-- battle-composition-runtime.test.js
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
@@ -874,7 +877,7 @@ tank-defender-8/
 
 `src/runtime/render-pipeline-composition-runtime.js` owns the multi-phase Canvas pipeline assembly: text and sprite adapters, the render adapter, the battle scene, and the final screen render composition. It exposes an explicit completion step so `battle-composition-runtime.js` remains between battle-scene setup and screen-composition setup, preserving the original initialization order while removing the large wiring block from `src/game.js`. Unit tests lock phase order, callback identity, and idempotent completion; browser integration verifies the no-build pipeline boundary.
 
-`src/runtime/battle-composition-runtime.js` owns the initialization order for player movement, projectiles, combat, stage results, stage flow, Game Over, timing, power-ups, enemy AI/movement/update, battle outcomes, the fixed-frame loop, and screen updates. It reads the existing `state.fn` and stage runtime instead of duplicating rules, and accepts only the top-level render/update/spawn gates from `src/game.js`. Unit tests lock the module order and returned loop handles; browser integration verifies the real startup path.
+`src/runtime/battle-systems-composition-runtime.js` owns the fixed legacy initialization order for tank/player movement, transient effects, projectiles, combat, stage flow/results, Game Over, battle outcomes, timing/randomness, power-ups, enemy spawning/AI/movement/update, and projectile resolution. It returns only the frame-counter and Game Over entry handles needed by its parent. `src/runtime/battle-composition-runtime.js` now owns the remaining battle loop, frame loop, and screen-update assembly, preserving the existing top-level render/update/spawn gates from `src/game.js`. Direct unit coverage locks the 21-system initialization order and returned handles; parent and browser integration tests verify composition and real startup.
 
 `src/runtime/legacy-api-runtime.js` owns the final compatibility registration of the retained `state.fn` surface. It runs only after all runtime modules have installed their APIs, validates the callback table, preserves registration order, and keeps the public debug adapter independent from the composition root's assignment block. Direct unit coverage locks validation, insertion order, and function identity; browser integration verifies that `src/game.js` contains no direct `state.fn` assignment statements.
 
