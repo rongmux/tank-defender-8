@@ -192,6 +192,7 @@ node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/score-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
+node --check src/runtime/combat-fire-limit-diagnostics.js
 node --check src/runtime/combat-projectile-diagnostics.js
 node --check src/runtime/combat-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
@@ -394,6 +395,7 @@ tank-defender-8/
 |   |   |-- power-up-diagnostics.js
 |   |   |-- score-diagnostics.js
 |   |   |-- upgrade-diagnostics.js
+|   |   |-- combat-fire-limit-diagnostics.js
 |   |   |-- combat-projectile-diagnostics.js
 |   |   |-- combat-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
@@ -651,6 +653,7 @@ tank-defender-8/
 |   |   |-- power-up-diagnostics.test.js
 |   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
+|   |   |-- combat-fire-limit-diagnostics.test.js
 |   |   |-- combat-projectile-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
@@ -809,7 +812,9 @@ tank-defender-8/
 
 `combat-projectile-diagnostics.js` 接管连续的子弹构造、场地边界命中、地形命中音效、友军火力设置与友军火力保护探针。它消费显式 combat 作用域，不依赖浏览器全局变量且不使用 `eval`；直接测试锁定输入校验、精确方法顺序和友军火力配置输出。
 
-`combat-diagnostics.js` 构建保留接收者的 combat 作用域，并将 7 个头盔保护、玩家/敌方碰撞、出生锁定、子弹上限/发射输入和交叉抵消探针，与 5 个弹体规则探针组合。其单元测试锁定状态/按键/待发射/音频校验、精确公开方法顺序、绑定优先级和输出作用域；浏览器集成测试在原公开索引 101-112 依次执行全部 12 个探针，并保持重构前 5,147 字节输出的 SHA-256。
+`combat-fire-limit-diagnostics.js` 接管玩家/敌方活跃子弹上限探针。它消费显式 combat 作用域，保留发射音频清理，并直接测试作用域校验及仅含一个方法的冻结诊断接口。
+
+`combat-diagnostics.js` 构建保留接收者的 combat 作用域，并将 6 个头盔保护、玩家/敌方碰撞、出生锁定、发射输入和交叉抵消探针，与子弹上限和 5 个弹体规则探针组合。其单元测试锁定状态/按键/待发射/音频校验、精确公开方法顺序、绑定优先级和输出作用域；浏览器集成测试在原公开索引 101-112 依次执行全部 12 个探针，并保持重构前 5,147 字节输出的 SHA-256。
 
 `player-movement-diagnostics.js` 通过保留接收者的函数绑定、42 个显式解构的运行时符号和实时冰面移动/玩家射击音频记录，接管连续的 11 个固定帧节奏、履带动画、友军火力眩晕、WASD 输入、转向对齐、砖块脱困、冰面移动以及冰面/森林图层探针，且不使用 `eval`。抽离并移除 6 个死适配器后，`debug-api.js` 保留 2,312 个物理行。其单元测试锁定状态/按键/音频校验、精确方法顺序、绑定优先级和状态恢复；浏览器集成测试在原公开索引 113-123 依次执行全部 11 个探针，并保持重构前 2,414 字节输出的 SHA-256。
 

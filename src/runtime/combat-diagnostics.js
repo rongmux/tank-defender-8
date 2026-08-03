@@ -74,6 +74,7 @@
       TILE,
       UP,
       applyPowerUp,
+      createCombatFireLimitDiagnostics,
       createBullet,
       createCombatProjectileDiagnostics,
       createPlayer,
@@ -530,87 +531,7 @@
             Object.assign(game, previous);
           }
         },
-        debugActiveBulletLimitProbe() {
-          const previousBullets = game.bullets;
-          const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
-          const makePlayer = (level) => ({
-            kind: "player",
-            id: 1,
-            x: 16,
-            y: 16,
-            w: 14,
-            h: 14,
-            dir: RIGHT,
-            alive: true,
-            spawnFlash: 0,
-            reload: 0,
-            level
-          });
-          const attempt = (level, shots) => {
-            const player = makePlayer(level);
-            game.bullets = [];
-            const counts = [];
-            for (let i = 0; i < shots; i += 1) {
-              player.reload = 0;
-              shoot(player);
-              counts.push(game.bullets.filter((bullet) => bullet.ownerKey === "player:1").length);
-            }
-            return {
-              level,
-              maxBullets: playerUpgradeRule(level).maxBullets,
-              counts,
-              speeds: game.bullets.map((bullet) => bullet.speed),
-              powers: game.bullets.map((bullet) => bullet.power)
-            };
-          };
-          const attemptEnemy = (shots) => {
-            const type = enemyTypeDefinitions()[2];
-            const enemy = {
-              kind: "enemy",
-              id: 100,
-              x: 48,
-              y: 16,
-              w: 14,
-              h: 14,
-              dir: DOWN,
-              alive: true,
-              spawnFlash: 0,
-              reload: 0,
-              reloadBase: type.reload,
-              bulletSpeed: type.bullet,
-              bulletPower: type.wallPower
-            };
-            game.bullets = [];
-            const counts = [];
-            for (let i = 0; i < shots; i += 1) {
-              enemy.reload = 0;
-              shoot(enemy);
-              counts.push(game.bullets.filter((bullet) => bullet.ownerKey === "enemy:100").length);
-            }
-            return {
-              maxBullets: 1,
-              counts,
-              speeds: game.bullets.map((bullet) => bullet.speed),
-              powers: game.bullets.map((bullet) => bullet.power)
-            };
-          };
-
-          try {
-            stopPlayerShootAudio();
-            return {
-              base: attempt(0, 2),
-              upgraded: attempt(2, 3),
-              enemy: attemptEnemy(2)
-            };
-          } finally {
-            stopPlayerShootAudio();
-            game.bullets = previousBullets;
-            playerShootAudio.active = previousPlayerShoot.active;
-            playerShootAudio.frame = previousPlayerShoot.frame;
-            syncPlayerShootAudioNodes();
-            syncMovementIceAudioNodes();
-          }
-        },
+        ...createCombatFireLimitDiagnostics(scope),
         debugPlayerFireInputProbe() {
           const previous = {
             grid: game.grid,

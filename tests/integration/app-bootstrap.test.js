@@ -28,6 +28,7 @@ function keyPress(listeners, code) {
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.titleMenuRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.inputCommandRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatProjectileDiagnostics), true);
+  assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatFireLimitDiagnostics), true);
   assert.equal(typeof animationFrameCallback, "function");
   for (const button of buttons) {
     assert.equal(typeof button.listeners.click, "function", `${button.dataset.action} should have a toolbar listener`);
