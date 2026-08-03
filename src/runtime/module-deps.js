@@ -114,6 +114,8 @@
   var terrainBaseDiagnostics = requireRuntimeModule("terrainBaseDiagnostics");
   var terrainDiagnostics = requireRuntimeModule("terrainDiagnostics");
   var playerLifecycleDiagnostics = requireRuntimeModule("playerLifecycleDiagnostics");
+  var effectExplosionDiagnostics = requireRuntimeModule("effectExplosionDiagnostics");
+  var effectEnemyDestructionDiagnostics = requireRuntimeModule("effectEnemyDestructionDiagnostics");
   var effectDiagnostics = requireRuntimeModule("effectDiagnostics");
   var panelDiagnostics = requireRuntimeModule("panelDiagnostics");
   var publicApiAdapters = requireRuntimeModule("publicApiAdapters");
@@ -396,6 +398,10 @@
     createTerrainBaseDiagnostics: terrainBaseDiagnostics.createTerrainBaseDiagnostics,
     createTerrainDiagnostics: terrainDiagnostics.createTerrainDiagnostics,
     createPlayerLifecycleDiagnostics: playerLifecycleDiagnostics.createPlayerLifecycleDiagnostics,
+    createEffectExplosionDiagnostics: effectExplosionDiagnostics.createEffectExplosionDiagnostics,
+    createEffectImpactDiagnostics: effectExplosionDiagnostics.createEffectImpactDiagnostics,
+    createEffectEnemyDestructionDiagnostics:
+      effectEnemyDestructionDiagnostics.createEffectEnemyDestructionDiagnostics,
     createEffectDiagnostics: effectDiagnostics.createEffectDiagnostics,
     createPanelDiagnostics: panelDiagnostics.createPanelDiagnostics,
     createPublicApiAdapters: publicApiAdapters.createPublicApiAdapters,

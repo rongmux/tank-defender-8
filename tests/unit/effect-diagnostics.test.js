@@ -1,5 +1,7 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/effect-diagnostics");
+const enemyDestructionDiagnostics = require("../../src/runtime/effect-enemy-destruction-diagnostics");
+const explosionDiagnostics = require("../../src/runtime/effect-explosion-diagnostics");
 
 const EFFECT_DIAGNOSTIC_METHODS = [
   "debugExplosionRuleProbe",
@@ -34,6 +36,10 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: {},
+  createEffectEnemyDestructionDiagnostics:
+    enemyDestructionDiagnostics.createEffectEnemyDestructionDiagnostics,
+  createEffectExplosionDiagnostics: explosionDiagnostics.createEffectExplosionDiagnostics,
+  createEffectImpactDiagnostics: explosionDiagnostics.createEffectImpactDiagnostics,
   explosionRule() {
     return { source: this.label };
   }

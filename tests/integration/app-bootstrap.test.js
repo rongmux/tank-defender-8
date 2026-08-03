@@ -44,6 +44,8 @@ function keyPress(listeners, code) {
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.enemySpawnDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.timerFreezeDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.terrainBaseDiagnostics), true);
+  assert.equal(Object.isFrozen(context.window.TankDefender8Modules.effectExplosionDiagnostics), true);
+  assert.equal(Object.isFrozen(context.window.TankDefender8Modules.effectEnemyDestructionDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.inputKeyboardRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatTankCollisionDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatProjectileDiagnostics), true);

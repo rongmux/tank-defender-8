@@ -218,6 +218,8 @@ node --check src/runtime/terrain-base-diagnostics.js
 node --check src/runtime/terrain-diagnostics.js
 node --check src/runtime/player-lifecycle-game-over-diagnostics.js
 node --check src/runtime/player-lifecycle-diagnostics.js
+node --check src/runtime/effect-explosion-diagnostics.js
+node --check src/runtime/effect-enemy-destruction-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/panel-diagnostics.js
 node --check src/runtime/public-api-adapters.js
@@ -443,6 +445,8 @@ tank-defender-8/
 |   |   |-- terrain-diagnostics.js
 |   |   |-- player-lifecycle-game-over-diagnostics.js
 |   |   |-- player-lifecycle-diagnostics.js
+|   |   |-- effect-explosion-diagnostics.js
+|   |   |-- effect-enemy-destruction-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- panel-diagnostics.js
 |   |   |-- public-api-adapters.js
@@ -650,6 +654,8 @@ tank-defender-8/
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
 |   |   |-- frame-counter-runtime.test.js
+|   |   |-- effect-explosion-diagnostics.test.js
+|   |   |-- effect-enemy-destruction-diagnostics.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -952,7 +958,7 @@ tank-defender-8/
 
 `screen-flow-navigation-diagnostics.js` owns the first three title-score layout, global frame-counter, and stage-select input-cadence probes. It consumes the explicit screen-flow scope and directly tests validation plus its frozen ordered diagnostic surface. `screen-flow-title-demo-diagnostics.js` owns the following title-demo and hidden-message lifecycle probes. `screen-flow-post-game-diagnostics.js` owns the final high-score screen/audio, full-screen Game Over screen/audio, and frame-rendering probes. `screen-flow-diagnostics.js` now only builds the receiver-preserving scope and composes the three ordered children.
 
-`effect-diagnostics.js` binds the five contiguous explosion-rule, tank-destruction, enemy-release, rendered-frame, and paused-impact probes through 31 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and seven dead-adapter removals leave `debug-api.js` at 4,175 physical lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all five probes at their original public indices 130-134 and preserves the pre-refactor 6,548-byte output SHA-256.
+`effect-explosion-diagnostics.js` owns the first two explosion-rule and tank-destruction presentation probes plus the final rendered-frame and paused bullet-impact probes. `effect-enemy-destruction-diagnostics.js` owns the intervening enemy-destruction lifecycle, released-slot, and stage-clear probe. `effect-diagnostics.js` now only builds the receiver-preserving scope and composes the children in the original 2+1+2 public order. Direct child tests, parent validation coverage, and browser integration preserve public indices 130-134 and the pre-refactor 6,548-byte output SHA-256 without `eval`.
 
 `wall-diagnostics.js` binds the five contiguous steel-damage, directional brick-strip, brick-fragment rendering, shovel-wall timing, and destroyed-base shovel probes through 29 explicitly destructured runtime symbols plus the live brick-impact audio record, with receiver-preserving function binding and no `eval`. The extraction leaves `debug-api.js` at 3,979 physical lines without dead adapters. Its unit suite locks state/audio validation, exact method order, binding precedence, and receiver identity; browser integration executes all five probes at their original public indices 51-55 and preserves the pre-refactor 1,929-byte output SHA-256.
 

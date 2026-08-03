@@ -218,6 +218,8 @@ node --check src/runtime/terrain-base-diagnostics.js
 node --check src/runtime/terrain-diagnostics.js
 node --check src/runtime/player-lifecycle-game-over-diagnostics.js
 node --check src/runtime/player-lifecycle-diagnostics.js
+node --check src/runtime/effect-explosion-diagnostics.js
+node --check src/runtime/effect-enemy-destruction-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/panel-diagnostics.js
 node --check src/runtime/public-api-adapters.js
@@ -443,6 +445,8 @@ tank-defender-8/
 |   |   |-- terrain-diagnostics.js
 |   |   |-- player-lifecycle-game-over-diagnostics.js
 |   |   |-- player-lifecycle-diagnostics.js
+|   |   |-- effect-explosion-diagnostics.js
+|   |   |-- effect-enemy-destruction-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- panel-diagnostics.js
 |   |   |-- public-api-adapters.js
@@ -650,6 +654,8 @@ tank-defender-8/
 |   |   |-- legacy-api-runtime.test.js
 |   |   |-- game-over-entry-runtime.test.js
 |   |   |-- frame-counter-runtime.test.js
+|   |   |-- effect-explosion-diagnostics.test.js
+|   |   |-- effect-enemy-destruction-diagnostics.test.js
 |   |   |-- effect-diagnostics.test.js
 |   |   |-- panel-diagnostics.test.js
 |   |   |-- public-api-adapters.test.js
@@ -869,7 +875,7 @@ tank-defender-8/
 
 `screen-flow-navigation-diagnostics.js` 接管前三个标题计分布局、全局帧计数与选关输入节奏探针。它消费显式 screen-flow 作用域，并直接测试输入校验及冻结的有序诊断接口。`screen-flow-title-demo-diagnostics.js` 接管随后两个标题演示和隐藏信息生命周期探针。`screen-flow-post-game-diagnostics.js` 接管最后的最高分画面/音频、全屏 Game Over 画面/音频及帧渲染探针。`screen-flow-diagnostics.js` 现在只构建保留接收者的作用域，并按顺序组合三个子模块。
 
-`effect-diagnostics.js` 通过保留接收者的函数绑定和 31 个显式解构的运行时符号，接管连续的 5 个爆炸规则、坦克摧毁、敌人释放、渲染帧和暂停命中特效探针，且不使用 `eval`。抽离并移除 7 个死适配器后，`debug-api.js` 保留 4,175 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 130-134 依次执行全部 5 个探针，并保持重构前 6,548 字节输出的 SHA-256。
+`effect-explosion-diagnostics.js` 接管前两个爆炸规则和坦克摧毁表现探针，以及最后两个摧毁帧渲染和暂停子弹命中特效探针。`effect-enemy-destruction-diagnostics.js` 接管中间的敌人销毁生命周期、槽位释放和关卡完成探针。`effect-diagnostics.js` 现在只构建保留接收者的作用域，并按原有 2+1+2 的公开顺序组合子模块。子模块直接测试、父模块输入校验与浏览器集成测试共同保持公开索引 130-134、重构前 6,548 字节 SHA-256 输出，并且不使用 `eval`。
 
 `wall-diagnostics.js` 通过保留接收者的函数绑定、29 个显式解构的运行时符号和实时砖块命中音频记录，接管连续的 5 个钢墙破坏、定向砖块条带、砖块碎片渲染、铲子围墙时序和基地已毁后的铲子探针，且不使用 `eval`。抽离后，`debug-api.js` 保留 3,979 个物理行，未产生死适配器。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 51-55 依次执行全部 5 个探针，并保持重构前 1,929 字节输出的 SHA-256。
 

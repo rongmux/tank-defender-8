@@ -19,6 +19,8 @@ const api = context.window.TankDefender8;
 
 assert(modules.effectDiagnostics, "effect diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.effectDiagnostics), true);
+assert.equal(Object.isFrozen(modules.effectExplosionDiagnostics), true);
+assert.equal(Object.isFrozen(modules.effectEnemyDestructionDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(130, 135))),
   EFFECT_DIAGNOSTIC_METHODS
@@ -44,11 +46,26 @@ const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/effect-diagnostics.js"),
   "utf8"
 );
+const explosionDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/effect-explosion-diagnostics.js"),
+  "utf8"
+);
+const enemyDestructionDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/effect-enemy-destruction-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createEffectDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
+assert.equal(explosionDiagnosticsSource.includes("eval("), false);
+assert.equal(enemyDestructionDiagnosticsSource.includes("eval("), false);
 for (const name of EFFECT_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
-  assert.equal(diagnosticsSource.includes(`${name}(`), true);
+  assert.equal(
+    diagnosticsSource.includes(`${name}(`) ||
+      explosionDiagnosticsSource.includes(`${name}(`) ||
+      enemyDestructionDiagnosticsSource.includes(`${name}(`),
+    true
+  );
 }
 assert(debugSource.split(/\r?\n/).length < 4200);
 
