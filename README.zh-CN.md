@@ -136,6 +136,7 @@ node --check src/runtime/text-render-runtime.js
 node --check src/runtime/sprite-render-runtime.js
 node --check src/runtime/battle-scene-render-runtime.js
 node --check src/runtime/input-command-runtime.js
+node --check src/runtime/input-keyboard-runtime.js
 node --check src/runtime/input-runtime.js
 node --check src/runtime/screen-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
@@ -357,6 +358,7 @@ tank-defender-8/
 |   |   |-- sprite-render-runtime.js
 |   |   |-- battle-scene-render-runtime.js
 |   |   |-- input-command-runtime.js
+|   |   |-- input-keyboard-runtime.js
 |   |   |-- input-runtime.js
 |   |   |-- screen-render-runtime.js
 |   |   |-- transient-effects-runtime.js
@@ -635,6 +637,7 @@ tank-defender-8/
 |   |   |-- sprite-render-runtime.test.js
 |   |   |-- battle-scene-render-runtime.test.js
 |   |   |-- input-command-runtime.test.js
+|   |   |-- input-keyboard-runtime.test.js
 |   |   |-- input-runtime.test.js
 |   |   |-- screen-render-runtime.test.js
 |   |   |-- render-composition-runtime.test.js
@@ -801,7 +804,7 @@ tank-defender-8/
 
 `src/runtime/input-command-runtime.js` 接管工具栏命令分派，以及活动战斗中的暂停资格判定和音频交接。直接测试锁定命令路由、仅编辑器命令门控、暂停拒绝条件、待发射按键清理和完整音频同步顺序。
 
-`src/runtime/input-runtime.js` 接管浏览器输入路由：键盘屏幕分派、一次性射击/选关按键、关卡包文件导入和 Construction 鼠标编辑。它保留方向键/WASD 映射、演示退出路径、隐藏信息输入保留、编辑器快捷键和坐标换算；`src/game.js` 只提供显式回调。直接测试锁定注册、键盘路由和鼠标坐标。
+`src/runtime/input-keyboard-runtime.js` 接管键盘屏幕分派、一次性射击/选关按键、方向键/WASD 映射、演示退出、隐藏信息输入保留和编辑器快捷键。`src/runtime/input-runtime.js` 保留浏览器事件注册、关卡包文件导入、Canvas 坐标换算和 Construction 鼠标编辑；直接测试锁定显式注入边界、键盘路由和鼠标坐标。
 
 `src/runtime/stage-select-runtime.js` 接管进入选关、玩家数选择、关卡范围钳制、确认开局及固定帧 A/B 输入节奏。先消费一次性按键，再处理长按重复；重复发生在原版八帧边界；A/B 同时到达时保留 A 优先级。显式回调将音频初始化、标题闲置计时复位、帧计数复位和游戏启动保留在组合边界；直接测试覆盖范围边界、进入状态、确认开局和输入节奏。
 
@@ -1120,7 +1123,7 @@ tank-defender-8/
 
 `src/runtime/input-command-runtime.js` 接管工具栏命令分派和活动战斗中的暂停交接，使暂停资格、待发射按键清理与音频同步独立于浏览器事件注册。
 
-`src/runtime/input-runtime.js` 接管键盘屏幕分派、关卡包导入和 Construction 鼠标编辑等浏览器输入路由。它将浏览器事件时序置于固定帧模拟之外，并通过显式回调提交状态变化；直接测试锁定输入契约，不重复实现游戏规则。
+`src/runtime/input-keyboard-runtime.js` 接管固定帧模拟之外的键盘路由。`src/runtime/input-runtime.js` 通过显式组合依赖委托这对冻结的处理器，同时保留关卡包导入和 Construction 鼠标编辑；其测试锁定输入契约，不重复实现游戏规则。
 
 `src/runtime/screen-render-runtime.js` 接管顶层屏幕分派与覆盖层顺序，各专用渲染运行时继续负责具体像素绘制。
 

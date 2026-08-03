@@ -83,6 +83,7 @@ const DEFAULT_BROWSER_SCRIPTS = Object.freeze([
   "src/runtime/sprite-render-runtime.js",
   "src/runtime/battle-scene-render-runtime.js",
   "src/runtime/input-command-runtime.js",
+  "src/runtime/input-keyboard-runtime.js",
   "src/runtime/input-runtime.js",
   "src/runtime/screen-render-runtime.js",
   "src/runtime/tank-movement-runtime.js",

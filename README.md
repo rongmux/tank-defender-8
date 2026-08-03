@@ -136,6 +136,7 @@ node --check src/runtime/text-render-runtime.js
 node --check src/runtime/sprite-render-runtime.js
 node --check src/runtime/battle-scene-render-runtime.js
 node --check src/runtime/input-command-runtime.js
+node --check src/runtime/input-keyboard-runtime.js
 node --check src/runtime/input-runtime.js
 node --check src/runtime/screen-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
@@ -357,6 +358,7 @@ tank-defender-8/
 |   |   |-- sprite-render-runtime.js
 |   |   |-- battle-scene-render-runtime.js
 |   |   |-- input-command-runtime.js
+|   |   |-- input-keyboard-runtime.js
 |   |   |-- input-runtime.js
 |   |   |-- screen-render-runtime.js
 |   |   |-- transient-effects-runtime.js
@@ -635,6 +637,7 @@ tank-defender-8/
 |   |   |-- sprite-render-runtime.test.js
 |   |   |-- battle-scene-render-runtime.test.js
 |   |   |-- input-command-runtime.test.js
+|   |   |-- input-keyboard-runtime.test.js
 |   |   |-- input-runtime.test.js
 |   |   |-- screen-render-runtime.test.js
 |   |   |-- render-composition-runtime.test.js
@@ -801,7 +804,7 @@ tank-defender-8/
 
 `src/runtime/input-command-runtime.js` owns toolbar command dispatch plus active-battle pause eligibility and audio handoff. Its direct tests lock command routing, editor-only command gating, pause rejection gates, pending-fire clearing, and the full audio synchronization order.
 
-`src/runtime/input-runtime.js` owns browser input routing: keyboard screen dispatch, one-shot fire/stage-selection presses, stage-pack file import, and Construction mouse editing. It preserves the Arrow/WASD mappings, demo escape path, hidden-message input reservation, editor shortcuts, and coordinate conversion while `src/game.js` supplies only explicit callbacks; direct tests lock registration, keyboard routing, and mouse coordinates.
+`src/runtime/input-keyboard-runtime.js` owns keyboard screen dispatch, one-shot fire/stage-selection presses, Arrow/WASD mappings, demo exit, hidden-message input reservation, and editor shortcuts. `src/runtime/input-runtime.js` retains browser event registration, stage-pack file import, Canvas coordinate conversion, and Construction mouse editing; direct tests lock the explicit injection boundary, keyboard routing, and mouse coordinates.
 
 `src/runtime/stage-select-runtime.js` owns stage-selection entry, player-mode selection, stage-range clamping, confirmation, and fixed-frame A/B input cadence. One-shot presses are consumed before held-key repeats, repeats occur on the original eight-frame boundary, and A retains priority when both buttons arrive together. Explicit callbacks keep audio initialization, title-idle reset, frame-counter reset, and game startup at the composition boundary; direct tests cover range bounds, entry state, confirmation, and input cadence.
 
@@ -1119,7 +1122,7 @@ The migration order is core timing/random/geometry, configuration and stage pack
 
 `src/runtime/input-command-runtime.js` owns toolbar command dispatch and active-battle pause handoff. It keeps pause eligibility, pending-fire clearing, and audio synchronization independent from browser event registration.
 
-`src/runtime/input-runtime.js` owns browser input routing for keyboard screen dispatch, stage-pack imports, and Construction mouse editing. It keeps browser event timing outside the fixed-frame simulation and delegates state changes through explicit callbacks; its direct tests lock the input contract without duplicating gameplay rules.
+`src/runtime/input-keyboard-runtime.js` owns keyboard routing outside the fixed-frame simulation. `src/runtime/input-runtime.js` delegates that frozen handler pair through an explicit composition dependency while retaining stage-pack imports and Construction mouse editing; its tests lock the input contract without duplicating gameplay rules.
 
 `src/runtime/screen-render-runtime.js` owns the top-level screen dispatch and overlay order, while specialized render runtimes own the pixels for each screen.
 

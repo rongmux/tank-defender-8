@@ -43,9 +43,11 @@
 
     var fn = state.fn;
     var inputCommandRuntime = deps.requireRuntimeModule("inputCommandRuntime");
+    var inputKeyboardRuntime = deps.requireRuntimeModule("inputKeyboardRuntime");
     var inputRuntimeApi = deps.requireRuntimeModule("inputRuntime").setupInputRuntime(state, {
       dom: deps.dom,
       inputCommandRuntime: inputCommandRuntime,
+      inputKeyboardRuntime: inputKeyboardRuntime,
       isEditorDirectionCode: deps.isEditorDirectionCode,
       sharedState: deps.sharedState
     }, {

@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const inputCommandRuntime = require("../../src/runtime/input-command-runtime");
+const inputKeyboardRuntime = require("../../src/runtime/input-keyboard-runtime");
 const inputRuntime = require("../../src/runtime/input-runtime");
 
 assert.equal(Object.isFrozen(inputRuntime), true);
@@ -58,6 +59,7 @@ const state = {
 const deps = {
   dom: { document, window },
   inputCommandRuntime,
+  inputKeyboardRuntime,
   isEditorDirectionCode(code) {
     return ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD"].includes(code);
   },
