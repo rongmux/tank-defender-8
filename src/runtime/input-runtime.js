@@ -116,6 +116,9 @@
     if (typeof deps.isEditorDirectionCode !== "function") {
       throw new Error("deps.isEditorDirectionCode must be a function");
     }
+    if (!deps.inputCommandRuntime || typeof deps.inputCommandRuntime.setupInputCommandRuntime !== "function") {
+      throw new Error("deps.inputCommandRuntime must provide setupInputCommandRuntime");
+    }
     if (!deps.dom || typeof deps.dom !== "object") throw new Error("deps.dom must be an object");
     if (!deps.dom.document || typeof deps.dom.document.querySelectorAll !== "function") {
       throw new Error("deps.dom.document must provide querySelectorAll");
@@ -145,77 +148,10 @@
     var shared = deps.sharedState;
     var document = deps.dom.document;
     var window = deps.dom.window;
+    var commandApi = deps.inputCommandRuntime.setupInputCommandRuntime(state, callbacks);
 
     function callback(name) {
       return callbacks[name];
-    }
-
-    function handleAction(action) {
-      callback("initAudio")();
-      if (action === "one") {
-        callback("setTitleMenu")(0);
-        callback("beginStageSelect")(1);
-      } else if (action === "two") {
-        callback("setTitleMenu")(1);
-        callback("beginStageSelect")(2);
-      } else if (action === "prev") {
-        callback("nextStage")(-1);
-      } else if (action === "next") {
-        callback("nextStage")(1);
-      } else if (action === "edit") {
-        callback("setTitleMenu")(2);
-        callback("enterEditor")();
-      } else if (action === "test" && game.screen === "editor") {
-        callback("testEditorStage")();
-      } else if (action === "save" && game.screen === "editor") {
-        callback("saveEditorStage")();
-      } else if (action === "load" && game.screen === "editor") {
-        callback("loadEditorStage")();
-      } else if (action === "clear" && game.screen === "editor") {
-        callback("clearEditorStage")();
-      } else if (action === "export" && game.screen === "editor") {
-        callback("exportEditorStage")();
-      } else if (action === "import") {
-        callback("importStagePackFile")();
-      } else if (action === "pause") {
-        togglePause();
-      } else if (action === "reset") {
-        callback("restoreBuiltInStagePack")();
-      }
-    }
-
-    function isPauseInputCode(code) {
-      return code === "Enter" || code === "KeyP";
-    }
-
-    /** Toggles pause only during active battle, preserving every audio handoff. */
-    function togglePause() {
-      if (
-        game.screen !== "playing" ||
-        game.demoMode ||
-        game.clearPendingTimer > 0 ||
-        game.baseDestroyTimer > 0 ||
-        callback("stageEnemiesCleared")()
-      ) return false;
-      game.paused = !game.paused;
-      game.pauseElapsed = 0;
-      pendingFirePresses.clear();
-      callback("syncStageStartAudioNodes")();
-      callback("syncBonusLifeAudioNodes")();
-      callback("syncPowerUpPickupAudioNodes")();
-      callback("syncPowerUpAppearAudioNodes")();
-      callback("syncBrickHitAudioNodes")();
-      callback("syncBaseHitAudioNodes")();
-      callback("syncSteelHitAudioNodes")();
-      callback("syncEnemyHitAudioNodes")();
-      callback("syncEnemyDestroyAudioNodes")();
-      callback("syncPlayerDestroyAudioNodes")();
-      callback("syncPlayerShootAudioNodes")();
-      callback("syncMovementIceAudioNodes")();
-      callback("syncPauseAudioNodes")();
-      callback("syncMovementAudio")();
-      if (game.paused) callback("playSound")("pause");
-      return true;
     }
 
     function canvasToGame(event) {
@@ -323,8 +259,8 @@
         return;
       } else if (game.screen === "stageClear" || game.screen === "stageClearClosing") {
         return;
-      } else if (isPauseInputCode(event.code)) {
-        togglePause();
+      } else if (commandApi.isPauseInputCode(event.code)) {
+        commandApi.togglePause();
       }
     }
 
@@ -376,7 +312,7 @@
     }
 
     document.querySelectorAll("[data-action]").forEach(function (button) {
-      button.addEventListener("click", function () { handleAction(button.dataset.action); });
+      button.addEventListener("click", function () { commandApi.handleAction(button.dataset.action); });
     });
     if (packFileInput) packFileInput.addEventListener("change", handleFileChange);
     window.addEventListener("keydown", handleKeyDown);
@@ -386,9 +322,9 @@
     canvas.addEventListener("click", handleCanvasClick);
 
     var api = {
-      handleAction: handleAction,
-      isPauseInputCode: isPauseInputCode,
-      togglePause: togglePause,
+      handleAction: commandApi.handleAction,
+      isPauseInputCode: commandApi.isPauseInputCode,
+      togglePause: commandApi.togglePause,
       canvasToGame: canvasToGame
     };
     Object.assign(state.fn, api);

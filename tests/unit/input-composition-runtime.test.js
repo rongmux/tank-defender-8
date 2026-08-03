@@ -65,10 +65,12 @@ const dom = {
 const sharedState = { SCREEN_W: 256, SCREEN_H: 240 };
 const inputRuntimeApi = Object.freeze({ handleAction() {} });
 let received;
+const inputCommandRuntime = Object.freeze({ setupInputCommandRuntime() {} });
 const deps = {
   dom,
   isEditorDirectionCode() { return true; },
   requireRuntimeModule(name) {
+    if (name === "inputCommandRuntime") return inputCommandRuntime;
     assert.equal(name, "inputRuntime");
     return {
       setupInputRuntime(receivedState, receivedDeps, callbacks) {
@@ -86,6 +88,7 @@ assert.equal(api.inputRuntime, inputRuntimeApi);
 assert.equal(received.receivedState, state);
 assert.deepEqual(received.receivedDeps, {
   dom,
+  inputCommandRuntime,
   isEditorDirectionCode: deps.isEditorDirectionCode,
   sharedState
 });

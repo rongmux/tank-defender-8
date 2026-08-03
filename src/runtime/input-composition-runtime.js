@@ -42,8 +42,10 @@
     requireInputs(state, deps);
 
     var fn = state.fn;
+    var inputCommandRuntime = deps.requireRuntimeModule("inputCommandRuntime");
     var inputRuntimeApi = deps.requireRuntimeModule("inputRuntime").setupInputRuntime(state, {
       dom: deps.dom,
+      inputCommandRuntime: inputCommandRuntime,
       isEditorDirectionCode: deps.isEditorDirectionCode,
       sharedState: deps.sharedState
     }, {

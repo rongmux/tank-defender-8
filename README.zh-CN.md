@@ -135,6 +135,7 @@ node --check src/runtime/screen-transition-render-runtime.js
 node --check src/runtime/text-render-runtime.js
 node --check src/runtime/sprite-render-runtime.js
 node --check src/runtime/battle-scene-render-runtime.js
+node --check src/runtime/input-command-runtime.js
 node --check src/runtime/input-runtime.js
 node --check src/runtime/screen-render-runtime.js
 node --check src/runtime/transient-effects-runtime.js
@@ -334,6 +335,7 @@ tank-defender-8/
 |   |   |-- text-render-runtime.js
 |   |   |-- sprite-render-runtime.js
 |   |   |-- battle-scene-render-runtime.js
+|   |   |-- input-command-runtime.js
 |   |   |-- input-runtime.js
 |   |   |-- screen-render-runtime.js
 |   |   |-- transient-effects-runtime.js
@@ -590,6 +592,7 @@ tank-defender-8/
 |   |   |-- text-render-runtime.test.js
 |   |   |-- sprite-render-runtime.test.js
 |   |   |-- battle-scene-render-runtime.test.js
+|   |   |-- input-command-runtime.test.js
 |   |   |-- input-runtime.test.js
 |   |   |-- screen-render-runtime.test.js
 |   |   |-- render-composition-runtime.test.js
@@ -733,7 +736,9 @@ tank-defender-8/
 
 `src/runtime/title-menu-runtime.js` 接管标题菜单选择，以及单人、双人和 Construction 的入口分派。直接测试锁定闲置计数器复位、循环、索引钳制，以及每个入口和越界回退。
 
-`src/runtime/input-runtime.js` 接管浏览器输入路由：工具栏动作、键盘屏幕分派、一次性射击/选关按键、暂停音频交接、关卡包文件导入和 Construction 鼠标编辑。它保留方向键/WASD 映射、演示退出路径、隐藏信息输入保留、编辑器快捷键、坐标换算和暂停门控；`src/game.js` 只提供显式回调。直接测试锁定注册、动作分派、暂停同步顺序、键盘路由和鼠标坐标。
+`src/runtime/input-command-runtime.js` 接管工具栏命令分派，以及活动战斗中的暂停资格判定和音频交接。直接测试锁定命令路由、仅编辑器命令门控、暂停拒绝条件、待发射按键清理和完整音频同步顺序。
+
+`src/runtime/input-runtime.js` 接管浏览器输入路由：键盘屏幕分派、一次性射击/选关按键、关卡包文件导入和 Construction 鼠标编辑。它保留方向键/WASD 映射、演示退出路径、隐藏信息输入保留、编辑器快捷键和坐标换算；`src/game.js` 只提供显式回调。直接测试锁定注册、键盘路由和鼠标坐标。
 
 `src/runtime/stage-select-runtime.js` 接管进入选关、玩家数选择、关卡范围钳制、确认开局及固定帧 A/B 输入节奏。先消费一次性按键，再处理长按重复；重复发生在原版八帧边界；A/B 同时到达时保留 A 优先级。显式回调将音频初始化、标题闲置计时复位、帧计数复位和游戏启动保留在组合边界；直接测试覆盖范围边界、进入状态、确认开局和输入节奏。
 
@@ -1030,7 +1035,9 @@ tank-defender-8/
 
 `src/runtime/editor-lifecycle-runtime.js` 接管 Construction 的进入/退出、单关地图试运行、本地存取、清空、剪贴板导出、导入按钮分派和编辑器反馈信息。试运行会保留当前关卡包，仅把编辑地图用于第 1 关，因此通关清除该临时地图后仍按常规关卡推进。其单元测试锁定注册、Construction 状态复位、持久化、活动关卡包保留、退出安装和导入分派；浏览器集成测试继续覆盖完整编辑器工作流。
 
-`src/runtime/input-runtime.js` 接管工具栏动作、键盘屏幕分派、暂停交接、关卡包导入和 Construction 鼠标编辑等浏览器输入路由。它将浏览器事件时序置于固定帧模拟之外，并通过显式回调提交状态变化；直接测试锁定输入契约，不重复实现游戏规则。
+`src/runtime/input-command-runtime.js` 接管工具栏命令分派和活动战斗中的暂停交接，使暂停资格、待发射按键清理与音频同步独立于浏览器事件注册。
+
+`src/runtime/input-runtime.js` 接管键盘屏幕分派、关卡包导入和 Construction 鼠标编辑等浏览器输入路由。它将浏览器事件时序置于固定帧模拟之外，并通过显式回调提交状态变化；直接测试锁定输入契约，不重复实现游戏规则。
 
 `src/runtime/screen-render-runtime.js` 接管顶层屏幕分派与覆盖层顺序，各专用渲染运行时继续负责具体像素绘制。
 
