@@ -43,6 +43,10 @@
     }
   }
 
+  /**
+   * Resolves dependency callbacks before state adapters so diagnostics preserve legacy receivers.
+   * Live audio records remain references because each probe must restore their mutable frames.
+   */
   function createRuntimeScope(state, deps) {
     requireInputs(state, deps);
     return {
