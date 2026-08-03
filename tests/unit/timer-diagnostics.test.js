@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/timer-diagnostics");
+const timerFreezeDiagnostics = require("../../src/runtime/timer-freeze-diagnostics");
 
 const TIMER_DIAGNOSTIC_METHODS = [
   "debugTimerRuleProbe",
@@ -36,6 +37,7 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: {},
+  createTimerFreezeDiagnostics: timerFreezeDiagnostics.createTimerFreezeDiagnostics,
   isEnemyTimeFrozen() {
     return this.label;
   },

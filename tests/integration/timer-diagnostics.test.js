@@ -21,6 +21,7 @@ const api = context.window.TankDefender8;
 
 assert(modules.timerDiagnostics, "timer diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.timerDiagnostics), true);
+assert.equal(Object.isFrozen(modules.timerFreezeDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(67, 74))),
   TIMER_DIAGNOSTIC_METHODS
@@ -64,11 +65,20 @@ const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/timer-diagnostics.js"),
   "utf8"
 );
+const freezeDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/timer-freeze-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createTimerDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
+assert.equal(freezeDiagnosticsSource.includes("eval("), false);
+assert(diagnosticsSource.includes("...createTimerFreezeDiagnostics(scope)"));
 for (const name of TIMER_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
-  assert.equal(diagnosticsSource.includes(`${name}(`), true);
+  assert.equal(
+    diagnosticsSource.includes(`${name}(`) || freezeDiagnosticsSource.includes(`${name}(`),
+    true
+  );
 }
 assert(debugSource.split(/\r?\n/).length < 3600);
 

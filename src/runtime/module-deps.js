@@ -99,6 +99,7 @@
   var wallDiagnostics = requireRuntimeModule("wallDiagnostics");
   var enemySpawnDiagnostics = requireRuntimeModule("enemySpawnDiagnostics");
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
+  var timerFreezeDiagnostics = requireRuntimeModule("timerFreezeDiagnostics");
   var timerDiagnostics = requireRuntimeModule("timerDiagnostics");
   var powerUpDiagnostics = requireRuntimeModule("powerUpDiagnostics");
   var scoreDiagnostics = requireRuntimeModule("scoreDiagnostics");
@@ -378,6 +379,7 @@
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
     createEnemySpawnOverlapDiagnostics:
       enemyDiagnostics.createEnemySpawnOverlapDiagnostics,
+    createTimerFreezeDiagnostics: timerFreezeDiagnostics.createTimerFreezeDiagnostics,
     createTimerDiagnostics: timerDiagnostics.createTimerDiagnostics,
     createPowerUpDiagnostics: powerUpDiagnostics.createPowerUpDiagnostics,
     createScoreDiagnostics: scoreDiagnostics.createScoreDiagnostics,

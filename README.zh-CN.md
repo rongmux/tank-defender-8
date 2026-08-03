@@ -195,6 +195,7 @@ node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-spawn-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
+node --check src/runtime/timer-freeze-diagnostics.js
 node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/power-up-presentation-diagnostics.js
 node --check src/runtime/power-up-collection-diagnostics.js
@@ -415,6 +416,7 @@ tank-defender-8/
 |   |   |-- wall-diagnostics.js
 |   |   |-- enemy-spawn-diagnostics.js
 |   |   |-- enemy-diagnostics.js
+|   |   |-- timer-freeze-diagnostics.js
 |   |   |-- timer-diagnostics.js
 |   |   |-- power-up-presentation-diagnostics.js
 |   |   |-- power-up-collection-diagnostics.js
@@ -736,6 +738,7 @@ tank-defender-8/
 |   |   |-- terrain-collision-rules.test.js
 |   |   |-- test-file-discovery.test.js
 |   |   |-- timer-diagnostics.test.js
+|   |   |-- timer-freeze-diagnostics.test.js
 |   |   |-- timing-settings.test.js
 |   |   |-- transient-effect-state.test.js
 |   |   |-- transient-effects-runtime.test.js
@@ -862,6 +865,8 @@ tank-defender-8/
 `wall-diagnostics.js` 通过保留接收者的函数绑定、29 个显式解构的运行时符号和实时砖块命中音频记录，接管连续的 5 个钢墙破坏、定向砖块条带、砖块碎片渲染、铲子围墙时序和基地已毁后的铲子探针，且不使用 `eval`。抽离后，`debug-api.js` 保留 3,979 个物理行，未产生死适配器。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 51-55 依次执行全部 5 个探针，并保持重构前 1,929 字节输出的 SHA-256。
 
 `timer-diagnostics.js` 通过保留接收者的函数绑定和 18 个显式解构的运行时符号，接管连续的 7 个定时器规则、全局倒计时、护盾节奏/暂停、冻结行为、最后冻结帧和冻结期间生成探针，且不使用 `eval`。抽离并移除 3 个死适配器后，`debug-api.js` 保留 3,557 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和状态恢复；浏览器集成测试在原公开索引 67-73 依次执行全部 7 个探针，并保持重构前 2,184 字节输出的 SHA-256。
+
+`timer-freeze-diagnostics.js` 接管最后三项敌方冻结、冻结到期边界和冻结期间生成探针。`timer-diagnostics.js` 现在构建保留接收者的作用域，保留前四项定时器和护盾探针，并在原有位置组合子模块。子模块单元覆盖、启动注册和浏览器集成测试共同保持公开索引 67-73 及 2,184 字节 SHA-256 输出。
 
 `power-up-presentation-diagnostics.js` 接管前五个类型池、共享随机、闪烁、暂停画面与水面动画探针。`power-up-collection-diagnostics.js` 接管随后五个 TTL、拾取边界/优先级、拾取渲染及足迹清理探针。`power-up-spawn-diagnostics.js` 接管最后的地形变更、出生筛选/轮换和携带者清除探针。三个模块均消费显式 power-up 作用域，并直接测试输入校验及冻结的有序诊断接口。`power-up-diagnostics.js` 现在只构建保留接收者的作用域，并按顺序组合三个子模块。浏览器集成测试在原公开索引 75-89 依次执行全部 15 个方法，并保持重构前 7,420 字节输出的 SHA-256。
 
