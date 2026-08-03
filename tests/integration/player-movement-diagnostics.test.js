@@ -25,6 +25,7 @@ const api = context.window.TankDefender8;
 
 assert(modules.playerMovementDiagnostics, "player movement diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.playerMovementDiagnostics), true);
+assert.equal(Object.isFrozen(modules.playerMovementMotionDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(113, 124))),
   PLAYER_MOVEMENT_DIAGNOSTIC_METHODS
@@ -43,11 +44,19 @@ const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/player-movement-diagnostics.js"),
   "utf8"
 );
+const motionDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/player-movement-motion-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createPlayerMovementDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
+assert.equal(motionDiagnosticsSource.includes("eval("), false);
 for (const name of PLAYER_MOVEMENT_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
-  assert.equal(diagnosticsSource.includes(`${name}(`), true);
+  assert.equal(
+    diagnosticsSource.includes(`${name}(`) || motionDiagnosticsSource.includes(`${name}(`),
+    true
+  );
 }
 assert(debugSource.split(/\r?\n/).length < 2400);
 

@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/player-movement-diagnostics");
+const motionDiagnostics = require("../../src/runtime/player-movement-motion-diagnostics");
 
 const PLAYER_MOVEMENT_DIAGNOSTIC_METHODS = [
   "debugPlayerMovementCadenceProbe",
@@ -48,6 +49,8 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: {},
+  createPlayerMovementMotionDiagnostics:
+    motionDiagnostics.createPlayerMovementMotionDiagnostics,
   gameSettings() {
     return { playerMovement: { speed: this.label === "state-fn" ? 7 : 11, frameCadence: [0, 1] } };
   },
