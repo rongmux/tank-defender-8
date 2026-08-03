@@ -74,6 +74,7 @@
       TILE,
       UP,
       applyPowerUp,
+      createCombatCrossingDiagnostics,
       createCombatFireLimitDiagnostics,
       createBullet,
       createCombatProjectileDiagnostics,
@@ -641,92 +642,7 @@
             syncMovementIceAudioNodes();
           }
         },
-        debugCrossingBulletCancelProbe() {
-          const previousBullets = game.bullets;
-          const previousExplosions = game.explosions;
-          const previousGrid = game.grid;
-          const previousPlayers = game.players;
-          const previousEnemies = game.enemies;
-          const speed = 6;
-          try {
-            game.grid = makeGrid();
-            game.players = [];
-            game.enemies = [];
-            game.explosions = [];
-            game.bullets = [
-              {
-                x: 40,
-                y: 80,
-                w: gameSettings().projectileRules.bulletSize,
-                h: gameSettings().projectileRules.bulletSize,
-                dir: RIGHT,
-                speed,
-                power: 1,
-                ownerKind: "player",
-                ownerId: 1,
-                ownerKey: "player:1"
-              },
-              {
-                x: 46,
-                y: 80,
-                w: gameSettings().projectileRules.bulletSize,
-                h: gameSettings().projectileRules.bulletSize,
-                dir: LEFT,
-                speed,
-                power: 1,
-                ownerKind: "enemy",
-                ownerId: 100,
-                ownerKey: "enemy:100"
-              }
-            ];
-            updateBullets();
-            const crossingRemaining = game.bullets.length;
-            const crossingPositions = game.bullets.map((bullet) => ({ x: bullet.x, y: bullet.y }));
-
-            const makeStaticPair = (difference, sameOwner) => [
-              {
-                x: 40,
-                y: 96,
-                w: gameSettings().projectileRules.bulletSize,
-                h: gameSettings().projectileRules.bulletSize,
-                ownerKey: "player:1",
-                remove: false
-              },
-              {
-                x: 40 + difference,
-                y: 96,
-                w: gameSettings().projectileRules.bulletSize,
-                h: gameSettings().projectileRules.bulletSize,
-                ownerKey: sameOwner ? "player:1" : "enemy:100",
-                remove: false
-              }
-            ];
-            game.bullets = makeStaticPair(5, false);
-            resolveBulletCollisions(game.bullets);
-            const thresholdFiveCanceled = game.bullets.every((bullet) => bullet.remove);
-            game.bullets = makeStaticPair(6, false);
-            resolveBulletCollisions(game.bullets);
-            const thresholdSixCanceled = game.bullets.some((bullet) => bullet.remove);
-            game.bullets = makeStaticPair(0, true);
-            resolveBulletCollisions(game.bullets);
-            const sameOwnerCanceled = game.bullets.some((bullet) => bullet.remove);
-            return {
-              remainingBullets: crossingRemaining,
-              crossingPositions,
-              speed,
-              explosionCount: game.explosions.length,
-              thresholdFiveCanceled,
-              thresholdSixCanceled,
-              sameOwnerCanceled
-            };
-          } finally {
-            game.bullets = previousBullets;
-            game.explosions = previousExplosions;
-            game.grid = previousGrid;
-            game.players = previousPlayers;
-            game.enemies = previousEnemies;
-          }
-        },
+        ...createCombatCrossingDiagnostics(scope),
         ...createCombatProjectileDiagnostics(scope)
     });
   }

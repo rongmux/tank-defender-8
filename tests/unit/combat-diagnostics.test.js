@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/combat-diagnostics");
+const crossingDiagnostics = require("../../src/runtime/combat-crossing-diagnostics");
 const fireLimitDiagnostics = require("../../src/runtime/combat-fire-limit-diagnostics");
 const projectileDiagnostics = require("../../src/runtime/combat-projectile-diagnostics");
 
@@ -55,6 +56,7 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: {},
+  createCombatCrossingDiagnostics: crossingDiagnostics.createCombatCrossingDiagnostics,
   createCombatFireLimitDiagnostics: fireLimitDiagnostics.createCombatFireLimitDiagnostics,
   createCombatProjectileDiagnostics: projectileDiagnostics.createCombatProjectileDiagnostics,
   gameSettings() {

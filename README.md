@@ -192,6 +192,7 @@ node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/score-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
+node --check src/runtime/combat-crossing-diagnostics.js
 node --check src/runtime/combat-fire-limit-diagnostics.js
 node --check src/runtime/combat-projectile-diagnostics.js
 node --check src/runtime/combat-diagnostics.js
@@ -395,6 +396,7 @@ tank-defender-8/
 |   |   |-- power-up-diagnostics.js
 |   |   |-- score-diagnostics.js
 |   |   |-- upgrade-diagnostics.js
+|   |   |-- combat-crossing-diagnostics.js
 |   |   |-- combat-fire-limit-diagnostics.js
 |   |   |-- combat-projectile-diagnostics.js
 |   |   |-- combat-diagnostics.js
@@ -653,6 +655,7 @@ tank-defender-8/
 |   |   |-- power-up-diagnostics.test.js
 |   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
+|   |   |-- combat-crossing-diagnostics.test.js
 |   |   |-- combat-fire-limit-diagnostics.test.js
 |   |   |-- combat-projectile-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
@@ -897,7 +900,9 @@ tank-defender-8/
 
 `combat-fire-limit-diagnostics.js` owns the player/enemy active-bullet-limit probe. It consumes the explicit combat scope, preserves firing-audio cleanup, and directly tests scope validation plus the frozen one-method diagnostic surface.
 
-`combat-diagnostics.js` builds the receiver-preserving combat scope and composes the six helmet-protection, player/enemy collision, spawn-lock, firing-input, and crossing-cancellation probes with the fire-limit and five projectile diagnostic probes. Its unit suite locks state/keys/pending-fire/audio validation, exact public method order, binding precedence, and output scope; browser integration executes all 12 probes at their original public indices 101-112 and preserves the pre-refactor 5,147-byte output SHA-256.
+`combat-crossing-diagnostics.js` owns the crossing projectile cancellation probe, including near-threshold and same-owner collision cases. It consumes the explicit combat scope and directly tests its frozen probe surface.
+
+`combat-diagnostics.js` builds the receiver-preserving combat scope and composes the helmet-protection, player/enemy collision, spawn-lock, and firing-input probes with crossing, fire-limit, and five projectile diagnostic modules. Its unit suite locks state/keys/pending-fire/audio validation, exact public method order, binding precedence, and output scope; browser integration executes all 12 probes at their original public indices 101-112 and preserves the pre-refactor 5,147-byte output SHA-256.
 
 `player-movement-diagnostics.js` binds the 11 contiguous fixed-loop cadence, tread animation, friendly-fire stun, WASD input, turn alignment, brick recovery, ice movement, and ice/forest layer probes through 42 explicitly destructured runtime symbols plus the live movement-ice and player-shoot audio records, with receiver-preserving function binding and no `eval`. The extraction and six dead-adapter removals leave `debug-api.js` at 2,312 physical lines. Its unit suite locks state/keys/audio validation, exact method order, binding precedence, and state restoration; browser integration executes all 11 probes at their original public indices 113-123 and preserves the pre-refactor 2,414-byte output SHA-256.
 
