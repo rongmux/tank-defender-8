@@ -89,6 +89,7 @@
   var screenFlowTitleDemoDiagnostics = requireRuntimeModule("screenFlowTitleDemoDiagnostics");
   var screenFlowPostGameDiagnostics = requireRuntimeModule("screenFlowPostGameDiagnostics");
   var screenFlowDiagnostics = requireRuntimeModule("screenFlowDiagnostics");
+  var playerMovementInputDiagnostics = requireRuntimeModule("playerMovementInputDiagnostics");
   var playerMovementMotionDiagnostics = requireRuntimeModule("playerMovementMotionDiagnostics");
   var wallDiagnostics = requireRuntimeModule("wallDiagnostics");
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
@@ -351,6 +352,8 @@
     createScreenFlowTitleDemoDiagnostics: screenFlowTitleDemoDiagnostics.createScreenFlowTitleDemoDiagnostics,
     createScreenFlowPostGameDiagnostics: screenFlowPostGameDiagnostics.createScreenFlowPostGameDiagnostics,
     createScreenFlowDiagnostics: screenFlowDiagnostics.createScreenFlowDiagnostics,
+    createPlayerMovementInputDiagnostics:
+      playerMovementInputDiagnostics.createPlayerMovementInputDiagnostics,
     createPlayerMovementMotionDiagnostics:
       playerMovementMotionDiagnostics.createPlayerMovementMotionDiagnostics,
     createWallDiagnostics: wallDiagnostics.createWallDiagnostics,

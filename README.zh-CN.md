@@ -204,6 +204,7 @@ node --check src/runtime/combat-fire-limit-diagnostics.js
 node --check src/runtime/combat-player-fire-input-diagnostics.js
 node --check src/runtime/combat-projectile-diagnostics.js
 node --check src/runtime/combat-diagnostics.js
+node --check src/runtime/player-movement-input-diagnostics.js
 node --check src/runtime/player-movement-motion-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
 node --check src/runtime/terrain-diagnostics.js
@@ -417,6 +418,7 @@ tank-defender-8/
 |   |   |-- combat-player-fire-input-diagnostics.js
 |   |   |-- combat-projectile-diagnostics.js
 |   |   |-- combat-diagnostics.js
+|   |   |-- player-movement-input-diagnostics.js
 |   |   |-- player-movement-motion-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
 |   |   |-- terrain-diagnostics.js
@@ -679,6 +681,7 @@ tank-defender-8/
 |   |   |-- combat-player-fire-input-diagnostics.test.js
 |   |   |-- combat-projectile-diagnostics.test.js
 |   |   |-- combat-diagnostics.test.js
+|   |   |-- player-movement-input-diagnostics.test.js
 |   |   |-- player-movement-motion-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
 |   |   |-- terrain-diagnostics.test.js
@@ -856,7 +859,7 @@ tank-defender-8/
 
 `combat-diagnostics.js` 构建保留接收者的 combat 作用域，并组合坦克碰撞、发射输入、交叉抵消、子弹上限和 5 个弹体规则诊断模块。其单元测试锁定状态/按键/待发射/音频校验、精确公开方法顺序、绑定优先级和输出作用域；浏览器集成测试在原公开索引 101-112 依次执行全部 12 个探针，并保持重构前 5,147 字节输出的 SHA-256。
 
-`player-movement-motion-diagnostics.js` 接管前五个固定帧节奏、履带动画、友军火力眩晕与玩家眩晕探针。它消费显式 player-movement 作用域，并直接测试输入校验及冻结的有序诊断接口。`player-movement-diagnostics.js` 现在只构建保留接收者的作用域，先组合该子模块，并保留 WASD 输入、转向对齐、砖块脱困、冰面移动以及冰面/森林图层探针。浏览器集成测试仍在原公开索引 113-123 依次执行全部 11 个方法，并保持重构前 2,414 字节输出的 SHA-256。
+`player-movement-motion-diagnostics.js` 接管前五个固定帧节奏、履带动画、友军火力眩晕与玩家眩晕探针。`player-movement-input-diagnostics.js` 接管随后三个 WASD 输入、转向对齐与砖块脱困探针。两个模块均消费显式 player-movement 作用域，并直接测试输入校验及冻结的有序诊断接口。`player-movement-diagnostics.js` 现在只构建保留接收者的作用域，按顺序组合两个子模块，并保留最后的冰面移动及冰面/森林图层探针。浏览器集成测试仍在原公开索引 113-123 依次执行全部 11 个方法，并保持重构前 2,414 字节输出的 SHA-256。
 
 `terrain-diagnostics.js` 通过保留接收者的函数绑定、40 个显式解构的运行时符号和 3 个实时音频记录，接管连续的 6 个地形表面、基地围墙优先级、基地摧毁时序/渲染、坦克占位和敌方重叠恢复探针，且不使用 `eval`。抽离并移除 18 个死适配器后，`debug-api.js` 保留 1,068 个物理行。其单元测试锁定状态/按键/待发射/音频校验、精确方法顺序、绑定优先级和碰撞输出作用域；浏览器集成测试在原公开索引 124-129 依次执行全部 6 个探针，并保持重构前 6,225 字节输出的 SHA-256。
 

@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/player-movement-diagnostics");
+const inputDiagnostics = require("../../src/runtime/player-movement-input-diagnostics");
 const motionDiagnostics = require("../../src/runtime/player-movement-motion-diagnostics");
 
 const PLAYER_MOVEMENT_DIAGNOSTIC_METHODS = [
@@ -49,6 +50,8 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: {},
+  createPlayerMovementInputDiagnostics:
+    inputDiagnostics.createPlayerMovementInputDiagnostics,
   createPlayerMovementMotionDiagnostics:
     motionDiagnostics.createPlayerMovementMotionDiagnostics,
   gameSettings() {

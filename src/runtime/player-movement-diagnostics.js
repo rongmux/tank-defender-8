@@ -55,227 +55,36 @@
     };
   }
 
-  /** Binds player input, recovery, and terrain-layer probes. */
+  /** Composes movement-state, input/recovery, and terrain-layer probes. */
   function createPlayerMovementDiagnostics(state, deps) {
     const scope = createRuntimeScope(state, deps);
     const {
-      BRICK,
       FOREST,
       GRID,
-      HALF,
       ICE,
       POWERUP_SIZE,
       RIGHT,
       STEEL,
       TILE,
-      UP,
       createPlayer,
+      createPlayerMovementInputDiagnostics,
       createPlayerMovementMotionDiagnostics,
-      entityRect,
       game,
       gameSettings,
-      keys,
       makeCell,
       makeGrid,
       movementIceAudio,
       powerUpVisualRect,
-      quarterMaskFromBrickFragments,
       renderGame,
       setTile,
-      solidTerrainOverlapArea,
       stopMovementIceAudio,
       syncMovementIceAudioNodes,
-      updatePlayerMovement,
-      updatePlayers
+      updatePlayerMovement
     } = scope;
 
     return Object.freeze({
       ...createPlayerMovementMotionDiagnostics(scope),
-      debugWasdDirectionProbe() {
-        const previous = {
-          grid: game.grid,
-          base: game.base,
-          players: game.players,
-          enemies: game.enemies,
-          bullets: game.bullets,
-          powerUp: game.powerUp,
-          playerCount: game.playerCount,
-          tick: game.tick
-        };
-        const previousKeys = Array.from(keys);
-        const makeReadyPlayer = (id, x, y) => {
-          const player = createPlayer(id);
-          player.x = x;
-          player.y = y;
-          player.spawnX = x;
-          player.spawnY = y;
-          player.dir = UP;
-          player.alive = true;
-          player.respawn = 0;
-          player.spawnFlash = 0;
-          player.invuln = 0;
-          player.stun = 0;
-          player.reload = 0;
-          player.slide = 0;
-          player.pendingSnap = false;
-          return player;
-        };
-
-        try {
-          game.grid = makeGrid();
-          game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
-          game.enemies = [];
-          game.bullets = [];
-          game.powerUp = null;
-          game.tick = 1;
-
-          keys.clear();
-          game.playerCount = 1;
-          const singlePlayer = makeReadyPlayer(1, 32, 32);
-          game.players = [singlePlayer];
-          const singleBefore = { x: singlePlayer.x, y: singlePlayer.y, dir: singlePlayer.dir };
-          keys.add("KeyD");
-          updatePlayers();
-          const singleAfter = { x: singlePlayer.x, y: singlePlayer.y, dir: singlePlayer.dir };
-
-          keys.clear();
-          game.playerCount = 2;
-          const p1 = makeReadyPlayer(1, 32, 32);
-          const p2 = makeReadyPlayer(2, 80, 32);
-          game.players = [p1, p2];
-          const twoBefore = {
-            p1: { x: p1.x, y: p1.y, dir: p1.dir },
-            p2: { x: p2.x, y: p2.y, dir: p2.dir }
-          };
-          keys.add("KeyD");
-          updatePlayers();
-          const twoAfter = {
-            p1: { x: p1.x, y: p1.y, dir: p1.dir },
-            p2: { x: p2.x, y: p2.y, dir: p2.dir }
-          };
-
-          return {
-            singleBefore,
-            singleAfter,
-            twoBefore,
-            twoAfter
-          };
-        } finally {
-          keys.clear();
-          for (const key of previousKeys) keys.add(key);
-          Object.assign(game, previous);
-        }
-      },
-      debugPlayerTurnAlignmentProbe() {
-        const previous = {
-          grid: game.grid,
-          base: game.base,
-          players: game.players,
-          enemies: game.enemies
-        };
-        const makePlayer = (dir) => {
-          const player = createPlayer(1);
-          player.x = 67;
-          player.y = 70;
-          player.dir = dir;
-          player.alive = true;
-          player.respawn = 0;
-          player.spawnFlash = 0;
-          player.invuln = 0;
-          player.stun = 0;
-          player.slide = 0;
-          player.pendingSnap = false;
-          return player;
-        };
-        const run = (fromDir, toDir) => {
-          const player = makePlayer(fromDir);
-          game.players = [player];
-          updatePlayerMovement(player, toDir);
-          return { x: player.x, y: player.y, dir: player.dir, pendingSnap: player.pendingSnap };
-        };
-
-        try {
-          game.grid = makeGrid();
-          game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
-          game.enemies = [];
-          return {
-            perpendicular: run(RIGHT, scope.DOWN),
-            reverse: run(RIGHT, scope.LEFT),
-            same: run(RIGHT, RIGHT),
-            gridSize: HALF
-          };
-        } finally {
-          Object.assign(game, previous);
-        }
-      },
-      debugPlayerBrickRecoveryProbe() {
-        const previous = {
-          grid: game.grid,
-          base: game.base,
-          players: game.players,
-          enemies: game.enemies
-        };
-        const makePlayer = (x, y, dir) => {
-          const player = createPlayer(1);
-          player.x = x;
-          player.y = y;
-          player.dir = dir;
-          player.alive = true;
-          player.respawn = 0;
-          player.spawnFlash = 0;
-          player.invuln = 0;
-          player.stun = 0;
-          player.slide = 0;
-          player.pendingSnap = false;
-          return player;
-        };
-
-        try {
-          game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
-          game.enemies = [];
-
-          game.grid = makeGrid();
-          const turnCell = makeCell(BRICK, 1);
-          turnCell.brickMask = 1 << 1;
-          turnCell.mask = quarterMaskFromBrickFragments(turnCell.brickMask);
-          game.grid[5][5] = turnCell;
-          const turningPlayer = makePlayer(69, 70, RIGHT);
-          game.players = [turningPlayer];
-          const turnBefore = {
-            x: turningPlayer.x,
-            y: turningPlayer.y,
-            overlap: solidTerrainOverlapArea(entityRect(turningPlayer))
-          };
-          updatePlayerMovement(turningPlayer, scope.DOWN);
-          const turnAfter = {
-            x: turningPlayer.x,
-            y: turningPlayer.y,
-            dir: turningPlayer.dir,
-            overlap: solidTerrainOverlapArea(entityRect(turningPlayer))
-          };
-
-          game.grid = makeGrid();
-          setTile(game.grid, 5, 11, BRICK, 15);
-          const coveredPlayer = makePlayer(90, 177, RIGHT);
-          game.players = [coveredPlayer];
-          const overlapHistory = [solidTerrainOverlapArea(entityRect(coveredPlayer))];
-          for (let step = 0; step < 6; step += 1) {
-            updatePlayerMovement(coveredPlayer, RIGHT);
-            overlapHistory.push(solidTerrainOverlapArea(entityRect(coveredPlayer)));
-          }
-
-          return {
-            blockedTurnSnap: { before: turnBefore, after: turnAfter },
-            restoredWallEscape: {
-              x: coveredPlayer.x,
-              y: coveredPlayer.y,
-              overlapHistory
-            }
-          };
-        } finally {
-          Object.assign(game, previous);
-        }
-      },
+      ...createPlayerMovementInputDiagnostics(scope),
       debugIceMovementProbe() {
         const previous = {
           grid: game.grid,
