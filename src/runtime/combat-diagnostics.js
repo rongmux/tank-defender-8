@@ -66,9 +66,6 @@
   function createCombatDiagnostics(state, deps) {
     const scope = createRuntimeScope(state, deps);
     const {
-      DOWN,
-      FIELD_H,
-      FIELD_W,
       LEFT,
       RIGHT,
       TILE,
@@ -76,7 +73,6 @@
       applyPowerUp,
       createCombatCrossingDiagnostics,
       createCombatFireLimitDiagnostics,
-      createBullet,
       createCombatProjectileDiagnostics,
       createPlayer,
       enemyDestroyAudio,
@@ -90,26 +86,19 @@
       pendingFirePresses,
       playerDestroyAudio,
       playerShootAudio,
-      playerUpgradeRule,
-      resolveBullet,
-      resolveBulletCollisions,
       shoot,
-      steelHitAudio,
       stopEnemyDestroyAudio,
       stopEnemyHitAudio,
       stopPlayerDestroyAudio,
       stopPlayerShootAudio,
-      stopSteelHitAudio,
       syncEnemyDestroyAudioNodes,
       syncEnemyHitAudioNodes,
       syncMovementAudio,
       syncMovementIceAudioNodes,
       syncPlayerDestroyAudioNodes,
       syncPlayerShootAudioNodes,
-      syncSteelHitAudioNodes,
       updateBullets,
-      updatePlayers,
-      wallHitSoundName
+      updatePlayers
     } = scope;
 
     return Object.freeze({
