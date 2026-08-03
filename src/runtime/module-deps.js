@@ -85,6 +85,7 @@
   var stageFlowProgressionDiagnostics = requireRuntimeModule("stageFlowProgressionDiagnostics");
   var stageFlowGameOverDiagnostics = requireRuntimeModule("stageFlowGameOverDiagnostics");
   var stageFlowDiagnostics = requireRuntimeModule("stageFlowDiagnostics");
+  var screenFlowNavigationDiagnostics = requireRuntimeModule("screenFlowNavigationDiagnostics");
   var screenFlowDiagnostics = requireRuntimeModule("screenFlowDiagnostics");
   var wallDiagnostics = requireRuntimeModule("wallDiagnostics");
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
@@ -343,6 +344,7 @@
     createStageFlowProgressionDiagnostics: stageFlowProgressionDiagnostics.createStageFlowProgressionDiagnostics,
     createStageFlowGameOverDiagnostics: stageFlowGameOverDiagnostics.createStageFlowGameOverDiagnostics,
     createStageFlowDiagnostics: stageFlowDiagnostics.createStageFlowDiagnostics,
+    createScreenFlowNavigationDiagnostics: screenFlowNavigationDiagnostics.createScreenFlowNavigationDiagnostics,
     createScreenFlowDiagnostics: screenFlowDiagnostics.createScreenFlowDiagnostics,
     createWallDiagnostics: wallDiagnostics.createWallDiagnostics,
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
