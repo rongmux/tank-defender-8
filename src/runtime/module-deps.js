@@ -92,6 +92,7 @@
   var playerMovementInputDiagnostics = requireRuntimeModule("playerMovementInputDiagnostics");
   var playerMovementMotionDiagnostics = requireRuntimeModule("playerMovementMotionDiagnostics");
   var playerMovementSurfaceDiagnostics = requireRuntimeModule("playerMovementSurfaceDiagnostics");
+  var powerUpPresentationDiagnostics = requireRuntimeModule("powerUpPresentationDiagnostics");
   var wallDiagnostics = requireRuntimeModule("wallDiagnostics");
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
   var timerDiagnostics = requireRuntimeModule("timerDiagnostics");
@@ -359,6 +360,8 @@
       playerMovementMotionDiagnostics.createPlayerMovementMotionDiagnostics,
     createPlayerMovementSurfaceDiagnostics:
       playerMovementSurfaceDiagnostics.createPlayerMovementSurfaceDiagnostics,
+    createPowerUpPresentationDiagnostics:
+      powerUpPresentationDiagnostics.createPowerUpPresentationDiagnostics,
     createWallDiagnostics: wallDiagnostics.createWallDiagnostics,
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
     createEnemySpawnOverlapDiagnostics: enemyDiagnostics.createEnemySpawnOverlapDiagnostics,

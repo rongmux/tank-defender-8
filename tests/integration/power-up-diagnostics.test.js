@@ -29,6 +29,7 @@ const api = context.window.TankDefender8;
 
 assert(modules.powerUpDiagnostics, "power-up diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.powerUpDiagnostics), true);
+assert.equal(Object.isFrozen(modules.powerUpPresentationDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(75, 90))),
   POWER_UP_DIAGNOSTIC_METHODS
@@ -108,11 +109,19 @@ const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/power-up-diagnostics.js"),
   "utf8"
 );
+const presentationDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/power-up-presentation-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createPowerUpDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
+assert.equal(presentationDiagnosticsSource.includes("eval("), false);
 for (const name of POWER_UP_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
-  assert.equal(diagnosticsSource.includes(`${name}(`), true);
+  assert.equal(
+    diagnosticsSource.includes(`${name}(`) || presentationDiagnosticsSource.includes(`${name}(`),
+    true
+  );
 }
 assert(debugSource.split(/\r?\n/).length < 3050);
 

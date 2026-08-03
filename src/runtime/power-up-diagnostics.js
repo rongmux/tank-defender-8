@@ -67,6 +67,7 @@
       cloneGrid,
       collectPowerUp,
       createPlayer,
+      createPowerUpPresentationDiagnostics,
       enemyTypeDefinitions,
       FIELD_X,
       FIELD_Y,
@@ -113,82 +114,7 @@
     } = scope;
 
     return Object.freeze({
-        debugPowerUpTypePoolProbe() {
-          const starFrame = FREE_SPRITE_MANIFEST.sprites.powerUp.frames.star || [];
-          const weights = Object.fromEntries(powerTypes.map((type) => [type, 0]));
-          for (const type of originalPowerUpRandomTable) weights[type] += 1;
-          return {
-            types: powerTypes.slice(),
-            randomTable: originalPowerUpRandomTable.slice(),
-            sampledTable: Array.from({ length: 8 }, (_, byte) => randomPowerUpType(() => byte / 256)),
-            weights,
-            starFrameParts: starFrame.length,
-            starPrimaryParts: starFrame.filter((part) => part.role === "primary").length
-          };
-        },
-        debugBattleRandomProbe() {
-          const previous = {
-            randomValue: game.randomValue,
-            randomIndex: game.randomIndex,
-            frameHigh: game.frameHigh
-          };
-          try {
-            game.randomValue = 0x5a;
-            game.randomIndex = 0xfe;
-            game.frameHigh = 0x22;
-            const aiDecision = aiRoll(1 / 16);
-            const afterAiIndex = game.randomIndex;
-            const secondType = randomPowerUpType();
-            const afterPowerUpIndex = game.randomIndex;
-            const location = selectPowerUpSpawnSpot(
-              [{ id: 0 }, { id: 1 }],
-              (randomByte() << 8) | randomByte(),
-              null
-            );
-            const afterLocationIndex = game.randomIndex;
-            const beforeInjected = { value: game.randomValue, index: game.randomIndex };
-            const injected = randomByte(() => 0.5);
-            return {
-              shared: { aiDecision, afterAiIndex, secondType, afterPowerUpIndex, locationId: location.id, afterLocationIndex },
-              injected,
-              injectedPreservedState: game.randomValue === beforeInjected.value && game.randomIndex === beforeInjected.index
-            };
-          } finally {
-            Object.assign(game, previous);
-          }
-        },
-        debugPowerUpFlashCadenceProbe() {
-          return Array.from({ length: 32 }, (_, tick) => ({ tick, visible: isPowerUpVisible(tick) }));
-        },
-        debugPausedPowerUpVisualProbe() {
-          const previous = { ...game };
-          try {
-            preparePausedDebugBattle(7);
-
-            const snapshot = () => ({
-              tick: game.tick,
-              pauseElapsed: game.pauseElapsed,
-              displayFrame: battleDisplayFrame(),
-              powerUpVisible: isPowerUpVisible(battleDisplayFrame()),
-              waterFrame: waterFrameName(game.frameLow)
-            });
-            const initial = snapshot();
-            update();
-            const afterOneFrame = snapshot();
-            for (let frame = 0; frame < 8; frame += 1) update();
-            const afterNineFrames = snapshot();
-
-            game.paused = false;
-            game.tick = 23;
-            const afterResume = snapshot();
-            return { initial, afterOneFrame, afterNineFrames, afterResume };
-          } finally {
-            Object.assign(game, previous);
-          }
-        },
-        debugWaterAnimationCadenceProbe() {
-          return [0, 31, 32, 63, 64, 95, 96].map((tick) => ({ tick, frame: waterFrameName(tick) }));
-        },
+        ...createPowerUpPresentationDiagnostics(scope),
         debugPowerUpTtlProbe(ttl) {
           const previousPowerUp = game.powerUp;
           game.powerUp = { type: "helmet", x: 0, y: 0, w: POWERUP_SIZE, h: POWERUP_SIZE, ttl: Math.max(0, Math.floor(Number(ttl) || 0)) };

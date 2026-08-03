@@ -195,6 +195,7 @@ node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
 node --check src/runtime/timer-diagnostics.js
+node --check src/runtime/power-up-presentation-diagnostics.js
 node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/score-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
@@ -410,6 +411,7 @@ tank-defender-8/
 |   |   |-- wall-diagnostics.js
 |   |   |-- enemy-diagnostics.js
 |   |   |-- timer-diagnostics.js
+|   |   |-- power-up-presentation-diagnostics.js
 |   |   |-- power-up-diagnostics.js
 |   |   |-- score-diagnostics.js
 |   |   |-- upgrade-diagnostics.js
@@ -674,6 +676,7 @@ tank-defender-8/
 |   |   |-- power-up-runtime.test.js
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
+|   |   |-- power-up-presentation-diagnostics.test.js
 |   |   |-- power-up-diagnostics.test.js
 |   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
@@ -929,7 +932,7 @@ tank-defender-8/
 
 `timer-diagnostics.js` binds the seven contiguous timer-rule, global countdown, shield cadence/pause, freeze behavior, final frozen-frame, and spawn-during-freeze probes through 18 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and three dead-adapter removals leave `debug-api.js` at 3,557 physical lines. Its unit suite locks validation, exact method order, binding precedence, receiver identity, and state restoration; browser integration executes all seven probes at their original public indices 67-73 and preserves the pre-refactor 2,184-byte output SHA-256.
 
-`power-up-diagnostics.js` binds the 15 contiguous type-pool/shared-random, visibility/pause, TTL/collection, pickup-render/footprint, terrain-mutation, spawn-filter/rotation, and carrier-clear probes through 54 explicitly destructured runtime symbols, including the live pickup-audio record and mapped power-up type/random-table aliases, with receiver-preserving function binding and no `eval`. The extraction and 13 dead-adapter removals leave `debug-api.js` at 3,042 physical lines. Its unit suite locks state/audio validation, exact method order, binding precedence, and receiver identity; browser integration executes all 15 probes at their original public indices 75-89 and preserves the pre-refactor 7,420-byte output SHA-256.
+`power-up-presentation-diagnostics.js` owns the first five type-pool, shared-random, flash, paused-visual, and water-animation probes. It consumes the explicit power-up scope and directly tests validation plus its frozen ordered diagnostic surface. `power-up-diagnostics.js` now composes that child ahead of the remaining TTL/collection, pickup-render/footprint, terrain-mutation, spawn-filter/rotation, and carrier-clear probes. Browser integration executes all 15 methods at their original public indices 75-89 and preserves the pre-refactor 7,420-byte output SHA-256.
 
 `upgrade-diagnostics.js` binds the three contiguous star-upgrade rule, upgraded-tank overlay, and level-three survivability probes through 17 explicitly destructured runtime symbols plus the live player-destruction audio record, with receiver-preserving function binding and no `eval`. The extraction leaves `debug-api.js` at 2,894 physical lines. Its unit suite locks state/audio validation, exact method order, binding precedence, and receiver identity; browser integration executes all three probes at their original public indices 94-96 and preserves the pre-refactor 702-byte output SHA-256.
 
