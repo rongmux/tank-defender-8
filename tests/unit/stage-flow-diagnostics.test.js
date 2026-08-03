@@ -2,6 +2,7 @@ const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/stage-flow-diagnostics");
 const transitionDiagnostics = require("../../src/runtime/stage-flow-transition-diagnostics");
 const progressionDiagnostics = require("../../src/runtime/stage-flow-progression-diagnostics");
+const gameOverDiagnostics = require("../../src/runtime/stage-flow-game-over-diagnostics");
 
 const STAGE_FLOW_DIAGNOSTIC_METHODS = [
   "debugStageIntroCurtainProbe",
@@ -59,6 +60,8 @@ const deps = {
     transitionDiagnostics.createStageFlowTransitionDiagnostics,
   createStageFlowProgressionDiagnostics:
     progressionDiagnostics.createStageFlowProgressionDiagnostics,
+  createStageFlowGameOverDiagnostics:
+    gameOverDiagnostics.createStageFlowGameOverDiagnostics,
   stageIntroCurtainState(value) {
     return { receiver: this.label, value };
   },

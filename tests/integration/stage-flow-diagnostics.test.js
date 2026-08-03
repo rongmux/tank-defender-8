@@ -33,6 +33,7 @@ assert(modules.stageFlowDiagnostics, "stage-flow diagnostics should register bef
 assert.equal(Object.isFrozen(modules.stageFlowDiagnostics), true);
 assert.equal(Object.isFrozen(modules.stageFlowTransitionDiagnostics), true);
 assert.equal(Object.isFrozen(modules.stageFlowProgressionDiagnostics), true);
+assert.equal(Object.isFrozen(modules.stageFlowGameOverDiagnostics), true);
 assert(modules.stageFlowRuntime, "stage flow runtime should register before game.js");
 assert.equal(Object.isFrozen(modules.stageFlowRuntime), true);
 assert(modules.battleOutcomeRuntime, "battle outcome runtime should register before game.js");
@@ -240,16 +241,22 @@ const progressionDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/stage-flow-progression-diagnostics.js"),
   "utf8"
 );
+const gameOverDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/stage-flow-game-over-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createStageFlowDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
 assert.equal(transitionDiagnosticsSource.includes("eval("), false);
 assert.equal(progressionDiagnosticsSource.includes("eval("), false);
+assert.equal(gameOverDiagnosticsSource.includes("eval("), false);
 for (const name of STAGE_FLOW_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
   assert.equal(
     diagnosticsSource.includes(`${name}(`) ||
       transitionDiagnosticsSource.includes(`${name}(`) ||
-      progressionDiagnosticsSource.includes(`${name}(`),
+      progressionDiagnosticsSource.includes(`${name}(`) ||
+      gameOverDiagnosticsSource.includes(`${name}(`),
     true
   );
 }
