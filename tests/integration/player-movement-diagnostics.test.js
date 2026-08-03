@@ -27,6 +27,7 @@ assert(modules.playerMovementDiagnostics, "player movement diagnostics should re
 assert.equal(Object.isFrozen(modules.playerMovementDiagnostics), true);
 assert.equal(Object.isFrozen(modules.playerMovementInputDiagnostics), true);
 assert.equal(Object.isFrozen(modules.playerMovementMotionDiagnostics), true);
+assert.equal(Object.isFrozen(modules.playerMovementSurfaceDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(113, 124))),
   PLAYER_MOVEMENT_DIAGNOSTIC_METHODS
@@ -53,16 +54,22 @@ const inputDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/player-movement-input-diagnostics.js"),
   "utf8"
 );
+const surfaceDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/player-movement-surface-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createPlayerMovementDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
 assert.equal(motionDiagnosticsSource.includes("eval("), false);
 assert.equal(inputDiagnosticsSource.includes("eval("), false);
+assert.equal(surfaceDiagnosticsSource.includes("eval("), false);
 for (const name of PLAYER_MOVEMENT_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
   assert.equal(
     diagnosticsSource.includes(`${name}(`) ||
       motionDiagnosticsSource.includes(`${name}(`) ||
-      inputDiagnosticsSource.includes(`${name}(`),
+      inputDiagnosticsSource.includes(`${name}(`) ||
+      surfaceDiagnosticsSource.includes(`${name}(`),
     true
   );
 }

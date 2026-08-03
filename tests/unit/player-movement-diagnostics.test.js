@@ -2,6 +2,7 @@ const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/player-movement-diagnostics");
 const inputDiagnostics = require("../../src/runtime/player-movement-input-diagnostics");
 const motionDiagnostics = require("../../src/runtime/player-movement-motion-diagnostics");
+const surfaceDiagnostics = require("../../src/runtime/player-movement-surface-diagnostics");
 
 const PLAYER_MOVEMENT_DIAGNOSTIC_METHODS = [
   "debugPlayerMovementCadenceProbe",
@@ -54,6 +55,8 @@ const deps = {
     inputDiagnostics.createPlayerMovementInputDiagnostics,
   createPlayerMovementMotionDiagnostics:
     motionDiagnostics.createPlayerMovementMotionDiagnostics,
+  createPlayerMovementSurfaceDiagnostics:
+    surfaceDiagnostics.createPlayerMovementSurfaceDiagnostics,
   gameSettings() {
     return { playerMovement: { speed: this.label === "state-fn" ? 7 : 11, frameCadence: [0, 1] } };
   },

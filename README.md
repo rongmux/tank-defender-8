@@ -206,6 +206,7 @@ node --check src/runtime/combat-projectile-diagnostics.js
 node --check src/runtime/combat-diagnostics.js
 node --check src/runtime/player-movement-input-diagnostics.js
 node --check src/runtime/player-movement-motion-diagnostics.js
+node --check src/runtime/player-movement-surface-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
 node --check src/runtime/terrain-diagnostics.js
 node --check src/runtime/player-lifecycle-diagnostics.js
@@ -420,6 +421,7 @@ tank-defender-8/
 |   |   |-- combat-diagnostics.js
 |   |   |-- player-movement-input-diagnostics.js
 |   |   |-- player-movement-motion-diagnostics.js
+|   |   |-- player-movement-surface-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
 |   |   |-- terrain-diagnostics.js
 |   |   |-- player-lifecycle-diagnostics.js
@@ -683,6 +685,7 @@ tank-defender-8/
 |   |   |-- combat-diagnostics.test.js
 |   |   |-- player-movement-input-diagnostics.test.js
 |   |   |-- player-movement-motion-diagnostics.test.js
+|   |   |-- player-movement-surface-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
 |   |   |-- terrain-diagnostics.test.js
 |   |   |-- player-lifecycle-diagnostics.test.js
@@ -942,7 +945,7 @@ tank-defender-8/
 
 `combat-diagnostics.js` builds the receiver-preserving combat scope and composes tank-collision, fire-input, crossing, fire-limit, and five projectile diagnostic modules. Its unit suite locks state/keys/pending-fire/audio validation, exact public method order, binding precedence, and output scope; browser integration executes all 12 probes at their original public indices 101-112 and preserves the pre-refactor 5,147-byte output SHA-256.
 
-`player-movement-motion-diagnostics.js` owns the first five fixed-loop cadence, tread animation, friendly-fire stun, and player-stun probes. `player-movement-input-diagnostics.js` owns the following WASD input, turn-alignment, and brick-recovery probes. Both consume the explicit player-movement scope and directly test validation plus their frozen ordered diagnostic surfaces. `player-movement-diagnostics.js` now only builds the receiver-preserving scope, composes both children in order, and retains the final ice movement and ice/forest layer probes. Browser integration continues to execute all 11 methods at their original public indices 113-123 and preserves the pre-refactor 2,414-byte output SHA-256.
+`player-movement-motion-diagnostics.js` owns the first five fixed-loop cadence, tread animation, friendly-fire stun, and player-stun probes. `player-movement-input-diagnostics.js` owns the following WASD input, turn-alignment, and brick-recovery probes. `player-movement-surface-diagnostics.js` owns the final ice movement, ice-cover rendering, and forest/power-up layer probes. Each consumes the explicit player-movement scope and directly tests validation plus its frozen ordered diagnostic surface. `player-movement-diagnostics.js` now only builds the receiver-preserving scope and composes the three children in order. Browser integration continues to execute all 11 methods at their original public indices 113-123 and preserves the pre-refactor 2,414-byte output SHA-256.
 
 `terrain-diagnostics.js` binds the six contiguous terrain-surface, base-wall-priority, base-destruction-timing/render, tank-occupancy, and enemy-overlap-recovery probes through 40 explicitly destructured runtime symbols plus three live audio records, with receiver-preserving function binding and no `eval`. The extraction and 18 dead-adapter removals leave `debug-api.js` at 1,068 physical lines. Its unit suite locks state/keys/pending-fire/audio validation, exact method order, binding precedence, and collision output scope; browser integration executes all six probes at their original public indices 124-129 and preserves the pre-refactor 6,225-byte output SHA-256.
 
