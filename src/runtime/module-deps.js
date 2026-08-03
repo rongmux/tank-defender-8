@@ -95,6 +95,7 @@
   var powerUpPresentationDiagnostics = requireRuntimeModule("powerUpPresentationDiagnostics");
   var powerUpCollectionDiagnostics = requireRuntimeModule("powerUpCollectionDiagnostics");
   var powerUpSpawnDiagnostics = requireRuntimeModule("powerUpSpawnDiagnostics");
+  var playerLifecycleGameOverDiagnostics = requireRuntimeModule("playerLifecycleGameOverDiagnostics");
   var wallDiagnostics = requireRuntimeModule("wallDiagnostics");
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
   var timerDiagnostics = requireRuntimeModule("timerDiagnostics");
@@ -367,6 +368,8 @@
     createPowerUpCollectionDiagnostics:
       powerUpCollectionDiagnostics.createPowerUpCollectionDiagnostics,
     createPowerUpSpawnDiagnostics: powerUpSpawnDiagnostics.createPowerUpSpawnDiagnostics,
+    createPlayerLifecycleGameOverDiagnostics:
+      playerLifecycleGameOverDiagnostics.createPlayerLifecycleGameOverDiagnostics,
     createWallDiagnostics: wallDiagnostics.createWallDiagnostics,
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
     createEnemySpawnOverlapDiagnostics: enemyDiagnostics.createEnemySpawnOverlapDiagnostics,

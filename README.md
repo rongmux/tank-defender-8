@@ -212,6 +212,7 @@ node --check src/runtime/player-movement-motion-diagnostics.js
 node --check src/runtime/player-movement-surface-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
 node --check src/runtime/terrain-diagnostics.js
+node --check src/runtime/player-lifecycle-game-over-diagnostics.js
 node --check src/runtime/player-lifecycle-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/panel-diagnostics.js
@@ -430,6 +431,7 @@ tank-defender-8/
 |   |   |-- player-movement-surface-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
 |   |   |-- terrain-diagnostics.js
+|   |   |-- player-lifecycle-game-over-diagnostics.js
 |   |   |-- player-lifecycle-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- panel-diagnostics.js
@@ -697,6 +699,7 @@ tank-defender-8/
 |   |   |-- player-movement-surface-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
 |   |   |-- terrain-diagnostics.test.js
+|   |   |-- player-lifecycle-game-over-diagnostics.test.js
 |   |   |-- player-lifecycle-diagnostics.test.js
 |   |   |-- pause-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
@@ -958,7 +961,7 @@ tank-defender-8/
 
 `terrain-diagnostics.js` binds the six contiguous terrain-surface, base-wall-priority, base-destruction-timing/render, tank-occupancy, and enemy-overlap-recovery probes through 40 explicitly destructured runtime symbols plus three live audio records, with receiver-preserving function binding and no `eval`. The extraction and 18 dead-adapter removals leave `debug-api.js` at 1,068 physical lines. Its unit suite locks state/keys/pending-fire/audio validation, exact method order, binding precedence, and collision output scope; browser integration executes all six probes at their original public indices 124-129 and preserves the pre-refactor 6,225-byte output SHA-256.
 
-`player-lifecycle-diagnostics.js` binds the four contiguous death/respawn, two-player Game Over message, message-rendering, and bonus-life probes through an explicit receiver-preserving state/audio scope without `eval`. The extraction and dead-adapter cleanup reduce `debug-api.js` from 1,068 to 638 physical lines. Its unit suite locks input validation, exact method order, receiver binding, and state restoration; browser integration executes all four probes at their original public indices 97-100 and preserves the pre-refactor 5,172-byte output SHA-256.
+`player-lifecycle-game-over-diagnostics.js` owns the middle two two-player Game Over message and message-rendering probes. It consumes the explicit player-lifecycle scope and directly tests validation plus its frozen ordered diagnostic surface. `player-lifecycle-diagnostics.js` builds the receiver-preserving scope, composes that child between the retained death/respawn and bonus-life probes, and preserves the original public order. Browser integration executes all four methods at their original public indices 97-100 and preserves the pre-refactor 5,172-byte output SHA-256.
 
 `pause-diagnostics.js` binds the three contiguous pause-toggle, pause-safe stage-completion, and pause-frame-rendering probes through an explicit receiver-preserving state/audio scope without `eval`. The extraction and dead-adapter cleanup reduce `debug-api.js` from 638 to 488 physical lines. Its unit suite locks input validation, exact method order, receiver binding, and state restoration; browser integration executes all three probes at their original public indices 36-38 and preserves the pre-refactor 973-byte output SHA-256.
 

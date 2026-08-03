@@ -18,6 +18,7 @@ const api = context.window.TankDefender8;
 
 assert(modules.playerLifecycleDiagnostics, "player lifecycle diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.playerLifecycleDiagnostics), true);
+assert.equal(Object.isFrozen(modules.playerLifecycleGameOverDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(97, 101))),
   PLAYER_LIFECYCLE_DIAGNOSTIC_METHODS
@@ -36,11 +37,19 @@ const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/player-lifecycle-diagnostics.js"),
   "utf8"
 );
+const gameOverDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/player-lifecycle-game-over-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createPlayerLifecycleDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
+assert.equal(gameOverDiagnosticsSource.includes("eval("), false);
 for (const name of PLAYER_LIFECYCLE_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
-  assert.equal(diagnosticsSource.includes(`${name}(`), true);
+  assert.equal(
+    diagnosticsSource.includes(`${name}(`) || gameOverDiagnosticsSource.includes(`${name}(`),
+    true
+  );
 }
 assert(debugSource.split(/\r?\n/).length < 800);
 

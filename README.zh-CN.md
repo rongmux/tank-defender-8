@@ -212,6 +212,7 @@ node --check src/runtime/player-movement-motion-diagnostics.js
 node --check src/runtime/player-movement-surface-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
 node --check src/runtime/terrain-diagnostics.js
+node --check src/runtime/player-lifecycle-game-over-diagnostics.js
 node --check src/runtime/player-lifecycle-diagnostics.js
 node --check src/runtime/effect-diagnostics.js
 node --check src/runtime/panel-diagnostics.js
@@ -430,6 +431,7 @@ tank-defender-8/
 |   |   |-- player-movement-surface-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
 |   |   |-- terrain-diagnostics.js
+|   |   |-- player-lifecycle-game-over-diagnostics.js
 |   |   |-- player-lifecycle-diagnostics.js
 |   |   |-- effect-diagnostics.js
 |   |   |-- panel-diagnostics.js
@@ -697,6 +699,7 @@ tank-defender-8/
 |   |   |-- player-movement-surface-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
 |   |   |-- terrain-diagnostics.test.js
+|   |   |-- player-lifecycle-game-over-diagnostics.test.js
 |   |   |-- player-lifecycle-diagnostics.test.js
 |   |   |-- pause-diagnostics.test.js
 |   |   |-- power-up-effect-rules.test.js
@@ -875,7 +878,7 @@ tank-defender-8/
 
 `terrain-diagnostics.js` 通过保留接收者的函数绑定、40 个显式解构的运行时符号和 3 个实时音频记录，接管连续的 6 个地形表面、基地围墙优先级、基地摧毁时序/渲染、坦克占位和敌方重叠恢复探针，且不使用 `eval`。抽离并移除 18 个死适配器后，`debug-api.js` 保留 1,068 个物理行。其单元测试锁定状态/按键/待发射/音频校验、精确方法顺序、绑定优先级和碰撞输出作用域；浏览器集成测试在原公开索引 124-129 依次执行全部 6 个探针，并保持重构前 6,225 字节输出的 SHA-256。
 
-`player-lifecycle-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 4 个死亡/重生、双人 Game Over 信息、信息渲染和奖励生命探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 1,068 行降至 638 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 97-100 依次执行全部 4 个探针，并保持重构前 5,172 字节输出的 SHA-256。
+`player-lifecycle-game-over-diagnostics.js` 接管中间两个双人 Game Over 信息与信息渲染探针。它消费显式 player-lifecycle 作用域，并直接测试输入校验及冻结的有序诊断接口。`player-lifecycle-diagnostics.js` 构建保留接收者的作用域，在保留的死亡/重生和奖励生命探针之间组合该子模块，并保持原有公开顺序。浏览器集成测试在原公开索引 97-100 依次执行全部 4 个方法，并保持重构前 5,172 字节输出的 SHA-256。
 
 `pause-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 3 个暂停切换、暂停期间关卡完成检测和暂停帧渲染探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 638 行降至 488 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 36-38 依次执行全部 3 个探针，并保持重构前 973 字节输出的 SHA-256。
 

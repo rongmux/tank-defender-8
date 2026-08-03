@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/player-lifecycle-diagnostics");
+const gameOverDiagnostics = require("../../src/runtime/player-lifecycle-game-over-diagnostics");
 
 const PLAYER_LIFECYCLE_DIAGNOSTIC_METHODS = [
   "debugPlayerDeathRespawnProbe",
@@ -73,6 +74,8 @@ const deps = {
     PLAYER_GAME_OVER_MESSAGE_TIMER: 8,
     PLAYER_GAME_OVER_MESSAGE_Y: 32
   },
+  createPlayerLifecycleGameOverDiagnostics:
+    gameOverDiagnostics.createPlayerLifecycleGameOverDiagnostics,
   clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
