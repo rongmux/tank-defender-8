@@ -27,6 +27,7 @@ assert(modules.screenFlowDiagnostics, "screen-flow diagnostics should register b
 assert.equal(Object.isFrozen(modules.screenFlowDiagnostics), true);
 assert.equal(Object.isFrozen(modules.screenFlowNavigationDiagnostics), true);
 assert.equal(Object.isFrozen(modules.screenFlowTitleDemoDiagnostics), true);
+assert.equal(Object.isFrozen(modules.screenFlowPostGameDiagnostics), true);
 assert(modules.stageSelectRuntime, "stage select runtime should register before game.js");
 assert.equal(Object.isFrozen(modules.stageSelectRuntime), true);
 assert(modules.postGameRuntime, "post-game runtime should register before game.js");
@@ -258,16 +259,22 @@ const titleDemoDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/screen-flow-title-demo-diagnostics.js"),
   "utf8"
 );
+const postGameDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/screen-flow-post-game-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createScreenFlowDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
 assert.equal(navigationDiagnosticsSource.includes("eval("), false);
 assert.equal(titleDemoDiagnosticsSource.includes("eval("), false);
+assert.equal(postGameDiagnosticsSource.includes("eval("), false);
 for (const name of SCREEN_FLOW_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
   assert.equal(
     diagnosticsSource.includes(`${name}(`) ||
       navigationDiagnosticsSource.includes(`${name}(`) ||
-      titleDemoDiagnosticsSource.includes(`${name}(`),
+      titleDemoDiagnosticsSource.includes(`${name}(`) ||
+      postGameDiagnosticsSource.includes(`${name}(`),
     true
   );
 }
