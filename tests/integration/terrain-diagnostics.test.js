@@ -20,6 +20,7 @@ const api = context.window.TankDefender8;
 
 assert(modules.terrainDiagnostics, "terrain diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.terrainDiagnostics), true);
+assert.equal(Object.isFrozen(modules.terrainBaseDiagnostics), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(Object.keys(api).slice(124, 130))),
   TERRAIN_DIAGNOSTIC_METHODS
@@ -38,11 +39,20 @@ const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/terrain-diagnostics.js"),
   "utf8"
 );
+const baseDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/terrain-base-diagnostics.js"),
+  "utf8"
+);
 assert(debugSource.includes("...createTerrainDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
+assert.equal(baseDiagnosticsSource.includes("eval("), false);
+assert(diagnosticsSource.includes("...createTerrainBaseDiagnostics(scope)"));
 for (const name of TERRAIN_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
-  assert.equal(diagnosticsSource.includes(`${name}(`), true);
+  assert.equal(
+    diagnosticsSource.includes(`${name}(`) || baseDiagnosticsSource.includes(`${name}(`),
+    true
+  );
 }
 assert(debugSource.split(/\r?\n/).length < 1200);
 

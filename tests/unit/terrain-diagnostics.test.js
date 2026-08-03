@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/terrain-diagnostics");
+const terrainBaseDiagnostics = require("../../src/runtime/terrain-base-diagnostics");
 
 const TERRAIN_DIAGNOSTIC_METHODS = [
   "debugTerrainCollisionProbe",
@@ -47,6 +48,7 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: { TILE: 16 },
+  createTerrainBaseDiagnostics: terrainBaseDiagnostics.createTerrainBaseDiagnostics,
   makeGrid() {
     return [];
   },

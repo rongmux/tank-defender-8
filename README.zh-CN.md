@@ -213,6 +213,7 @@ node --check src/runtime/player-movement-input-diagnostics.js
 node --check src/runtime/player-movement-motion-diagnostics.js
 node --check src/runtime/player-movement-surface-diagnostics.js
 node --check src/runtime/player-movement-diagnostics.js
+node --check src/runtime/terrain-base-diagnostics.js
 node --check src/runtime/terrain-diagnostics.js
 node --check src/runtime/player-lifecycle-game-over-diagnostics.js
 node --check src/runtime/player-lifecycle-diagnostics.js
@@ -434,6 +435,7 @@ tank-defender-8/
 |   |   |-- player-movement-motion-diagnostics.js
 |   |   |-- player-movement-surface-diagnostics.js
 |   |   |-- player-movement-diagnostics.js
+|   |   |-- terrain-base-diagnostics.js
 |   |   |-- terrain-diagnostics.js
 |   |   |-- player-lifecycle-game-over-diagnostics.js
 |   |   |-- player-lifecycle-diagnostics.js
@@ -703,6 +705,7 @@ tank-defender-8/
 |   |   |-- player-movement-motion-diagnostics.test.js
 |   |   |-- player-movement-surface-diagnostics.test.js
 |   |   |-- player-movement-diagnostics.test.js
+|   |   |-- terrain-base-diagnostics.test.js
 |   |   |-- terrain-diagnostics.test.js
 |   |   |-- player-lifecycle-game-over-diagnostics.test.js
 |   |   |-- player-lifecycle-diagnostics.test.js
@@ -887,6 +890,8 @@ tank-defender-8/
 `player-movement-motion-diagnostics.js` 接管前五个固定帧节奏、履带动画、友军火力眩晕与玩家眩晕探针。`player-movement-input-diagnostics.js` 接管随后三个 WASD 输入、转向对齐与砖块脱困探针。`player-movement-surface-diagnostics.js` 接管最后的冰面移动、冰面遮盖渲染以及森林/道具图层探针。三个模块均消费显式 player-movement 作用域，并直接测试输入校验及冻结的有序诊断接口。`player-movement-diagnostics.js` 现在只构建保留接收者的作用域，并按顺序组合三个子模块。浏览器集成测试仍在原公开索引 113-123 依次执行全部 11 个方法，并保持重构前 2,414 字节输出的 SHA-256。
 
 `terrain-diagnostics.js` 通过保留接收者的函数绑定、40 个显式解构的运行时符号和 3 个实时音频记录，接管连续的 6 个地形表面、基地围墙优先级、基地摧毁时序/渲染、坦克占位和敌方重叠恢复探针，且不使用 `eval`。抽离并移除 18 个死适配器后，`debug-api.js` 保留 1,068 个物理行。其单元测试锁定状态/按键/待发射/音频校验、精确方法顺序、绑定优先级和碰撞输出作用域；浏览器集成测试在原公开索引 124-129 依次执行全部 6 个探针，并保持重构前 6,225 字节输出的 SHA-256。
+
+`terrain-base-diagnostics.js` 接管连续的基地围墙优先级、基地摧毁序列和摧毁帧渲染探针。`terrain-diagnostics.js` 现在构建保留接收者的作用域，保留地形表面和坦克重叠探针，并在原有第二至第四位置组合基地子模块。子模块单元覆盖、启动注册和浏览器集成测试共同保持公开索引 124-129 及 6,225 字节 SHA-256 输出。
 
 `player-lifecycle-game-over-diagnostics.js` 接管中间两个双人 Game Over 信息与信息渲染探针。它消费显式 player-lifecycle 作用域，并直接测试输入校验及冻结的有序诊断接口。`player-lifecycle-diagnostics.js` 构建保留接收者的作用域，在保留的死亡/重生和奖励生命探针之间组合该子模块，并保持原有公开顺序。浏览器集成测试在原公开索引 97-100 依次执行全部 4 个方法，并保持重构前 5,172 字节输出的 SHA-256。
 
