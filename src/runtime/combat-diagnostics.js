@@ -77,6 +77,7 @@
       applyPowerUp,
       createCombatCrossingDiagnostics,
       createCombatFireLimitDiagnostics,
+      createCombatPlayerFireInputDiagnostics,
       createCombatProjectileDiagnostics,
       createPlayer,
       enemyDestroyAudio,
@@ -526,115 +527,7 @@
           }
         },
         ...createCombatFireLimitDiagnostics(scope),
-        debugPlayerFireInputProbe() {
-          const previous = {
-            grid: game.grid,
-            base: game.base,
-            players: game.players,
-            enemies: game.enemies,
-            bullets: game.bullets,
-            explosions: game.explosions,
-            powerUp: game.powerUp,
-            playerCount: game.playerCount,
-            tick: game.tick
-          };
-          const previousKeys = Array.from(keys);
-          const previousFirePresses = Array.from(pendingFirePresses);
-          const previousPlayerShoot = { active: playerShootAudio.active, frame: playerShootAudio.frame };
-          const player = createPlayer(1);
-          const bulletCount = () => game.bullets.filter((bullet) => bullet.ownerKey === "player:1").length;
-          const updateWithPress = () => {
-            pendingFirePresses.add("Space");
-            game.tick += 1;
-            updatePlayers();
-            return bulletCount();
-          };
-          const updateWithoutPress = () => {
-            game.tick += 1;
-            updatePlayers();
-            return bulletCount();
-          };
-
-          try {
-            stopPlayerShootAudio();
-            game.grid = makeGrid();
-            game.base = { x: 6 * TILE, y: 12 * TILE, w: TILE, h: TILE, alive: true };
-            game.players = [player];
-            game.enemies = [];
-            game.bullets = [];
-            game.explosions = [];
-            game.powerUp = null;
-            game.playerCount = 1;
-            game.tick = 0;
-            keys.clear();
-            keys.add("Space");
-            pendingFirePresses.clear();
-            player.x = 64;
-            player.y = 64;
-            player.spawnX = 64;
-            player.spawnY = 64;
-            player.alive = true;
-            player.respawn = 0;
-            player.spawnFlash = 0;
-            player.reload = 0;
-            player.stun = 0;
-            player.level = 0;
-
-            const firstPress = updateWithPress();
-            game.bullets = [];
-            player.reload = 0;
-            const heldAfterBulletClears = updateWithoutPress();
-            const repressAfterRelease = updateWithPress();
-
-            player.reload = 0;
-            const fullSlotPress = updateWithPress();
-            game.bullets = [];
-            player.reload = 0;
-            const fullSlotPressAfterClear = updateWithoutPress();
-            const fullSlotRepress = updateWithPress();
-
-            game.bullets = [];
-            player.level = 2;
-            player.reload = 0;
-            const doubleShotCounts = [updateWithPress(), updateWithPress(), updateWithPress()];
-
-            game.bullets = [];
-            player.level = 0;
-            player.reload = 0;
-            player.spawnFlash = 2;
-            const spawnPress = updateWithPress();
-            player.spawnFlash = 0;
-            const spawnPressAfterUnlock = updateWithoutPress();
-
-            player.stun = 10;
-            player.reload = 0;
-            const stunnedPress = updateWithPress();
-
-            return {
-              firstPress,
-              heldAfterBulletClears,
-              repressAfterRelease,
-              fullSlotPress,
-              fullSlotPressAfterClear,
-              fullSlotRepress,
-              doubleShotCounts,
-              spawnPress,
-              spawnPressAfterUnlock,
-              stunnedPress
-            };
-          } finally {
-            stopPlayerShootAudio();
-            keys.clear();
-            for (const key of previousKeys) keys.add(key);
-            pendingFirePresses.clear();
-            for (const key of previousFirePresses) pendingFirePresses.add(key);
-            Object.assign(game, previous);
-            playerShootAudio.active = previousPlayerShoot.active;
-            playerShootAudio.frame = previousPlayerShoot.frame;
-            syncPlayerShootAudioNodes();
-            syncMovementIceAudioNodes();
-          }
-        },
+        ...createCombatPlayerFireInputDiagnostics(scope),
         ...createCombatCrossingDiagnostics(scope),
         ...createCombatProjectileDiagnostics(scope)
     });

@@ -28,6 +28,7 @@ assert(modules.combatDiagnostics, "combat diagnostics should register before gam
 assert.equal(Object.isFrozen(modules.combatDiagnostics), true);
 assert.equal(Object.isFrozen(modules.combatCrossingDiagnostics), true);
 assert.equal(Object.isFrozen(modules.combatFireLimitDiagnostics), true);
+assert.equal(Object.isFrozen(modules.combatPlayerFireInputDiagnostics), true);
 assert.equal(Object.isFrozen(modules.combatProjectileDiagnostics), true);
 assert(modules.battleLoopRuntime, "battle loop runtime should register before game.js");
 assert.equal(Object.isFrozen(modules.battleLoopRuntime), true);
@@ -80,6 +81,10 @@ const fireLimitDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/combat-fire-limit-diagnostics.js"),
   "utf8"
 );
+const playerFireInputDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/combat-player-fire-input-diagnostics.js"),
+  "utf8"
+);
 const crossingDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/combat-crossing-diagnostics.js"),
   "utf8"
@@ -88,6 +93,7 @@ assert(debugSource.includes("...createCombatDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
 assert.equal(projectileDiagnosticsSource.includes("eval("), false);
 assert.equal(fireLimitDiagnosticsSource.includes("eval("), false);
+assert.equal(playerFireInputDiagnosticsSource.includes("eval("), false);
 assert.equal(crossingDiagnosticsSource.includes("eval("), false);
 for (const name of COMBAT_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
@@ -95,6 +101,7 @@ for (const name of COMBAT_DIAGNOSTIC_METHODS) {
     diagnosticsSource.includes(`${name}(`) ||
       crossingDiagnosticsSource.includes(`${name}(`) ||
       fireLimitDiagnosticsSource.includes(`${name}(`) ||
+      playerFireInputDiagnosticsSource.includes(`${name}(`) ||
       projectileDiagnosticsSource.includes(`${name}(`),
     true
   );

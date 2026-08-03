@@ -91,6 +91,7 @@
   var upgradeDiagnostics = requireRuntimeModule("upgradeDiagnostics");
   var combatCrossingDiagnostics = requireRuntimeModule("combatCrossingDiagnostics");
   var combatFireLimitDiagnostics = requireRuntimeModule("combatFireLimitDiagnostics");
+  var combatPlayerFireInputDiagnostics = requireRuntimeModule("combatPlayerFireInputDiagnostics");
   var combatProjectileDiagnostics = requireRuntimeModule("combatProjectileDiagnostics");
   var combatDiagnostics = requireRuntimeModule("combatDiagnostics");
   var playerMovementDiagnostics = requireRuntimeModule("playerMovementDiagnostics");
@@ -345,6 +346,7 @@
     createUpgradeDiagnostics: upgradeDiagnostics.createUpgradeDiagnostics,
     createCombatCrossingDiagnostics: combatCrossingDiagnostics.createCombatCrossingDiagnostics,
     createCombatFireLimitDiagnostics: combatFireLimitDiagnostics.createCombatFireLimitDiagnostics,
+    createCombatPlayerFireInputDiagnostics: combatPlayerFireInputDiagnostics.createCombatPlayerFireInputDiagnostics,
     createCombatProjectileDiagnostics: combatProjectileDiagnostics.createCombatProjectileDiagnostics,
     createCombatDiagnostics: combatDiagnostics.createCombatDiagnostics,
     createPlayerMovementDiagnostics: playerMovementDiagnostics.createPlayerMovementDiagnostics,

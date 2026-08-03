@@ -2,6 +2,7 @@ const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/combat-diagnostics");
 const crossingDiagnostics = require("../../src/runtime/combat-crossing-diagnostics");
 const fireLimitDiagnostics = require("../../src/runtime/combat-fire-limit-diagnostics");
+const playerFireInputDiagnostics = require("../../src/runtime/combat-player-fire-input-diagnostics");
 const projectileDiagnostics = require("../../src/runtime/combat-projectile-diagnostics");
 
 const COMBAT_DIAGNOSTIC_METHODS = [
@@ -58,6 +59,7 @@ const deps = {
   sharedState: {},
   createCombatCrossingDiagnostics: crossingDiagnostics.createCombatCrossingDiagnostics,
   createCombatFireLimitDiagnostics: fireLimitDiagnostics.createCombatFireLimitDiagnostics,
+  createCombatPlayerFireInputDiagnostics: playerFireInputDiagnostics.createCombatPlayerFireInputDiagnostics,
   createCombatProjectileDiagnostics: projectileDiagnostics.createCombatProjectileDiagnostics,
   gameSettings() {
     return {

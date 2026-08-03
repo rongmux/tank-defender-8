@@ -29,6 +29,7 @@ function keyPress(listeners, code) {
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.inputCommandRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatProjectileDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatFireLimitDiagnostics), true);
+  assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatPlayerFireInputDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatCrossingDiagnostics), true);
   assert.equal(typeof animationFrameCallback, "function");
   for (const button of buttons) {
