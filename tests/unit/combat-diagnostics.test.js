@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/combat-diagnostics");
+const projectileDiagnostics = require("../../src/runtime/combat-projectile-diagnostics");
 
 const COMBAT_DIAGNOSTIC_METHODS = [
   "debugHelmetProtectionProbe",
@@ -53,6 +54,7 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: {},
+  createCombatProjectileDiagnostics: projectileDiagnostics.createCombatProjectileDiagnostics,
   gameSettings() {
     return {
       friendlyFire: {

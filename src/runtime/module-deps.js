@@ -89,6 +89,7 @@
   var powerUpDiagnostics = requireRuntimeModule("powerUpDiagnostics");
   var scoreDiagnostics = requireRuntimeModule("scoreDiagnostics");
   var upgradeDiagnostics = requireRuntimeModule("upgradeDiagnostics");
+  var combatProjectileDiagnostics = requireRuntimeModule("combatProjectileDiagnostics");
   var combatDiagnostics = requireRuntimeModule("combatDiagnostics");
   var playerMovementDiagnostics = requireRuntimeModule("playerMovementDiagnostics");
   var terrainDiagnostics = requireRuntimeModule("terrainDiagnostics");
@@ -340,6 +341,7 @@
     createPowerUpDiagnostics: powerUpDiagnostics.createPowerUpDiagnostics,
     createScoreDiagnostics: scoreDiagnostics.createScoreDiagnostics,
     createUpgradeDiagnostics: upgradeDiagnostics.createUpgradeDiagnostics,
+    createCombatProjectileDiagnostics: combatProjectileDiagnostics.createCombatProjectileDiagnostics,
     createCombatDiagnostics: combatDiagnostics.createCombatDiagnostics,
     createPlayerMovementDiagnostics: playerMovementDiagnostics.createPlayerMovementDiagnostics,
     createTerrainDiagnostics: terrainDiagnostics.createTerrainDiagnostics,
