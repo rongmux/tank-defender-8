@@ -156,6 +156,7 @@
   var stagePackLifecycleRuntime = requireRuntimeModule("stagePackLifecycleRuntime");
   var stageLifecycleRuntime = requireRuntimeModule("stageLifecycleRuntime");
   var titleFlowRuntime = requireRuntimeModule("titleFlowRuntime");
+  var titleMenuRuntime = requireRuntimeModule("titleMenuRuntime");
   var sharedState = requireRuntimeModule("sharedState");
 
   return {
@@ -466,6 +467,7 @@
     stagePackLifecycleRuntime: stagePackLifecycleRuntime,
     stageLifecycleRuntime: stageLifecycleRuntime,
     titleFlowRuntime: titleFlowRuntime,
+    titleMenuRuntime: titleMenuRuntime,
 
     // Shared state module
     sharedState: sharedState,

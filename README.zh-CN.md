@@ -205,6 +205,7 @@ node --check src/runtime/game-session-runtime.js
 node --check src/runtime/high-score-runtime.js
 node --check src/runtime/player-session-runtime.js
 node --check src/runtime/title-flow-runtime.js
+node --check src/runtime/title-menu-runtime.js
 node --check src/runtime/stage-pack-lifecycle-runtime.js
 node --check src/runtime/stage-lifecycle-runtime.js
 node --check src/runtime/audio-fixed-frame-runtime.js
@@ -404,6 +405,7 @@ tank-defender-8/
 |   |   |-- high-score-runtime.js
 |   |   |-- player-session-runtime.js
 |   |   |-- title-flow-runtime.js
+|   |   |-- title-menu-runtime.js
 |   |   |-- stage-pack-lifecycle-runtime.js
 |   |   |-- stage-lifecycle-runtime.js
 |   |   |-- audio-fixed-frame-runtime.js
@@ -564,6 +566,7 @@ tank-defender-8/
 |   |   |-- high-score-runtime.test.js
 |   |   |-- player-session-runtime.test.js
 |   |   |-- title-flow-runtime.test.js
+|   |   |-- title-menu-runtime.test.js
 |   |   |-- stage-pack-lifecycle-runtime.test.js
 |   |   |-- stage-lifecycle-runtime.test.js
 |   |   |-- stage-select-runtime.test.js
@@ -727,6 +730,8 @@ tank-defender-8/
 `src/runtime/player-session-runtime.js` 通过活动关卡运行时接管玩家记录创建和每关位置复位。直接测试锁定出生点查询、游戏设置、敌人类型数量、方向和复位参数。
 
 `src/runtime/title-flow-runtime.js` 接管标题闲置计数器，以及隐藏信息的输入、时序和表现。直接测试锁定演示启动、复位回调、手柄字节运算、开始/结束过渡、文本节奏、圆点时序和水滴动画。
+
+`src/runtime/title-menu-runtime.js` 接管标题菜单选择，以及单人、双人和 Construction 的入口分派。直接测试锁定闲置计数器复位、循环、索引钳制，以及每个入口和越界回退。
 
 `src/runtime/input-runtime.js` 接管浏览器输入路由：工具栏动作、键盘屏幕分派、一次性射击/选关按键、暂停音频交接、关卡包文件导入和 Construction 鼠标编辑。它保留方向键/WASD 映射、演示退出路径、隐藏信息输入保留、编辑器快捷键、坐标换算和暂停门控；`src/game.js` 只提供显式回调。直接测试锁定注册、动作分派、暂停同步顺序、键盘路由和鼠标坐标。
 

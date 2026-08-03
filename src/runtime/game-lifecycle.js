@@ -17,7 +17,6 @@
    * `deps` is the module-deps barrel (requireRuntimeModule("moduleDeps")).
    */
   function setupGameLifecycle(state, deps) {
-    var sh = deps.sharedState;
     var fn = state.fn;
 
     // ── High score ─────────────────────────────────────────────────────────
@@ -38,22 +37,7 @@
     deps.editorLifecycleRuntime.setupEditorLifecycleRuntime(state, deps);
 
     // ── Title menu ────────────────────────────────────────────────────────
-    fn.moveTitleMenu = function (delta) {
-      fn.resetTitleIdleHighByte();
-      state.game.titleMenu = (state.game.titleMenu + delta + sh.TITLE_MENU_ITEMS.length) % sh.TITLE_MENU_ITEMS.length;
-    };
-
-    fn.setTitleMenu = function (index) {
-      fn.resetTitleIdleHighByte();
-      state.game.titleMenu = deps.clamp(Math.floor(Number(index) || 0), 0, sh.TITLE_MENU_ITEMS.length - 1);
-    };
-
-    fn.activateTitleMenu = function () {
-      var item = sh.TITLE_MENU_ITEMS[state.game.titleMenu] || sh.TITLE_MENU_ITEMS[0];
-      if (item.action === "one") fn.beginStageSelect(1);
-      else if (item.action === "two") fn.beginStageSelect(2);
-      else if (item.action === "construction") fn.enterEditor();
-    };
+    deps.titleMenuRuntime.setupTitleMenuRuntime(state, deps);
 
     deps.stagePackLifecycleRuntime.setupStagePackLifecycleRuntime(state, deps, {
       clearTransientBattleState: fn.clearTransientBattleState,
