@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/power-up-diagnostics");
+const collectionDiagnostics = require("../../src/runtime/power-up-collection-diagnostics");
 const presentationDiagnostics = require("../../src/runtime/power-up-presentation-diagnostics");
 const spawnDiagnostics = require("../../src/runtime/power-up-spawn-diagnostics");
 
@@ -53,6 +54,8 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: {},
+  createPowerUpCollectionDiagnostics:
+    collectionDiagnostics.createPowerUpCollectionDiagnostics,
   createPowerUpPresentationDiagnostics:
     presentationDiagnostics.createPowerUpPresentationDiagnostics,
   createPowerUpSpawnDiagnostics: spawnDiagnostics.createPowerUpSpawnDiagnostics,

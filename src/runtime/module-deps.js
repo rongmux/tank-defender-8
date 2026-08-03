@@ -93,6 +93,7 @@
   var playerMovementMotionDiagnostics = requireRuntimeModule("playerMovementMotionDiagnostics");
   var playerMovementSurfaceDiagnostics = requireRuntimeModule("playerMovementSurfaceDiagnostics");
   var powerUpPresentationDiagnostics = requireRuntimeModule("powerUpPresentationDiagnostics");
+  var powerUpCollectionDiagnostics = requireRuntimeModule("powerUpCollectionDiagnostics");
   var powerUpSpawnDiagnostics = requireRuntimeModule("powerUpSpawnDiagnostics");
   var wallDiagnostics = requireRuntimeModule("wallDiagnostics");
   var enemyDiagnostics = requireRuntimeModule("enemyDiagnostics");
@@ -363,6 +364,8 @@
       playerMovementSurfaceDiagnostics.createPlayerMovementSurfaceDiagnostics,
     createPowerUpPresentationDiagnostics:
       powerUpPresentationDiagnostics.createPowerUpPresentationDiagnostics,
+    createPowerUpCollectionDiagnostics:
+      powerUpCollectionDiagnostics.createPowerUpCollectionDiagnostics,
     createPowerUpSpawnDiagnostics: powerUpSpawnDiagnostics.createPowerUpSpawnDiagnostics,
     createWallDiagnostics: wallDiagnostics.createWallDiagnostics,
     createEnemyDiagnostics: enemyDiagnostics.createEnemyDiagnostics,
