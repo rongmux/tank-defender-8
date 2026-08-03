@@ -101,6 +101,7 @@
       stageResultDuration,
       stageSelectCurtainState,
       stageStartAudio,
+      createStageFlowTransitionDiagnostics,
       STAGE_CURTAIN_CLOSE_FRAMES,
       stopGameOverAudio,
       stopHighScoreAudio,
@@ -112,85 +113,7 @@
     } = scope;
 
     return Object.freeze({
-        debugStageIntroCurtainProbe(timer) {
-          return stageIntroCurtainState(timer);
-        },
-        debugStageSelectCurtainProbe(timer) {
-          return stageSelectCurtainState(timer);
-        },
-        debugRenderStageClearClosingFrame(timer) {
-          const previous = {
-            screen: game.screen,
-            stage: game.stage,
-            playerCount: game.playerCount,
-            transitionTimer: game.transitionTimer,
-            players: game.players,
-            stageResultReason: game.stageResultReason,
-            stageClearElapsed: game.stageClearElapsed,
-            stageClearBonusPlayerIds: game.stageClearBonusPlayerIds.slice(),
-            stageClearBonusAwarded: game.stageClearBonusAwarded
-          };
-          try {
-            const player = createPlayer(1);
-            player.score = 12300;
-            player.stageKills = [1, 2, 3, 4];
-            game.screen = "stageClearClosing";
-            game.stage = 1;
-            game.playerCount = 1;
-            game.transitionTimer = clamp(Math.floor(Number(timer) || 0), 0, STAGE_CURTAIN_CLOSE_FRAMES);
-            game.players = [player];
-            game.stageResultReason = "clear";
-            game.stageClearElapsed = stageResultDuration(game.players);
-            game.stageClearBonusPlayerIds = [];
-            game.stageClearBonusAwarded = true;
-            render();
-            return stageSelectCurtainState();
-          } finally {
-            Object.assign(game, previous);
-          }
-        },
-        debugAdvanceStageTransition(frames) {
-          const count = Math.max(0, Math.floor(Number(frames) || 0));
-          for (let index = 0; index < count; index += 1) {
-            if (game.screen !== "stageSelectClosing" && game.screen !== "stageIntro") break;
-            update();
-          }
-          return {
-            screen: game.screen,
-            transitionTimer: game.transitionTimer,
-            stage: game.stage,
-            players: game.players.length
-          };
-        },
-        debugAdvanceStageSelect(frames) {
-          const count = Math.max(0, Math.floor(Number(frames) || 0));
-          for (let index = 0; index < count; index += 1) {
-            if (game.screen !== "stageSelect") break;
-            update();
-          }
-          return {
-            screen: game.screen,
-            stage: game.stage,
-            frameLow: game.frameLow,
-            frameHigh: game.frameHigh
-          };
-        },
-        debugAdvanceStageStartAudio(frames) {
-          const count = Math.max(0, Math.floor(Number(frames) || 0));
-          for (let index = 0; index < count; index += 1) {
-            updateStageStartAudio();
-            updatePauseAudio();
-          }
-          return {
-            active: stageStartAudio.active,
-            frame: stageStartAudio.frame,
-            durationFrames: FREE_AUDIO_MANIFEST.events.stageStart.durationFrames,
-            movementAudioMode: movementAudio.mode,
-            paused: game.paused,
-            pauseAudioActive: pauseAudio.active,
-            pauseAudioFrame: pauseAudio.frame
-          };
-        },
+        ...createStageFlowTransitionDiagnostics(scope),
         debugStageAdvanceProbe(stage) {
           return stageAdvanceResult(stage === undefined ? stageCount() : Number(stage));
         },

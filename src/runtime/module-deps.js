@@ -81,6 +81,7 @@
   var stagePackDiagnostics = requireRuntimeModule("stagePackDiagnostics");
   var stageResultDiagnostics = requireRuntimeModule("stageResultDiagnostics");
   var pauseDiagnostics = requireRuntimeModule("pauseDiagnostics");
+  var stageFlowTransitionDiagnostics = requireRuntimeModule("stageFlowTransitionDiagnostics");
   var stageFlowDiagnostics = requireRuntimeModule("stageFlowDiagnostics");
   var screenFlowDiagnostics = requireRuntimeModule("screenFlowDiagnostics");
   var wallDiagnostics = requireRuntimeModule("wallDiagnostics");
@@ -336,6 +337,7 @@
     createStageResultDiagnostics: stageResultDiagnostics.createStageResultDiagnostics,
     createStageResultProbePlayer: stageResultDiagnostics.createStageResultProbePlayer,
     createPauseDiagnostics: pauseDiagnostics.createPauseDiagnostics,
+    createStageFlowTransitionDiagnostics: stageFlowTransitionDiagnostics.createStageFlowTransitionDiagnostics,
     createStageFlowDiagnostics: stageFlowDiagnostics.createStageFlowDiagnostics,
     createScreenFlowDiagnostics: screenFlowDiagnostics.createScreenFlowDiagnostics,
     createWallDiagnostics: wallDiagnostics.createWallDiagnostics,

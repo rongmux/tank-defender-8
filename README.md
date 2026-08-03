@@ -184,6 +184,7 @@ node --check src/runtime/audio-diagnostics.js
 node --check src/runtime/stage-pack-diagnostics.js
 node --check src/runtime/stage-result-diagnostics.js
 node --check src/runtime/pause-diagnostics.js
+node --check src/runtime/stage-flow-transition-diagnostics.js
 node --check src/runtime/stage-flow-diagnostics.js
 node --check src/runtime/screen-flow-diagnostics.js
 node --check src/runtime/wall-diagnostics.js
@@ -390,6 +391,7 @@ tank-defender-8/
 |   |   |-- stage-pack-diagnostics.js
 |   |   |-- stage-result-diagnostics.js
 |   |   |-- pause-diagnostics.js
+|   |   |-- stage-flow-transition-diagnostics.js
 |   |   |-- stage-flow-diagnostics.js
 |   |   |-- screen-flow-diagnostics.js
 |   |   |-- wall-diagnostics.js
@@ -676,6 +678,7 @@ tank-defender-8/
 |   |   |-- score-rules.test.js
 |   |   |-- screen-flow-diagnostics.test.js
 |   |   |-- screen-presentation.test.js
+|   |   |-- stage-flow-transition-diagnostics.test.js
 |   |   |-- stage-flow-diagnostics.test.js
 |   |   |-- stage-flow-settings.test.js
 |   |   |-- stage-settings.test.js
@@ -891,6 +894,8 @@ tank-defender-8/
 
 `src/game.js` no longer maintains local aliases for registered audio or non-audio runtime methods. Composition modules read `state.fn` during setup, while the main loop invokes the high-score API directly after registration; the composition root now retains only the dependency bucket, shared-state handle, stage runtime, and small tile-name mapping.
 
+
+`stage-flow-transition-diagnostics.js` owns the first six contiguous curtain-state, closing-frame rendering, transition advance, stage-select advance, and stage-start-audio probes. It consumes the explicit stage-flow scope and directly tests validation plus its frozen ordered diagnostic surface. After this extraction, `stage-flow-diagnostics.js` composes that child and retains the remaining 11 stage-cycle, stage-clear, automatic-advance, and game-over probes.
 
 `effect-diagnostics.js` binds the five contiguous explosion-rule, tank-destruction, enemy-release, rendered-frame, and paused-impact probes through 31 explicitly destructured runtime symbols with receiver-preserving function binding and no `eval`. The extraction and seven dead-adapter removals leave `debug-api.js` at 4,175 physical lines. Its unit suite locks validation, exact method order, binding precedence, and receiver identity; browser integration executes all five probes at their original public indices 130-134 and preserves the pre-refactor 6,548-byte output SHA-256.
 

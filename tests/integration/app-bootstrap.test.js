@@ -27,6 +27,7 @@ function keyPress(listeners, code) {
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.titleFlowRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.titleMenuRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.inputCommandRuntime), true);
+  assert.equal(Object.isFrozen(context.window.TankDefender8Modules.stageFlowTransitionDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatTankCollisionDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatProjectileDiagnostics), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.combatFireLimitDiagnostics), true);
