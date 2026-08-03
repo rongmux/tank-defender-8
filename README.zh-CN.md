@@ -206,6 +206,7 @@ node --check src/runtime/high-score-runtime.js
 node --check src/runtime/player-session-runtime.js
 node --check src/runtime/title-flow-runtime.js
 node --check src/runtime/stage-pack-lifecycle-runtime.js
+node --check src/runtime/stage-lifecycle-runtime.js
 node --check src/runtime/audio-fixed-frame-runtime.js
 node --check src/runtime/audio-channel-runtime.js
 node --check src/runtime/audio-movement-runtime.js
@@ -404,6 +405,7 @@ tank-defender-8/
 |   |   |-- player-session-runtime.js
 |   |   |-- title-flow-runtime.js
 |   |   |-- stage-pack-lifecycle-runtime.js
+|   |   |-- stage-lifecycle-runtime.js
 |   |   |-- audio-fixed-frame-runtime.js
 |   |   |-- audio-channel-runtime.js
 |   |   |-- audio-movement-runtime.js
@@ -563,6 +565,7 @@ tank-defender-8/
 |   |   |-- player-session-runtime.test.js
 |   |   |-- title-flow-runtime.test.js
 |   |   |-- stage-pack-lifecycle-runtime.test.js
+|   |   |-- stage-lifecycle-runtime.test.js
 |   |   |-- stage-select-runtime.test.js
 |   |   |-- post-game-runtime.test.js
 |   |   |-- stage-flow-runtime.test.js
@@ -716,6 +719,8 @@ tank-defender-8/
 `src/runtime/game-session-runtime.js` 接管常规游戏会话初始化以及标题演示的进入和退出。直接测试锁定最高分基线复位、Construction/自定义网格选择、玩家创建、关卡启动、演示时序、帧计数器复位、移动音频交接和完整的演示音频清理。
 
 `src/runtime/stage-pack-lifecycle-runtime.js` 接管 JSON 解析、关卡包规范化、活动包安装、战场网格准备和内置包恢复。显式回调将标题闲置计时复位、战斗随机数复位及临时战斗状态清理保留在组合边界；其单元测试锁定畸形输入、校验失败、状态复位投影和内置包恢复，浏览器集成测试锁定模块注册和公开关卡包加载。
+
+`src/runtime/stage-lifecycle-runtime.js` 接管每关网格准备、战斗状态初始化、临时战斗清理、每关玩家统计和关卡推进。直接测试锁定内置、自定义和 Construction 网格路径，音频清理顺序，实体/计时器复位，结算状态，以及标题选关和战斗内推进的分支。
 
 `src/runtime/high-score-runtime.js` 接管最高分读取、存储持久化和单调分数提升。直接测试锁定数值规范化、基线投影、较小分数拒绝、存储写入以及受限浏览器环境下的存储降级。
 

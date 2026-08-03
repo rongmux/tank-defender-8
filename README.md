@@ -206,6 +206,7 @@ node --check src/runtime/high-score-runtime.js
 node --check src/runtime/player-session-runtime.js
 node --check src/runtime/title-flow-runtime.js
 node --check src/runtime/stage-pack-lifecycle-runtime.js
+node --check src/runtime/stage-lifecycle-runtime.js
 node --check src/runtime/audio-fixed-frame-runtime.js
 node --check src/runtime/audio-channel-runtime.js
 node --check src/runtime/audio-movement-runtime.js
@@ -404,6 +405,7 @@ tank-defender-8/
 |   |   |-- player-session-runtime.js
 |   |   |-- title-flow-runtime.js
 |   |   |-- stage-pack-lifecycle-runtime.js
+|   |   |-- stage-lifecycle-runtime.js
 |   |   |-- audio-fixed-frame-runtime.js
 |   |   |-- audio-channel-runtime.js
 |   |   |-- audio-movement-runtime.js
@@ -563,6 +565,7 @@ tank-defender-8/
 |   |   |-- player-session-runtime.test.js
 |   |   |-- title-flow-runtime.test.js
 |   |   |-- stage-pack-lifecycle-runtime.test.js
+|   |   |-- stage-lifecycle-runtime.test.js
 |   |   |-- stage-select-runtime.test.js
 |   |   |-- post-game-runtime.test.js
 |   |   |-- stage-flow-runtime.test.js
@@ -716,6 +719,8 @@ tank-defender-8/
 `src/runtime/game-session-runtime.js` owns normal game-session setup plus title-demo entry and exit. Its direct tests lock high-score baseline reset, Construction/custom-grid selection, player creation, stage start, demo timing, frame-counter reset, movement-audio handoff, and full demo audio cleanup.
 
 `src/runtime/stage-pack-lifecycle-runtime.js` owns JSON parsing, pack normalization, active-pack installation, fresh-grid preparation, and restoring the built-in pack. Explicit callbacks keep title-idle reset, battle-random reset, and transient battle-state clearing at the composition boundary; its unit test locks malformed input, validation failures, reset projection, and built-in restoration, while browser integration locks module registration and public pack loading.
+
+`src/runtime/stage-lifecycle-runtime.js` owns per-stage grid preparation, battle-state initialization, transient battle cleanup, per-stage player statistics, and stage progression. Its direct tests lock built-in, custom, and Construction grid paths; audio cleanup order; entity/timer resets; stage-result state; and title-selection versus in-battle progression.
 
 `src/runtime/high-score-runtime.js` owns high-score loading, storage persistence, and monotonic score promotion. Its direct tests lock numeric normalization, baseline projection, smaller-score rejection, storage writes, and restricted-browser storage fallback.
 

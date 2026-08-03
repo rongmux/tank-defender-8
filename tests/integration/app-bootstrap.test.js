@@ -23,6 +23,7 @@ function keyPress(listeners, code) {
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.gameSessionRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.highScoreRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.playerSessionRuntime), true);
+  assert.equal(Object.isFrozen(context.window.TankDefender8Modules.stageLifecycleRuntime), true);
   assert.equal(Object.isFrozen(context.window.TankDefender8Modules.titleFlowRuntime), true);
   assert.equal(typeof animationFrameCallback, "function");
   for (const button of buttons) {
