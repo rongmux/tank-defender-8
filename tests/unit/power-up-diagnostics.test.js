@@ -1,6 +1,7 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/power-up-diagnostics");
 const presentationDiagnostics = require("../../src/runtime/power-up-presentation-diagnostics");
+const spawnDiagnostics = require("../../src/runtime/power-up-spawn-diagnostics");
 
 const POWER_UP_DIAGNOSTIC_METHODS = [
   "debugPowerUpTypePoolProbe",
@@ -54,6 +55,7 @@ const deps = {
   sharedState: {},
   createPowerUpPresentationDiagnostics:
     presentationDiagnostics.createPowerUpPresentationDiagnostics,
+  createPowerUpSpawnDiagnostics: spawnDiagnostics.createPowerUpSpawnDiagnostics,
   isPowerUpVisible() {
     return this.label;
   }

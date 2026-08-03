@@ -196,6 +196,7 @@ node --check src/runtime/wall-diagnostics.js
 node --check src/runtime/enemy-diagnostics.js
 node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/power-up-presentation-diagnostics.js
+node --check src/runtime/power-up-spawn-diagnostics.js
 node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/score-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
@@ -412,6 +413,7 @@ tank-defender-8/
 |   |   |-- enemy-diagnostics.js
 |   |   |-- timer-diagnostics.js
 |   |   |-- power-up-presentation-diagnostics.js
+|   |   |-- power-up-spawn-diagnostics.js
 |   |   |-- power-up-diagnostics.js
 |   |   |-- score-diagnostics.js
 |   |   |-- upgrade-diagnostics.js
@@ -677,6 +679,7 @@ tank-defender-8/
 |   |   |-- power-up-settings.test.js
 |   |   |-- power-up-collection-rules.test.js
 |   |   |-- power-up-presentation-diagnostics.test.js
+|   |   |-- power-up-spawn-diagnostics.test.js
 |   |   |-- power-up-diagnostics.test.js
 |   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
@@ -849,7 +852,7 @@ tank-defender-8/
 
 `timer-diagnostics.js` 通过保留接收者的函数绑定和 18 个显式解构的运行时符号，接管连续的 7 个定时器规则、全局倒计时、护盾节奏/暂停、冻结行为、最后冻结帧和冻结期间生成探针，且不使用 `eval`。抽离并移除 3 个死适配器后，`debug-api.js` 保留 3,557 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和状态恢复；浏览器集成测试在原公开索引 67-73 依次执行全部 7 个探针，并保持重构前 2,184 字节输出的 SHA-256。
 
-`power-up-presentation-diagnostics.js` 接管前五个类型池、共享随机、闪烁、暂停画面与水面动画探针。它消费显式 power-up 作用域，并直接测试输入校验及冻结的有序诊断接口。`power-up-diagnostics.js` 现在在其前组合该子模块，并保留 TTL/拾取、拾取渲染/足迹、地形变更、出生筛选/轮换和携带者清除探针。浏览器集成测试在原公开索引 75-89 依次执行全部 15 个方法，并保持重构前 7,420 字节输出的 SHA-256。
+`power-up-presentation-diagnostics.js` 接管前五个类型池、共享随机、闪烁、暂停画面与水面动画探针。`power-up-spawn-diagnostics.js` 接管最后的地形变更、出生筛选/轮换和携带者清除探针。两个模块均消费显式 power-up 作用域，并直接测试输入校验及冻结的有序诊断接口。`power-up-diagnostics.js` 在其前后组合两个子模块，并保留 TTL/拾取及拾取渲染/足迹探针。浏览器集成测试在原公开索引 75-89 依次执行全部 15 个方法，并保持重构前 7,420 字节输出的 SHA-256。
 
 `upgrade-diagnostics.js` 通过保留接收者的函数绑定、17 个显式解构的运行时符号和实时玩家摧毁音频记录，接管连续的 3 个星星升级规则、升级坦克覆盖层和三级坦克生存探针，且不使用 `eval`。抽离后，`debug-api.js` 保留 2,894 个物理行。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 94-96 依次执行全部 3 个探针，并保持重构前 702 字节输出的 SHA-256。
 
