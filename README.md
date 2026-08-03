@@ -192,6 +192,7 @@ node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/score-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
+node --check src/runtime/combat-tank-collision-diagnostics.js
 node --check src/runtime/combat-crossing-diagnostics.js
 node --check src/runtime/combat-fire-limit-diagnostics.js
 node --check src/runtime/combat-player-fire-input-diagnostics.js
@@ -397,6 +398,7 @@ tank-defender-8/
 |   |   |-- power-up-diagnostics.js
 |   |   |-- score-diagnostics.js
 |   |   |-- upgrade-diagnostics.js
+|   |   |-- combat-tank-collision-diagnostics.js
 |   |   |-- combat-crossing-diagnostics.js
 |   |   |-- combat-fire-limit-diagnostics.js
 |   |   |-- combat-player-fire-input-diagnostics.js
@@ -657,6 +659,7 @@ tank-defender-8/
 |   |   |-- power-up-diagnostics.test.js
 |   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
+|   |   |-- combat-tank-collision-diagnostics.test.js
 |   |   |-- combat-crossing-diagnostics.test.js
 |   |   |-- combat-fire-limit-diagnostics.test.js
 |   |   |-- combat-player-fire-input-diagnostics.test.js
@@ -901,13 +904,15 @@ tank-defender-8/
 
 `combat-projectile-diagnostics.js` owns the contiguous projectile construction, field-boundary impact, terrain-hit sound, friendly-fire settings, and friendly-fire protection probes. It consumes the explicit combat scope without browser globals or `eval`; its direct test locks validation, exact method order, and friendly-fire configuration output.
 
+`combat-tank-collision-diagnostics.js` owns helmet protection, enemy-to-player and player-to-enemy impact thresholds, armored-enemy hit behavior, and player spawn-lock probes. It consumes the explicit combat scope and directly tests validation plus its frozen ordered diagnostic surface.
+
 `combat-fire-limit-diagnostics.js` owns the player/enemy active-bullet-limit probe. It consumes the explicit combat scope, preserves firing-audio cleanup, and directly tests scope validation plus the frozen one-method diagnostic surface.
 
 `combat-player-fire-input-diagnostics.js` owns fresh-press consumption, full-slot discard, two-bullet upgrade, spawn lock, and stunned-player fire probes. It consumes the explicit combat scope and directly tests validation plus its frozen diagnostic surface.
 
 `combat-crossing-diagnostics.js` owns the crossing projectile cancellation probe, including near-threshold and same-owner collision cases. It consumes the explicit combat scope and directly tests its frozen probe surface.
 
-`combat-diagnostics.js` builds the receiver-preserving combat scope and composes the helmet-protection, player/enemy collision, and spawn-lock probes with fire-input, crossing, fire-limit, and five projectile diagnostic modules. Its unit suite locks state/keys/pending-fire/audio validation, exact public method order, binding precedence, and output scope; browser integration executes all 12 probes at their original public indices 101-112 and preserves the pre-refactor 5,147-byte output SHA-256.
+`combat-diagnostics.js` builds the receiver-preserving combat scope and composes tank-collision, fire-input, crossing, fire-limit, and five projectile diagnostic modules. Its unit suite locks state/keys/pending-fire/audio validation, exact public method order, binding precedence, and output scope; browser integration executes all 12 probes at their original public indices 101-112 and preserves the pre-refactor 5,147-byte output SHA-256.
 
 `player-movement-diagnostics.js` binds the 11 contiguous fixed-loop cadence, tread animation, friendly-fire stun, WASD input, turn alignment, brick recovery, ice movement, and ice/forest layer probes through 42 explicitly destructured runtime symbols plus the live movement-ice and player-shoot audio records, with receiver-preserving function binding and no `eval`. The extraction and six dead-adapter removals leave `debug-api.js` at 2,312 physical lines. Its unit suite locks state/keys/audio validation, exact method order, binding precedence, and state restoration; browser integration executes all 11 probes at their original public indices 113-123 and preserves the pre-refactor 2,414-byte output SHA-256.
 

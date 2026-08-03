@@ -192,6 +192,7 @@ node --check src/runtime/timer-diagnostics.js
 node --check src/runtime/power-up-diagnostics.js
 node --check src/runtime/score-diagnostics.js
 node --check src/runtime/upgrade-diagnostics.js
+node --check src/runtime/combat-tank-collision-diagnostics.js
 node --check src/runtime/combat-crossing-diagnostics.js
 node --check src/runtime/combat-fire-limit-diagnostics.js
 node --check src/runtime/combat-player-fire-input-diagnostics.js
@@ -397,6 +398,7 @@ tank-defender-8/
 |   |   |-- power-up-diagnostics.js
 |   |   |-- score-diagnostics.js
 |   |   |-- upgrade-diagnostics.js
+|   |   |-- combat-tank-collision-diagnostics.js
 |   |   |-- combat-crossing-diagnostics.js
 |   |   |-- combat-fire-limit-diagnostics.js
 |   |   |-- combat-player-fire-input-diagnostics.js
@@ -657,6 +659,7 @@ tank-defender-8/
 |   |   |-- power-up-diagnostics.test.js
 |   |   |-- score-diagnostics.test.js
 |   |   |-- upgrade-diagnostics.test.js
+|   |   |-- combat-tank-collision-diagnostics.test.js
 |   |   |-- combat-crossing-diagnostics.test.js
 |   |   |-- combat-fire-limit-diagnostics.test.js
 |   |   |-- combat-player-fire-input-diagnostics.test.js
@@ -818,13 +821,15 @@ tank-defender-8/
 
 `combat-projectile-diagnostics.js` 接管连续的子弹构造、场地边界命中、地形命中音效、友军火力设置与友军火力保护探针。它消费显式 combat 作用域，不依赖浏览器全局变量且不使用 `eval`；直接测试锁定输入校验、精确方法顺序和友军火力配置输出。
 
+`combat-tank-collision-diagnostics.js` 接管头盔保护、敌弹命中玩家和玩家弹命中敌人的临界碰撞、装甲敌人命中行为及玩家出生锁定探针。它消费显式 combat 作用域，并直接测试输入校验及冻结的有序诊断接口。
+
 `combat-fire-limit-diagnostics.js` 接管玩家/敌方活跃子弹上限探针。它消费显式 combat 作用域，保留发射音频清理，并直接测试作用域校验及仅含一个方法的冻结诊断接口。
 
 `combat-player-fire-input-diagnostics.js` 接管新按键消费、满弹槽丢弃、双发升级、出生锁定和眩晕玩家发射探针。它消费显式 combat 作用域，并直接测试输入校验及冻结诊断接口。
 
 `combat-crossing-diagnostics.js` 接管交叉子弹抵消探针，包括临界距离和同一归属者的碰撞情形。它消费显式 combat 作用域，并直接测试冻结探针接口。
 
-`combat-diagnostics.js` 构建保留接收者的 combat 作用域，并将头盔保护、玩家/敌方碰撞和出生锁定探针，与发射输入、交叉抵消、子弹上限和 5 个弹体规则诊断模块组合。其单元测试锁定状态/按键/待发射/音频校验、精确公开方法顺序、绑定优先级和输出作用域；浏览器集成测试在原公开索引 101-112 依次执行全部 12 个探针，并保持重构前 5,147 字节输出的 SHA-256。
+`combat-diagnostics.js` 构建保留接收者的 combat 作用域，并组合坦克碰撞、发射输入、交叉抵消、子弹上限和 5 个弹体规则诊断模块。其单元测试锁定状态/按键/待发射/音频校验、精确公开方法顺序、绑定优先级和输出作用域；浏览器集成测试在原公开索引 101-112 依次执行全部 12 个探针，并保持重构前 5,147 字节输出的 SHA-256。
 
 `player-movement-diagnostics.js` 通过保留接收者的函数绑定、42 个显式解构的运行时符号和实时冰面移动/玩家射击音频记录，接管连续的 11 个固定帧节奏、履带动画、友军火力眩晕、WASD 输入、转向对齐、砖块脱困、冰面移动以及冰面/森林图层探针，且不使用 `eval`。抽离并移除 6 个死适配器后，`debug-api.js` 保留 2,312 个物理行。其单元测试锁定状态/按键/音频校验、精确方法顺序、绑定优先级和状态恢复；浏览器集成测试在原公开索引 113-123 依次执行全部 11 个探针，并保持重构前 2,414 字节输出的 SHA-256。
 

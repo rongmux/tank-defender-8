@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const diagnostics = require("../../src/runtime/combat-diagnostics");
+const tankCollisionDiagnostics = require("../../src/runtime/combat-tank-collision-diagnostics");
 const crossingDiagnostics = require("../../src/runtime/combat-crossing-diagnostics");
 const fireLimitDiagnostics = require("../../src/runtime/combat-fire-limit-diagnostics");
 const playerFireInputDiagnostics = require("../../src/runtime/combat-player-fire-input-diagnostics");
@@ -57,6 +58,7 @@ assert.throws(
 const deps = {
   label: "deps",
   sharedState: {},
+  createCombatTankCollisionDiagnostics: tankCollisionDiagnostics.createCombatTankCollisionDiagnostics,
   createCombatCrossingDiagnostics: crossingDiagnostics.createCombatCrossingDiagnostics,
   createCombatFireLimitDiagnostics: fireLimitDiagnostics.createCombatFireLimitDiagnostics,
   createCombatPlayerFireInputDiagnostics: playerFireInputDiagnostics.createCombatPlayerFireInputDiagnostics,

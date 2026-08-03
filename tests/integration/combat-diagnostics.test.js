@@ -26,6 +26,7 @@ const api = context.window.TankDefender8;
 
 assert(modules.combatDiagnostics, "combat diagnostics should register before game.js");
 assert.equal(Object.isFrozen(modules.combatDiagnostics), true);
+assert.equal(Object.isFrozen(modules.combatTankCollisionDiagnostics), true);
 assert.equal(Object.isFrozen(modules.combatCrossingDiagnostics), true);
 assert.equal(Object.isFrozen(modules.combatFireLimitDiagnostics), true);
 assert.equal(Object.isFrozen(modules.combatPlayerFireInputDiagnostics), true);
@@ -73,6 +74,10 @@ const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/combat-diagnostics.js"),
   "utf8"
 );
+const tankCollisionDiagnosticsSource = fs.readFileSync(
+  path.join(root, "src/runtime/combat-tank-collision-diagnostics.js"),
+  "utf8"
+);
 const projectileDiagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/combat-projectile-diagnostics.js"),
   "utf8"
@@ -91,6 +96,7 @@ const crossingDiagnosticsSource = fs.readFileSync(
 );
 assert(debugSource.includes("...createCombatDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
+assert.equal(tankCollisionDiagnosticsSource.includes("eval("), false);
 assert.equal(projectileDiagnosticsSource.includes("eval("), false);
 assert.equal(fireLimitDiagnosticsSource.includes("eval("), false);
 assert.equal(playerFireInputDiagnosticsSource.includes("eval("), false);
@@ -99,6 +105,7 @@ for (const name of COMBAT_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
   assert.equal(
     diagnosticsSource.includes(`${name}(`) ||
+      tankCollisionDiagnosticsSource.includes(`${name}(`) ||
       crossingDiagnosticsSource.includes(`${name}(`) ||
       fireLimitDiagnosticsSource.includes(`${name}(`) ||
       playerFireInputDiagnosticsSource.includes(`${name}(`) ||
