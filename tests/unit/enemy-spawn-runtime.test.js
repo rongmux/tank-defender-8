@@ -136,4 +136,32 @@ assert.equal(state.game.nextSpawn, 1);
 api.spawnEnemies();
 assert.equal(state.game.nextSpawn, 0);
 
+// DB48-DB74 ticks the delay before looking for a free enemy slot.
+state.game.enemySpawned = 1;
+state.game.nextSpawn = 2;
+state.game.enemies = [{ alive: true }, { alive: true }];
+deps.isEnemySpawnPointOccupied = () => false;
+const eventsBeforeCapacityWait = events.length;
+api.spawnEnemies();
+assert.equal(state.game.nextSpawn, 1, "full capacity must not freeze the spawn countdown");
+api.spawnEnemies();
+assert.equal(state.game.nextSpawn, 0);
+api.spawnEnemies();
+assert.equal(state.game.nextSpawn, 0, "an expired countdown must not underflow or restart");
+assert.equal(state.game.enemySpawned, 1);
+assert.equal(state.game.enemies.length, 2);
+assert.equal(events.length, eventsBeforeCapacityWait, "waiting must not clear a power-up");
+
+state.game.enemies.pop();
+api.spawnEnemies();
+assert.equal(state.game.enemySpawned, 2, "an expired countdown must spawn as soon as a slot is free");
+assert.equal(state.game.enemies.length, 2);
+assert.equal(state.game.nextSpawn, 0, "the last enemy must not schedule another spawn");
+
+state.game.nextSpawn = 1;
+api.spawnEnemies();
+assert.equal(state.game.nextSpawn, 0, "the countdown precedes even the exhausted-queue check");
+api.spawnEnemies();
+assert.equal(state.game.enemySpawned, 2);
+
 console.log("enemy-spawn-runtime unit test passed");

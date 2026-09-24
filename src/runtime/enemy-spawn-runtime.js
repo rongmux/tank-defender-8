@@ -58,13 +58,14 @@
     } = callbacks;
 
     function spawnEnemies() {
-      if (game.enemySpawned >= enemyTotal()) return;
-      var capacity = maxActiveEnemies();
-      if (deps.activeEnemyCount(game.enemies) >= capacity) return;
+      // NES $DB48 ticks the interval even while every enemy slot is occupied.
       if (game.nextSpawn > 0) {
         game.nextSpawn -= 1;
         return;
       }
+      if (game.enemySpawned >= enemyTotal()) return;
+      var capacity = maxActiveEnemies();
+      if (deps.activeEnemyCount(game.enemies) >= capacity) return;
       var enemySpec = getEnemySpec(game.stage, game.enemySpawned);
       var spawnIndex = deps.selectEnemySpawnIndex(enemySpec, game.enemySpawned);
       var typeIndex = enemySpec.typeIndex;
