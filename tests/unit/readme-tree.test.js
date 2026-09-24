@@ -55,6 +55,26 @@ function listWorkspaceFiles(directory = root, relativeDirectory = "") {
   return files.sort();
 }
 
+function markdownStructure(fileName) {
+  const lines = fs.readFileSync(path.join(root, fileName), "utf8").split(/\r?\n/);
+  let inFence = false;
+  return lines.flatMap((line) => {
+    const fence = line.match(/^```(.*)$/);
+    if (fence) {
+      inFence = !inFence;
+      return [`fence:${fence[1]}`];
+    }
+    if (inFence) return [];
+    const heading = line.match(/^(#+) /);
+    if (heading) return [`heading:${heading[1].length}`];
+    const ordered = line.match(/^(\d+)\. /);
+    if (ordered) return [`ordered:${ordered[1]}`];
+    if (line.startsWith("- ")) return ["bullet"];
+    if (line.startsWith("|")) return [`table:${line.split("|").length - 2}`];
+    return [];
+  });
+}
+
 const englishTree = readTreeBlock("README.md");
 const chineseTree = readTreeBlock("README.zh-CN.md");
 assert.equal(chineseTree, englishTree, "README file trees must match exactly");
@@ -62,5 +82,10 @@ assert.equal(chineseTree, englishTree, "README file trees must match exactly");
 const documentedFiles = parseDocumentedFiles(englishTree);
 const workspaceFiles = listWorkspaceFiles();
 assert.deepEqual(documentedFiles, workspaceFiles);
+assert.deepEqual(
+  markdownStructure("README.zh-CN.md"),
+  markdownStructure("README.md"),
+  "README headings, lists, tables, and code fences must have matching structure, not line counts"
+);
 
 console.log(`README trees match the ${workspaceFiles.length}-file workspace`);

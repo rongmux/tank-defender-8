@@ -6,37 +6,9 @@
 
 本仓库不包含 NES 原版 ROM 数据、原版精灵图或原版音频。内置 35 关布局使用固定的、由公开源码推导出的结构化地图数据；地图表现、精灵图和音频仍使用免费或自定义替代资源。内置敌人构成使用从公开的 Battle City（日版）反汇编转录出的固定 35 关敌人编组顺序与数量，并展开为每关严格 20 辆坦克；引擎仍采用数据驱动设计，因此无需修改核心代码即可调整玩法规则、敌人序列和关卡包。
 
-项目当前处于独立的架构重构阶段。在把剩余的单文件运行时拆分为显式浏览器模块、纯规则模块、共享测试基础设施、单元测试套件和按功能划分的集成套件期间，暂停新增 1:1 游戏机制。核心计时、随机数、几何和方向向量现已模块化；配置域接管共享值校验、基础会话/生命规则、弹丸/友军伤害规则、敌人 AI 与生成节奏、敌人类型/规格规范化、爆炸时序/颜色、玩家移动/cadence、玩家星星升级档位、道具持续时间/规则、关卡流程/奖励、固定逻辑时序以及各关活动敌人上限/出生点配置；关卡域接管地图网格规则、战场初始化/基地围墙行为、固定的 35 关内置地图数据、确定性备用地图生成、内置/导入关卡包组合、公开关卡包 schema、活动关卡包运行时查询、关卡路由及原版风格敌人编组/序列模型；实体域接管玩家生命周期、敌人/子弹/道具创建以及爆炸/分数提示的短生命周期状态；玩法规则域现已接管得分/奖励生命推进、结算行/领先者/计数时序、坦克/子弹碰撞边界、不同拥有者的子弹抵消、子弹边界/命中表现选择、精确到碎片的地形重叠脱困，以及定向砖块条带/钢墙象限破坏。整个迁移过程必须继续兼容无需构建的静态启动方式。
+项目已按功能拆分：`src/game.js` 是应用装配入口，纯领域模块负责规则与数据，专门的运行时模块负责浏览器副作用及流程编排。测试分为单元套件、按功能划分的集成套件和共享测试环境。应用保留无需构建的静态启动方式，不需要安装依赖包。
 
-表现层现已接管深冻结的免费替代精灵清单、两套像素字体字形和对齐几何，以及纯坦克、瞬态效果、战斗 HUD、标题计分、幕布、全屏 GAME OVER 和 HIGH SCORE 的视觉时间轴；Canvas 精灵提交和像素绘制仍由运行时负责。
-
-音频域现已接管深冻结的免费替代音频清单、纯固定帧音效状态生命周期、声部时长/音符投影、逐声部可听性选择、跨事件声道优先级解析，以及玩家/敌人移动循环相位/模式投影。Web Audio 节点创建、暂停/恢复副作用和播放仍由运行时负责。
-
-编辑器域现已接管原版风格 Construction 图块调色板和块图案序列、D-pad/WASD 方向别名、整格光标移动、面板命中测试、地形循环、精确到 8px 的砖/钢象限修改、带版本的存档文档、旧版 13x13 存档兼容、单关卡包组装及 JSON 编解码。浏览器存储、剪贴板/文件访问、消息、音效和输入监听仍由运行时负责。
-
-运行时层现已接管共享可变状态、浏览器模块依赖桶、最高分/标题/关卡/编辑器生命周期编排、Web Audio 副作用和公开调试适配器。关卡包诊断已隔离为纯投影模块，使 `currentPackInfo()` 与 `debugSnapshot()` 对克隆配置、路由、出生点、敌人类型、升级规则和敌人序列共用同一个可独立测试的数据源。关卡结算诊断将公开的奖励、结算行、行布局和计数表现四个探针绑定到纯关卡结算规则，不再把仅供诊断使用的辅助函数保留在游戏组合入口中。音频诊断现将全部 31 个清单、表现、声道优先级、暂停和生命周期探针隔离到显式绑定作用域中，不再留在单体调试适配器内。关卡流程诊断也通过同类的接收者保留边界隔离了全部 17 个幕布、关卡循环、通关、自动推进和 Game Over 生命周期探针。屏幕流程诊断隔离了标题计分、帧计数、选关输入节奏、标题演示/隐藏信息路由、最高分和全屏 Game Over 探针。敌人诊断隔离了携带者行为、目标选择、AI/移动节奏、受阻恢复、生成时间线和出生动画探针。完整公开调试快照也已成为纯投影模块，使其画面、时序、音频、关卡包、地图/编辑器和玩家记录都可独立编辑，而不会暴露运行时状态。
-
-效果诊断现通过同一套显式且保留接收者的边界，隔离了爆炸规则、坦克摧毁时间线、敌人延迟释放、摧毁帧渲染和暂停时的子弹命中特效生命周期。
-
-墙体诊断现通过显式状态/音频边界，隔离了钢墙破坏、定向砖块条带、砖块碎片渲染、铲子围墙时序和基地已毁后的铲子行为。
-
-计时诊断现通过同一套显式且保留接收者的边界，隔离了全局倒计时节奏、暂停时的护盾可见性、定时器道具冻结、最后一个冻结帧和冻结期间的敌人生成。
-
-道具诊断现通过显式状态/音频边界，隔离了类型选择、共享随机消耗、可见性与暂停行为、TTL 与拾取、拾取渲染与清除、地形影响、可达出生点轮换和携带者触发清除。
-
-升级诊断现通过同一套显式状态/音频边界，隔离了星星等级规则、升级坦克外观覆盖层渲染和三级坦克生存能力。
-
-战斗诊断现通过同一套显式状态/音频边界，隔离了头盔保护、玩家/敌方子弹碰撞、出生锁定、子弹上限与发射输入、交叉抵消、场地边界、地形命中音效和友军火力行为。
-
-地形诊断现通过同一套显式状态/音频边界，隔离了地形表面、基地围墙优先级、基地摧毁时序与渲染、坦克占位以及敌方重叠恢复。
-
-玩家移动诊断现通过同一套显式状态/音频边界，隔离了固定帧节奏、履带动画、友军火力眩晕时序、WASD 方向别名、转向对齐、砖块脱困、冰面惯性以及冰面/森林渲染层。
-
-玩家生命周期诊断现通过同一套显式状态/音频边界，隔离了死亡/重生时序、双人 Game Over 信息、信息渲染和奖励生命推进。
-
-暂停诊断现通过同一套显式状态/音频边界，隔离了暂停切换、暂停期间的关卡完成检测和暂停帧渲染。
-
-分数诊断现通过同一套显式状态/音频边界，隔离了手雷计分、敌人出生保护、分数提示创建和暂停时的分数提示生命周期。
+结构性重构已完成。下一阶段是基于原版证据逐项验证 1:1 一致性，而不是继续按文件行数拆分。现有回归套件通过只能保护当前行为，不能单独证明已经与 NES 原版等价。下文说明当前架构与验证边界。
 
 ## 运行
 
@@ -50,212 +22,14 @@ python -m http.server 8765 --bind 127.0.0.1
 
 ## 验证
 
+只有自动化验证需要 Node.js，无需安装依赖包。
+
 ```powershell
-node --check src/audio/audio-mix-rules.js
-node --check src/audio/audio-presentation.js
-node --check src/audio/fixed-frame-audio-state.js
-node --check src/audio/free-audio-manifest.js
-node --check src/core/battle-random.js
-node --check src/core/directions.js
-node --check src/core/frame-counter.js
-node --check src/core/geometry.js
-node --check src/editor/editor-rules.js
-node --check src/editor/editor-stage-format.js
-node --check src/entities/enemy-state.js
-node --check src/entities/player-state.js
-node --check src/entities/power-up-state.js
-node --check src/entities/projectile-state.js
-node --check src/entities/transient-effect-state.js
-node --check src/presentation/battle-hud-presentation.js
-node --check src/presentation/effect-presentation.js
-node --check src/presentation/free-sprite-manifest.js
-node --check src/presentation/pixel-font.js
-node --check src/presentation/screen-presentation.js
-node --check src/presentation/tank-presentation.js
-node --check src/rules/enemy-ai-rules.js
-node --check src/rules/enemy-spawn-rules.js
-node --check src/rules/power-up-collection-rules.js
-node --check src/rules/power-up-effect-rules.js
-node --check src/rules/power-up-spawn-rules.js
-node --check src/rules/projectile-collision-rules.js
-node --check src/rules/projectile-impact-rules.js
-node --check src/rules/score-rules.js
-node --check src/rules/stage-result-rules.js
-node --check src/rules/tank-collision-rules.js
-node --check src/rules/terrain-collision-rules.js
-node --check src/rules/wall-damage-rules.js
-node --check src/config/value-normalization.js
-node --check src/config/combat-settings.js
-node --check src/config/enemy-ai-settings.js
-node --check src/config/enemy-spawn-settings.js
-node --check src/config/explosion-settings.js
-node --check src/config/game-session-settings.js
-node --check src/config/player-movement-settings.js
-node --check src/config/power-up-settings.js
-node --check src/config/timing-settings.js
-node --check src/config/stage-flow-settings.js
-node --check src/config/enemy-types.js
-node --check src/config/player-upgrades.js
-node --check src/config/stage-settings.js
-node --check src/stages/battlefield-grid.js
-node --check src/stages/built-in-stage-pack.js
-node --check src/stages/enemy-sequences.js
-node --check src/stages/original-stage-source.js
-node --check src/stages/original-stage-data.js
-node --check src/stages/procedural-stage.js
-node --check src/stages/stage-grid.js
-node --check src/stages/stage-pack.js
-node --check src/stages/stage-pack-schema.js
-node --check src/stages/stage-routing.js
-node --check src/stages/stage-runtime.js
-node --check src/runtime/shared-state.js
-node --check src/runtime/diagnostic-scope.js
-node --check src/runtime/editor-input-runtime.js
-node --check src/runtime/editor-lifecycle-runtime.js
-node --check src/runtime/stage-select-runtime.js
-node --check src/runtime/post-game-runtime.js
-node --check src/runtime/stage-flow-runtime.js
-node --check src/runtime/battle-outcome-runtime.js
-node --check src/runtime/battle-loop-runtime.js
-node --check src/runtime/frame-loop-runtime.js
-node --check src/runtime/screen-update-runtime.js
-node --check src/runtime/title-render-runtime.js
-node --check src/runtime/terrain-render-runtime.js
-node --check src/runtime/tank-render-runtime.js
-node --check src/runtime/tank-movement-runtime.js
-node --check src/runtime/player-movement-runtime.js
-node --check src/runtime/game-over-entry-runtime.js
-node --check src/runtime/frame-counter-runtime.js
-node --check src/runtime/power-up-render-runtime.js
-node --check src/runtime/projectile-render-runtime.js
-node --check src/runtime/effect-render-runtime.js
-node --check src/runtime/stage-result-render-runtime.js
-node --check src/runtime/battle-hud-render-runtime.js
-node --check src/runtime/editor-render-runtime.js
-node --check src/runtime/screen-transition-render-runtime.js
-node --check src/runtime/text-render-runtime.js
-node --check src/runtime/sprite-render-runtime.js
-node --check src/runtime/battle-scene-render-runtime.js
-node --check src/runtime/input-command-runtime.js
-node --check src/runtime/input-keyboard-runtime.js
-node --check src/runtime/input-runtime.js
-node --check src/runtime/screen-render-runtime.js
-node --check src/runtime/transient-effects-runtime.js
-node --check src/runtime/projectile-runtime.js
-node --check src/runtime/battle-combat-runtime.js
-node --check src/runtime/stage-result-runtime.js
-node --check src/runtime/player-update-runtime.js
-node --check src/runtime/battle-timing-runtime.js
-node --check src/runtime/battle-random-runtime.js
-node --check src/runtime/projectile-target-runtime.js
-node --check src/runtime/projectile-resolution-runtime.js
-node --check src/runtime/projectile-motion-runtime.js
-node --check src/runtime/power-up-runtime.js
-node --check src/runtime/enemy-spawn-runtime.js
-node --check src/runtime/enemy-ai-runtime.js
-node --check src/runtime/enemy-movement-runtime.js
-node --check src/runtime/enemy-update-runtime.js
-node --check src/runtime/audio-score-diagnostics.js
-node --check src/runtime/audio-stage-bonus-diagnostics.js
-node --check src/runtime/audio-movement-diagnostics.js
-node --check src/runtime/audio-movement-lifecycle-diagnostics.js
-node --check src/runtime/audio-brick-hit-diagnostics.js
-node --check src/runtime/audio-brick-hit-lifecycle-diagnostics.js
-node --check src/runtime/audio-steel-hit-diagnostics.js
-node --check src/runtime/audio-steel-hit-lifecycle-diagnostics.js
-node --check src/runtime/audio-enemy-hit-diagnostics.js
-node --check src/runtime/audio-enemy-hit-lifecycle-diagnostics.js
-node --check src/runtime/audio-enemy-destroy-diagnostics.js
-node --check src/runtime/audio-enemy-destroy-lifecycle-diagnostics.js
-node --check src/runtime/audio-player-destroy-diagnostics.js
-node --check src/runtime/audio-player-destroy-lifecycle-diagnostics.js
-node --check src/runtime/audio-base-hit-diagnostics.js
-node --check src/runtime/audio-base-hit-lifecycle-diagnostics.js
-node --check src/runtime/audio-player-shoot-diagnostics.js
-node --check src/runtime/audio-player-shoot-lifecycle-diagnostics.js
-node --check src/runtime/audio-stage-start-diagnostics.js
-node --check src/runtime/audio-bonus-life-diagnostics.js
-node --check src/runtime/audio-bonus-life-lifecycle-diagnostics.js
-node --check src/runtime/audio-power-up-pickup-diagnostics.js
-node --check src/runtime/audio-power-up-pickup-lifecycle-diagnostics.js
-node --check src/runtime/audio-power-up-appear-diagnostics.js
-node --check src/runtime/audio-power-up-appear-lifecycle-diagnostics.js
-node --check src/runtime/audio-pause-diagnostics.js
-node --check src/runtime/audio-pause-lifecycle-diagnostics.js
-node --check src/runtime/audio-diagnostics.js
-node --check src/runtime/stage-pack-diagnostics.js
-node --check src/runtime/stage-result-diagnostics.js
-node --check src/runtime/pause-diagnostics.js
-node --check src/runtime/stage-flow-transition-diagnostics.js
-node --check src/runtime/stage-flow-progression-diagnostics.js
-node --check src/runtime/stage-flow-game-over-diagnostics.js
-node --check src/runtime/stage-flow-diagnostics.js
-node --check src/runtime/screen-flow-navigation-diagnostics.js
-node --check src/runtime/screen-flow-title-demo-diagnostics.js
-node --check src/runtime/screen-flow-post-game-diagnostics.js
-node --check src/runtime/screen-flow-diagnostics.js
-node --check src/runtime/wall-diagnostics.js
-node --check src/runtime/enemy-spawn-diagnostics.js
-node --check src/runtime/enemy-diagnostics.js
-node --check src/runtime/timer-freeze-diagnostics.js
-node --check src/runtime/timer-diagnostics.js
-node --check src/runtime/power-up-presentation-diagnostics.js
-node --check src/runtime/power-up-collection-diagnostics.js
-node --check src/runtime/power-up-spawn-diagnostics.js
-node --check src/runtime/power-up-diagnostics.js
-node --check src/runtime/score-diagnostics.js
-node --check src/runtime/upgrade-diagnostics.js
-node --check src/runtime/combat-tank-collision-diagnostics.js
-node --check src/runtime/combat-crossing-diagnostics.js
-node --check src/runtime/combat-fire-limit-diagnostics.js
-node --check src/runtime/combat-player-fire-input-diagnostics.js
-node --check src/runtime/combat-projectile-diagnostics.js
-node --check src/runtime/combat-diagnostics.js
-node --check src/runtime/player-movement-input-diagnostics.js
-node --check src/runtime/player-movement-motion-diagnostics.js
-node --check src/runtime/player-movement-surface-diagnostics.js
-node --check src/runtime/player-movement-diagnostics.js
-node --check src/runtime/terrain-base-diagnostics.js
-node --check src/runtime/terrain-diagnostics.js
-node --check src/runtime/player-lifecycle-game-over-diagnostics.js
-node --check src/runtime/player-lifecycle-diagnostics.js
-node --check src/runtime/effect-explosion-diagnostics.js
-node --check src/runtime/effect-enemy-destruction-diagnostics.js
-node --check src/runtime/effect-diagnostics.js
-node --check src/runtime/panel-diagnostics.js
-node --check src/runtime/public-api-adapters.js
-node --check src/runtime/debug-snapshot.js
-node --check src/runtime/module-deps.js
-node --check src/runtime/game-lifecycle.js
-node --check src/runtime/game-session-runtime.js
-node --check src/runtime/high-score-runtime.js
-node --check src/runtime/player-session-runtime.js
-node --check src/runtime/title-flow-runtime.js
-node --check src/runtime/title-menu-runtime.js
-node --check src/runtime/stage-pack-lifecycle-runtime.js
-node --check src/runtime/stage-lifecycle-runtime.js
-node --check src/runtime/audio-fixed-frame-runtime.js
-node --check src/runtime/audio-channel-runtime.js
-node --check src/runtime/audio-movement-runtime.js
-node --check src/runtime/audio-voice-runtime.js
-node --check src/runtime/audio-bridge.js
-node --check src/runtime/application-flow-composition-runtime.js
-node --check src/runtime/input-composition-runtime.js
-node --check src/runtime/legacy-api-composition-runtime.js
-node --check src/runtime/render-pipeline-composition-runtime.js
-node --check src/runtime/debug-api.js
-node --check src/runtime/debug-battle-runtime.js
-node --check src/runtime/render-adapter-runtime.js
-node --check src/runtime/battle-systems-composition-runtime.js
-node --check src/runtime/battle-composition-runtime.js
-node --check src/runtime/render-composition-runtime.js
-node --check src/runtime/legacy-api-runtime.js
-node --check src/game.js
-node --check tests/helpers/test-file-discovery.js
-node --check tools/build-free-stage-pack.js
 node tests/run-tests.js
 git diff --check
 ```
+
+运行器包含浏览器入口脚本顺序检查、公开 API 与探针哈希回归，以及双语文件树校验。需要单项检查时，可用 Node 直接运行相应的 `tests/unit/*.test.js` 或 `tests/integration/*.test.js` 文件。
 
 ## 项目结构
 
@@ -775,299 +549,68 @@ tank-defender-8/
 `-- README.zh-CN.md
 ```
 
-`src/runtime/diagnostic-scope.js` 统一 17 个诊断和公开适配模块中保留接收者的作用域组装。共享值覆盖依赖值；回调优先级保持为 `state.fn > state.stageRuntime > deps`，非函数覆盖值不会遮蔽低优先级回调。各调用模块继续负责输入校验，并显式保留游戏、输入和音频状态引用。直接测试覆盖接收者身份、优先级回退、独立作用域和引用保留；集成测试锁定全部 159 项公开 API 的顺序及现有各领域输出哈希。
+### 模块职责
+
+| 领域 | 位置 | 职责 |
+| --- | --- | --- |
+| 核心 | `src/core/` | 固定帧计数器、随机数运算、方向与几何。 |
+| 配置 | `src/config/` | 计时、战斗、敌人、移动、升级、道具和关卡规则的默认值校验与规范化。 |
+| 关卡 | `src/stages/` | 内置地图与敌人序列、网格几何、关卡包解析/schema、路由及活动关卡包查询。 |
+| 实体 | `src/entities/` | 玩家、敌人、子弹、道具、爆炸和分数提示记录及其生命周期转换。 |
+| 玩法规则 | `src/rules/` | AI 决策、生成、碰撞与重叠脱困、墙体破坏、道具选择/效果、计分及结算。 |
+| 编辑器 | `src/editor/` | Construction 图案、光标/画笔规则、象限修改、存档格式与关卡包转换。 |
+| 画面表现 | `src/presentation/` | 不包含 Canvas 副作用的替代精灵、像素字体、布局几何、调色板和画面时序。 |
+| 音频 | `src/audio/` | 不创建 Web Audio 节点的替代声音数据、固定帧声音状态、声部投影与声道优先级。 |
+| 运行时 | `src/runtime/` | 状态管理、模块装配、浏览器输入/存储、Web Audio 播放、Canvas 绘制、固定帧更新和诊断。 |
+| 数据与工具 | `data/`、`tools/` | 替代资源清单、示例关卡包数据、关卡包生成及可选的回环地址开发服务器。 |
+| 测试 | `tests/unit/`、`tests/integration/`、`tests/helpers/` | 领域级检查、生产模块集成、确定性浏览器替身及测试发现。 |
+
+### 运行时装配
+
+`index.html` 在 `src/game.js` 之前加载显式浏览器模块。模块注册到 `window.TankDefender8Modules`；领域模块同时提供 CommonJS 导出，供 Node 直接测试。启动不需要打包器，也不在运行时下载依赖。
+
+1. `shared-state.js` 创建可变的游戏/输入/音频状态。`module-deps.js` 解析已注册模块并提供依赖集合。
+2. 入口创建活动的 `stage-runtime.js` 适配器和确定性的 `debug-battle-runtime.js` 测试场景。
+3. `application-flow-composition-runtime.js` 安装生命周期、标题/编辑器/关卡流程、音频及相关画面服务。
+4. `render-pipeline-composition-runtime.js` 准备文字、精灵和渲染适配器。在完成渲染管线时，由 `render-composition-runtime.js` 安装各专门渲染器。
+5. `battle-systems-composition-runtime.js` 按规定顺序安装移动、战斗、计时、计分、道具、敌人及子弹系统。`battle-composition-runtime.js` 再接入战斗循环、帧循环与画面更新循环。
+6. 渲染管线完成后，`input-composition-runtime.js` 连接键盘/鼠标/工具栏/文件事件；`legacy-api-composition-runtime.js` 与 `debug-api.js` 暴露兼容接口和诊断接口。
+7. 入口加载最高分、创建初始网格，并启动 `frame-loop-runtime.js`。
+
+`state.fn` 是已安装运行时回调的共享注册表，并非第二份游戏状态。装配模块向子模块传递显式回调；`stage-runtime.js` 动态读取当前关卡包。`QUAD_GRID` 等网格领域常量由 `stage-grid.js` 经依赖集合提供，画面几何和共享状态工厂则来自 `shared-state.js`。
+
+`frame-loop-runtime.js` 使用累加器按固定 60 Hz 推进模拟，在每次动画帧回调中渲染，并将长间隔限制为 80 ms。浏览器刷新率不等于模拟频率。`screen-update-runtime.js` 按画面分派更新，`battle-loop-runtime.js` 管理战斗更新顺序。规则、输入、音频和渲染模块不得另设独立的游戏时钟。
+
+### 诊断与测试
+
+`diagnostic-scope.js` 集中处理保留接收者的回调绑定。回调优先级保持为 `state.fn > state.stageRuntime > deps`；共享值覆盖原始依赖值，游戏/输入/音频记录保留实时引用。探针模块负责场景准备、结果与状态恢复。`debug-api.js` 仅组合公开接口；`public-api-adapters.js` 管理关卡包加载、元信息、快照和 schema 投影。
+
+完整的 159 项公开 API 顺序由 `tests/integration/public-api-adapters.test.js` 锁定，SHA-256 为 `4a69f389c931e770ddde7b3f044d1868a2df1bd685a6ce5aada5b9a354c3cfb0`。各领域集成套件另行锁定探针输出长度和哈希。重构必须保留这些基线；有意修正游戏机制时，应先提供独立的原版证据及针对性断言，再调整受影响的基线。
+
+`combat-diagnostics.js` 按 4+1+1+1+5 个探针的顺序组合坦克碰撞、子弹上限、发射输入、交叉抵消及弹体规则。碰撞和发射输入实现位于 `combat-tank-collision-diagnostics.js` 与 `combat-player-fire-input-diagnostics.js`。这 12 项公开索引仍为 101-112，5,147 字节输出的哈希仍为 `610833017059b265259ef4b26cc5bed1076687c3e7b181c40588eb6545ad39f2`。
+
+- `tests/run-tests.js` 按稳定路径顺序发现测试文件，并在独立 Node 进程中逐个运行；新增测试不需要手工注册到运行器。
+- `tests/unit/` 覆盖纯规则和专门运行时接口，包括 AI 目标选择、碰撞边界、升级、依赖校验、接收者绑定与状态恢复。
+- `tests/helpers/load-browser-scripts.js` 将生产脚本加载到 VM 中。`tests/unit/browser-entry.test.js` 要求其脚本顺序与 `index.html` 一致。
+- `tests/helpers/browser-game-harness.js` 提供确定性的 DOM、Canvas、音频、存储和动画帧替身。这些集成测试不能替代真实浏览器的画面或音频检查。
+- `tests/integration/app-bootstrap.test.js` 覆盖启动及工具栏/导入接线。各功能套件负责各自流程；`tests/integration/editor-render-runtime.test.js` 检查实际编辑器模块装配、进入时清除演示状态、持续显示的光标、绘制、边界拒绝，以及退出时安装编辑后的关卡。
+- `tests/unit/readme-tree.test.js` 将两份完整文件树与工作区比较，排除工具元数据目录，检查 UTF-8 文本和代码围栏配对，并比较标题/列表/表格/围栏结构，而不要求行数相同。翻译准确性仍需人工审查。
+
+### 数据与替代资源
 
 `src/stages/original-stage-source.js` 保存从公开 Battle City（日版）反汇编文件 `incbin/stages/stage_01.bin` 到 `stage_35.bin` 解码出的精确 35 关、13x13 图块 ID 行。`src/stages/original-stage-data.js` 按 NES 图块表解码这些 ID（`0x0-0x4` 为砖块形态、`0x5-0x9` 为铁墙形态、`0xA-0xD` 依次为水/森林/冰/空白），再叠加运行时固定的五格基地围墙，并重建部分砖块碎片和钢墙象限。对于未提供地图数据的自定义关卡包，`procedural-stage.js` 仍作为确定性备用生成器。
 
 `src/stages/enemy-sequences.js` 保存从公开的 Battle City（日版）反汇编转录出的固定 35 关敌人编组表（`tbl_E4EC_stage_enemies` 与 `tbl_E578_stage_enemies_type_counter`）。每个 `[count, typeIndex]` 编组会按原始顺序展开，同时保留原版运行时的携带者槽位和出生点轮转。每关内置序列严格包含 20 辆敌人。
 
-`src/config/` 负责关卡包配置共享的数据校验：`value-normalization.js` 校验数值范围和颜色；`game-session-settings.js` 接管初始生命、排序后的奖励生命阈值、死亡星级和定时器冻结敌人开关；`combat-settings.js` 接管弹丸尺寸/出生/边界几何以及双人友军伤害开关和眩晕时序；`enemy-ai-settings.js` 接管交叉点寻路、受阻重试、目标轴概率和旧 AI 字段别名；`enemy-spawn-settings.js` 接管逐关生成曲线、关卡/扩展循环下限、双人减法、旧倍率兼容和纯间隔计算；`enemy-types.js` 接管四类默认敌人定义、移动/子弹速度档位、道具类型名称、敌人类型克隆与校验，以及单关敌人规格规范化；`explosion-settings.js` 接管九类嵌套爆炸 TTL/颜色默认值、深克隆和关卡包覆盖校验；`player-movement-settings.js` 接管固定逻辑循环中的移动速度、原版四帧三次移动 cadence、旧版仅覆盖速度时的兼容行为、冰面惯性和独立配置克隆；`player-upgrades.js` 接管四个星星升级等级、独立克隆和关卡包覆盖校验；`power-up-settings.js` 接管头盔/铲子/定时器持续时间、携带者释放和清理规则、拾取分数及其校验；`stage-flow-settings.js` 接管最终关循环、扩展循环地图/敌人数据选择和双人通关领先奖励；`timing-settings.js` 接管固定逻辑循环中的关卡、出生、重生、重试、无敌和道具寿命时序；`stage-settings.js` 接管活动敌人上限、默认玩家/敌人/道具出生布局、严格的 13x13 坐标校验以及图块到像素的转换。`src/core/` 存放不依赖 DOM 或 Canvas、可同时用于浏览器和 Node 的纯规则；共享战斗随机数、四方向常量/向量、独立帧计数器和矩形几何已迁入该目录。`src/editor/` 接管 Construction 输入/地形规则，以及不依赖浏览器存储或文件 API 的带版本存档文档、旧存档解析、单关卡包组装和 JSON 编解码。`src/entities/` 接管可变游戏实体记录：`player-state.js` 创建完整的单双人玩家记录，并在不丢弃持久得分、生命、击杀或升级状态的前提下复位位置、摧毁、保护、射击、滑行和履带等瞬态；`enemy-state.js` 将类型/序列数据实体化为已放置的敌人，包含独立装甲颜色、出生/重载计时、携带道具数据、移动 cadence 标志以及干净的 AI/摧毁状态；`projectile-state.js` 根据坦克几何、方向、升级/类型战斗数值和关卡包弹丸几何，创建玩家/敌人共用的子弹记录；`power-up-state.js` 在运行时完成随机/地形过滤后，根据已校验战场位置和配置寿命创建可拾取的 12px 道具；`transient-effect-state.js` 创建爆炸与分数提示记录，并在保留存活对象标识的同时推进两者共用的 TTL 生命周期。`src/rules/score-rules.js` 修改玩家分数与奖励生命进度，并返回运行时执行最高分持久化和音频副作用所需的结果；`stage-result-rules.js` 选择结算奖励接收者、生成逐类型结算行/汇总，并计算原版计数与揭示时间轴；`tank-collision-rules.js` 接管实体矩形、精确子弹中心命中范围、有效碰撞对象过滤、总重叠面积、战场/基地阻挡，以及严格减小地形/坦克重叠的脱困规则；`terrain-collision-rules.js` 接管 16px 图块、8px 钢墙象限和 4px 砖块碎片几何、重叠掩码与精确固体地形面积。`src/stages/` 负责关卡域：`stage-grid.js` 提供图块常量、砖块碎片状态、网格修改与校验以及 13x13/26x26 编解码；`enemy-sequences.js` 接管 35 关敌人编组表、每关 20 辆敌人的展开、携带者位置、出生点轮转和序列摘要；`stage-pack.js` 组合全部配置校验器、强制校验完整地图/敌人/关卡数量、支持两种地图编码，并构建运行时网格与敌人查询方法；`stage-routing.js` 将显示用的 1-70 关循环映射到有限的地图/敌人数据，并解析敌人总数和单双人容量上限。`src/game.js` 仍是组合入口和旧运行时；随着行为迁移到显式模块 API，该文件必须持续缩小。`tests/helpers/` 负责可复用的 Canvas、音频、DOM、存储、输入和脚本加载模拟。`tests/unit/` 直接验证纯模块，`tests/integration/` 通过真实浏览器 API 验证已抽离的配置、基础会话规则、得分/奖励生命与结算推进、固定逻辑时序、精确到碎片的地形/坦克/子弹碰撞与脱困、弹丸/友军伤害规则、子弹、敌人、道具和短生命周期视觉效果的创建/推进、编辑器保存/加载/导出/导入/测试关卡流程、敌人 AI、敌人生成节奏、爆炸设置、玩家移动/cadence、玩家状态/重生、道具设置、关卡流程、关卡设置、关卡网格、关卡包导入、关卡路由、敌人序列和星星升级行为，`tests/run-tests.js` 会在隔离的 Node 进程中运行全部单元测试和集成测试。
+`data/free-sprite-manifest.json` 和 `data/free-audio-manifest.json` 分别对应 `src/presentation/free-sprite-manifest.js` 与 `src/audio/free-audio-manifest.js` 中的冻结浏览器清单。测试检查清单一致性与独立克隆。绘图和声音生成使用这些替代资源，而非原始 NES 图像或音频。
 
-`src/config/power-up-settings.js` 现已接管已校验配置背后的纯携带者状态判定：受击时是否释放携带的道具，以及新携带者出生时是否清除当前未拾取道具。运行时代码只保留实际生成和清除副作用。
+### 重构验收
 
-`src/entities/enemy-state.js` 现已同时接管完整敌人记录创建和销毁状态推进。满足 cadence 的 tick 会规范化计数器、保留已配置爆炸阶段、额外固定显示 6 tick 分数，并只在精确边界释放敌人槽位；`src/game.js` 提供槽位 cadence 和后备爆炸时长，再在收到释放结果时累加全局击败敌人数。
+结构性阶段交付了仅负责装配的入口、按功能归属的运行时模块、独立领域规则/数据、配套单元/集成套件，以及描述完整文件结构的双语文档。新增或修正机制时应保持这些边界，不要将功能代码移回入口或公开诊断接口的组装模块。
 
-`src/entities/player-state.js` 现已接管完整玩家记录创建、关卡/重生复位以及保留式死亡生命周期。它会拒绝非存活、已在销毁或受保护玩家的命中，初始化死亡降级/计时并清理瞬态战斗状态，只在有效移动帧推进重生 tick，并在最后一命结束时判定立即重生准备或淘汰。运行时代码保留音频、出生位置恢复、保护激活和单玩家 GAME OVER 提示。
+推送前应运行完整套件、检查相关真实浏览器流程，并审查两份 README。自动化套件覆盖静态脚本顺序和公开兼容性约束，但不能证明浏览器音质、所有视口/刷新率组合或完整的原版通关流程。
 
-`src/audio/audio-presentation.js` 接管固定帧声部时长与音符投影、全局或逐声部可听性选择，以及由清单驱动的玩家/敌人移动循环相位。薄运行时适配器只注入所选清单事件，`src/game.js` 保留 Web Audio 缓冲区/振荡器创建、暂停/恢复行为及全部播放副作用。直接单元测试锁定异常输入、片段/重复边界、静音音符、增益和移动相位；浏览器集成测试保留原先位于 smoke 套件中的代表性计分音、移动相位、冰面提示音和开场音探针。
-
-`src/audio/audio-mix-rules.js` 接管纯脉冲一、脉冲二、三角波和噪声声道优先级矩阵，以及移动循环模式选择。它会区分游戏正处于暂停状态和暂停提示音仍在播放的状态，保留彼此独立的声道，并让玩家移动请求检测保持懒执行，避免已被阻塞的状态改变运行时工作量或演示模式行为。`src/game.js` 提供当前事件标志并执行节点同步。直接单元测试锁定完整优先级矩阵；浏览器集成测试集中接管原先散落在 smoke 套件中的跨声道探针。
-
-`src/audio/fixed-frame-audio-state.js` 接管所有保留音效的创建、开始/复位转换、暂停保持选择、固定帧推进和精确结束帧钳位。运行时拥有的 Web Audio 节点句柄仍作为各状态中的不透明条目，只由 `src/game.js` 停止或重建。直接单元测试锁定独立状态记录、节点所有权保留、暂停模式、非法时长回退和完成边界；浏览器集成测试集中接管原先位于 smoke 套件中的一帧、暂停、暂停中继续运行、重新触发、清理和最终帧生命周期探针。
-
-`src/audio/free-audio-manifest.js` 接管 `data/free-audio-manifest.json` 的深冻结浏览器模块副本，以及运行时使用的独立深克隆 API。单元测试逐事件对照 JSON 数据源，锁定全部保留时长/声道布局、敌方射击保持静音，以及嵌套克隆隔离；浏览器集成测试验证模块注册，并确认每次公开运行时克隆都与 JSON 数据源一致，同时不会暴露内部冻结对象。
-
-`src/editor/editor-rules.js` 接管六种地形的浏览器调色板、14 步原版 Construction 块序列、方向键/WASD 映射与按住优先级、整格光标钳位、面板色块命中测试、图块循环、光标到单元格转换，以及精确的砖块碎片/钢墙象限编辑。`src/editor/editor-stage-format.js` 接管紧凑的版本 2 本地存档序列化、旧版 13x13 `rows` 与当前 26x26 `quadrants` 格式的兼容加载、可复用的 JSON 解析结果、默认单关导出/测试关卡包组装，以及带缩进的导出序列化。`src/game.js` 现在只保留编辑器屏幕状态、本地存储/剪贴板/文件副作用、消息、音效和事件接线。单元测试锁定两种存档编码、JSON 语法错误与存档结构错误的区分、相互独立的默认关卡包记录、出生点、敌人构成和序列化输出；浏览器集成测试接管原先位于 smoke 中的完整保存、清空、加载、导出、文件导入、Construction 关卡安装、即时测试和复位流程。
-
-`src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，由 `input-runtime.js` 负责 Canvas 坐标换算与 DOM 事件接线。编辑器从关卡网格依赖而非共享状态中校验并读取 `QUAD_GRID`；越界的象限编辑会被忽略，不改变地形，也不播放绘制音效。直接测试覆盖原版图案掩码、边界拒绝、画笔选择和 20 帧重复节奏。
-
-`src/runtime/editor-lifecycle-runtime.js` 接管 Construction 的进入/退出、单关地图试运行、本地存取、清空、剪贴板导出、导入按钮分派和编辑器反馈信息。试运行会保留当前关卡包，仅把编辑地图用于第 1 关，因此通关清除该临时地图后仍按常规关卡推进。其单元测试锁定注册、Construction 状态复位、持久化、活动关卡包保留、退出安装和导入分派；浏览器集成测试继续覆盖完整编辑器工作流。
-
-`src/runtime/game-session-runtime.js` 接管常规游戏会话初始化以及标题演示的进入和退出。直接测试锁定最高分基线复位、Construction/自定义网格选择、玩家创建、关卡启动、演示时序、帧计数器复位、移动音频交接和完整的演示音频清理。
-
-`src/runtime/stage-pack-lifecycle-runtime.js` 接管 JSON 解析、关卡包规范化、活动包安装、战场网格准备和内置包恢复。显式回调将标题闲置计时复位、战斗随机数复位及临时战斗状态清理保留在组合边界；其单元测试锁定畸形输入、校验失败、状态复位投影和内置包恢复，浏览器集成测试锁定模块注册和公开关卡包加载。
-
-`src/runtime/stage-lifecycle-runtime.js` 接管每关网格准备、战斗状态初始化、临时战斗清理、每关玩家统计和关卡推进。直接测试锁定内置、自定义和 Construction 网格路径，音频清理顺序，实体/计时器复位，结算状态，以及标题选关和战斗内推进的分支。
-
-`src/runtime/high-score-runtime.js` 接管最高分读取、存储持久化和单调分数提升。直接测试锁定数值规范化、基线投影、较小分数拒绝、存储写入以及受限浏览器环境下的存储降级。
-
-`src/runtime/player-session-runtime.js` 通过活动关卡运行时接管玩家记录创建和每关位置复位。直接测试锁定出生点查询、游戏设置、敌人类型数量、方向和复位参数。
-
-`src/runtime/title-flow-runtime.js` 接管标题闲置计数器，以及隐藏信息的输入、时序和表现。直接测试锁定演示启动、复位回调、手柄字节运算、开始/结束过渡、文本节奏、圆点时序和水滴动画。
-
-`src/runtime/title-menu-runtime.js` 接管标题菜单选择，以及单人、双人和 Construction 的入口分派。直接测试锁定闲置计数器复位、循环、索引钳制，以及每个入口和越界回退。
-
-`src/runtime/input-command-runtime.js` 接管工具栏命令分派，以及活动战斗中的暂停资格判定和音频交接。直接测试锁定命令路由、仅编辑器命令门控、暂停拒绝条件、待发射按键清理和完整音频同步顺序。
-
-`src/runtime/input-keyboard-runtime.js` 接管键盘屏幕分派、一次性射击/选关按键、方向键/WASD 映射、演示退出、隐藏信息输入保留和编辑器快捷键。`src/runtime/input-runtime.js` 保留浏览器事件注册、关卡包文件导入、Canvas 坐标换算和 Construction 鼠标编辑；直接测试锁定显式注入边界、键盘路由和鼠标坐标。
-
-`src/runtime/stage-select-runtime.js` 接管进入选关、玩家数选择、关卡范围钳制、确认开局及固定帧 A/B 输入节奏。先消费一次性按键，再处理长按重复；重复发生在原版八帧边界；A/B 同时到达时保留 A 优先级。显式回调将音频初始化、标题闲置计时复位、帧计数复位和游戏启动保留在组合边界；直接测试覆盖范围边界、进入状态、确认开局和输入节奏。
-
-`src/runtime/post-game-runtime.js` 接管固定帧全屏 GAME OVER 与最高分屏幕生命周期：音频交接、定时结束、Start/Escape 跳过、高分分支和标题状态复位。现有最高分比较与阶段结算转换仍保留在模块外，并通过显式回调接入。
-
-`src/runtime/stage-flow-runtime.js` 接管关卡结算屏幕转换：进入通关/游戏结束结算、选择下一关或停止路线、关闭关卡幕布、启动下一关以及计算场内 GAME OVER 时长。`src/runtime/stage-result-runtime.js` 继续负责结算投影和奖励副作用，音频清理与生命周期入口通过显式回调接入。
-
-`src/runtime/battle-outcome-runtime.js` 接管固定帧战斗结束判定：演示模式结束、基地/玩家 GAME OVER 触发、敌人清空后的延迟、玩家 GAME OVER 延长、帧计数器复位以及进入关卡结算转换。实际屏幕转换通过回调交给 `stage-flow-runtime`，原版 60 Hz 边界行为可以单独测试。
-
-`src/runtime/battle-loop-runtime.js` 接管固定帧战斗更新顺序：冻结与实体计时器、玩家/敌人更新、地形效果、投射物、分数提示、道具、玩家 GAME OVER 文本、敌人生成、结束判定和移动音频同步。游戏结束后的场内帧通过同一个 API 关闭输入和结束检查。
-
-`src/runtime/frame-loop-runtime.js` 接管固定 60 Hz 累积器、每个 RAF 的渲染调度和 80ms 长间隔上限。渲染回调仍在每个浏览器帧执行，而逻辑更新只按固定步长推进，因此高刷新率显示器不会改变游戏时序；直接测试覆盖半步节奏、补帧和长间隔边界。
-
-`src/runtime/screen-update-runtime.js` 接管标题、隐藏信息、最高分、全屏 GAME OVER、选关、编辑器、关卡开场/结算、暂停和战斗结束场内帧的固定帧分派。它保留原有分支顺序，并通过显式回调注入音频、过渡、结算和战斗副作用；单元测试覆盖过渡边界、结算计数、Game Over、编辑器、暂停和活动战斗路由。
-
-`src/runtime/title-render-runtime.js` 接管标题菜单、隐藏信息、最高分和全屏 GAME OVER 的像素 Canvas 绘制。它保留现有像素字体几何、标题菜单光标、调色板、隐藏掉落精灵和终局画面时序，并通过显式回调提交文字/精灵；直接测试覆盖屏幕背景、计分/菜单布局、隐藏信息内容和终局表现调用。
-
-`src/runtime/terrain-render-runtime.js` 接管战场地形层、砖块碎片、钢墙象限、水/冰/森林图块、基地和冰面子弹遮罩。它保留原有绘制顺序、4px 碎片几何、8px 象限掩码、水面相位和基地调色板，并使用共享精灵提交回调；直接测试覆盖图层选择、地形动画、遮罩精确坐标、背景几何和基地状态。
-
-`src/runtime/tank-render-runtime.js` 接管坦克主体/履带、玩家星星升级覆盖层、护盾、玩家/敌人出生动画，以及树林覆盖坦克时绘制的方向轮廓。它保留方向几何、携带者/升级颜色回调、暂停安全的护盾相位、配置的出生时长和现有 Canvas 精灵顺序；直接测试覆盖玩家覆盖层、精确战场偏移、护盾颜色、玩家出生尺寸和树林轮廓。
-
-`src/runtime/power-up-render-runtime.js` 接管道具闪烁相位、精灵尺寸居中、背景框绘制以及六类道具（包括星星）图标的清单提交。它保持暂停期间仍使用独立显示帧相位，并保留 12px 道具到清单精灵尺寸的几何换算；直接测试覆盖闪烁边界、精确居中、图标调色板和隐藏帧。
-
-`src/runtime/projectile-render-runtime.js` 接管子弹精灵提交：清单尺寸缩放、战场偏移以及玩家/敌方子弹的不同调色板。移动、数量上限、碰撞和命中解析仍由原有战斗模块负责；直接测试覆盖玩家缩放子弹、敌方原尺寸子弹和精确整数坐标。
-
-`src/runtime/effect-render-runtime.js` 接管瞬态爆炸、玩家/敌人摧毁序列、基地摧毁和分数提示的 Canvas 绘制。它保留现有表现投影、配置的爆炸颜色、摧毁帧顺序与战场偏移，并通过显式回调提交精灵/文字；直接测试覆盖绘制顺序、分数态文字、摧毁调色板和模块注册。
-
-`src/runtime/stage-result-render-runtime.js` 接管关卡完成结算页：分数标题、单人/双人结算行、按敌人类型区分的居中坦克图标、方向箭头、奖励行、总计、分数格式化和关闭幕布。它保留原有 256x240 整数几何，并通过兼容 API 暴露结算辅助函数；直接测试锁定四种图标变体、双人结算行坐标，以及中间坦克图标与箭头的间距。
-
-`src/runtime/battle-hud-render-runtime.js` 接管战斗中的右侧信息栏、暂停文字、场内 GAME OVER 横幅、玩家 GAME OVER 提示及其布局辅助函数。它保留固定像素字体几何、敌人计数/生命数投影、暂停闪烁相位和双人紧凑 GAME OVER 字形；直接测试覆盖面板坐标、横幅计时回调、暂停可见性和旗帜几何。
-
-`src/runtime/editor-render-runtime.js` 接管 Construction 战场渲染：可编辑地形层、基地、持续显示的父单元框与 8px 子格光标焦点，以及六类图块图例。它保留原有 256x240 战场几何、16px 图块定位、图块掩码和画笔高亮，并通过显式回调提交地形绘制。光标边界使用经过校验的关卡网格依赖 `QUAD_GRID`。直接测试采用真实共享状态常量；`tests/integration/editor-render-runtime.test.js` 覆盖生产模块接线、不同调色循环帧中的光标可见性、键盘移动/绘制、最后一个象限、边框点击拒绝，以及离开画布后的光标恢复。
-
-`src/runtime/screen-transition-render-runtime.js` 接管选关页、选关关闭幕布、关卡开场战场/幕布渲染和幕布状态适配。它保留原有 256x240 整数几何、上下覆盖行、关卡文字裁剪、配置的开场时长和过渡计时器来源；直接测试覆盖选关文字、关闭填充顺序、开场裁剪和状态参数。
-
-`src/runtime/text-render-runtime.js` 接管普通文字、裁剪文字和右对齐文字共用的整数像素字体提交路径。它保留大写字形查找、整数起点取整、缩放/步进默认值、裁剪相交和右边缘对齐；直接测试覆盖精确字形矩形、裁剪、空裁剪列表和右对齐调用流程。
-
-`src/runtime/sprite-render-runtime.js` 接管免费精灵清单帧查找，以及原尺寸/缩放 Canvas 矩形提交。它还统一接管标题/结算共用的 `miniTank/up` 迷你坦克精灵组合和固定阴影调色板，使组合入口不再重复这段基础绘制。它保留角色调色板优先级、部件颜色回退、填充/描边操作和小数缩放几何；直接测试覆盖原尺寸帧、缩放帧、迷你坦克组合、回退颜色、缺失帧和模块注册。
-
-`src/runtime/battle-scene-render-runtime.js` 接管战斗场景 Canvas 组合顺序：背景、战场、地形、基地、玩家、敌人、子弹、子弹遮罩、上层地形、道具、爆炸、摧毁覆盖层、分数提示、玩家 GAME OVER 文字和右侧栏。它保留出生/死亡过滤、暂停护盾可见性、显示帧读取和所有遮挡边界；直接测试锁定完整回调序列。
-
-`src/runtime/screen-render-runtime.js` 接管顶层 Canvas 屏幕路由：黑底清屏、标题/隐藏信息/最高分/全屏 GAME OVER、选关、Construction、开场/结算、活动战斗，以及最终 GAME OVER/暂停覆盖层顺序。各屏幕的具体绘制仍由专用渲染器负责；直接测试覆盖全部路由和 Game Over/暂停组合。
-
-`src/stages/battlefield-grid.js` 统一程序化生成、Construction、关卡启动和铲子道具共享的战场几何。它冻结五个围墙格、基地格和六个标准清理矩形，保留更宽的程序化地图保留区，初始化空白 Construction 战场，在保留定制出生区域编辑的同时打开基地格，并在配置的铲子闪烁窗口中选择砖墙/钢墙。直接单元测试锁定所有坐标与修改边界；浏览器集成测试验证真实编辑器围墙，并接管原先位于 smoke 中的铲子围墙断言。
-
-`src/stages/built-in-stage-pack.js` 使用共享的规范化默认配置、克隆的敌人定义、35 关原版风格敌人序列和程序化地图回退，组合出相互独立且可变的运行时关卡包。它还接管保留的敌人规格转换，以及仅在序列数据缺失时使用的旧后备类型曲线。单元测试锁定完整关卡包契约、默认设置、地图来源选择、代表性敌人记录、后备边界和克隆隔离；浏览器集成测试对照公开 schema 与敌人摘要，并验证真实第 1 关启动地图。
-
-`src/stages/procedural-stage.js` 接管活动运行时关卡数据源缺少地图时的确定性备用地图生成。它通过冻结的浏览器/Node API 保留带种子的随机数序列、逐关密度和地形阈值、每三关一次的镜像 cadence、七关 motif 循环、出生保留区以及最终战场清理。单元测试锁定随机数前缀、阈值边界、全部 motif、相互独立的网格状态，以及重构前第 1-7 关和第 35 关的黄金地图；浏览器集成测试通过真实标题页和选关流程验证第 1、2 关。
-
-`src/stages/stage-pack-schema.js` 接管公开 `stagePackSchema()` API 返回的全新可编辑示例：规范化默认设置、克隆的敌人/升级数据、固定墙体元数据、默认出生坐标、文档化的两种地图编码、示例敌人延迟及图块代码说明。单元测试锁定全部可读区段、克隆隔离和重构前完整 6,498 字节 JSON 的 SHA-256；浏览器集成测试证明公开适配器与纯模块一致，并且不受已加载自定义关卡包影响。
-
-`src/stages/stage-runtime.js` 将纯路由/配置/网格模块绑定到动态读取的游戏状态。其冻结运行时 API 接管活动关卡包回退、显示/地图/敌人关卡解析、逐关敌人总数与单双人容量、默认/自定义出生点查询、地图解码/程序化回退、敌人规格回退及规范化关卡序列。直接测试让同一个运行时在内置、自定义、原始 quadrants、无地图和演示状态间切换；浏览器集成测试验证公开关卡包诊断，并从 `src/game.js` 删除对应查询包装函数。
-
-`src/runtime/` 包含运行时拆分后形成的浏览器组合边界。`shared-state.js` 创建唯一的可变状态图以及固定布局/时序常量；`module-deps.js` 校验脚本顺序并公开显式依赖桶；`game-lifecycle.js` 接管标题、关卡、编辑器和过渡编排；`player-session-runtime.js` 通过活动关卡的设置和出生点接管玩家记录创建及每关复位；`high-score-runtime.js` 接管最高分读取、持久化和单调提升；`stage-pack-lifecycle-runtime.js` 通过显式的标题、随机数和临时状态回调，接管 JSON 解析、规范化关卡包安装、战场网格准备和内置包恢复；`audio-bridge.js` 接管 Web Audio 节点创建与事件同步；`debug-api.js` 把保留的运行时函数适配为公开测试/诊断 API。`audio-diagnostics.js` 通过保留接收者的函数绑定和 142 个显式解构的运行时符号，接管连续的 31 个清单、表现、移动、优先级、暂停和固定帧生命周期探针，且不使用 `eval`；抽离该模块并清理死别名后，`debug-api.js` 从 8,957 行降至 6,171 行。其单元测试锁定方法顺序、输入校验、绑定优先级和克隆隔离；浏览器集成测试依次执行全部探针，并保持重构前 61,974 字节输出的 SHA-256。`stage-pack-diagnostics.js` 接管 `currentPackInfo()` 与 `debugSnapshot()` 关卡包区段共用的精确克隆投影，包括路由元数据、规范化设置、敌人类型、升级/墙体规则、出生布局和活动敌人序列。`stage-result-diagnostics.js` 将四个冻结的公开关卡结算探针绑定到纯规则，规范化诊断玩家记录，投影奖励领取者、结算行得分/布局间距和计数/揭示时序，并从 `src/game.js` 删除两个仅供调试使用的辅助函数。其单元测试覆盖输入规范化、奖励资格、动态时序覆盖、表现边界和输出隔离；浏览器集成测试锁定公开 API 顺序及重构前 1,478 字节输出哈希。`stage-flow-diagnostics.js` 通过保留接收者的函数绑定和 49 个显式解构的运行时符号，接管连续的 17 个幕布、关卡循环、通关、自动推进和 Game Over 探针，且不使用 `eval`；抽离该模块并清理 17 个死别名后，`debug-api.js` 从 6,171 行降至 5,483 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引依次执行全部 17 个探针，并保持重构前 13,047 字节输出的 SHA-256。`screen-flow-diagnostics.js` 通过保留接收者的函数绑定和 57 个显式解构的运行时符号，接管连续的 11 个标题计分、帧计数、选关节奏、标题演示/隐藏信息、最高分和全屏 Game Over 探针，且不使用 `eval`；抽离该模块并清理 32 个死别名后，`debug-api.js` 从 5,483 行降至 4,833 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和克隆布局输出；浏览器集成测试在原公开索引依次执行全部 11 个探针，并保持重构前 25,534 字节输出的 SHA-256。`enemy-diagnostics.js` 通过保留接收者的函数绑定和 34 个显式解构的运行时符号，接管连续的 11 个携带者、敌人表现、目标选择、AI/移动节奏、受阻恢复、生成时间线和出生动画探针，且不使用 `eval`；抽离该模块并清理 4 个死别名后，`debug-api.js` 从 4,833 行降至 4,497 行。其单元测试锁定输入校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引依次执行全部 11 个探针，并保持重构前 3,839 字节输出的 SHA-256。`debug-snapshot.js` 现已接管完整的 95 字段公开状态投影：画面与固定计数器、全部 17 个保留音频事件、关卡包诊断、分数提示、战场/编辑器网格、场地几何和独立克隆的玩家摘要。单元测试锁定精确字段顺序、音频事件映射、代表值和克隆隔离；浏览器集成测试验证模块注册、薄适配器和重复调用隔离。
-
-`enemy-spawn-diagnostics.js` 现在接管有序的生成时间线、生成动画探针，以及独立的生成重叠工厂。`enemy-diagnostics.js` 构建保留接收者的作用域，以不改变公开约定的方式委托 `createEnemySpawnOverlapDiagnostics(state, deps)`，并在受阻恢复探针之后组合两项有序方法。子模块单元测试、父模块集成测试和启动测试共同锁定模块注册、公开索引 56-66，以及未变化的 3,839 字节 SHA-256 输出。
-
-`stage-flow-transition-diagnostics.js` 接管前六个连续的幕布状态、关闭帧渲染、过渡推进、选关推进和关卡开场音频探针。它消费显式 stage-flow 作用域，并直接测试输入校验及冻结的有序诊断接口。`stage-flow-progression-diagnostics.js` 接管随后七个关卡路由、敌人序列、通关延迟、关闭幕布、状态保持循环和自动推进探针。`stage-flow-game-over-diagnostics.js` 接管最后四个战场、横幅、全屏返回和结算路由 Game Over 探针。`stage-flow-diagnostics.js` 现在只构建保留接收者的作用域，并按顺序组合三个子模块。
-
-`screen-flow-navigation-diagnostics.js` 接管前三个标题计分布局、全局帧计数与选关输入节奏探针。它消费显式 screen-flow 作用域，并直接测试输入校验及冻结的有序诊断接口。`screen-flow-title-demo-diagnostics.js` 接管随后两个标题演示和隐藏信息生命周期探针。`screen-flow-post-game-diagnostics.js` 接管最后的最高分画面/音频、全屏 Game Over 画面/音频及帧渲染探针。`screen-flow-diagnostics.js` 现在只构建保留接收者的作用域，并按顺序组合三个子模块。
-
-`effect-explosion-diagnostics.js` 接管前两个爆炸规则和坦克摧毁表现探针，以及最后两个摧毁帧渲染和暂停子弹命中特效探针。`effect-enemy-destruction-diagnostics.js` 接管中间的敌人销毁生命周期、槽位释放和关卡完成探针。`effect-diagnostics.js` 现在只构建保留接收者的作用域，并按原有 2+1+2 的公开顺序组合子模块。子模块直接测试、父模块输入校验与浏览器集成测试共同保持公开索引 130-134、重构前 6,548 字节 SHA-256 输出，并且不使用 `eval`。
-
-`wall-diagnostics.js` 通过保留接收者的函数绑定、29 个显式解构的运行时符号和实时砖块命中音频记录，接管连续的 5 个钢墙破坏、定向砖块条带、砖块碎片渲染、铲子围墙时序和基地已毁后的铲子探针，且不使用 `eval`。抽离后，`debug-api.js` 保留 3,979 个物理行，未产生死适配器。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 51-55 依次执行全部 5 个探针，并保持重构前 1,929 字节输出的 SHA-256。
-
-`timer-diagnostics.js` 通过保留接收者的函数绑定和 18 个显式解构的运行时符号，接管连续的 7 个定时器规则、全局倒计时、护盾节奏/暂停、冻结行为、最后冻结帧和冻结期间生成探针，且不使用 `eval`。抽离并移除 3 个死适配器后，`debug-api.js` 保留 3,557 个物理行。其单元测试锁定输入校验、精确方法顺序、绑定优先级、接收者身份和状态恢复；浏览器集成测试在原公开索引 67-73 依次执行全部 7 个探针，并保持重构前 2,184 字节输出的 SHA-256。
-
-`timer-freeze-diagnostics.js` 接管最后三项敌方冻结、冻结到期边界和冻结期间生成探针。`timer-diagnostics.js` 现在构建保留接收者的作用域，保留前四项定时器和护盾探针，并在原有位置组合子模块。子模块单元覆盖、启动注册和浏览器集成测试共同保持公开索引 67-73 及 2,184 字节 SHA-256 输出。
-
-`power-up-presentation-diagnostics.js` 接管前五个类型池、共享随机、闪烁、暂停画面与水面动画探针。`power-up-collection-diagnostics.js` 接管随后五个 TTL、拾取边界/优先级、拾取渲染及足迹清理探针。`power-up-spawn-diagnostics.js` 接管最后的地形变更、出生筛选/轮换和携带者清除探针。三个模块均消费显式 power-up 作用域，并直接测试输入校验及冻结的有序诊断接口。`power-up-diagnostics.js` 现在只构建保留接收者的作用域，并按顺序组合三个子模块。浏览器集成测试在原公开索引 75-89 依次执行全部 15 个方法，并保持重构前 7,420 字节输出的 SHA-256。
-
-`upgrade-diagnostics.js` 通过保留接收者的函数绑定、17 个显式解构的运行时符号和实时玩家摧毁音频记录，接管连续的 3 个星星升级规则、升级坦克覆盖层和三级坦克生存探针，且不使用 `eval`。抽离后，`debug-api.js` 保留 2,894 个物理行。其单元测试锁定状态/音频校验、精确方法顺序、绑定优先级和接收者身份；浏览器集成测试在原公开索引 94-96 依次执行全部 3 个探针，并保持重构前 702 字节输出的 SHA-256。
-
-`combat-projectile-diagnostics.js` 接管连续的子弹构造、场地边界命中、地形命中音效、友军火力设置与友军火力保护探针。它消费显式 combat 作用域，不依赖浏览器全局变量且不使用 `eval`；直接测试锁定输入校验、精确方法顺序和友军火力配置输出。
-
-`combat-tank-collision-diagnostics.js` 接管头盔保护、敌弹命中玩家和玩家弹命中敌人的临界碰撞、装甲敌人命中行为及玩家出生锁定探针。它消费显式 combat 作用域，并直接测试输入校验及冻结的有序诊断接口。
-
-`combat-fire-limit-diagnostics.js` 接管玩家/敌方活跃子弹上限探针。它消费显式 combat 作用域，保留发射音频清理，并直接测试作用域校验及仅含一个方法的冻结诊断接口。
-
-`combat-player-fire-input-diagnostics.js` 接管新按键消费、满弹槽丢弃、双发升级、出生锁定和眩晕玩家发射探针。它消费显式 combat 作用域，并直接测试输入校验及冻结诊断接口。
-
-`combat-crossing-diagnostics.js` 接管交叉子弹抵消探针，包括临界距离和同一归属者的碰撞情形。它消费显式 combat 作用域，并直接测试冻结探针接口。
-
-`combat-diagnostics.js` 只构建保留接收者的 combat 作用域，并按坦克碰撞、子弹上限、发射输入、交叉抵消、弹体规则的顺序组合五个子模块（4+1+1+1+5 个探针）。其单元测试锁定输入校验、绑定优先级、工厂调用顺序、探针直接委托及共享的实时状态/输入/音频引用。VM 集成测试检查每个探针的归属模块与工厂注册，在原公开索引 101-112 依次执行全部 12 个探针，并保持重构前 5,147 字节输出的 SHA-256。完整的 159 项公开 API 顺序另由现有 SHA-256 回归测试保护。
-
-`player-movement-motion-diagnostics.js` 接管前五个固定帧节奏、履带动画、友军火力眩晕与玩家眩晕探针。`player-movement-input-diagnostics.js` 接管随后三个 WASD 输入、转向对齐与砖块脱困探针。`player-movement-surface-diagnostics.js` 接管最后的冰面移动、冰面遮盖渲染以及森林/道具图层探针。三个模块均消费显式 player-movement 作用域，并直接测试输入校验及冻结的有序诊断接口。`player-movement-diagnostics.js` 现在只构建保留接收者的作用域，并按顺序组合三个子模块。浏览器集成测试仍在原公开索引 113-123 依次执行全部 11 个方法，并保持重构前 2,414 字节输出的 SHA-256。
-
-`terrain-diagnostics.js` 通过保留接收者的函数绑定、40 个显式解构的运行时符号和 3 个实时音频记录，接管连续的 6 个地形表面、基地围墙优先级、基地摧毁时序/渲染、坦克占位和敌方重叠恢复探针，且不使用 `eval`。抽离并移除 18 个死适配器后，`debug-api.js` 保留 1,068 个物理行。其单元测试锁定状态/按键/待发射/音频校验、精确方法顺序、绑定优先级和碰撞输出作用域；浏览器集成测试在原公开索引 124-129 依次执行全部 6 个探针，并保持重构前 6,225 字节输出的 SHA-256。
-
-`terrain-base-diagnostics.js` 接管连续的基地围墙优先级、基地摧毁序列和摧毁帧渲染探针。`terrain-diagnostics.js` 现在构建保留接收者的作用域，保留地形表面和坦克重叠探针，并在原有第二至第四位置组合基地子模块。子模块单元覆盖、启动注册和浏览器集成测试共同保持公开索引 124-129 及 6,225 字节 SHA-256 输出。
-
-`player-lifecycle-game-over-diagnostics.js` 接管中间两个双人 Game Over 信息与信息渲染探针。它消费显式 player-lifecycle 作用域，并直接测试输入校验及冻结的有序诊断接口。`player-lifecycle-diagnostics.js` 构建保留接收者的作用域，在保留的死亡/重生和奖励生命探针之间组合该子模块，并保持原有公开顺序。浏览器集成测试在原公开索引 97-100 依次执行全部 4 个方法，并保持重构前 5,172 字节输出的 SHA-256。
-
-`pause-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 3 个暂停切换、暂停期间关卡完成检测和暂停帧渲染探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 638 行降至 488 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 36-38 依次执行全部 3 个探针，并保持重构前 973 字节输出的 SHA-256。
-
-`score-diagnostics.js` 通过显式且保留接收者的状态/音频作用域接管连续的 4 个手雷计分、手雷出生保护、分数提示和暂停时分数提示探针，且不使用 `eval`。抽离并清理死适配器后，`debug-api.js` 从 488 行降至 218 个物理行。其单元测试锁定输入校验、精确方法顺序、接收者绑定和状态恢复；浏览器集成测试在原公开索引 90-93 依次执行全部 4 个探针，并保持重构前 1,095 字节输出的 SHA-256。
-
-敌人诊断模块还公开 `createEnemySpawnOverlapDiagnostics` 工厂，承载原本位于计时器诊断之后的敌人出生重叠探针。状态构造已移出 `debug-api.js`，同时保持原公开 API 位置不变；当前适配器为 77 个物理行。
-
-`panel-diagnostics.js` 通过同一套保留接收者的作用域接管连续的两个敌人计数和生命计数面板探针，且不使用 `eval`。其单元测试锁定输入规范化、绑定优先级、方法顺序和输出投影；浏览器集成测试验证模块注册、原公开索引 135-136 以及重构前 133 字节输出的 SHA-256。
-
-`power-up-runtime.js` 接管从 `src/game.js` 抽出的实时道具边界：携带者释放与清除、刷新点校验与轮换、TTL 推进、拾取计分以及效果副作用。模块通过显式回调接入游戏设置、地形、碰撞、音频、计分和敌人摧毁逻辑，并注册保持不变的 `state.fn` 接口。其单元测试覆盖初始化校验、函数注册、刷新轮换、拾取、星星升级、携带者释放和瞬态状态清理；现有浏览器道具测试继续覆盖真实游戏路径。
-
-`enemy-spawn-runtime.js` 接管从 `src/game.js` 抽出的实时敌人生成边界：活动槽位容量、首选与备用出生点占用检查、所有出生点被占用时的重试时序、携带者清理、敌人实体创建以及按玩家数缩放的固定帧生成节奏。其单元测试锁定 `state.fn` 注册、序列上限、显式延迟、默认节奏、占用出生点回退、全点占用重试和携带者回调；现有浏览器敌人诊断继续验证真实关卡流程。
-
-`enemy-ai-runtime.js` 接管从 `src/game.js` 抽出的敌人决策辅助：随机/玩家/HQ 阶段选择、按槽位选择玩家目标、横向优先方向判断、开火概率和 AI 概率匹配。模块接收现有战斗随机回调，不创建第二条随机流；其单元测试锁定阶段边界、目标投影、方向选择和开火决策。
-
-`enemy-movement-runtime.js` 接管从 `src/game.js` 抽出的敌人移动逻辑：交替移动 cadence、重叠脱困、阻塞重试、待转向、交叉点寻路、方向反转和履带相位推进。其单元测试锁定 cadence 跳过、严格降低重叠面积、重试时序和转向决策；现有敌人、地形和玩家移动浏览器诊断继续覆盖真实路径。
-
-`enemy-update-runtime.js` 接管从 `src/game.js` 抽出的固定帧敌人更新边界：摧毁动画释放、定时器冻结敌人、出生动画推进、重载递减、移动分派和开火调度。其单元测试锁定冻结中的敌人仍会完成出生动画、但不会移动、重载或射击；现有定时器、敌人状态、战斗和分数浏览器探针继续覆盖真实路径。
-
-`tank-movement-runtime.js` 接管从 `src/game.js` 抽出的固定帧坦克移动边界：碰撞 peer 过滤、地形/基地占位、重叠面积恢复支持、冰面识别、转向对齐、履带相位切换和垂直转向判断。其单元测试锁定移动阻挡、活动 peer 选择、地形投影、冰面识别、履带相位和对齐行为；现有浏览器地形与玩家移动诊断继续覆盖真实路径。
-
-`src/runtime/player-movement-runtime.js` 接管固定帧玩家移动边界：配置速度应用、冰面滑行启动/延续、垂直转向对齐、受击停顿门控和履带相位更新。它通过显式回调接入地形移动与音效，保留滑行移动中两次读取设置的原有行为；直接测试覆盖普通转向、滑行、锁定冰面移动、受击阻挡和履带更新。
-
-`src/runtime/game-over-entry-runtime.js` 接管进入场内 GAME OVER 状态：精确的 14 路音频停止顺序、演示结束、重复进入保护、固定计数器复位、扩展高字节、基地/提示清理、高分比较和场内计时器初始化。直接测试同时保留原有未停止的音频通道、实际清理调用和状态转换细节。
-
-`src/runtime/frame-counter-runtime.js` 接管 `src/core/frame-counter.js` 到实时状态的适配：低/高字节推进、单独复位、整体复位以及写回共享游戏状态。它不复制纯计数规则，保留原有 64 帧高字节边界；直接测试锁定溢出、独立复位、整体复位和模块注册。
-
-`transient-effects-runtime.js` 接管从 `src/game.js` 抽出的爆炸与分数提示运行时边界：爆炸规则回退、命中/摧毁样式选择、基地摧毁持续时间、队列写入和固定帧 TTL 推进。Canvas 渲染仍保留在 `src/game.js`；其单元测试锁定显式依赖校验、规则回退、样式选择、提示默认坐标、TTL 推进和存活对象标识，现有浏览器瞬态效果集成测试则验证模块注册与公开行为不变。
-
-`projectile-runtime.js` 接管从 `src/game.js` 抽出的固定帧射击边界：玩家升级档位查询、每辆坦克的活动子弹上限、按当前关卡包几何创建子弹、重载时序和仅玩家射击音效。碰撞与移动解析仍保持独立运行时边界；其单元测试锁定升级档位钳位、单/双子弹上限、速度与破墙等级传递、敌人静音和重载行为，浏览器子弹集成测试则验证模块注册与关卡包覆盖。
-
-`projectile-target-runtime.js` 接管从 `src/game.js` 抽出的子弹目标副作用：基地摧毁、精确到碎片的砖/钢墙伤害、敌人受伤与携带者释放、友军伤害眩晕以及敌方子弹击杀玩家。其单元测试锁定原有副作用顺序和目标过滤；现有碰撞、地形、战斗、道具和音频浏览器探针继续覆盖真实路径。
-
-`projectile-resolution-runtime.js` 接管从 `src/game.js` 抽出的固定顺序子弹命中分派：带边距的场地边界命中、地形/基地/坦克检查，以及边界爆炸和音频副作用。其单元测试锁定提前返回和地形/基地/坦克的精确顺序；现有子弹碰撞和命中规则集成测试继续覆盖真实路径。
-
-`projectile-motion-runtime.js` 接管从 `src/game.js` 抽出的固定帧子弹步进边界：重置移除标志、按小数速度细分步数、按方向向量移动、逐步派发碰撞、对向子弹抵消以及过期子弹过滤。其单元测试锁定步数、提前命中终止、步进后抵消顺序、存活对象标识和标志重置；现有子弹碰撞、边界命中、定时器和战斗浏览器测试继续覆盖真实路径。
-
-`public-api-adapters.js` 接管四组有序的公开入口：关卡包加载/校验、精灵与当前关卡包投影、`debugSnapshot()` 以及 `stagePackSchema()`。保留接收者的绑定让状态所有的加载器和依赖所有的投影保持显式，同时薄组合继续保持原公开索引 0-2、34-35、50 和 158。其单元测试锁定分组顺序、接收者优先级、校验和输出路由；浏览器集成测试验证公开位置，并移除原先动态适配器函数体。最终 `debug-api.js` 为 77 个物理行，且不再包含 `eval`。
-
-`src/presentation/free-sprite-manifest.js` 接管 `data/free-sprite-manifest.json` 的深冻结浏览器模块副本，以及运行时公开的独立深克隆 API。单元测试逐项对照 JSON 中全部 14 类精灵，并锁定履带动画相位、六种带轮廓道具、五角星几何、钢墙螺栓、水面动画、隐藏掉落物相位、摧毁相位和克隆隔离；浏览器集成测试验证模块注册，并确认公开克隆无法修改内部冻结的替代图形。
-
-`src/presentation/pixel-font.js` 接管冻结的 41 字形 5x7 字体、七个 3x5 紧凑 GAME OVER 字形、未知字符回退和右对齐几何。`src/game.js` 仅保留 Canvas 矩形提交、裁剪和条纹调色板绘制。单元测试锁定每个字形的行宽、二进制像素行以及缩放/步进对齐；浏览器集成测试验证标题/全屏条纹文字、普通 PAUSE 文字和双人淘汰紧凑文字全部使用整数矩形绘制，绝不调用抗锯齿 `fillText`。
-
-`src/presentation/battle-hud-presentation.js` 接管右侧栏后备敌人/生命计数、16 帧 PAUSE 闪烁选择、场内 GAME OVER 的 127 帧滑入与 129 帧停留，以及双人模式单玩家淘汰时 32x8 紧凑提示的投影。薄运行时适配器在 Canvas 绘制前注入当前计数、暂停/演示标志和关卡包 GAME OVER 时序。直接单元测试锁定纯规则边界，浏览器集成测试保留原先位于 smoke 套件中的生命周期、音频耦合和像素占位探针。
-
-`src/presentation/effect-presentation.js` 接管玩家/敌人/基地销毁、子弹命中与普通爆炸、固定或浮动分数文字的参考相位表、精灵几何和时间轴投影。薄运行时适配器在 Canvas 绘制前注入当前关卡包 TTL 与战场布局。直接单元测试覆盖全部纯投影，浏览器集成测试保留原先位于 smoke 套件中的生命周期和像素边界探针。
-
-`src/presentation/screen-presentation.js` 接管标题计分组布局、108 帧全屏 GAME OVER 布局、460 帧 HIGH SCORE 调色板/居中时间轴，以及离散的关卡选择/结算闭幕与关卡开场幕布。薄运行时适配器在 Canvas 绘制前注入当前屏幕尺寸、关卡号、转场计时器和已配置的开场时长。直接单元测试锁定全部边界与参考坐标，浏览器集成测试保留原先位于 smoke 套件中的生命周期、输入、音频耦合和像素绘制探针。
-
-`src/presentation/tank-presentation.js` 接管方向与履带帧名、星级升级叠层的几何/颜色、装甲颜色、携带道具与眩晕闪烁 cadence、护盾可见性/颜色以及四档尺寸的出生动画序列。`src/game.js` 保留 Canvas 精灵提交和调色板绘制。直接单元测试覆盖全部纯选择器，浏览器集成测试保留原先位于 smoke 套件中的运行时探针和像素级履带/升级外观断言。
-
-`src/rules/enemy-ai-rules.js` 接管按槽位交替的移动 cadence、8px 转向路口、由间隔派生的随机/玩家/基地阶段、存活玩家目标选择、轴优先方向、精确到随机字节的 AI 概率，以及默认/自定义开火判断。`src/game.js` 仍从共享 NES 风格随机序列取字节，并执行移动、碰撞脱困、转向和射击，因此抽取不会改变随机数消费顺序。
-
-`src/rules/enemy-spawn-rules.js` 接管存活敌人容量统计、倒序可复用槽位选择、14px 玩家/敌人出生点占用判断，以及显式或循环出生点索引选择。销毁中的敌人在释放前继续占用容量，但销毁中、已死亡或等待重生的坦克不会阻塞出生点；运行时代码保留重试倒计时、携带者清理和敌人创建。
-
-`src/entities/power-up-state.js` 现已同时接管可拾取记录创建和单帧 TTL 推进。正 TTL 逐帧递减并在归零时立即移除，零或负值则保留同一对象作为不计时道具。
-
-`src/rules/power-up-collection-rules.js` 接管活动玩家拾取资格、两个中心轴都严格小于 12px 的边界，以及双人同帧都满足条件时让 P2 优先的倒序槽位选择。运行时代码保留道具移除、计分、提示和拾取音效。
-
-`src/rules/power-up-effect-rules.js` 接管六类道具的同步状态变化：手雷的敌人销毁请求、头盔保护延长、基地存活时的铲子计时、带上限的星星升级、定时器冻结，以及坦克加命。模块把地形、敌人和音频动作返回给 `src/game.js`，使这些运行时副作用不进入规则层；专用测试现已同时覆盖直接状态变化以及真实手雷/铲子/定时器路径。
-
-`src/rules/power-up-spawn-rules.js` 接管原版 8 项道具随机表、稳定坐标去重、16 位均匀候选选择，以及存在替代位置时排除上次位置。运行时代码仍先依据战场边界、当前基地、固体地形和坦克占位过滤配置/回退位置，再把可达候选交给该模块。
-
-`tests/helpers/test-file-discovery.js` 按稳定路径顺序递归发现 `*.test.js` 文件。`tests/run-tests.js` 会在隔离的 Node 进程中运行全部单元测试和集成测试，因此新增功能测试不再需要手工维护运行器清单。`tests/integration/app-bootstrap.test.js` 负责剩余的浏览器启动、工具栏、首帧渲染、关卡准备渲染和文件输入清理检查；各功能生命周期断言仍由对应领域的集成测试负责。
-
-`tests/unit/readme-tree.test.js` 校验 UTF-8 解码与代码围栏配对，要求英文和中文文件树完全一致，并在排除 Git、Codex 与 Reasonix 元数据目录后，将文档中的文件逐项对照实际工作区。
-
-`src/rules/projectile-collision-rules.js` 接管子弹中心距离判断，以及不同拥有者子弹的有序抵消。对应测试保留严格小于 6px 的边界、同拥有者排除、跳过已移除子弹、确定性配对顺序、高速交叉行为和无命中特效抵消。
-
-`src/rules/projectile-impact-rules.js` 接管带 padding 的战场边界判断、夹紧后的边缘命中坐标，以及仅玩家触发的砖块/钢墙命中音效选择。对应测试保留包含边界等号的行为、208px 战场四边夹紧、敌方命中静音、钢墙阻挡音效和最高火力破坏钢墙音效。
-
-`src/rules/wall-damage-rules.js` 接管关卡包诊断使用的冻结墙体规则元数据与独立克隆 API，以及定向象限选择、普通子弹按 4px 深度剥离砖块条带、强化子弹移除 8px 砖块象限和最高火力破坏钢墙象限。专用单元测试锁定元数据并直接覆盖左下和右下碎片掩码；浏览器集成测试验证 schema/当前关卡包投影，并保留此前位于单体 smoke 测试中的运行时调试探针行为。
-
-迁移顺序依次为核心计时/随机/几何、配置与关卡包、游戏实体与规则、输入/编辑器、音频、渲染/画面、调试适配器，最后收敛应用启动入口。每次抽离都必须保留无需构建的静态启动方式，在同一提交中迁移对应测试，并在下一子系统开始前通过完整回归。重构和测试拆分全部完成前，暂停新增 1:1 游戏机制。
-
-`src/runtime/render-composition-runtime.js` 接管面向 Canvas 的 runtime 组装顺序：标题、地形、坦克、道具、子弹、效果、结算表、HUD、编辑器、转场和顶层屏幕渲染。它接收现有游戏回调，通过原有 runtime 模块注册相同的 `state.fn` 方法，将冻结的 runtime 句柄返回给组合入口，并把渲染依赖接线从 `src/game.js` 移出。单元测试锁定回调校验、组装顺序和句柄隔离；浏览器启动测试通过真实的无构建入口加载该脚本。
-
-`src/runtime/render-adapter-runtime.js` 接管把组合入口连接到已抽离渲染 runtime 的兼容 Canvas 适配函数。它延迟到组装完成后才查找子 runtime，保留原有表现选择器和整数文字辅助函数，并显式接收单独初始化的战斗场景渲染器。单元测试锁定延迟连接、子 runtime 的接收者身份和表现委托；浏览器集成测试验证无需构建的启动路径及首帧渲染保持不变。
-
-`src/runtime/application-flow-composition-runtime.js` 接管生命周期、音频、Construction 输入、选关和全屏结算画面的应用流程初始化顺序。它读取现有 `state.fn` 注册结果，保持帧/生命周期回调显式注入，并将这段初始化从 `src/game.js` 移出。单元测试锁定初始化顺序和回调接线；浏览器集成测试验证真实的无需构建启动路径。
-
-`src/runtime/input-composition-runtime.js` 接管把浏览器输入路由连接到已注册游戏方法的回调组装。它保留原有回调顺序、暂停门控使用的动态关卡清空判定，以及显式的 DOM/共享状态依赖，让 `src/game.js` 只保留组合调用和主循环直接调用最高分接口。单元测试锁定回调身份和适配器输入；浏览器集成测试验证无需构建的注册路径。
-
-`src/runtime/legacy-api-composition-runtime.js` 接管保留的公开/调试 API 回调投影。它组合本地屏幕/更新回调、抽离后的渲染适配器和关卡 runtime，再将原有注册顺序交给 `legacy-api-runtime.js`，从 `src/game.js` 移出大型注册对象，同时不改变公开的 `state.fn` 表面。单元测试锁定两类来源的回调身份；浏览器集成测试验证无需构建的注册边界。
-
-`src/runtime/render-pipeline-composition-runtime.js` 接管分阶段的 Canvas 管线组装：文本与精灵适配器、渲染适配器、战斗场景和最终屏幕渲染组合。它提供显式完成步骤，让 `battle-composition-runtime.js` 继续位于战斗场景初始化与屏幕组合初始化之间，在移出 `src/game.js` 大型接线块的同时保持原有初始化顺序。单元测试锁定阶段顺序、回调身份和幂等完成；浏览器集成测试验证无需构建的管线边界。
-
-`src/runtime/battle-systems-composition-runtime.js` 接管坦克/玩家移动、瞬态特效、投射物、战斗、关卡流程与结算、Game Over、战斗结束判定、计时/随机、道具、敌人生成/AI/移动/更新和投射物结算的固定原始初始化顺序，只向父模块返回帧计数器与 Game Over 入口句柄。`src/runtime/battle-composition-runtime.js` 现在只负责剩余的战斗循环、帧循环和屏幕更新装配，并保持从 `src/game.js` 接收的顶层渲染/更新/生成门控。直接单元测试锁定 21 个系统的初始化顺序及返回句柄；父模块和浏览器集成测试验证组合及真实启动路径。
-
-`src/runtime/legacy-api-runtime.js` 接管保留的 `state.fn` 兼容接口的最终注册。它只在所有 runtime 模块完成 API 注册后运行，校验回调表、保持注册顺序，并让公开调试适配器不再依赖组合入口中的逐项赋值。单元测试锁定参数校验、插入顺序和函数身份；浏览器集成测试验证 `src/game.js` 不再直接赋值 `state.fn`。
-
-`src/runtime/debug-battle-runtime.js` 接管效果、道具、分数、计时器和地形诊断共用的确定性暂停战斗夹具。它只写入这些探针所需的最小战斗状态，将 60 Hz 计数与帧字节转换集中到一个边界，并保持正式战斗循环不变。单元测试锁定夹具几何、数值归一化和重置字段；浏览器集成测试验证诊断仍使用抽离后的夹具。
-
-`src/runtime/audio-bridge.js` 接管音频状态初始化、混音投影、已抽取音频运行时模块的组合，以及交给组合入口的固定帧音频生命周期顺序：更新全部声部、结算前停止游戏声部、停止结算声部，以及完整退出时停止全部声部。通用 Web Audio 声部调度现由 `audio-voice-runtime.js` 接管。单元测试锁定这四组生命周期顺序，避免后续音频修改静默改变声道清理或推进顺序。
-
-`src/runtime/audio-fixed-frame-runtime.js` 接管从 `audio-bridge.js` 抽出的固定帧音频基础设施：清单表现查询、确定性的短/长噪声缓冲、Web Audio 声源创建、节点同步、暂停感知的帧推进和移动音效重新同步。其单元测试锁定注册和无音频上下文时的噪声缓冲行为，同时由 audio bridge 测试保留生命周期方法顺序。
-
-`src/runtime/audio-channel-runtime.js` 接管从 `audio-bridge.js` 抽出的 17 个固定帧事件声道绑定：表现查询、可听性选择、节点同步、启动/停止/更新生命周期，以及暂停、关卡开始、奖励生命和道具事件所需的跨声道重新同步。其单元测试锁定完整声道方法面和代表性的优先级回调；audio bridge 继续负责音频状态、混音投影、模块组合和全局生命周期顺序。
-
-`src/runtime/audio-movement-runtime.js` 接管从 `audio-bridge.js` 抽出的连续移动音效状态机：玩家输入请求、演示模式请求、玩家/敌人模式判定、振荡器生命周期、按相位更新频率，以及与混音状态的移动声道同步。其单元测试覆盖输入检测、振荡器创建、相位更新、屏蔽和销毁。
-
-`src/runtime/audio-voice-runtime.js` 接管从 `audio-bridge.js` 抽出的 Web Audio 上下文初始化、序列振荡器的跟踪与清理、通用音调创建、清单声部时序，以及固定帧事件的重定向路由。其单元测试锁定序列时序、通用音高路由、重定向和初始化节点同步。
-
-`src/runtime/audio-score-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的计分音效表现与生命周期探针。它接收显式运行时作用域并返回冻结的探针方法；`audio-diagnostics.js` 再将其合并回原有公开顺序，直接测试和浏览器测试共同保持现有输出哈希。
-
-`src/runtime/audio-stage-bonus-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的关卡结算领先奖励音效表现与生命周期探针。它使用同样的显式作用域边界并合并回原有公开顺序；直接测试和浏览器测试保持原版 28 帧音效及结算行为。
-
-`src/runtime/audio-movement-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的普通移动模式与冰面移动表现探针。`src/runtime/audio-movement-lifecycle-diagnostics.js` 接管冰面移动生命周期探针，包括暂停冻结、优先级屏蔽、重新触发和关卡清理；组合入口会将它合并回原有公开 API 位置。
-
-`src/runtime/audio-brick-hit-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态可破坏砖块命中音效表现探针。它通过显式作用域将三帧三角波替代序列与砖块命中生命周期探针分离。
-
-`src/runtime/audio-brick-hit-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的砖块命中生命周期探针。它保留砖块与钢墙碰撞覆盖、暂停和关卡开场优先级屏蔽、独立射击声道以及关卡清理行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-steel-hit-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态钢墙命中音效表现探针。它通过显式作用域将五帧边界撞击序列与钢墙命中生命周期探针分离。
-
-`src/runtime/audio-steel-hit-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的钢墙命中生命周期探针。它保留边界与敌方子弹命中、暂停冻结、道具出现和关卡开场优先级屏蔽、独立射击声道以及关卡清理行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-enemy-hit-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态敌方坦克命中音效表现探针。它通过显式作用域将六帧装甲命中序列与敌方命中生命周期探针分离。
-
-`src/runtime/audio-enemy-hit-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的敌方命中生命周期探针。它保留装甲第二音高时序、致命命中转交、友军眩晕、玩家受击摧毁、声道优先级以及关卡清理行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-enemy-destroy-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态敌方摧毁音效表现探针。它通过显式作用域将采样的摧毁序列与敌人释放和计分生命周期探针分离。
-
-`src/runtime/audio-enemy-destroy-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的敌方摧毁生命周期探针。它保留摧毁动画阶段、分数提示时序、手榴弹清场、出生中敌人处理、暂停推进和关卡清理行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-player-destroy-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态玩家摧毁音效表现探针。它通过显式作用域将采样的重生摧毁序列与玩家生命周期状态恢复分离。
-
-`src/runtime/audio-player-destroy-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的玩家摧毁生命周期探针。它保留敌方子弹击杀、护盾免疫、暂停冻结、GAME OVER 延续、摧毁声道优先级和关卡清理行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-base-hit-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态基地命中音效表现探针。它通过显式作用域将采样的基地摧毁序列与基地生命周期和关卡复位探针分离。
-
-`src/runtime/audio-base-hit-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的基地命中生命周期探针。它保留基地摧毁、GAME OVER 延续、优先级屏蔽、暂停冻结、外观屏蔽和关卡清理行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-player-shoot-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态玩家射击音效表现探针。它通过显式作用域将三个边界采样点与射击输入和子弹生命周期状态分离。
-
-`src/runtime/audio-player-shoot-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的玩家射击生命周期探针。它保留玩家/敌人射击差异、重载重复触发保护、暂停冻结、冰面声道屏蔽、关卡开场与奖励生命优先级以及关卡清理行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-stage-start-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态关卡开始音效表现探针。它通过显式作用域将长时固定帧采样点与关卡初始化和幕布生命周期状态分离。
-
-`src/runtime/audio-bonus-life-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态奖励生命音效表现探针。它通过显式作用域将双声部乐句采样与奖励生命状态变化和声道优先级生命周期逻辑分离。
-
-`src/runtime/audio-bonus-life-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的奖励生命生命周期探针。它保留 54 帧边界、脉冲二完成状态、暂停冻结和移动音效恢复行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-power-up-pickup-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态道具拾取音效表现探针。它通过显式作用域将七个乐句边界采样点与收集状态、暂停处理和声道优先级生命周期逻辑分离。
-
-`src/runtime/audio-power-up-pickup-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的道具拾取生命周期探针。它保留 39 帧完成边界、暂停冻结、奖励生命声道屏蔽和移动音效恢复行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-power-up-appear-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态道具出现音效表现探针。它通过显式作用域将九个乐句边界采样点与携带者释放、暂停处理和拾取优先级生命周期逻辑分离。
-
-`src/runtime/audio-power-up-appear-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的道具出现生命周期探针。它保留携带者释放、暂停冻结、音效完成、声道优先级屏蔽以及无可达位置清理行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/runtime/audio-pause-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的无状态暂停音效表现探针。它通过显式作用域将九个乐句边界采样点与暂停切换、帧冻结和恢复生命周期逻辑分离。
-
-`src/runtime/audio-pause-lifecycle-diagnostics.js` 接管从 `audio-diagnostics.js` 抽出的暂停生命周期探针。它保留暂停进入/退出、音效帧保持、最后一帧完成和清理行为，同时由组合入口恢复原有公开 API 位置。
-
-`src/game.js` 现在不再为已注册的音频或非音频 runtime 方法维护本地别名。组合模块在初始化期间读取 `state.fn`，主循环在注册完成后直接调用最高分接口；组合入口仅保留依赖桶、共享状态句柄、关卡 runtime 和少量图块名称映射。
+下一阶段的一致性工作需要对照原版证据检查 35 关战役及循环、玩家/敌人/碰撞时序、Construction 关卡推进、道具、结算画面及声画事件时序。当前随机流模型仍将未建模的 NES 临时内存字节保留在初始值。替代图像/音频，以及鼠标编辑、森林轮廓和可达道具落点等浏览器扩展，都应显式记录，而不能当作已与 NES 完全等价的证明。
 
 
 ## 操作方式
@@ -1116,33 +659,6 @@ tank-defender-8/
 - 游戏结束后，若任一玩家最终分数严格超过本局开始时已有的纪录，则显示最高分庆祝画面；与纪录相同不会触发。该画面最多保留七位分数，并每帧循环四组文字调色板。免费的脉冲一、脉冲二和三角波替代号角会遵循原版固定帧音序：两个脉冲声部均持续 460 帧，三角波在第 380 帧结束；脉冲一保留中间 80 帧静音区间，三角波保留开头 130 帧未启用区间。画面等待脉冲一结束，并在第 460 帧进入全新的标题周期。
 - 原版风格建造模式，包含 16px 坦克光标、14 种图案的 A/B 方块循环、第 1 关替换及正常第 2 关延续，并附带可选的 8px 鼠标编辑和保存/加载/导出扩展。
 
-`src/runtime/player-update-runtime.js` 接管固定帧玩家输入和演示模式更新。它通过冻结的运行时 API 保留原版方向键/WASD 键位、单次射击按下事件、移动节奏、出生保护、重生时序、演示模式优先追踪道具和敌人槽位优先级。其单元测试覆盖键位矩阵、射击、恢复和目标选择；浏览器集成测试通过真实游戏 harness 验证模块注册。
-
-`src/runtime/player-movement-runtime.js` 接管玩家输入与演示更新调用的实际移动操作，将冰面滑行、转向对齐、受击停顿和履带动画从输入调度器中分离出来。
-
-`src/runtime/game-over-entry-runtime.js` 接管场内 GAME OVER 的进入副作用和计时器初始化，将音频清理与高分标记从战斗结束判定中分离出来。
-
-`src/runtime/frame-counter-runtime.js` 接管纯 60 Hz 计数结果写入共享状态的实时适配，让各生命周期模块共享同一个推进/复位边界。
-
-`src/runtime/battle-timing-runtime.js` 接管固定帧全局计时边界：暂停倒计时、铁锹墙恢复/闪烁时序、玩家无敌倒计时、基地摧毁倒计时以及精确的关卡清空判定。其单元测试锁定 64 帧计时节奏、墙体转换和敌人数量边界；浏览器集成测试验证模块注册，同时不改变公开 API 顺序。
-
-`src/runtime/battle-random-runtime.js` 接管纯 D44D 随机算术之上的活动战场适配：有状态随机流、零页映射、原版敌人出生位置采样，以及玩家/敌人坦克内存和类型字节。其单元测试锁定地址映射、环绕和槽位编码，同时保证 AI、生成、移动和道具运行时继续收到相同的 `randomByte` 回调。
-
-`src/runtime/battle-combat-runtime.js` 接管敌人摧毁计分、奖励生命阈值、玩家受击/死亡转换、重生恢复以及双人 GAME OVER 横幅时序。音频和最高分持久化作为显式回调保留，投射物、道具和玩家更新运行时继续使用相同的 `state.fn` API。
-
-`src/runtime/stage-result-runtime.js` 接管关卡推进投影、结算表时序、通关奖励领取者选择以及一次性通关奖励副作用。屏幕状态转换仍保留在 `src/game.js`，诊断接口和关卡结算渲染使用同一个冻结运行时 API。
-
-`src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，由 `input-runtime.js` 负责 Canvas 坐标换算与 DOM 事件接线。编辑器从关卡网格依赖而非共享状态中校验并读取 `QUAD_GRID`；越界的象限编辑会被忽略，不改变地形，也不播放绘制音效。直接测试覆盖原版图案掩码、边界拒绝、画笔选择和 20 帧重复节奏。
-
-`src/runtime/editor-lifecycle-runtime.js` 接管 Construction 的进入/退出、单关地图试运行、本地存取、清空、剪贴板导出、导入按钮分派和编辑器反馈信息。试运行会保留当前关卡包，仅把编辑地图用于第 1 关，因此通关清除该临时地图后仍按常规关卡推进。其单元测试锁定注册、Construction 状态复位、持久化、活动关卡包保留、退出安装和导入分派；浏览器集成测试继续覆盖完整编辑器工作流。
-
-`src/runtime/input-command-runtime.js` 接管工具栏命令分派和活动战斗中的暂停交接，使暂停资格、待发射按键清理与音频同步独立于浏览器事件注册。
-
-`src/runtime/input-keyboard-runtime.js` 接管固定帧模拟之外的键盘路由。`src/runtime/input-runtime.js` 通过显式组合依赖委托这对冻结的处理器，同时保留关卡包导入和 Construction 鼠标编辑；其测试锁定输入契约，不重复实现游戏规则。
-
-`src/runtime/screen-render-runtime.js` 接管顶层屏幕分派与覆盖层顺序，各专用渲染运行时继续负责具体像素绘制。
-
-`src/runtime/stage-select-runtime.js` 接管进入选关、玩家数选择、关卡范围钳制、确认开局及固定帧 A/B 输入节奏。先消费一次性按键，再处理长按重复；重复发生在原版八帧边界；A/B 同时到达时保留 A 优先级。显式回调将音频初始化、标题闲置计时复位、帧计数复位和游戏启动保留在组合边界；直接测试覆盖范围边界、进入状态、确认开局和输入节奏。
 
 ## 关卡包格式
 
