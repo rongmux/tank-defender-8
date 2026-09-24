@@ -25,11 +25,13 @@ const state = {
   fn: {},
   keys: new Set()
 };
-const api = runtime.setupEditorInputRuntime(state, {
+const deps = {
   ...editorRules,
+  QUAD_GRID: stageGrid.QUAD_GRID,
   setTile: stageGrid.setTile,
   sharedState
-}, {
+};
+const callbacks = {
   playSound(name, options) {
     events.push([name, options]);
   },
@@ -39,7 +41,12 @@ const api = runtime.setupEditorInputRuntime(state, {
   tileTypeName(type) {
     return ["empty", "brick", "steel", "water", "forest", "ice"][type];
   }
-});
+};
+for (const QUAD_GRID of [undefined, 0, -1, 2.5, "26"]) {
+  assert.throws(() => runtime.setupEditorInputRuntime(state, { ...deps, QUAD_GRID }, callbacks),
+    /deps\.QUAD_GRID must be a positive integer/);
+}
+const api = runtime.setupEditorInputRuntime(state, deps, callbacks);
 
 assert(Object.isFrozen(api));
 assert.deepEqual(Object.keys(api), [
@@ -101,5 +108,14 @@ assert.equal(state.game.editorMoveHoldTimer, 15);
 state.game.editorCursor = { qc: -1, qr: -1 };
 api.editAtEditorCursor(true);
 assert.equal(state.game.editorGrid[0][0].type, editorRules.EDITOR_TILE_TYPES[1]);
+
+const previousGrid = JSON.stringify(state.game.editorGrid);
+const previousEventCount = events.length;
+for (const [column, row] of [[-1, 0], [0, -1], [26, 0], [0, 26], [26, 26]]) {
+  assert.doesNotThrow(() => api.paintEditorQuadrant(column, row));
+  assert.doesNotThrow(() => api.cycleEditorQuadrant(column, row));
+}
+assert.equal(JSON.stringify(state.game.editorGrid), previousGrid, "out-of-bounds edits must not change terrain");
+assert.equal(events.length, previousEventCount, "out-of-bounds edits must not play paint sounds");
 
 console.log("editor-input-runtime unit test passed");

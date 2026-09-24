@@ -42,6 +42,9 @@
     if (!deps.sharedState || typeof deps.sharedState !== "object") {
       throw new Error("deps.sharedState must be an object");
     }
+    if (!Number.isInteger(deps.QUAD_GRID) || deps.QUAD_GRID <= 0) {
+      throw new Error("deps.QUAD_GRID must be a positive integer");
+    }
     for (var i = 0; i < DEP_NAMES.length; i += 1) {
       var depName = DEP_NAMES[i];
       if (typeof deps[depName] !== "function" && depName !== "EDITOR_TILE_TYPES") {
@@ -67,6 +70,7 @@
     var game = state.game;
     var keys = state.keys;
     var shared = deps.sharedState;
+    var quadGrid = deps.QUAD_GRID;
     var editorTileTypes = deps.EDITOR_TILE_TYPES;
     var playSound = callbacks.playSound;
     var showEditorMessage = callbacks.showEditorMessage;
@@ -124,7 +128,7 @@
     }
 
     function paintEditorQuadrant(column, row) {
-      if (!game.editorGrid || column < 0 || column >= shared.QUAD_GRID || row < 0 || row >= shared.QUAD_GRID) return;
+      if (!game.editorGrid || column < 0 || column >= quadGrid || row < 0 || row >= quadGrid) return;
       deps.setEditorQuadrant(game.editorGrid, column, row, game.editorBrush);
       playSound("editorPaintSubtile", { brush: game.editorBrush });
     }
@@ -150,7 +154,7 @@
     }
 
     function cycleEditorQuadrant(column, row) {
-      if (!game.editorGrid || column < 0 || column >= shared.QUAD_GRID || row < 0 || row >= shared.QUAD_GRID) return;
+      if (!game.editorGrid || column < 0 || column >= quadGrid || row < 0 || row >= quadGrid) return;
       var cellColumn = Math.floor(column / 2);
       var cellRow = Math.floor(row / 2);
       var quadrant = (row % 2) * 2 + (column % 2);

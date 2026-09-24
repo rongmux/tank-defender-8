@@ -497,6 +497,7 @@ tank-defender-8/
 |   |   |-- collision.test.js
 |   |   |-- combat-settings.test.js
 |   |   |-- debug-snapshot.test.js
+|   |   |-- editor-render-runtime.test.js
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-stage-format.test.js
 |   |   |-- effect-diagnostics.test.js
@@ -798,7 +799,7 @@ tank-defender-8/
 
 `src/editor/editor-rules.js` 接管六种地形的浏览器调色板、14 步原版 Construction 块序列、方向键/WASD 映射与按住优先级、整格光标钳位、面板色块命中测试、图块循环、光标到单元格转换，以及精确的砖块碎片/钢墙象限编辑。`src/editor/editor-stage-format.js` 接管紧凑的版本 2 本地存档序列化、旧版 13x13 `rows` 与当前 26x26 `quadrants` 格式的兼容加载、可复用的 JSON 解析结果、默认单关导出/测试关卡包组装，以及带缩进的导出序列化。`src/game.js` 现在只保留编辑器屏幕状态、本地存储/剪贴板/文件副作用、消息、音效和事件接线。单元测试锁定两种存档编码、JSON 语法错误与存档结构错误的区分、相互独立的默认关卡包记录、出生点、敌人构成和序列化输出；浏览器集成测试接管原先位于 smoke 中的完整保存、清空、加载、导出、文件导入、Construction 关卡安装、即时测试和复位流程。
 
-`src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，`src/game.js` 只保留 Canvas 坐标换算与 DOM 事件接线；直接测试覆盖原版图案掩码、边界安全编辑、画笔选择和 20 帧重复节奏。
+`src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，由 `input-runtime.js` 负责 Canvas 坐标换算与 DOM 事件接线。编辑器从关卡网格依赖而非共享状态中校验并读取 `QUAD_GRID`；越界的象限编辑会被忽略，不改变地形，也不播放绘制音效。直接测试覆盖原版图案掩码、边界拒绝、画笔选择和 20 帧重复节奏。
 
 `src/runtime/editor-lifecycle-runtime.js` 接管 Construction 的进入/退出、单关地图试运行、本地存取、清空、剪贴板导出、导入按钮分派和编辑器反馈信息。试运行会保留当前关卡包，仅把编辑地图用于第 1 关，因此通关清除该临时地图后仍按常规关卡推进。其单元测试锁定注册、Construction 状态复位、持久化、活动关卡包保留、退出安装和导入分派；浏览器集成测试继续覆盖完整编辑器工作流。
 
@@ -850,7 +851,7 @@ tank-defender-8/
 
 `src/runtime/battle-hud-render-runtime.js` 接管战斗中的右侧信息栏、暂停文字、场内 GAME OVER 横幅、玩家 GAME OVER 提示及其布局辅助函数。它保留固定像素字体几何、敌人计数/生命数投影、暂停闪烁相位和双人紧凑 GAME OVER 字形；直接测试覆盖面板坐标、横幅计时回调、暂停可见性和旗帜几何。
 
-`src/runtime/editor-render-runtime.js` 接管 Construction 战场渲染：可编辑地形层、基地、持续显示的父单元框与 8px 子格光标焦点，以及六类图块图例。它保留原有 256x240 战场几何、16px 图块定位、图块掩码和画笔高亮，并通过显式回调提交地形绘制；直接测试覆盖后备网格创建、不同调色循环帧中的光标可见性、图例坐标和每类图块渲染器。
+`src/runtime/editor-render-runtime.js` 接管 Construction 战场渲染：可编辑地形层、基地、持续显示的父单元框与 8px 子格光标焦点，以及六类图块图例。它保留原有 256x240 战场几何、16px 图块定位、图块掩码和画笔高亮，并通过显式回调提交地形绘制。光标边界使用经过校验的关卡网格依赖 `QUAD_GRID`。直接测试采用真实共享状态常量；`tests/integration/editor-render-runtime.test.js` 覆盖生产模块接线、不同调色循环帧中的光标可见性、键盘移动/绘制、最后一个象限、边框点击拒绝，以及离开画布后的光标恢复。
 
 `src/runtime/screen-transition-render-runtime.js` 接管选关页、选关关闭幕布、关卡开场战场/幕布渲染和幕布状态适配。它保留原有 256x240 整数几何、上下覆盖行、关卡文字裁剪、配置的开场时长和过渡计时器来源；直接测试覆盖选关文字、关闭填充顺序、开场裁剪和状态参数。
 
@@ -1131,7 +1132,7 @@ tank-defender-8/
 
 `src/runtime/stage-result-runtime.js` 接管关卡推进投影、结算表时序、通关奖励领取者选择以及一次性通关奖励副作用。屏幕状态转换仍保留在 `src/game.js`，诊断接口和关卡结算渲染使用同一个冻结运行时 API。
 
-`src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，`src/game.js` 只保留 Canvas 坐标换算与 DOM 事件接线；直接测试覆盖原版图案掩码、边界安全编辑、画笔选择和 20 帧重复节奏。
+`src/runtime/editor-input-runtime.js` 接管 Construction 模式的固定帧输入编排：光标移动、原版 A/B 图案循环、整格与象限绘制、画笔选择、图块循环以及方向键长按重复。它通过显式回调执行地图修改和音效，由 `input-runtime.js` 负责 Canvas 坐标换算与 DOM 事件接线。编辑器从关卡网格依赖而非共享状态中校验并读取 `QUAD_GRID`；越界的象限编辑会被忽略，不改变地形，也不播放绘制音效。直接测试覆盖原版图案掩码、边界拒绝、画笔选择和 20 帧重复节奏。
 
 `src/runtime/editor-lifecycle-runtime.js` 接管 Construction 的进入/退出、单关地图试运行、本地存取、清空、剪贴板导出、导入按钮分派和编辑器反馈信息。试运行会保留当前关卡包，仅把编辑地图用于第 1 关，因此通关清除该临时地图后仍按常规关卡推进。其单元测试锁定注册、Construction 状态复位、持久化、活动关卡包保留、退出安装和导入分派；浏览器集成测试继续覆盖完整编辑器工作流。
 

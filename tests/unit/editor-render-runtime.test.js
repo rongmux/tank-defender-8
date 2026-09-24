@@ -1,5 +1,7 @@
 const assert = require("assert").strict;
 const runtime = require("../../src/runtime/editor-render-runtime");
+const sharedState = require("../../src/runtime/shared-state");
+const { QUAD_GRID } = require("../../src/stages/stage-grid");
 
 assert(Object.isFrozen(runtime));
 assert.throws(
@@ -28,24 +30,17 @@ const state = {
   },
   fn: {}
 };
-const api = runtime.setupEditorRenderRuntime(state, {
-  sharedState: {
-    SCREEN_W: 256,
-    SCREEN_H: 240,
-    FIELD_X: 16,
-    FIELD_Y: 16,
-    FIELD_W: 208,
-    FIELD_H: 208,
-    TILE: 16,
-    QUAD_GRID: 26
-  },
+const deps = {
+  sharedState,
+  QUAD_GRID,
   EDITOR_TILE_TYPES: ["empty", "brick", "steel", "water", "forest", "ice"],
   BRICK: "brick",
   STEEL: "steel",
   WATER: "water",
   FOREST: "forest",
   ICE: "ice"
-}, {
+};
+const callbacks = {
   createStageGrid(stage) {
     calls.push(["createGrid", stage]);
     return [[{ type: "empty" }]];
@@ -74,7 +69,12 @@ const api = runtime.setupEditorRenderRuntime(state, {
   renderTerrain(...args) {
     calls.push(["terrain", ...args]);
   }
-});
+};
+for (const QUAD_GRID of [undefined, 0, -1, 2.5, "26"]) {
+  assert.throws(() => runtime.setupEditorRenderRuntime(state, { ...deps, QUAD_GRID }, callbacks),
+    /deps\.QUAD_GRID must be a positive integer/);
+}
+const api = runtime.setupEditorRenderRuntime(state, deps, callbacks);
 
 assert(Object.isFrozen(api));
 assert.deepEqual(Object.keys(api), ["drawTileLegend", "renderEditor"]);

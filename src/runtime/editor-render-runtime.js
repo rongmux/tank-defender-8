@@ -33,6 +33,9 @@
     if (!deps.sharedState || typeof deps.sharedState !== "object") {
       throw new Error("deps.sharedState must be an object");
     }
+    if (!Number.isInteger(deps.QUAD_GRID) || deps.QUAD_GRID <= 0) {
+      throw new Error("deps.QUAD_GRID must be a positive integer");
+    }
     if (!Array.isArray(deps.EDITOR_TILE_TYPES)) {
       throw new Error("deps.EDITOR_TILE_TYPES must be an array");
     }
@@ -59,7 +62,7 @@
     var fieldWidth = shared.FIELD_W;
     var fieldHeight = shared.FIELD_H;
     var tile = shared.TILE;
-    var quadGrid = shared.QUAD_GRID;
+    var quadGrid = deps.QUAD_GRID;
     var editorTileTypes = deps.EDITOR_TILE_TYPES;
     var brick = deps.BRICK;
     var steel = deps.STEEL;
