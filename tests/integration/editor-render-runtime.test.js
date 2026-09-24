@@ -37,7 +37,10 @@ function assertCursor(qc, qr) {
     "cursor corners must remain visible above terrain");
 }
 
+for (let frame = 0; frame < 640; frame += 1) renderFrame();
+assert.equal(api.debugSnapshot().demoMode, true, "the real frame loop must reach the attract demo");
 action("edit").click();
+assert.equal(api.debugSnapshot().demoMode, false, "entering Construction must clear the demo flag");
 for (let frame = 0; frame < 24; frame += 1) {
   renderFrame();
   assertCursor(0, 0);
@@ -47,6 +50,7 @@ keyPress("ArrowRight");
 keyPress("KeyS");
 keyPress("Space");
 renderFrame();
+assert.equal(api.debugSnapshot().screen, "editor", "A must paint, not exit the previous demo");
 assertCursor(2, 2);
 assert.equal(api.debugSnapshot().editorQuadrants[2].slice(2, 4), ".B");
 
@@ -76,5 +80,10 @@ assert.equal(canvasContext.calls.some((call) => call.op === "strokeRect"), false
 keyPress("ArrowLeft");
 renderFrame();
 assertCursor(0, 0);
+
+keyPress("Enter");
+assert.equal(api.debugSnapshot().screen, "title");
+assert.equal(api.debugSnapshot().hasConstructedStage, true, "Start must install the edited stage");
+assert.equal(api.debugSnapshot().demoMode, false);
 
 console.log("editor-render-runtime integration test passed");

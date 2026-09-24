@@ -51,6 +51,7 @@
       fn.stopStageBonusAudio();
       fn.initAudio();
       game.screen = "editor";
+      game.demoMode = false;
       game.paused = false;
       if (!game.editorGrid) game.editorGrid = deps.makeOriginalConstructionGrid();
       game.editorCursor = { qc: 0, qr: 0 };

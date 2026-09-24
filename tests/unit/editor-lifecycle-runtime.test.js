@@ -126,6 +126,7 @@ assert.equal(fn.enterEditor, api.enterEditor);
 
 api.enterEditor();
 assert.equal(state.game.screen, "editor");
+assert.equal(state.game.demoMode, false, "Construction must stop accepting attract-demo exit input");
 assert.equal(state.game.paused, false);
 assert.equal(state.game.editorGrid, originalGrid);
 assert.equal(state.game.editorBrush, "brick");
