@@ -109,6 +109,7 @@ node --check src/stages/stage-pack-schema.js
 node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
+node --check src/runtime/diagnostic-scope.js
 node --check src/runtime/editor-input-runtime.js
 node --check src/runtime/editor-lifecycle-runtime.js
 node --check src/runtime/stage-select-runtime.js
@@ -334,6 +335,7 @@ tank-defender-8/
 |   |   `-- stage-runtime.js
 |   |-- runtime/
 |   |   |-- shared-state.js
+|   |   |-- diagnostic-scope.js
 |   |   |-- editor-input-runtime.js
 |   |   |-- editor-lifecycle-runtime.js
 |   |   |-- stage-select-runtime.js
@@ -611,6 +613,7 @@ tank-defender-8/
 |   |   |-- combat-settings.test.js
 |   |   |-- debug-snapshot.test.js
 |   |   |-- directions.test.js
+|   |   |-- diagnostic-scope.test.js
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-input-runtime.test.js
 |   |   |-- editor-lifecycle-runtime.test.js
@@ -770,6 +773,8 @@ tank-defender-8/
 |-- README.md
 `-- README.zh-CN.md
 ```
+
+`src/runtime/diagnostic-scope.js` centralizes receiver-preserving scope assembly for 17 diagnostic and public-adapter modules. Shared values overlay dependency values; callback precedence remains `state.fn > state.stageRuntime > deps`, and non-function overrides do not hide lower-priority callbacks. Each caller retains its input validation and explicit live game, input, and audio references. Direct tests cover receiver identity, fallback precedence, fresh scopes, and reference preservation; the integration suite locks all 159 public API positions and the existing per-domain output hashes.
 
 `src/stages/original-stage-source.js` stores the exact 35-stage, 13x13 block-ID rows decoded from the public Battle City (J) disassembly files `incbin/stages/stage_01.bin` through `stage_35.bin`. `src/stages/original-stage-data.js` decodes the original IDs using the NES block table (`0x0-0x4` brick shapes, `0x5-0x9` steel shapes, `0xA-0xD` water/forest/ice/empty), then applies the fixed five-cell base enclosure used by the runtime and reconstructs partial brick fragments and steel quadrants. `procedural-stage.js` remains the deterministic fallback for custom packs that omit map data.
 

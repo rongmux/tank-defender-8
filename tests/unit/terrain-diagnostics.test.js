@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/terrain-diagnostics");
 const terrainBaseDiagnostics = require("../../src/runtime/terrain-base-diagnostics");
 
@@ -46,6 +47,7 @@ assert.throws(
 );
 
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: { TILE: 16 },
   createTerrainBaseDiagnostics: terrainBaseDiagnostics.createTerrainBaseDiagnostics,

@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/timer-diagnostics");
 const timerFreezeDiagnostics = require("../../src/runtime/timer-freeze-diagnostics");
 
@@ -35,6 +36,7 @@ assert.throws(
 );
 
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: {},
   createTimerFreezeDiagnostics: timerFreezeDiagnostics.createTimerFreezeDiagnostics,

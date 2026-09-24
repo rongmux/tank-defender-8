@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/player-movement-diagnostics");
 const inputDiagnostics = require("../../src/runtime/player-movement-input-diagnostics");
 const motionDiagnostics = require("../../src/runtime/player-movement-motion-diagnostics");
@@ -49,6 +50,7 @@ assert.throws(
 );
 
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: {},
   createPlayerMovementInputDiagnostics:

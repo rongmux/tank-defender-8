@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/power-up-diagnostics");
 const collectionDiagnostics = require("../../src/runtime/power-up-collection-diagnostics");
 const presentationDiagnostics = require("../../src/runtime/power-up-presentation-diagnostics");
@@ -52,6 +53,7 @@ assert.throws(
 );
 
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: {},
   createPowerUpCollectionDiagnostics:

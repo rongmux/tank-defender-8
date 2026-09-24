@@ -119,6 +119,7 @@
   var effectDiagnostics = requireRuntimeModule("effectDiagnostics");
   var panelDiagnostics = requireRuntimeModule("panelDiagnostics");
   var publicApiAdapters = requireRuntimeModule("publicApiAdapters");
+  var diagnosticScope = requireRuntimeModule("diagnosticScope");
   var debugSnapshot = requireRuntimeModule("debugSnapshot");
 
   // ── Presentation ───────────────────────────────────────────────────────────
@@ -405,6 +406,7 @@
     createEffectDiagnostics: effectDiagnostics.createEffectDiagnostics,
     createPanelDiagnostics: panelDiagnostics.createPanelDiagnostics,
     createPublicApiAdapters: publicApiAdapters.createPublicApiAdapters,
+    createDiagnosticScope: diagnosticScope.createDiagnosticScope,
     createDebugSnapshot: debugSnapshot.createDebugSnapshot,
 
     // Presentation

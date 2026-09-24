@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/upgrade-diagnostics");
 
 const UPGRADE_DIAGNOSTIC_METHODS = [
@@ -34,6 +35,7 @@ assert.throws(
 );
 
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: {
     UP: 0,

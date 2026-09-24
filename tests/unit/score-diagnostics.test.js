@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/score-diagnostics");
 
 const SCORE_DIAGNOSTIC_METHODS = [
@@ -49,6 +50,7 @@ const state = {
   }
 };
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: { ENEMY_DESTRUCTION_SCORE_TICKS: 6 }
 };

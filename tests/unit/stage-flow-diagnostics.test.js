@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/stage-flow-diagnostics");
 const transitionDiagnostics = require("../../src/runtime/stage-flow-transition-diagnostics");
 const progressionDiagnostics = require("../../src/runtime/stage-flow-progression-diagnostics");
@@ -54,6 +55,7 @@ assert.throws(
 );
 
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: { STAGE_CURTAIN_CLOSE_FRAMES: 64 },
   createStageFlowTransitionDiagnostics:

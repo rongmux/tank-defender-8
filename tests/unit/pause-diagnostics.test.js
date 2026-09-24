@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/pause-diagnostics");
 
 const PAUSE_DIAGNOSTIC_METHODS = [
@@ -62,6 +63,7 @@ const state = {
   }
 };
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: { TILE: 16 }
 };

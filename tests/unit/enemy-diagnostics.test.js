@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/enemy-diagnostics");
 const enemySpawnDiagnostics = require("../../src/runtime/enemy-spawn-diagnostics");
 
@@ -39,6 +40,7 @@ assert.throws(
 );
 
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: {},
   createEnemySpawnDiagnostics: enemySpawnDiagnostics.createEnemySpawnDiagnostics,

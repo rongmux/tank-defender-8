@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/audio-diagnostics");
 const audioScoreDiagnostics = require("../../src/runtime/audio-score-diagnostics");
 const audioStageBonusDiagnostics = require("../../src/runtime/audio-stage-bonus-diagnostics");
@@ -126,6 +127,7 @@ const manifest = {
   }
 };
 const deps = {
+  createDiagnosticScope,
   sharedState: {},
   audioScoreDiagnostics,
   audioStageBonusDiagnostics,

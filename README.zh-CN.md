@@ -109,6 +109,7 @@ node --check src/stages/stage-pack-schema.js
 node --check src/stages/stage-routing.js
 node --check src/stages/stage-runtime.js
 node --check src/runtime/shared-state.js
+node --check src/runtime/diagnostic-scope.js
 node --check src/runtime/editor-input-runtime.js
 node --check src/runtime/editor-lifecycle-runtime.js
 node --check src/runtime/stage-select-runtime.js
@@ -334,6 +335,7 @@ tank-defender-8/
 |   |   `-- stage-runtime.js
 |   |-- runtime/
 |   |   |-- shared-state.js
+|   |   |-- diagnostic-scope.js
 |   |   |-- editor-input-runtime.js
 |   |   |-- editor-lifecycle-runtime.js
 |   |   |-- stage-select-runtime.js
@@ -611,6 +613,7 @@ tank-defender-8/
 |   |   |-- combat-settings.test.js
 |   |   |-- debug-snapshot.test.js
 |   |   |-- directions.test.js
+|   |   |-- diagnostic-scope.test.js
 |   |   |-- editor-rules.test.js
 |   |   |-- editor-input-runtime.test.js
 |   |   |-- editor-lifecycle-runtime.test.js
@@ -770,6 +773,8 @@ tank-defender-8/
 |-- README.md
 `-- README.zh-CN.md
 ```
+
+`src/runtime/diagnostic-scope.js` 统一 17 个诊断和公开适配模块中保留接收者的作用域组装。共享值覆盖依赖值；回调优先级保持为 `state.fn > state.stageRuntime > deps`，非函数覆盖值不会遮蔽低优先级回调。各调用模块继续负责输入校验，并显式保留游戏、输入和音频状态引用。直接测试覆盖接收者身份、优先级回退、独立作用域和引用保留；集成测试锁定全部 159 项公开 API 的顺序及现有各领域输出哈希。
 
 `src/stages/original-stage-source.js` 保存从公开 Battle City（日版）反汇编文件 `incbin/stages/stage_01.bin` 到 `stage_35.bin` 解码出的精确 35 关、13x13 图块 ID 行。`src/stages/original-stage-data.js` 按 NES 图块表解码这些 ID（`0x0-0x4` 为砖块形态、`0x5-0x9` 为铁墙形态、`0xA-0xD` 依次为水/森林/冰/空白），再叠加运行时固定的五格基地围墙，并重建部分砖块碎片和钢墙象限。对于未提供地图数据的自定义关卡包，`procedural-stage.js` 仍作为确定性备用生成器。
 

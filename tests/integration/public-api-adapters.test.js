@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { createBrowserGameHarness } = require("../helpers/browser-game-harness");
@@ -8,6 +9,18 @@ const { context } = createBrowserGameHarness(root);
 const modules = context.window.TankDefender8Modules;
 const api = context.window.TankDefender8;
 const keys = Object.keys(api);
+
+assert.equal(Object.isFrozen(modules.diagnosticScope), true);
+assert.equal(
+  modules.moduleDeps.createDiagnosticScope,
+  modules.diagnosticScope.createDiagnosticScope
+);
+assert.equal(keys.length, 159);
+assert.equal(
+  crypto.createHash("sha256").update(JSON.stringify(keys)).digest("hex"),
+  "4a69f389c931e770ddde7b3f044d1868a2df1bd685a6ce5aada5b9a354c3cfb0",
+  "the complete public API order must survive scope consolidation"
+);
 
 assert(modules.publicApiAdapters, "public API adapters should register before game.js");
 assert.equal(Object.isFrozen(modules.publicApiAdapters), true);

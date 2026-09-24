@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/screen-flow-diagnostics");
 const navigationDiagnostics = require("../../src/runtime/screen-flow-navigation-diagnostics");
 const titleDemoDiagnostics = require("../../src/runtime/screen-flow-title-demo-diagnostics");
@@ -48,6 +49,7 @@ assert.throws(
 );
 
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: {},
   createScreenFlowNavigationDiagnostics:

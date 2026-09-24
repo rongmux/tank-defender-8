@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/panel-diagnostics");
 
 const PANEL_DIAGNOSTIC_METHODS = [
@@ -41,6 +42,7 @@ const state = {
   }
 };
 const deps = {
+  createDiagnosticScope,
   DEFAULT_ENEMY_TOTAL: 20,
   sharedState: {},
   label: "deps",

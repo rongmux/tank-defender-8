@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/combat-diagnostics");
 const tankCollisionDiagnostics = require("../../src/runtime/combat-tank-collision-diagnostics");
 const crossingDiagnostics = require("../../src/runtime/combat-crossing-diagnostics");
@@ -56,6 +57,7 @@ assert.throws(
 );
 
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: {},
   createCombatTankCollisionDiagnostics: tankCollisionDiagnostics.createCombatTankCollisionDiagnostics,

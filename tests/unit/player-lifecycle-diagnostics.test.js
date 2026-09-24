@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const diagnostics = require("../../src/runtime/player-lifecycle-diagnostics");
 const gameOverDiagnostics = require("../../src/runtime/player-lifecycle-game-over-diagnostics");
 
@@ -69,6 +70,7 @@ const state = {
   }
 };
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: {
     PLAYER_GAME_OVER_MESSAGE_TIMER: 8,

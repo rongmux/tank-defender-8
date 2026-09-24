@@ -1,4 +1,5 @@
 const assert = require("assert").strict;
+const { createDiagnosticScope } = require("../../src/runtime/diagnostic-scope");
 const adapters = require("../../src/runtime/public-api-adapters");
 
 assert.equal(Object.isFrozen(adapters), true);
@@ -37,6 +38,7 @@ const state = {
   }
 };
 const deps = {
+  createDiagnosticScope,
   label: "deps",
   sharedState: {},
   tryNormalizeStagePack(pack) {
