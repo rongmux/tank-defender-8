@@ -104,4 +104,42 @@ state.fn.gameSettings = undefined;
 const stageApi = diagnostics.createCombatDiagnostics(state, deps);
 assert.deepEqual(stageApi.debugFriendlyFireProbe(), { enabled: false, stunFrames: 0 });
 
+const childFactories = [
+  ["createCombatTankCollisionDiagnostics", COMBAT_DIAGNOSTIC_METHODS.slice(0, 4)],
+  ["createCombatFireLimitDiagnostics", COMBAT_DIAGNOSTIC_METHODS.slice(4, 5)],
+  ["createCombatPlayerFireInputDiagnostics", COMBAT_DIAGNOSTIC_METHODS.slice(5, 6)],
+  ["createCombatCrossingDiagnostics", COMBAT_DIAGNOSTIC_METHODS.slice(6, 7)],
+  ["createCombatProjectileDiagnostics", COMBAT_DIAGNOSTIC_METHODS.slice(7)]
+];
+const factoryCalls = [];
+const childApis = new Map();
+const compositionDeps = { ...deps };
+for (const [factoryName, methodNames] of childFactories) {
+  const childApi = Object.freeze(Object.fromEntries(methodNames.map((name) => [name, () => name])));
+  childApis.set(factoryName, childApi);
+  compositionDeps[factoryName] = function (scope) {
+    factoryCalls.push({ factoryName, scope, receiver: this });
+    return childApi;
+  };
+}
+
+const composedApi = diagnostics.createCombatDiagnostics(state, compositionDeps);
+assert.equal(Object.isFrozen(composedApi), true);
+assert.deepEqual(Object.keys(composedApi), COMBAT_DIAGNOSTIC_METHODS);
+assert.deepEqual(factoryCalls.map((call) => call.factoryName), childFactories.map(([name]) => name));
+const sharedScope = factoryCalls[0].scope;
+for (const call of factoryCalls) {
+  assert.equal(call.scope, sharedScope, "all combat children must receive the same scope");
+  assert.equal(call.receiver, compositionDeps, "child factories must retain their receiver");
+  for (const [name, probe] of Object.entries(childApis.get(call.factoryName))) {
+    assert.equal(composedApi[name], probe, `${name} must be delegated directly to its child`);
+  }
+}
+for (const name of ["game", "keys", "pendingFirePresses"]) {
+  assert.equal(sharedScope[name], state[name], `${name} must remain a live reference`);
+}
+for (const name of ["enemyDestroy", "enemyHit", "playerDestroy", "playerShoot", "steelHit"]) {
+  assert.equal(sharedScope[`${name}Audio`], state.audio[name], `${name} audio must remain live`);
+}
+
 console.log("combat-diagnostics unit test passed");

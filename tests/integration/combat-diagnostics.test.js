@@ -74,44 +74,31 @@ const diagnosticsSource = fs.readFileSync(
   path.join(root, "src/runtime/combat-diagnostics.js"),
   "utf8"
 );
-const tankCollisionDiagnosticsSource = fs.readFileSync(
-  path.join(root, "src/runtime/combat-tank-collision-diagnostics.js"),
-  "utf8"
-);
-const projectileDiagnosticsSource = fs.readFileSync(
-  path.join(root, "src/runtime/combat-projectile-diagnostics.js"),
-  "utf8"
-);
-const fireLimitDiagnosticsSource = fs.readFileSync(
-  path.join(root, "src/runtime/combat-fire-limit-diagnostics.js"),
-  "utf8"
-);
-const playerFireInputDiagnosticsSource = fs.readFileSync(
-  path.join(root, "src/runtime/combat-player-fire-input-diagnostics.js"),
-  "utf8"
-);
-const crossingDiagnosticsSource = fs.readFileSync(
-  path.join(root, "src/runtime/combat-crossing-diagnostics.js"),
-  "utf8"
-);
+const childModules = [
+  ["combatTankCollisionDiagnostics", "createCombatTankCollisionDiagnostics", "combat-tank-collision-diagnostics.js", COMBAT_DIAGNOSTIC_METHODS.slice(0, 4)],
+  ["combatFireLimitDiagnostics", "createCombatFireLimitDiagnostics", "combat-fire-limit-diagnostics.js", COMBAT_DIAGNOSTIC_METHODS.slice(4, 5)],
+  ["combatPlayerFireInputDiagnostics", "createCombatPlayerFireInputDiagnostics", "combat-player-fire-input-diagnostics.js", COMBAT_DIAGNOSTIC_METHODS.slice(5, 6)],
+  ["combatCrossingDiagnostics", "createCombatCrossingDiagnostics", "combat-crossing-diagnostics.js", COMBAT_DIAGNOSTIC_METHODS.slice(6, 7)],
+  ["combatProjectileDiagnostics", "createCombatProjectileDiagnostics", "combat-projectile-diagnostics.js", COMBAT_DIAGNOSTIC_METHODS.slice(7)]
+];
 assert(debugSource.includes("...createCombatDiagnostics(state, deps)"));
 assert.equal(diagnosticsSource.includes("eval("), false);
-assert.equal(tankCollisionDiagnosticsSource.includes("eval("), false);
-assert.equal(projectileDiagnosticsSource.includes("eval("), false);
-assert.equal(fireLimitDiagnosticsSource.includes("eval("), false);
-assert.equal(playerFireInputDiagnosticsSource.includes("eval("), false);
-assert.equal(crossingDiagnosticsSource.includes("eval("), false);
 for (const name of COMBAT_DIAGNOSTIC_METHODS) {
   assert.equal(debugSource.includes(`${name}(`), false);
+  assert.equal(diagnosticsSource.includes(`${name}(`), false, `${name} must stay outside the composer`);
+}
+for (const [moduleName, factoryName, fileName, methodNames] of childModules) {
+  assert.equal(typeof modules[moduleName][factoryName], "function");
   assert.equal(
-    diagnosticsSource.includes(`${name}(`) ||
-      tankCollisionDiagnosticsSource.includes(`${name}(`) ||
-      crossingDiagnosticsSource.includes(`${name}(`) ||
-      fireLimitDiagnosticsSource.includes(`${name}(`) ||
-      playerFireInputDiagnosticsSource.includes(`${name}(`) ||
-      projectileDiagnosticsSource.includes(`${name}(`),
-    true
+    modules.moduleDeps[factoryName],
+    modules[moduleName][factoryName],
+    `${factoryName} must be wired to its registered child module`
   );
+  const source = fs.readFileSync(path.join(root, "src/runtime", fileName), "utf8");
+  assert.equal(source.includes("eval("), false);
+  for (const name of COMBAT_DIAGNOSTIC_METHODS) {
+    assert.equal(source.includes(`${name}(`), methodNames.includes(name), `${name} ownership in ${fileName}`);
+  }
 }
 assert(debugSource.split(/\r?\n/).length < 2000);
 
